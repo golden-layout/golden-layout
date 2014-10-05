@@ -3,3 +3,5 @@
 
 The ultimate Javascript layout manager
 
+[https://golden-layout.com](https://golden-layout.com)
+-------------------------------------------------------
