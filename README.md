@@ -1,4 +1,4 @@
-# Golden Layout ![Bower version](http://img.shields.io/bower/v/golden-layout.svg)
+# [Golden Layout](https://golden-layout.com/) ![Bower version](http://img.shields.io/bower/v/golden-layout.svg)
 
 ![Screenshot](https://cloud.githubusercontent.com/assets/512416/4584449/e6c154a0-4ffa-11e4-81a8-a7e5f8689dc5.PNG)
 
