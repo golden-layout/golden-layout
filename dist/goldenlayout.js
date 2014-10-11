@@ -1992,7 +1992,17 @@ lm.utils.copy( lm.controls.Header.prototype, {
 	 * @returns {void}
 	 */
 	createTab: function( contentItem, index ) {
-		var tab = new lm.controls.Tab( this, contentItem );
+		var tab, i;
+
+		//If there's already a tab relating to the
+		//content item, don't do anything
+		for( i = 0; i < this.tabs.length; i++ ) {
+			if( this.tabs[ i ].contentItem === contentItem ) {
+				return;
+			}
+		}
+
+		tab = new lm.controls.Tab( this, contentItem );
 		
 		if( this.tabs.length === 0 ) {
 			this.tabs.push( tab );
