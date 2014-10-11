@@ -1,6 +1,6 @@
 {
   "name": "golden-layout",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": "Hoxton One Ltd.",
   "license": "Creative Commons Attribution-NonCommercial 4.0 International License",
   "devDependencies": {
@@ -16,7 +16,8 @@
     "karma-jasmine": "~0.1.5",
     "karma-chrome-launcher": "~0.1.4",
     "karma-ie-launcher": "~0.1.5",
-    "karma-coverage": "0.2.4"
+    "karma-coverage": "0.2.4",
+    "grunt-release": "0.7.0"
   },
   "description": "The ultimate JavaScript layout manager \r https://golden-layout.com",
   "main": "dist/js/goldenlayout.min.js",
