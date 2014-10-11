@@ -53,7 +53,13 @@ lm.utils.copy( lm.controls.BrowserPopout.prototype, {
 	},
 
 	close: function() {
-		this.getGlInstance()._$closeWindow();
+		if( this.getGlInstance() ) {
+			this.getGlInstance()._$closeWindow();
+		} else {
+			try{
+				this.getWindow().close();
+			} catch( e ){}
+		}
 	},
 
 	/**
