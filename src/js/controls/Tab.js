@@ -139,7 +139,7 @@ lm.utils.copy( lm.controls.Tab.prototype,{
 			this.header.parent.setActiveContentItem( this.contentItem );
 
 		// middle mouse button
-		} else if( event.button === 1 ) {
+		} else if( event.button === 1 && this.contentItem.config.isClosable ) {
 			this._onCloseClick( event );
 		}
 	},
