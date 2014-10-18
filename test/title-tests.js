@@ -52,6 +52,13 @@ describe( 'content items are abled to to emit events that bubble up the tree', f
 		expect( layout.toConfig().content[ 0 ].content[ 0 ].title ).toBe( 'Third Title' );
 	});
 
+	it( 'supports html in title', function() {
+		itemWithTitle.container.setTitle( 'title <b>with</b> html' );
+		expect( stack.header.tabs[ 0 ].element.find( '.lm_title' ).html() ).toBe( 'title <b>with</b> html' );
+		expect( stack.header.tabs[ 0 ].element.find( '.lm_title' ).text() ).toBe( 'title with html' );
+		expect( stack.header.tabs[ 0 ].element.attr( 'title' ) ).toBe( 'title with html' );
+	});
+
 	it( 'destroys the layout', function(){
 		layout.destroy();
 	});

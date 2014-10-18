@@ -139,3 +139,42 @@ lm.utils.getUniqueId = function() {
 		.toString(36)
 		.replace( '.', '' );
 };
+
+/**
+ * A basic XSS filter. It is ultimately up to the
+ * implementing developer to make sure their particular 
+ * applications and usecases are save from cross site scripting attacks
+ *
+ * @param   {String} input
+ * @param 	{Boolean} keepTags
+ *
+ * @returns {String} filtered input
+ */
+lm.utils.filterXss = function( input, keepTags ) {
+	
+	var output = input
+		.replace( /javascript/gi, 'j&#97;vascript' )
+		.replace( /expression/gi, 'expr&#101;ssion' )
+		.replace( /onload/gi, 'onlo&#97;d' )
+		.replace( /script/gi, '&#115;cript' )
+		.replace( /onerror/gi, 'on&#101;rror' );
+
+	if( keepTags === true ) {
+		return output;
+	} else {
+		return output
+			.replace( />/g, '&gt;' )
+			.replace( /</g, '&lt;' );
+	}
+};
+
+/**
+ * Removes html tags from a string
+ *
+ * @param   {String} input
+ *
+ * @returns {String} input without tags
+ */
+lm.utils.stripTags = function( input ) {
+	return $.trim( input.replace( /(<([^>]+)>)/ig, '' ) );
+};

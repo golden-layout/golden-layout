@@ -1,5 +1,5 @@
 describe( 'Basic XSS filtering is applied', function(){
-	var filterFn = window.GoldenLayout.prototype._filterXss;
+	var filterFn = window.GoldenLayout.__lm.utils.filterXss;
 
 	it( 'escapes tags', function(){
 		var escapedString = filterFn( '>\'>"><img src=x onerror=alert(0)>' );
@@ -8,7 +8,7 @@ describe( 'Basic XSS filtering is applied', function(){
 
 	it( 'escapes javascript urls', function(){
 		var escapedString = filterFn( 'javascript:alert("hi")' ); // jshint ignore:line
-		expect( escapedString ).toBe( 'j&#97;vascript:alert("hi")' );
+		expect( escapedString ).toBe( 'j&#97;va&#115;cript:alert("hi")' );
 	});
 
 	it( 'escapes expression statements', function(){
