@@ -36,7 +36,7 @@
 .lm_tab.lm_active, 
 .lm_tab:hover{
 	color: #FFF;
-	background: #rgba( 255, 255, 255, 0.3 );
+	background: rgba( 255, 255, 255, 0.3 );
 }
 
 
