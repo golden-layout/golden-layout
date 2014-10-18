@@ -1,8 +1,29 @@
+/**
+ * A generic and very fast EventEmitter
+ * implementation. On top of emitting the
+ * actual event it emits an
+ *
+ * lm.utils.EventEmitter.ALL_EVENT
+ *
+ * event for every event triggered. This allows
+ * to hook into it and proxy events forwards
+ *
+ * @constructor
+ */
 lm.utils.EventEmitter = function()
 {
 	this._mSubscriptions = { };
 	this._mSubscriptions[ lm.utils.EventEmitter.ALL_EVENT ] = [];
 
+	/**
+	 * Listen for events
+	 *
+	 * @param   {String} sEvent    The name of the event to listen to
+	 * @param   {Function} fCallback The callback to execute when the event occurs
+	 * @param   {[Object]} oContext The value of the this pointer within the callback function
+	 *
+	 * @returns {void}
+	 */
 	this.on = function( sEvent, fCallback, oContext )
 	{
 		if( !this._mSubscriptions[ sEvent ] )
@@ -13,6 +34,14 @@ lm.utils.EventEmitter = function()
 		this._mSubscriptions[ sEvent ].push({ fn: fCallback, ctx: oContext });
 	};
 
+	/**
+	 * Emit an event and notify listeners
+	 *
+	 * @param   {String} sEvent The name of the event
+	 * @param 	{Mixed}  various additional arguments that will be passed to the listener
+	 *
+	 * @returns {void}
+	 */
 	this.emit = function( sEvent )
 	{
 		var i, ctx, args;
@@ -36,6 +65,15 @@ lm.utils.EventEmitter = function()
 		}
 	};
 
+	/**
+	 * Removes a listener for an event
+	 *
+	 * @param   {String} sEvent    The name of the event
+	 * @param   {Function} fCallback The previously registered callback method
+	 * @param   {Object} oContext  The previously registered context
+	 *
+	 * @returns {void}
+	 */
 	this.unbind = function( sEvent, fCallback, oContext )
 	{
 		if( !this._mSubscriptions[ sEvent ] ) {
@@ -63,9 +101,26 @@ lm.utils.EventEmitter = function()
 		}
 	};
 
+	/**
+	 * Alias for unbind
+	 */
 	this.off = this.unbind;
-	//this.subscribe = this.on;
+
+	/**
+	 * Alias for emit
+	 */
 	this.trigger = this.emit;
 };
 
+/**
+ * The name of the event that's triggered for every other event
+ *
+ * usage
+ *
+ * myEmitter.on( lm.utils.EventEmitter.ALL_EVENT, function( eventName, argsArray ){
+ * 	//do stuff
+ * });
+ *
+ * @type {String}
+ */
 lm.utils.EventEmitter.ALL_EVENT = '__all';
