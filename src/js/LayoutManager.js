@@ -57,6 +57,11 @@ lm.LayoutManager = function( config, container ) {
 };
 
 /**
+ * Hook that allows to access private classes
+ */
+lm.LayoutManager.__lm = lm;
+
+/**
  * Takes a GoldenLayout configuration object and
  * replaces its keys and values recoursively with
  * one letter codes
@@ -733,7 +738,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		if( windowConfig ) {
 			this.isSubWindow = true;
 			config = window.decodeURIComponent( windowConfig );
-			config = this._filterXss( config );
+			config = lm.utils.filterXss( config );
 			config = JSON.parse( config );
 			config = ( new lm.utils.ConfigMinifier() ).unminifyConfig( config );
 		}
@@ -807,25 +812,6 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 				popout.indexInParent
 			);
 		}
-	},
-
-	/**
-	 * A basic XSS filter. It is ultimately up to the
-	 * implementing developer to make sure their particular 
-	 * applications and usecases are save from cross site scripting attacks
-	 *
-	 * @param   {String} configString
-	 *
-	 * @returns {String} filtered configString
-	 */
-	_filterXss: function( configString ) {
-		return configString
-			.replace( />/g, '&gt;' )
-			.replace( /</g, '&lt;' )
-			.replace( /javascript/gi, 'j&#97;vascript' )
-			.replace( /expression/gi, 'expr&#101;ssion' )
-			.replace( /onload/gi, 'onlo&#97;d')
-			.replace( /onerror/gi, 'on&#101;rror');
 	},
 
 	/**
