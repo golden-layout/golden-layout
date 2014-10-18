@@ -1,6 +1,6 @@
 {
   "name": "golden-layout",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "author": "Hoxton One Ltd.",
   "license": "Creative Commons Attribution-NonCommercial 4.0 International License",
   "devDependencies": {
@@ -25,7 +25,7 @@
     "test": "test"
   },
   "dependencies": {
-    "jquery":"2.1.1"
+    "jquery": "2.1.1"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -46,18 +46,21 @@
   },
   "homepage": "https://github.com/hoxton-one/golden-layout",
   "npmName": "golden-layout",
-  "npmFileMap": [{
-    "basePath": "/dist/",
-    "files": [ 
-      "goldenlayout.js",
-      "goldenlayout.min.js"
-    ]
-  },{
-    "basePath": "/src/css/",
-    "files": [ 
-      "goldenlayout.base.css", 
-      "goldenlayout-dark-theme.css", 
-      "goldenlayout-light-theme.css" 
-    ]
-  }]
+  "npmFileMap": [
+    {
+      "basePath": "/dist/",
+      "files": [
+        "goldenlayout.js",
+        "goldenlayout.min.js"
+      ]
+    },
+    {
+      "basePath": "/src/css/",
+      "files": [
+        "goldenlayout.base.css",
+        "goldenlayout-dark-theme.css",
+        "goldenlayout-light-theme.css"
+      ]
+    }
+  ]
 }
