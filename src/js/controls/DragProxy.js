@@ -27,7 +27,7 @@ lm.controls.DragProxy = function( x, y, dragListener, layoutManager, contentItem
 
 	this.element = $( lm.controls.DragProxy._template );
 	this.element.css({ left: x, top: y });
-	this.element.find( '.lm_title' ).text( this._contentItem.config.title );
+	this.element.find( '.lm_title' ).html( lm.utils.filterXss( this._contentItem.config.title, true ) );
 	this.childElementContainer = this.element.find( '.lm_content' );
 	this.childElementContainer.append( contentItem.element );
 
