@@ -128,11 +128,20 @@ lm.utils.copy( lm.controls.Tab.prototype,{
 	/**
 	 * Callback when the tab is clicked
 	 *
+	 * @param {jQuery DOM event} event
+	 * 
 	 * @private
 	 * @returns {void}
 	 */
-	_onTabClick: function() {
-		this.header.parent.setActiveContentItem( this.contentItem );
+	_onTabClick: function( event ) {
+		// left mouse button
+		if( event.button === 0 ) {
+			this.header.parent.setActiveContentItem( this.contentItem );
+
+		// middle mouse button
+		} else if( event.button === 1 ) {
+			this._onCloseClick( event );
+		}
 	},
 
 	/**
