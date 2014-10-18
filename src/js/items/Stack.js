@@ -100,7 +100,10 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		
 		if( this.contentItems.length > 0 ) {
 			this.setActiveContentItem( this.contentItems[ Math.max( index -1 , 0 ) ] );
+		} else {
+			this._activeContentItem = null;
 		}
+		
 		this.emitBubblingEvent( 'stateChanged' );
 	},
 
@@ -140,6 +143,14 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		if( this._dropSegment === 'header' ) {
 			this._resetHeaderDropZone();
 			this.addChild( contentItem, this._dropIndex );
+			return;
+		}
+
+		/*
+		 * The stack is empty. Let's just add the element.
+		 */
+		if( this._dropSegment === 'body' ) {
+			this.addChild( contentItem );
 			return;
 		}
 
@@ -209,7 +220,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 
 		for( segment in this._contentAreaDimensions ) {
 			area = this._contentAreaDimensions[ segment ].hoverArea;
-			
+
 			if( area.x1 < x && area.x2 > x && area.y1 < y && area.y2 > y ) {
 
 				if( segment === 'header' ) {
@@ -253,8 +264,31 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		 * If this Stack is a parent to rows, columns or other stacks only its
 		 * header is a valid dropzone.
 		 */
-		if( this._activeContentItem.isComponent === false ) {
+		if( this._activeContentItem && this._activeContentItem.isComponent === false ) {
 			return headerArea;
+		}
+
+		/**
+		 * Highlight the entire body if the stack is empty
+		 */
+		if( this.contentItems.length === 0 ) {
+
+			this._contentAreaDimensions.body = {
+				hoverArea: {
+					x1: contentArea.x1,
+					y1: contentArea.y1,
+					x2: contentArea.x2,
+					y2: contentArea.y2
+				},
+				highlightArea: {
+					x1: contentArea.x1,
+					y1: contentArea.y1,
+					x2: contentArea.x2,
+					y2: contentArea.y2
+				}
+			};
+
+			return getArea.call( this, this.element );
 		}
 
 		this._contentAreaDimensions.left = {
@@ -329,8 +363,23 @@ lm.utils.copy( lm.items.Stack.prototype, {
 			tabLeft,
 			offset,
 			placeHolderLeft,
+			headerOffset,
 			tabWidth,
 			halfX;
+
+		// Empty stack
+		if( tabsLength === 0 ) {
+			headerOffset = this.header.element.offset();
+
+			this.layoutManager.dropTargetIndicator.highlightArea({
+				x1: headerOffset.left,
+				x2: headerOffset.left + 100,
+				y1: headerOffset.top + this.header.element.height() - 20,
+				y2: headerOffset.top + this.header.element.height()
+			});
+
+			return;
+		}
 
 		for( i = 0; i < tabsLength; i++ ) {
 			tabElement = this.header.tabs[ i ].element;

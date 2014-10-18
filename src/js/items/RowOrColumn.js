@@ -86,10 +86,15 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	 * @returns {void}
 	 */
 	removeChild: function( contentItem, keepChild ) {
-		var removedItemSize = contentItem.config[ this._dimension ], i,
+		var removedItemSize = contentItem.config[ this._dimension ],
 			index = lm.utils.indexOf( contentItem, this.contentItems ),
 			splitterIndex = Math.max( index - 1, 0 ),
+			i,
 			childItem;
+
+		if( index === -1 ) {
+			throw new Error( 'Can\'t remove child. ContentItem is not child of this Row or Column' );
+		}
 		
 		/**
 		 * Remove the splitter before the item or after if the item happens

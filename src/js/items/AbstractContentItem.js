@@ -129,7 +129,7 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 		/**
 		 * If this was the last content item, remove this node as well
 		 */
-		} else if( !(this instanceof lm.items.Root) ) {
+		} else if( !(this instanceof lm.items.Root) && this.config.isClosable === true ) {
 			this.parent.removeChild( this );
 		}
 	},
