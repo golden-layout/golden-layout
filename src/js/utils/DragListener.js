@@ -29,25 +29,28 @@ lm.utils.DragListener = function(eElement, nButtonCode)
 	this._fUp = lm.utils.fnBind( this.onMouseUp, this );
 	this._fDown = lm.utils.fnBind( this.onMouseDown, this );
 
-	this._eElement.mousedown( this._fDown );
+
+	this._eElement.on( 'mousedown touchstart', this._fDown );
 };
 
 lm.utils.DragListener.timeout = null;
 
 lm.utils.copy( lm.utils.DragListener.prototype, {
 	destroy: function() {
-		this._eElement.unbind( 'mousedown', this._fDown );
+		this._eElement.unbind( 'mousedown touchstart', this._fDown );
 	},
 
 	onMouseDown: function(oEvent)
 	{
 		oEvent.preventDefault();
-		
-		this._nOriginalX = oEvent.pageX;
-		this._nOriginalY = oEvent.pageY;
 
-		this._oDocument.on('mousemove', this._fMove);
-		this._oDocument.one('mouseup', this._fUp);
+		var coordinates = this._getCoordinates( oEvent );
+		
+		this._nOriginalX = coordinates.x;
+		this._nOriginalY = coordinates.y;
+
+		this._oDocument.on('mousemove touchmove', this._fMove);
+		this._oDocument.one('mouseup touchend', this._fUp);
 
 		this._timeout = setTimeout( lm.utils.fnBind( this._startDrag, this ), this._nDelay );
 	},
@@ -56,8 +59,10 @@ lm.utils.copy( lm.utils.DragListener.prototype, {
 	{
 		oEvent.preventDefault();
 
-		this._nX = oEvent.pageX - this._nOriginalX;
-		this._nY = oEvent.pageY - this._nOriginalY;
+		var coordinates = this._getCoordinates( oEvent );
+
+		this._nX = coordinates.x - this._nOriginalX;
+		this._nY = coordinates.y - this._nOriginalY;
 
 		if( this._bDragging === false ) {
 			if(
@@ -79,7 +84,7 @@ lm.utils.copy( lm.utils.DragListener.prototype, {
 	{
 		clearTimeout( this._timeout );
 		this._eBody.removeClass( 'lm_dragging' );
-		this._oDocument.unbind( 'mousemove', this._fMove);
+		this._oDocument.unbind( 'mousemove touchmove', this._fMove);
 		
 		if( this._bDragging === true )
 		{
@@ -93,6 +98,19 @@ lm.utils.copy( lm.utils.DragListener.prototype, {
 		this._bDragging = true;
 		this._eBody.addClass( 'lm_dragging' );
 		this.emit('dragStart', this._nOriginalX, this._nOriginalY);
+	},
+
+	_getCoordinates: function( event ) {
+		var coordinates = {};
+
+		if( event.type.substr( 0, 5 ) === 'touch' ) {
+			coordinates.x = event.originalEvent.targetTouches[ 0 ].pageX;
+			coordinates.y = event.originalEvent.targetTouches[ 0 ].pageY;
+		} else {
+			coordinates.x = event.pageX;
+			coordinates.y = event.pageY;
+		}
+
+		return coordinates;
 	}
 });
-
