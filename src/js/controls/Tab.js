@@ -19,8 +19,11 @@ lm.controls.Tab = function( header, contentItem ) {
 	this.contentItem.on( 'titleChanged', this.setTitle, this );
 
 	this._layoutManager = this.contentItem.layoutManager;
-	
-	if( this._layoutManager.config.settings.reorderEnabled === true ) {
+
+	if( 
+		this._layoutManager.config.settings.reorderEnabled === true &&
+		contentItem.config.reorderEnabled === true
+	) {
 		this._dragListener = new lm.utils.DragListener( this.element );
 		this._dragListener.on( 'dragStart', this._onDragStart, this );
 	}
