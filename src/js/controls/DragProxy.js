@@ -14,6 +14,9 @@
  * @param {lm.item.AbstractContentItem} originalParent
  */
 lm.controls.DragProxy = function( x, y, dragListener, layoutManager, contentItem, originalParent ) {
+
+	lm.utils.EventEmitter.call( this );
+
 	this._dragListener = dragListener;
 	this._layoutManager = layoutManager;
 	this._contentItem = contentItem;
