@@ -415,7 +415,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 			x1: placeHolderLeft,
 			x2: placeHolderLeft + this.layoutManager.tabDropPlaceholder.width(),
 			y1: tabTop,
-			y2: tabTop + tabElement.height()
+			y2: tabTop + tabElement.innerHeight()
 		});
 	},
 
