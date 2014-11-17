@@ -17,6 +17,6 @@ Add `golden-layout` to your bower.json, or [download](https://golden-layout.com/
 
 ## [Examples](https://golden-layout.com/examples/)
 
-## License
-
-[Creative Commons Attribution-NonCommercial 4.0 International](LICENSE.md)
+## Dual Licensed
+[Creative Commons Attribution-NonCommercial 4.0 International](LICENSE-CC-NC-4.0.md)
+[GNU General Public License 3.0](LICENSE-GPL-3.0.md)
