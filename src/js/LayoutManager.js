@@ -286,6 +286,12 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 
 		if( this.isInitialised === true ) {
 			this.root.callDownwards( 'setSize' );
+
+			if( this._maximisedItem ) {
+				this._maximisedItem.element.width( this.container.width() );
+				this._maximisedItem.element.height( this.container.height() );
+				this._maximisedItem.callDownwards( 'setSize' );
+			}
 		}
 	},
 
