@@ -866,7 +866,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 			throw new lm.errors.ConfigurationError( errorMsg, config );
 		}
 
-		if( config.content.length !== 1 ) {
+		if( config.content.length > 1 ) {
 			errorMsg = 'Top level content can\'t contain more then one element.';
 			throw new lm.errors.ConfigurationError( errorMsg, config );
 		}
