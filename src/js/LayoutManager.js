@@ -733,14 +733,14 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	 * @returns {Object} config
 	 */
 	_createConfig: function( config ) {
-		var windowConfig = lm.utils.getQueryStringParam( 'gl-window' );
-
-		if( windowConfig ) {
+		var windowConfigKey = lm.utils.getQueryStringParam( 'gl-window' );
+	
+		if( windowConfigKey ) {
 			this.isSubWindow = true;
-			config = window.decodeURIComponent( windowConfig );
-			config = lm.utils.filterXss( config );
+			config = localStorage.getItem( windowConfigKey );
 			config = JSON.parse( config );
 			config = ( new lm.utils.ConfigMinifier() ).unminifyConfig( config );
+			localStorage.removeItem( windowConfigKey );
 		}
 
 		config = $.extend( true, {}, lm.config.defaultConfig, config );
@@ -770,7 +770,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 			this.emit( 'popIn' );
 		}, this));
 
-		document.title = this.config.content[ 0 ].title;
+		document.title = lm.utils.stripTags( this.config.content[ 0 ].title );
 
 		$( 'head' ).append( $( 'body link, body style, template, .gl_keep' ) );
 

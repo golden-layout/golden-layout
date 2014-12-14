@@ -193,20 +193,27 @@ lm.utils.copy( lm.controls.BrowserPopout.prototype, {
 	 * @returns {String} URL
 	 */
 	_createUrl: function() {
-		var config = { content: this._config }, 
+		var config = { content: this._config },
+			storageKey = 'gl-window-config-' + lm.utils.getUniqueId(),
 			urlParts;
 
 		config = ( new lm.utils.ConfigMinifier() ).minifyConfig( config );
-		config = window.encodeURIComponent( JSON.stringify( config ) );
+		
+		try{
+			localStorage.setItem( storageKey, JSON.stringify( config ) );
+		} catch( e ) {
+			throw new Error( 'Error while writing to localStorage ' + e.toString() );
+		}
+
 		urlParts = document.location.href.split( '?' );
 
 		// URL doesn't contain GET-parameters
 		if( urlParts.length === 1 ) {
-			return urlParts[ 0 ] + '?gl-window=' + config;
+			return urlParts[ 0 ] + '?gl-window=' + storageKey;
 
 		// URL contains GET-parameters
 		} else {
-			return document.location.href + '&gl-window=' + config;
+			return document.location.href + '&gl-window=' + storageKey;
 		}
 	},
 
