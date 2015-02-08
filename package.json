@@ -62,5 +62,23 @@
         "goldenlayout-light-theme.css"
       ]
     }
-  ]
+  ],
+  "jspm": {
+    "directories": {
+      "lib": "dist"
+    },
+    "main": "dist/goldenlayout",
+    "files": [
+      "dist/goldenlayout.js",
+      "dist/goldenlayout.min.js",
+    ],
+    "format": "global",
+    "registry": "jspm",
+    "dependencies": {
+      "jquery": "*",
+    },
+    "shim": {
+      "dist/goldenlayout": ["jquery"]
+    }
+  }
 }
