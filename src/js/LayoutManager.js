@@ -880,7 +880,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		this.root = new lm.items.Root( this, { content: config.content }, this.container );
 		this.root.callDownwards( '_$init' );
 
-		if( config.maximisedItemId ) {
+		if( config.maximisedItemId === '__glMaximised' ) {
 			this.root.getItemsById( config.maximisedItemId )[ 0 ].toggleMaximise();
 		}
 	},
