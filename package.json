@@ -1,6 +1,6 @@
 {
   "name": "golden-layout",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "author": "Hoxton One Ltd.",
   "license": "Creative Commons Attribution-NonCommercial 4.0 International License",
   "devDependencies": {
@@ -78,7 +78,9 @@
       "jquery": "*"
     },
     "shim": {
-      "dist/goldenlayout": ["jquery"]
+      "dist/goldenlayout": [
+        "jquery"
+      ]
     }
   }
 }
