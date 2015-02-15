@@ -70,12 +70,12 @@
     "main": "dist/goldenlayout",
     "files": [
       "dist/goldenlayout.js",
-      "dist/goldenlayout.min.js",
+      "dist/goldenlayout.min.js"
     ],
     "format": "global",
     "registry": "jspm",
     "dependencies": {
-      "jquery": "*",
+      "jquery": "*"
     },
     "shim": {
       "dist/goldenlayout": ["jquery"]
