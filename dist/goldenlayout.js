@@ -1,4 +1,4 @@
-(function($){var lm={"config":{},"container":{},"controls":{},"items":{},"errors":{},"utils":{}};
+(function($){var lm={"config":{},"controls":{},"container":{},"errors":{},"items":{},"utils":{}};
 
 lm.utils.F = function () {};
 	
@@ -1303,7 +1303,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		this.root = new lm.items.Root( this, { content: config.content }, this.container );
 		this.root.callDownwards( '_$init' );
 
-		if( config.maximisedItemId ) {
+		if( config.maximisedItemId === '__glMaximised' ) {
 			this.root.getItemsById( config.maximisedItemId )[ 0 ].toggleMaximise();
 		}
 	},
@@ -1446,9 +1446,11 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 	setSize: function( width, height ) {
 		var rowOrColumn = this.parent,
 			rowOrColumnChild = this,
-			totalPixelHeight,
-			percentageHeight,
-			heightDelta,
+			totalPixel,
+			percentage,
+			direction,
+			newSize,
+			delta,
 			i;
 
 		while( !rowOrColumn.isColumn && !rowOrColumn.isRow ) {
@@ -1464,15 +1466,18 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 			}
 		}
 
-		totalPixelHeight = this.height * ( 1 / ( rowOrColumnChild.config.height / 100 ) );
-		percentageHeight = ( height / totalPixelHeight ) * 100;
-		heightDelta = ( rowOrColumnChild.config.height - percentageHeight ) / rowOrColumn.contentItems.length;
+		direction = rowOrColumn.isColumn ? "height" : "width";
+		newSize = direction === "height" ? height : width;
+
+		totalPixel = this[direction] * ( 1 / ( rowOrColumnChild.config[direction] / 100 ) );
+		percentage = ( newSize / totalPixel ) * 100;
+		delta = ( rowOrColumnChild.config[direction] - percentage ) / rowOrColumn.contentItems.length;
 
 		for( i = 0; i < rowOrColumn.contentItems.length; i++ ) {
 			if( rowOrColumn.contentItems[ i ] === rowOrColumnChild ) {
-				rowOrColumn.contentItems[ i ].config.height = percentageHeight;
+				rowOrColumn.contentItems[ i ].config[direction] = percentage;
 			} else {
-				rowOrColumn.contentItems[ i ].config.height += heightDelta;
+				rowOrColumn.contentItems[ i ].config[direction] += delta;
 			}
 		}
 
@@ -1553,6 +1558,7 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 		}
 	}
 });
+
 /**
  * Pops a content item out into a new browser window.
  * This is achieved by
