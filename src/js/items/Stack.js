@@ -19,6 +19,7 @@ lm.items.Stack = function( layoutManager, config, parent ) {
 	}
 
 	this.element.append( this.childElementContainer );
+	this._$validateClosability();
 };
 
 lm.utils.extend( lm.items.Stack, lm.items.AbstractContentItem );
@@ -90,6 +91,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		this.header.createTab( contentItem, index );
 		this.setActiveContentItem( contentItem );
 		this.callDownwards( 'setSize' );
+		this._$validateClosability();
 		this.emitBubblingEvent( 'stateChanged' );
 	},
 
@@ -104,7 +106,34 @@ lm.utils.copy( lm.items.Stack.prototype, {
 			this._activeContentItem = null;
 		}
 		
+		this._$validateClosability();
 		this.emitBubblingEvent( 'stateChanged' );
+	},
+
+	/**
+	 * Validates that the stack is still closable or not. If a stack is able
+	 * to close, but has a non closable component added to it, the stack is no
+	 * longer closable until all components are closable.
+	 *
+	 * @returns {void}
+	 */
+	_$validateClosability: function() {
+		var contentItem,
+			isClosable,
+			len,
+			i;
+
+		isClosable = this.header._isClosable();
+
+		for ( i = 0, len = this.contentItems.length; i < len; i++ ) {
+			if (!isClosable) { 
+				break; 
+			}
+
+			isClosable = this.contentItems[ i ].config.isClosable;
+		}
+
+		this.header._$setClosable( isClosable );
 	},
 
 	_$destroy: function() {
@@ -130,7 +159,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 	 * Same thing for rows and left / right drop segments... so in total there are 9 things that can potentially happen
 	 * (left, top, right, bottom) * is child of the right parent (row, column) + header drop
 	 * 
-	 * @param   {lm.item} contentItem
+	 * @param	{lm.item} contentItem
 	 *
 	 * @returns {void}
 	 */
@@ -210,8 +239,8 @@ lm.utils.copy( lm.items.Stack.prototype, {
 	 * If the user hovers above the header part of the stack, indicate drop positions for tabs.
 	 * otherwise indicate which segment of the body the dragged item would be dropped on
 	 *
-	 * @param   {Int} x Absolute Screen X
-	 * @param   {Int} y Absolute Screen Y
+	 * @param	{Int} x Absolute Screen X
+	 * @param	{Int} y Absolute Screen Y
 	 *
 	 * @returns {void}
 	 */
