@@ -116,7 +116,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	
 		lm.items.AbstractContentItem.prototype.removeChild.call( this, contentItem, keepChild );
 
-		if( this.contentItems.length === 1 ) {
+		if( this.contentItems.length === 1 && this.config.isClosable === true ) {
 			childItem = this.contentItems[ 0 ];
 			this.contentItems = [];
 			this.parent.replaceChild( this, childItem, true );

@@ -9,7 +9,7 @@
 	<link rel="stylesheet" type="text/css" href="src/css/goldenlayout-dark-theme.css" />
 	<script type="text/javascript" src="lib/jquery.js"></script>
 	<script type="text/javascript">
-		window.lm = {"config":{},"controls":{},"container":{},"errors":{},"items":{},"utils":{}};
+		window.lm = {"config":{},"container":{},"controls":{},"errors":{},"items":{},"utils":{}};
 	</script>
 	
 	<script type="text/javascript" src="src\js\utils\utils.js"></script>
@@ -18,9 +18,11 @@
 	
 	<script type="text/javascript" src="src\js\LayoutManager.js"></script>
 	
+	<script type="text/javascript" src="src\js\config\defaultConfig.js"></script>
+	
 	<script type="text/javascript" src="src\js\config\ItemDefaultConfig.js"></script>
 	
-	<script type="text/javascript" src="src\js\config\defaultConfig.js"></script>
+	<script type="text/javascript" src="src\js\container\ItemContainer.js"></script>
 	
 	<script type="text/javascript" src="src\js\controls\BrowserPopout.js"></script>
 	
@@ -39,8 +41,6 @@
 	<script type="text/javascript" src="src\js\controls\Tab.js"></script>
 	
 	<script type="text/javascript" src="src\js\controls\TransitionIndicator.js"></script>
-	
-	<script type="text/javascript" src="src\js\container\ItemContainer.js"></script>
 	
 	<script type="text/javascript" src="src\js\errors\ConfigurationError.js"></script>
 	
@@ -70,13 +70,8 @@
 </head>
 <body>
 	<div id="wrapper">
-		<div class="layoutA"></div>
-		<div class="controls">
-			<p>
-				Whenever the layout on the left emits a ‘stateChanged’ event, the layout on the right is destroyed and recreated with the left layout’s configuration.
-			</p>
-		</div>
-		<div class="layoutB"></div>
+	  <ul id="menuContainer"></ul>
+	  <div id="layoutContainer"></div>
 	</div>
 </body>
 </html>
