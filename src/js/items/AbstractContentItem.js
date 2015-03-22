@@ -10,6 +10,7 @@
  * @param {lm.item} parent
  *
  * @event stateChanged
+ * @event beforeItemDestroyed
  * @event itemDestroyed
  * @event itemCreated
  * @event componentCreated
@@ -427,6 +428,7 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 	 * @returns {void}
 	 */
 	_$destroy: function() {
+		this.emitBubblingEvent( 'beforeItemDestroyed' );
 		this.callDownwards( '_$destroy', [], true, true );
 		this.element.remove();
 		this.emitBubblingEvent( 'itemDestroyed' );

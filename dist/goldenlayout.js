@@ -2615,6 +2615,7 @@ lm.errors.ConfigurationError.prototype = new Error();
  * @param {lm.item} parent
  *
  * @event stateChanged
+ * @event beforeItemDestroyed
  * @event itemDestroyed
  * @event itemCreated
  * @event componentCreated
@@ -3032,6 +3033,7 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 	 * @returns {void}
 	 */
 	_$destroy: function() {
+		this.emitBubblingEvent( 'beforeItemDestroyed' );
 		this.callDownwards( '_$destroy', [], true, true );
 		this.element.remove();
 		this.emitBubblingEvent( 'itemDestroyed' );
@@ -3203,6 +3205,7 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 		this.layoutManager.emit( name, event );
 	}
 });
+
 /**
  * @param {[type]} layoutManager [description]
  * @param {[type]} config      [description]
