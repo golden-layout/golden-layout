@@ -64,18 +64,11 @@
     }
   ],
   "jspm": {
-    "directories": {
-      "lib": "dist"
-    },
     "main": "dist/goldenlayout",
-    "files": [
-      "dist/goldenlayout.js",
-      "dist/goldenlayout.min.js"
-    ],
     "format": "global",
     "registry": "jspm",
     "dependencies": {
-      "jquery": "*"
+      "jquery": "^2.1.0"
     },
     "shim": {
       "dist/goldenlayout": [
