@@ -65,7 +65,7 @@
 	overflow: visible;
 }
 
-.lm_header * {
+.lm_header [class^=lm_] {
 	box-sizing: content-box !important;
 }
 
