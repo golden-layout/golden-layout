@@ -14,20 +14,20 @@ lm.controls.Tab = function( header, contentItem ) {
 	this.closeElement = this.element.find( '.lm_close_tab' );
 	this.closeElement[ contentItem.config.isClosable ? 'show' : 'hide' ]();
 	this.isActive = false;
-	
+
 	this.setTitle( contentItem.config.title );
 	this.contentItem.on( 'titleChanged', this.setTitle, this );
 
 	this._layoutManager = this.contentItem.layoutManager;
 
-	if( 
+	if(
 		this._layoutManager.config.settings.reorderEnabled === true &&
 		contentItem.config.reorderEnabled === true
 	) {
 		this._dragListener = new lm.utils.DragListener( this.element );
 		this._dragListener.on( 'dragStart', this._onDragStart, this );
 	}
-	
+
 	this._onTabClickFn = lm.utils.fnBind( this._onTabClick, this );
 	this._onCloseClickFn = lm.utils.fnBind( this._onCloseClick, this );
 
@@ -38,7 +38,7 @@ lm.controls.Tab = function( header, contentItem ) {
 	} else {
 		this.closeElement.remove();
 	}
-	
+
 	this.contentItem.tab = this;
 	this.contentItem.emit( 'tab', this );
 	this.contentItem.layoutManager.emit( 'tabCreated', this );
@@ -62,7 +62,7 @@ lm.utils.copy( lm.controls.Tab.prototype,{
 
 	/**
 	 * Sets the tab's title to the provided string and sets
-	 * its title attribute to a pure text representation (without 
+	 * its title attribute to a pure text representation (without
 	 * html tags) of the same string.
 	 *
 	 * @public
@@ -74,7 +74,7 @@ lm.utils.copy( lm.controls.Tab.prototype,{
 	},
 
 	/**
-	 * Sets this tab's active state. To programmatically 
+	 * Sets this tab's active state. To programmatically
 	 * switch tabs, use header.setActiveContentItem( item ) instead.
 	 *
 	 * @public
@@ -132,14 +132,17 @@ lm.utils.copy( lm.controls.Tab.prototype,{
 	 * Callback when the tab is clicked
 	 *
 	 * @param {jQuery DOM event} event
-	 * 
+	 *
 	 * @private
 	 * @returns {void}
 	 */
 	_onTabClick: function( event ) {
 		// left mouse button
 		if( event.button === 0 ) {
-			this.header.parent.setActiveContentItem( this.contentItem );
+			var activeContentItem = this.header.parent.getActiveContentItem();
+			if (this.contentItem !== activeContentItem) {
+				this.header.parent.setActiveContentItem( this.contentItem );
+			}
 
 		// middle mouse button
 		} else if( event.button === 1 && this.contentItem.config.isClosable ) {
