@@ -20,7 +20,7 @@
     "grunt-release": "0.7.0"
   },
   "description": "The ultimate JavaScript layout manager \r https://golden-layout.com",
-  "main": "dist/js/goldenlayout.min.js",
+  "main": "dist/goldenlayout.min.js",
   "directories": {
     "test": "test"
   },
