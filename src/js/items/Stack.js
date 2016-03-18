@@ -237,6 +237,10 @@ lm.utils.copy( lm.items.Stack.prototype, {
 	},
 
 	_$getArea: function() {
+		if( this.element.is( ':visible' ) === false ) {
+			return null;
+		}
+		
 		var getArea = lm.items.AbstractContentItem.prototype._$getArea,
 			headerArea = getArea.call( this, this.header.element ),
 			contentArea = getArea.call( this, this.childElementContainer ),
