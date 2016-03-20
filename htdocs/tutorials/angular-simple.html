@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>GOLDEN LAYOUT - the ultimate javascript layout manager</title>
+	
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<meta name="keywords" content="HTML5, JavaScript, Layout Manager, webapp" />
+	<meta name="description" content="GOLDEN LAYOUT - the ultimate javascript layout manager" />
+	<meta name="author" content="Wolfram Hempel" />
+	<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+	<link rel="icon" href="/favicon.ico" type="image/x-icon">
+	<link rel="stylesheet" type="text/css" href="../assets/css/screen.css" />
+	
+	<link rel="stylesheet" type="text/css" href="../assets/css/api.css" />
+	<link rel="stylesheet" type="text/css" href="../assets/css/syntaxhighlighter.css" />
+	
+	<script type="text/javascript">
+	document.createElement( 'header' );
+	document.createElement( 'nav' );
+	</script>
+	<script type="text/javascript" src="../assets/js/jquery.js"></script>
+</head>
+<body class="category_tutorials">
+	<div id="modal" class="loading">
+		<div class="background"></div>
+		<div class="content-wrapper">
+			<div class="head">
+				<div class="close"></div>
+				<span class="title"></span>
+			</div>
+			<div class="content"></div>
+		</div>
+	</div>
+	
+	<div id="outerWrapper">
+		<div class="topSection">
+			
+			<div id="header" class="orangeGradient micro">
+				<h1><a href="..">GoldenLayout the ultimate webapp layout manager</a></h1>
+				
+			</div>  
+			
+			<div id="nav" class="standalone">
+				
+				<img src="../assets/images/background-abstract.jpg" />
+				
+				<ul>
+					<li ><a href="..">START</a></li>
+					<li ><a href="../download">DOWNLOAD</a></li>
+					<li ><a href="../examples">EXAMPLES</a></li>
+					<li class="active"><a href="../tutorials">TUTORIALS</a></li>
+					<li ><a href="../docs">DOCS</a></li>
+					<li ><a href="../buylicense">BUY</a></li>
+				</ul>
+			</div>
+		</div>
+		
+		<div id="wrapper" class="main">
+			<ul id="subnav">
+	<li class="head first">GoldenLayout</li>
+	<li >
+		<a href="getting-started.html">Getting Started</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+	</li>
+	<li >
+		<a href="saving-state.html">Saving State</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+	</li>
+	<li >
+		<a href="dynamically-adding-components.html">Adding Items</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+	</li>
+	<li >
+		<a href="adding-controls-to-header.html">Header Controls</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+	</li>
+	<li >
+		<a href="working-with-popouts.html">Popouts</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+	</li>
+	<li >
+		<a href="extending-tabs.html">Extending Tabs</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+	</li>
+
+	<li class="head">Usage with...</li>
+	<li >
+		<a href="requirejs.html">RequireJS</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+	</li>
+	<li class="active">
+		<a href="angular-simple.html">Angular (simple)</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+	</li>
+	<li >
+		<a href="angular-complex.html">Angular (complex)</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+	</li>
+	<li >
+		<a href="highcharts.html">HighCharts</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+	</li>
+	<li >
+		<a href="slickgrid.html">SlickGrid</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+	</li>
+</ul>
+			<div id="content">
+				<h1>Simple Angular integration</h1><p>When it comes to using GoldenLayout with Angular there&#39;s a large number of approaches. This tutorial covers the most basic one. For a more advances use case, please have a look at <a href="angular-complex.html">this tutorial</a>.</p><h3>Keeping it dead simple</h3><p>This will be our app: Two controllers, nothing to it.</p><pre><code>angular<span class="token punctuation" >.</span><span class="token function" >module<span class="token punctuation" >(</span></span> <span class="token string" >'userModule'</span><span class="token punctuation" >,</span> <span class="token punctuation" >[</span><span class="token punctuation" >]</span> <span class="token punctuation" >)</span>
+    <span class="token punctuation" >.</span><span class="token function" >controller<span class="token punctuation" >(</span></span> <span class="token string" >'user'</span><span class="token punctuation" >,</span> <span class="token keyword" >function</span><span class="token punctuation" >(</span> $scope <span class="token punctuation" >)</span><span class="token punctuation" >{</span>
+        $scope<span class="token punctuation" >.</span>name <span class="token operator" >=</span> <span class="token string" >'John Dee'</span><span class="token punctuation" >;</span>
+    <span class="token punctuation" >}</span><span class="token punctuation" >)</span>
+    <span class="token punctuation" >.</span><span class="token function" >controller<span class="token punctuation" >(</span></span> <span class="token string" >'userDetails'</span><span class="token punctuation" >,</span> <span class="token keyword" >function</span><span class="token punctuation" >(</span> $scope <span class="token punctuation" >)</span><span class="token punctuation" >{</span>
+        $scope<span class="token punctuation" >.</span>age <span class="token operator" >=</span> <span class="token number" >38</span><span class="token punctuation" >;</span>
+    <span class="token punctuation" >}</span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+</code></pre><p>Our aim is to lay them out side by side with a splitter in between them:</p><p><p data-height="268" data-theme-id="7376" data-slug-hash="c1b7d914ceb5504f2a2425f918b8511c" data-default-tab="result" class='codepen'>See the Pen <a href='http://codepen.io/wolframhempel/pen/c1b7d914ceb5504f2a2425f918b8511c/'>Angular Simple</a> by Wolfram Hempel (<a href='http://codepen.io/wolframhempel'>@wolframhempel</a>) on <a href='http://codepen.io'>CodePen</a>.</p></p><script async src="//codepen.io/assets/embed/ei.js"></script>
+
+<h3>Why can&#39;t I just add <code>ng-app</code> to the body tag?</h3><p>Angular looks for <code>ng-app</code> attributes and works its magic once the document is ready. However, so does GoldenLayout. So in order to make the two work together you have to follow these three steps:</p><ul>
+<li>Create a Layout with GoldenLayout</li>
+<li>Load your templates into GoldenLayout&#39;s containers</li>
+<li>Bootstrap Angular</li>
+</ul>
+<h3>Creating the layout</h3><p>This one should be fairly straight forward by now. If not, have a look at the <a href="getting-started.html">getting started tutorial</a>. Two container, side by side, without headers. 
+The only thing note-worthy is the <code>{ templateId: &#39;userNameTemplate&#39; }</code> bit. This will be used to tell our component which template to load.</p><pre><code>myLayout <span class="token operator" >=</span> <span class="token keyword" >new</span> <span class="token class-name" >GoldenLayout</span><span class="token punctuation" >(</span><span class="token punctuation" >{</span>
+    settings<span class="token punctuation" >:</span><span class="token punctuation" >{</span>
+        hasHeaders<span class="token punctuation" >:</span> <span class="token keyword" >false</span>
+    <span class="token punctuation" >}</span><span class="token punctuation" >,</span>
+    content<span class="token punctuation" >:</span><span class="token punctuation" >[</span><span class="token punctuation" >{</span>
+        type<span class="token punctuation" >:</span> <span class="token string" >'row'</span><span class="token punctuation" >,</span>
+        content<span class="token punctuation" >:</span> <span class="token punctuation" >[</span><span class="token punctuation" >{</span>
+            type<span class="token punctuation" >:</span> <span class="token string" >'component'</span><span class="token punctuation" >,</span>
+            componentName<span class="token punctuation" >:</span> <span class="token string" >'template'</span><span class="token punctuation" >,</span>
+            componentState<span class="token punctuation" >:</span> <span class="token punctuation" >{</span> templateId<span class="token punctuation" >:</span> <span class="token string" >'userNameTemplate'</span> <span class="token punctuation" >}</span>
+        <span class="token punctuation" >}</span><span class="token punctuation" >,</span><span class="token punctuation" >{</span>
+            type<span class="token punctuation" >:</span> <span class="token string" >'component'</span><span class="token punctuation" >,</span>
+            componentName<span class="token punctuation" >:</span> <span class="token string" >'template'</span><span class="token punctuation" >,</span>
+            componentState<span class="token punctuation" >:</span> <span class="token punctuation" >{</span> templateId<span class="token punctuation" >:</span> <span class="token string" >'userDetailTemplate'</span> <span class="token punctuation" >}</span>
+        <span class="token punctuation" >}</span><span class="token punctuation" >]</span>
+    <span class="token punctuation" >}</span><span class="token punctuation" >]</span>
+<span class="token punctuation" >}</span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+</code></pre><h3>Loading Templates</h3><p>For this example we&#39;ll store our html in <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template">template tags</a>. (Not supported in IE). This is only one of many ways to store and retrieve pieces of html. You could also use Angular&#39;s <code>$templateCache</code> or <code>ng-include</code> method, RequireJS&#39; text plugin, hidden divs, Ajax or a number of other approaches.</p><pre><code><span class="token operator" >&lt;</span>template type<span class="token operator" >=</span><span class="token string" >"text/html"</span> id<span class="token operator" >=</span><span class="token string" >"userNameTemplate"</span><span class="token operator" >></span>
+    <span class="token operator" >&lt;</span>div ng<span class="token operator" >-</span>controller<span class="token operator" >=</span><span class="token string" >"user"</span> <span class="token keyword" >class</span><span class="token operator" >=</span><span class="token string" >"section"</span><span class="token operator" >></span>
+        <span class="token operator" >&lt;</span>strong<span class="token operator" >></span>Username<span class="token operator" >&lt;</span><span class="token operator" >/</span>strong<span class="token operator" >></span> <span class="token punctuation" >{</span><span class="token punctuation" >{</span>name<span class="token punctuation" >}</span><span class="token punctuation" >}</span>
+    <span class="token operator" >&lt;</span><span class="token operator" >/</span>div<span class="token operator" >></span>
+<span class="token operator" >&lt;</span><span class="token operator" >/</span>template<span class="token operator" >></span>
+
+<span class="token operator" >&lt;</span>template type<span class="token operator" >=</span><span class="token string" >"text/html"</span> id<span class="token operator" >=</span><span class="token string" >"userDetailTemplate"</span><span class="token operator" >></span>
+    <span class="token operator" >&lt;</span>div ng<span class="token operator" >-</span>controller<span class="token operator" >=</span><span class="token string" >"userDetails"</span> <span class="token keyword" >class</span><span class="token operator" >=</span><span class="token string" >"section"</span><span class="token operator" >></span>
+        <span class="token operator" >&lt;</span>strong<span class="token operator" >></span>Age<span class="token operator" >&lt;</span><span class="token operator" >/</span>strong<span class="token operator" >></span> <span class="token punctuation" >{</span><span class="token punctuation" >{</span>age<span class="token punctuation" >}</span><span class="token punctuation" >}</span>
+    <span class="token operator" >&lt;</span><span class="token operator" >/</span>div<span class="token operator" >></span>
+<span class="token operator" >&lt;</span><span class="token operator" >/</span>template<span class="token operator" >></span>
+</code></pre><p>Our component will retrieve the template&#39;s html and inject it into the container.</p><pre><code>myLayout<span class="token punctuation" >.</span><span class="token function" >registerComponent<span class="token punctuation" >(</span></span> <span class="token string" >'template'</span><span class="token punctuation" >,</span> <span class="token keyword" >function</span><span class="token punctuation" >(</span> container<span class="token punctuation" >,</span> state <span class="token punctuation" >)</span><span class="token punctuation" >{</span>
+    <span class="token keyword" >var</span> templateHtml <span class="token operator" >=</span> $<span class="token punctuation" >(</span> <span class="token string" >'#'</span> <span class="token operator" >+</span> state<span class="token punctuation" >.</span>templateId <span class="token punctuation" >)</span><span class="token punctuation" >.</span><span class="token function" >html<span class="token punctuation" >(</span></span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+    container<span class="token punctuation" >.</span><span class="token function" >getElement<span class="token punctuation" >(</span></span><span class="token punctuation" >)</span><span class="token punctuation" >.</span><span class="token function" >html<span class="token punctuation" >(</span></span> templateHtml <span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+<span class="token punctuation" >}</span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+</code></pre><h3>Bootstrapping our App</h3><p>All that&#39;s left now is to create our layout and, once it&#39;s initialised, bootstrap Angular.</p><pre><code>myLayout<span class="token punctuation" >.</span><span class="token function" >on<span class="token punctuation" >(</span></span> <span class="token string" >'initialised'</span><span class="token punctuation" >,</span> <span class="token keyword" >function</span><span class="token punctuation" >(</span><span class="token punctuation" >)</span><span class="token punctuation" >{</span>
+    angular<span class="token punctuation" >.</span><span class="token function" >bootstrap<span class="token punctuation" >(</span></span> document<span class="token punctuation" >.</span>body<span class="token punctuation" >,</span> <span class="token punctuation" >[</span> <span class="token string" >'userModule'</span> <span class="token punctuation" >]</span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+<span class="token punctuation" >}</span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+
+myLayout<span class="token punctuation" >.</span><span class="token function" >init<span class="token punctuation" >(</span></span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+</code></pre>
+				
+				<h3>Comments and Questions</h3>
+				<div id="disqusContainer">
+					<div id="disqus_thread"></div>
+				    <script type="text/javascript">
+				        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+				        var disqus_shortname = 'goldenlayoutcom'; // required: replace example with your forum shortname
+
+				        /* * * DON'T EDIT BELOW THIS LINE * * */
+				        (function() {
+				            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+				            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+				            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+				        })();
+				    </script>
+				    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+				    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+			    
+					
+					
+				</div>
+			</div>
+		</div>
+		<script type="text/javascript" src="../assets/js/docs.js"></script>
+		
+		<div id="footerPush"></div>
+	</div>
+	<div id="footer">
+		<div class="copyright">&copy;2014 Hoxton One Ltd. All rights reserved.</div>
+		<ul class="footerItems">
+			<li class="news">
+				<h4>GoldenLayout on...</h4>
+				<ul class="social">
+					<li class="twitter">
+						<a href="https://twitter.com/goldenlayout">Twitter</a>
+					</li>
+					<li class="github">
+						<a href="https://github.com/hoxton-one/golden-layout">Github</a>
+					</li>
+					<li class="bower">
+						<a href="http://bower.io/search/?q=golden-layout">Bower: golden-layout</a>
+					</li>
+				</ul>
+			</li>
+
+			<li class="contact">
+				<h4>Contact</h4>
+				<p>
+					Like to learn more?
+					<a href="mailto:info@golden-layout.com">info@golden-layout.com</a>
+				</p>
+				<p>
+					Support for licensees
+					<a href="mailto:support@golden-layout.com">support@golden-layout.com</a>
+				</p>
+				<p>
+					For technical questions please also check the comment section at the bottom of docs and tutorials
+				</p>
+			</li>
+
+			<li class="footerItem about">
+				<h4>About</h4>
+				<p>
+					GoldenLayout is developed by <b>Hoxton One Ltd.</b>, a small Company based in London's dodgy, yet glorious East.
+				</p>
+				<p>
+					<b>Registered Offices</b>:
+					Suite 7,
+					KD Tower,
+					Cotterells,
+					Hemel Hempstead,
+					Herts,
+					HP1 1FW
+				</p>
+				<p>Registered in England and Wales, Company Nr 09121068</p>
+				
+			</li>
+		</ul>
+	</div>
+
+	<script type="text/javascript" src="../assets/js/Modal.js"></script>
+	
+		
+	
+</body>
+</html>

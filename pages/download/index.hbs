@@ -1,0 +1,94 @@
+<div id="downloads">
+	<div class="column left">
+		<h2>Latest Version</h2>
+		<a href="../files/latest/GoldenLayout.zip" class="latest">
+			<div>Download GoldenLayout.zip</div>
+			<small>V {{latest.tag}} ({{latest.date}})</small>
+		</a>
+		<h2 class="second">Bower / NPM</h2>
+		<div class="bower">
+			<pre>"golden-layout": "{{latest.tag}}"</pre>
+		</div>
+
+		<h2>Individual Files</h2>
+		<div class="individual_files">
+			<div>JS</div>
+			<a href="../files/latest/js/goldenlayout.js">goldenlayout.js</a>
+			<a href="../files/latest/js/goldenlayout.min.js">goldenlayout.min.js</a>
+			<div>BASE CSS</div>
+			<a href="../files/latest/css/goldenlayout-base.css">goldenlayout-base.css</a>
+			<div>THEMES</div>
+			<a href="../files/latest/css/goldenlayout-dark-theme.css">goldenlayout-dark-theme.css</a>
+			<a href="../files/latest/css/goldenlayout-light-theme.css">goldenlayout-light-theme.css</a>
+			{{!--<a href="../files/latest/css/goldenlayout-soda-theme.css">goldenlayout-soda-theme.css</a>
+			<a href="../files/latest/css/goldenlayout-translucent-theme.css">goldenlayout-translucent-theme.css</a>--}}
+			<div>LICENSE</div>
+			<a href="../files/latest/LICENSE-CC-NC-4.0.md">CC Non Commercial use license</a>
+			<a href="../files/latest/LICENSE-GPL-3.0.md">GNU General Public License 3.0</a>
+		</div>
+	</div>
+	<div class="column right">
+		<h2>Previous Versions</h2>
+
+		<div class="previous">
+			GoldenLayout V&nbsp;&nbsp;<select>
+				{{#each versions}}
+				<option value="{{tag}}">
+					{{tag}} ({{date}})
+				</option>
+				{{/each}}
+			</select>
+
+			<script type="text/javascript">
+			$('select').change(function(){
+				document.location.href = '../files/v' + $(this).val() + '/GoldenLayout.zip';
+			});
+			</script>
+		</div>
+
+		<h2>Change log</h2>
+		<div class="changeLog">
+		<strong>Version 1.0.10</strong>
+		<ul>
+			<li>Fixed hidden panel bug when using nested stacks</li>
+		</ul>
+		<strong>Version 1.0.9</strong>
+		<ul>
+			<li>Support for <a href="http://jspm.io/">JSPM</a></li>
+		</ul>
+		<strong>Version 1.0.8</strong>
+		<ul>
+			<li>Added isClosable check for rows and columns</li>
+		</ul>
+		<strong>Version 1.0.7</strong>
+		<ul>
+			<li>Fixed check for maximised window {{issue 31}}</li>
+			<li>Fixed set size for rows {{issue 37}}</li>
+			<li>Added support for JSPM {{issue 35}}</li>
+		</ul>
+		<strong>Version 1.0.6</strong>
+		<ul>
+			<li>Configuration for new windows is now passed through localStorage rather than URL parameter {{issue 23}}</li>
+			<li>{{issue 23}} also closes the XSS attack vector created by passing config through the url which fixes {{issue 28}}</li>
+			<li>Allow empty dashboards {{issue 24}}</li>
+			<li>Fixed resizing bug for maximised components {{issue 25}}</li>
+			<li>Added strip-tags for title in popout windows. Also removed XSS filtering since configuration is now safely passed through localStorage (see {{issue 23}}). {{issue 18}}</li>
+		</ul>
+		<strong>Version 1.0.5</strong>
+		<ul>
+			<li>Added basic touch event support {{issue 4}}</li>
+			<li>Fixed state change on DragProxy bug {{issue 15}}</li>
+			<li>Added support for reorderEnabled attribute on an item level {{issue 13}}</li>
+		</ul>
+		<strong>Version 1.0.4</strong>
+		<ul>
+			<li>Full support for HTML in title attributes / tabs {{issue 6}}</li>
+			<li>Middle mouse button now closes tab {{issue 7}}</li>
+			<li>layout emits 'tabCreated' event for every tab {{issue 6}}</li>
+			<li>Added support for empty stacks {{issue 5}}</li>
+			<li>'isClosable: false' now prevents item from being destroyed if it is the only child of its parent {{issue 5}}</li>
+		</ul>
+		</div>
+	</div>
+	
+</div>

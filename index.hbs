@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>GOLDEN LAYOUT - the ultimate javascript layout manager</title>
+	
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<meta name="keywords" content="HTML5, JavaScript, Layout Manager, webapp" />
+	<meta name="description" content="GOLDEN LAYOUT - the ultimate javascript layout manager" />
+	<meta name="author" content="Wolfram Hempel" />
+	<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+	<link rel="icon" href="/favicon.ico" type="image/x-icon">
+	<link rel="stylesheet" type="text/css" href="{{link 'asset' 'css/screen.css'}}" />
+	{{#if isDocs}}
+	<link rel="stylesheet" type="text/css" href="{{link 'asset' 'css/api.css'}}" />
+	<link rel="stylesheet" type="text/css" href="{{link 'asset' 'css/syntaxhighlighter.css'}}" />
+	{{/if}}
+	<script type="text/javascript">
+	document.createElement( 'header' );
+	document.createElement( 'nav' );
+	</script>
+	<script type="text/javascript" src="{{link 'asset' 'js/jquery.js'}}"></script>
+</head>
+<body class="category_{{category}}">
+	<div id="modal" class="loading">
+		<div class="background"></div>
+		<div class="content-wrapper">
+			<div class="head">
+				<div class="close"></div>
+				<span class="title"></span>
+			</div>
+			<div class="content"></div>
+		</div>
+	</div>
+	{{!--
+	<div id="development_warning">
+		<blink>In Development. Not yet released !!!</blink>
+	</div>--}}
+	<div id="outerWrapper">
+		<div class="topSection">
+			{{#if isNotStart}}
+			<div id="header" class="orangeGradient {{#if isNotStart}}micro{{/if}}">
+				<h1><a href="{{link 'page' ''}}">GoldenLayout the ultimate webapp layout manager</a></h1>
+				{{!-- <a class="download" href="{{link 'page' 'download'}}">download</a> --}}
+			</div>  
+			{{/if}}
+			<div id="nav" {{#if isNotStart}}class="standalone"{{/if}}>
+				{{#if isNotStart}}
+				<img src="{{link 'asset' 'images/background-abstract.jpg'}}" />
+				{{/if}}
+				<ul>
+					<li {{#if pageIs_start}}class="active"{{/if}}><a href="{{link 'page' ''}}">START</a></li>
+					<li {{#if pageIs_download}}class="active"{{/if}}><a href="{{link 'page' 'download'}}">DOWNLOAD</a></li>
+					<li {{#if pageIs_examples}}class="active"{{/if}}><a href="{{link 'page' 'examples'}}">EXAMPLES</a></li>
+					<li {{#if pageIs_tutorials}}class="active"{{/if}}><a href="{{link 'page' 'tutorials'}}">TUTORIALS</a></li>
+					<li {{#if pageIs_docs}}class="active"{{/if}}><a href="{{link 'page' 'docs'}}">DOCS</a></li>
+					<li {{#if pageIs_buy}}class="active"{{/if}}><a href="{{link 'page' 'buylicense'}}">BUY</a></li>
+				</ul>
+			</div>
+		</div>
+		{{#if hasNav}}
+		<div id="wrapper" class="main">
+			{{nav}}
+			<div id="content">
+				{{pageContent}}
+				
+				<h3>Comments and Questions</h3>
+				<div id="disqusContainer">
+					<div id="disqus_thread"></div>
+				    <script type="text/javascript">
+				        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+				        var disqus_shortname = 'goldenlayoutcom'; // required: replace example with your forum shortname
+
+				        /* * * DON'T EDIT BELOW THIS LINE * * */
+				        (function() {
+				            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+				            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+				            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+				        })();
+				    </script>
+				    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+				    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+			    
+					
+					{{!-- discuss --}}
+				</div>
+			</div>
+		</div>
+		<script type="text/javascript" src="{{link 'asset' 'js/docs.js'}}"></script>
+		{{else}}
+		<div class="content main">
+			{{pageContent}}
+		</div>
+		{{/if}}
+		<div id="footerPush"></div>
+	</div>
+	<div id="footer">
+		<div class="copyright">&copy;2014 Hoxton One Ltd. All rights reserved.</div>
+		<ul class="footerItems">
+			<li class="news">
+				<h4>GoldenLayout on...</h4>
+				<ul class="social">
+					<li class="twitter">
+						<a href="https://twitter.com/goldenlayout">Twitter</a>
+					</li>
+					<li class="github">
+						<a href="https://github.com/hoxton-one/golden-layout">Github</a>
+					</li>
+					<li class="bower">
+						<a href="http://bower.io/search/?q=golden-layout">Bower: golden-layout</a>
+					</li>
+				</ul>
+			</li>
+
+			<li class="contact">
+				<h4>Contact</h4>
+				<p>
+					Like to learn more?
+					<a href="mailto:info@golden-layout.com">info@golden-layout.com</a>
+				</p>
+				<p>
+					Support for licensees
+					<a href="mailto:support@golden-layout.com">support@golden-layout.com</a>
+				</p>
+				<p>
+					For technical questions please also check the comment section at the bottom of docs and tutorials
+				</p>
+			</li>
+
+			<li class="footerItem about">
+				<h4>About</h4>
+				<p>
+					GoldenLayout is developed by <b>Hoxton One Ltd.</b>, a small Company based in London's dodgy, yet glorious East.
+				</p>
+				<p>
+					<b>Registered Offices</b>:
+					Suite 7,
+					KD Tower,
+					Cotterells,
+					Hemel Hempstead,
+					Herts,
+					HP1 1FW
+				</p>
+				<p>Registered in England and Wales, Company Nr 09121068</p>
+				{{!--<p>It's run by <a href="http://wolframhempel.com/">Wolfram Hempel</a></p>--}}
+			</li>
+		</ul>
+	</div>
+
+	<script type="text/javascript" src="{{link 'asset' 'js/Modal.js'}}"></script>
+	{{#if isDef}}
+		{{!--<script src="//localhost:5051/livereload.js"></script>--}}
+	{{else}}
+	<script>
+	  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+	  ga('create', 'UA-53022077-1', 'auto');
+	  ga('send', 'pageview');
+
+	</script>
+	{{/if}}
+</body>
+</html>

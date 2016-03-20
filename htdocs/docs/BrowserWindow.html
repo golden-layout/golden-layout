@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>GOLDEN LAYOUT - the ultimate javascript layout manager</title>
+	
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<meta name="keywords" content="HTML5, JavaScript, Layout Manager, webapp" />
+	<meta name="description" content="GOLDEN LAYOUT - the ultimate javascript layout manager" />
+	<meta name="author" content="Wolfram Hempel" />
+	<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+	<link rel="icon" href="/favicon.ico" type="image/x-icon">
+	<link rel="stylesheet" type="text/css" href="../assets/css/screen.css" />
+	
+	<link rel="stylesheet" type="text/css" href="../assets/css/api.css" />
+	<link rel="stylesheet" type="text/css" href="../assets/css/syntaxhighlighter.css" />
+	
+	<script type="text/javascript">
+	document.createElement( 'header' );
+	document.createElement( 'nav' );
+	</script>
+	<script type="text/javascript" src="../assets/js/jquery.js"></script>
+</head>
+<body class="category_docs">
+	<div id="modal" class="loading">
+		<div class="background"></div>
+		<div class="content-wrapper">
+			<div class="head">
+				<div class="close"></div>
+				<span class="title"></span>
+			</div>
+			<div class="content"></div>
+		</div>
+	</div>
+	
+	<div id="outerWrapper">
+		<div class="topSection">
+			
+			<div id="header" class="orangeGradient micro">
+				<h1><a href="..">GoldenLayout the ultimate webapp layout manager</a></h1>
+				
+			</div>  
+			
+			<div id="nav" class="standalone">
+				
+				<img src="../assets/images/background-abstract.jpg" />
+				
+				<ul>
+					<li ><a href="..">START</a></li>
+					<li ><a href="../download">DOWNLOAD</a></li>
+					<li ><a href="../examples">EXAMPLES</a></li>
+					<li ><a href="../tutorials">TUTORIALS</a></li>
+					<li class="active"><a href="../docs">DOCS</a></li>
+					<li ><a href="../buylicense">BUY</a></li>
+				</ul>
+			</div>
+		</div>
+		
+		<div id="wrapper" class="main">
+			<ul id="subnav">
+	<li class="head first">Configuration</li>
+	<li >
+		<a href="Config.html">Layout Config</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+	</li>
+	<li >
+		<a href="ItemConfig.html">Item Config</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+	</li>
+
+	<li class="head">API</li>
+	<li >
+		<a href="GoldenLayout.html">GoldenLayout</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+		
+	</li>
+	<li >
+		<a href="Item.html">ContentItem</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+		
+	</li>
+	<li >
+		<a href="Container.html">Container</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+		
+	</li>
+	<li class="active">
+		<a href="BrowserWindow.html">BrowserWindow</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+		
+			<ul class="overview">
+				
+				<li><a href="#Properties">Properties</a></li>
+				
+				<li><a href="#Events">Events</a></li>
+				
+				<li><a href="#toConfig()">toConfig()</a></li>
+				
+				<li><a href="#getGlInstance()">getGlInstance()</a></li>
+				
+				<li><a href="#getWindow()">getWindow()</a></li>
+				
+				<li><a href="#close()">close()</a></li>
+				
+				<li><a href="#popIn()">popIn()</a></li>
+				
+			</ul>
+		
+	</li>
+	<li >
+		<a href="Header.html">Header</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+		
+	</li>
+	<li >
+		<a href="Tab.html">Tab</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+		
+	</li>
+	<li >
+		<a href="EventEmitter.html">EventEmitter</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+		
+	</li>
+</ul>
+			<div id="content">
+				<div class="section"><h2><a name="Properties">Properties</a></h2><h3>isInitialised</h3><p>True if the window has been opened and its GoldenLayout instance initialised.</p></div><div class="section"><h2><a name="Events">Events</a></h2><h3>initialised</h3><p>Emitted when the window has been opened and its GoldenLayout instance initialised</p><h3>closed</h3><p>Emitted when the window has been closed</p></div><div class="section"><h2><a name="toConfig()">toConfig()</a></h2><p>Creates a window configuration object from the Popout. Window configurations look like this:</p><pre><code><span class="token punctuation" >{</span>
+    <span class="token string" >"dimensions"</span><span class="token punctuation" >:</span> <span class="token punctuation" >{</span>
+        <span class="token string" >"width"</span><span class="token punctuation" >:</span> <span class="token number" >1532</span><span class="token punctuation" >,</span>
+        <span class="token string" >"height"</span><span class="token punctuation" >:</span> <span class="token number" >100</span><span class="token punctuation" >,</span>
+        <span class="token string" >"left"</span><span class="token punctuation" >:</span> <span class="token number" >0</span><span class="token punctuation" >,</span>
+        <span class="token string" >"top"</span><span class="token punctuation" >:</span> <span class="token number" >129</span>
+    <span class="token punctuation" >}</span><span class="token punctuation" >,</span>
+    <span class="token string" >"content"</span><span class="token punctuation" >:</span> <span class="token punctuation" >[</span><span class="token comment" spellcheck="true">/* your usual content config */</span><span class="token punctuation" >]</span><span class="token punctuation" >,</span>
+    <span class="token string" >"parentId"</span><span class="token punctuation" >:</span> <span class="token string" >"4ef2ubr28tor"</span><span class="token punctuation" >,</span>
+    <span class="token string" >"indexInParent"</span><span class="token punctuation" >:</span> <span class="token number" >1</span>
+<span class="token punctuation" >}</span>
+</code></pre></div><div class="section"><h2><a name="getGlInstance()">getGlInstance()</a></h2><p>Returns the GoldenLayout instance from the child window</p></div><div class="section"><h2><a name="getWindow()">getWindow()</a></h2><p>Returns the native Window object</p></div><div class="section"><h2><a name="close()">close()</a></h2><p>Closes the popout</p></div><div class="section"><h2><a name="popIn()">popIn()</a></h2><p>Returns the popout to its original position as specified in <code>parentId</code> and <code>indexInParent</code></p><p></div></p>
+				
+				<h3>Comments and Questions</h3>
+				<div id="disqusContainer">
+					<div id="disqus_thread"></div>
+				    <script type="text/javascript">
+				        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+				        var disqus_shortname = 'goldenlayoutcom'; // required: replace example with your forum shortname
+
+				        /* * * DON'T EDIT BELOW THIS LINE * * */
+				        (function() {
+				            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+				            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+				            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+				        })();
+				    </script>
+				    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+				    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+			    
+					
+					
+				</div>
+			</div>
+		</div>
+		<script type="text/javascript" src="../assets/js/docs.js"></script>
+		
+		<div id="footerPush"></div>
+	</div>
+	<div id="footer">
+		<div class="copyright">&copy;2014 Hoxton One Ltd. All rights reserved.</div>
+		<ul class="footerItems">
+			<li class="news">
+				<h4>GoldenLayout on...</h4>
+				<ul class="social">
+					<li class="twitter">
+						<a href="https://twitter.com/goldenlayout">Twitter</a>
+					</li>
+					<li class="github">
+						<a href="https://github.com/hoxton-one/golden-layout">Github</a>
+					</li>
+					<li class="bower">
+						<a href="http://bower.io/search/?q=golden-layout">Bower: golden-layout</a>
+					</li>
+				</ul>
+			</li>
+
+			<li class="contact">
+				<h4>Contact</h4>
+				<p>
+					Like to learn more?
+					<a href="mailto:info@golden-layout.com">info@golden-layout.com</a>
+				</p>
+				<p>
+					Support for licensees
+					<a href="mailto:support@golden-layout.com">support@golden-layout.com</a>
+				</p>
+				<p>
+					For technical questions please also check the comment section at the bottom of docs and tutorials
+				</p>
+			</li>
+
+			<li class="footerItem about">
+				<h4>About</h4>
+				<p>
+					GoldenLayout is developed by <b>Hoxton One Ltd.</b>, a small Company based in London's dodgy, yet glorious East.
+				</p>
+				<p>
+					<b>Registered Offices</b>:
+					Suite 7,
+					KD Tower,
+					Cotterells,
+					Hemel Hempstead,
+					Herts,
+					HP1 1FW
+				</p>
+				<p>Registered in England and Wales, Company Nr 09121068</p>
+				
+			</li>
+		</ul>
+	</div>
+
+	<script type="text/javascript" src="../assets/js/Modal.js"></script>
+	
+		
+	
+</body>
+</html>
