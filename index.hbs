@@ -10,6 +10,7 @@
 	<meta name="author" content="Wolfram Hempel" />
 	<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
 	<link rel="icon" href="/favicon.ico" type="image/x-icon">
+	<link href='https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700' rel='stylesheet' type='text/css'>
 	<link rel="stylesheet" type="text/css" href="{{link 'asset' 'css/screen.css'}}" />
 	{{#if isDocs}}
 	<link rel="stylesheet" type="text/css" href="{{link 'asset' 'css/api.css'}}" />
@@ -37,26 +38,21 @@
 		<blink>In Development. Not yet released !!!</blink>
 	</div>--}}
 	<div id="outerWrapper">
-		<div class="topSection">
-			{{#if isNotStart}}
-			<div id="header" class="orangeGradient {{#if isNotStart}}micro{{/if}}">
-				<h1><a href="{{link 'page' ''}}">GoldenLayout the ultimate webapp layout manager</a></h1>
-				{{!-- <a class="download" href="{{link 'page' 'download'}}">download</a> --}}
-			</div>  
-			{{/if}}
-			<div id="nav" {{#if isNotStart}}class="standalone"{{/if}}>
-				{{#if isNotStart}}
-				<img src="{{link 'asset' 'images/background-abstract.jpg'}}" />
-				{{/if}}
-				<ul>
-					<li {{#if pageIs_start}}class="active"{{/if}}><a href="{{link 'page' ''}}">START</a></li>
-					<li {{#if pageIs_download}}class="active"{{/if}}><a href="{{link 'page' 'download'}}">DOWNLOAD</a></li>
-					<li {{#if pageIs_examples}}class="active"{{/if}}><a href="{{link 'page' 'examples'}}">EXAMPLES</a></li>
-					<li {{#if pageIs_tutorials}}class="active"{{/if}}><a href="{{link 'page' 'tutorials'}}">TUTORIALS</a></li>
-					<li {{#if pageIs_docs}}class="active"{{/if}}><a href="{{link 'page' 'docs'}}">DOCS</a></li>
-					<li {{#if pageIs_buy}}class="active"{{/if}}><a href="{{link 'page' 'buylicense'}}">BUY</a></li>
-				</ul>
-			</div>
+		{{#if isNotStart}}
+		<div id="header" class="orangeGradient {{#if isNotStart}}micro{{/if}}">
+			<h1><a href="{{link 'page' ''}}">GoldenLayout the ultimate webapp layout manager</a></h1>
+			{{!-- <a class="download" href="{{link 'page' 'download'}}">download</a> --}}
+		</div>  
+		{{/if}}
+		<div id="nav" {{#if isNotStart}}class="standalone"{{/if}}>
+			<div class="start-bg"></div>
+			<ul>
+				<li {{#if pageIs_start}}class="active"{{/if}}><a href="{{link 'page' ''}}">Start</a></li>
+				<li {{#if pageIs_download}}class="active"{{/if}}><a href="{{link 'page' 'download'}}">Download</a></li>
+				<li {{#if pageIs_examples}}class="active"{{/if}}><a href="{{link 'page' 'examples'}}">Demos</a></li>
+				<li {{#if pageIs_tutorials}}class="active"{{/if}}><a href="{{link 'page' 'tutorials'}}">Tutorials</a></li>
+				<li {{#if pageIs_docs}}class="active"{{/if}}><a href="{{link 'page' 'docs'}}">Docs</a></li>
+			</ul>
 		</div>
 		{{#if hasNav}}
 		<div id="wrapper" class="main">

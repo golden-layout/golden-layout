@@ -198,3 +198,93 @@ classes should alter those!
 .ui-widget ::-webkit-scrollbar-thumb:window-inactive {
     background: #111; 
 }
+
+.fibonacci-spiral{
+  position: relative;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-image: url(../images/fibonacci-spiral.svg);
+}
+
+.gl-text{
+  position: relative;
+}
+
+.gl-text > div{
+    margin: 0 auto;
+}
+.gl-text h1,
+.gl-text h3{
+  color: #fff;
+  font-family: 'Roboto', sans-serif;
+}
+
+.gl-text h1{
+  font-weight: 100;
+  margin: 35px 0 0 30px;
+  font-size: 40px;
+}
+
+.gl-text h3{
+  font-weight: 100;
+  margin: 10px 0 0 30px;
+  font-size: 20px;
+  color: #ccc;
+}
+
+body .lm_tab.lm_active{
+  color: #aaa;
+}
+
+body .lm_header .lm_tab.lm_active .lm_close_tab{
+  opacity: 0.7;
+  filter: alpha(opacity=70);
+}
+
+
+#getting-started{
+  padding: 40px 0;
+  overflow: hidden;
+  position: relative;
+  width: 1200px;
+  margin: 0 auto;
+}
+
+#getting-started li{
+  width: 28%;
+  height: 150px;
+  float: left;
+  background-color: rgba(255,255,255,0.1);
+}
+
+#getting-started li.center{
+  margin: 0 8%;
+}
+
+#used-by{
+  position: relative;
+  background: #fff;
+  box-shadow: 0 0 16px 0px rgba( 0, 0, 0, 0.4);
+}
+
+#used-by .center{
+  width: 1200px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+#used-by .center > *{
+  float: left;
+  width: 600px;
+  padding: 0;
+}
+
+#footer{
+  position: relative;
+}
+

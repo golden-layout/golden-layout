@@ -5,6 +5,7 @@
 	margin: 0;
 	padding: : 0;
 	list-style-type: none;
+	font-family: 'Roboto', sans-serif;
 }
 
 html, body{
@@ -65,24 +66,17 @@ html, body{
   	-o-animation:      blink 2s infinite; /* Opera 12+ */
   	animation:         blink 2s infinite; /* IE 10+, Fx 29+ */
 }
-/****************************
-* FONTS
-****************************/
-@font-face {
-	font-family: 'Kalinga';
-	src: url('../fonts/Kalinga.eot');
-	src: local('Kalinga'), url('../fonts/Kalinga.woff') format('woff'), url('../fonts/Kalinga.ttf') format('truetype');
-}
 
 /****************************
 * NAVIGATION
 ****************************/
 #nav{
-	position: relative;
-	height: 30px;
-	margin-bottom: -30px;
-	z-index: 1;
-	overflow: hidden;
+    height: 44px;
+    margin-bottom: -30px;
+    z-index: 1;
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
 }
 
 #nav img{
@@ -122,8 +116,8 @@ html, body{
 #nav a{
 	padding-top: 11px;
 	padding-right: 40px;
+	font-weight: 300;
 	display: block;
-	font: 16px "Courier New", monospace;
 	color: #fff;
 	text-decoration: none;
 }
@@ -283,6 +277,7 @@ html, body{
 .startExample{
 	position: relative;
 	height: 782px;
+	z-index: 1;
 }
 
 #startPageBackground{
@@ -330,8 +325,10 @@ html, body{
 #startPageFeatures{
 	overflow: hidden;
 	position: relative;
-	z-index: 2;
+	z-index: 0;
 	height: 405px;
+	background: #fff;
+	box-shadow: 0 0 16px 0px rgba( 0, 0, 0, 0.4);
 }
 
 #wrapper_960{
@@ -362,7 +359,6 @@ html, body{
 }
 
 #startPageFeatures li .bg{
-	background: #000;
 	opacity: 0.7;
 	filter:alpha(opacity=70);
 	width: 400px;
@@ -376,21 +372,35 @@ html, body{
 }
 
 #startPageFeatures li small{
-	font: 14px Kalinga, sans-serif;
-	color: #ef7d17;
+	font-size: 14px;
+	color: #666;
 	left: 160px;
 	top: 54px;
 	z-index: 1;
 }
 
 #startPageFeatures li strong{
-	font: 24px Kalinga, sans-serif;
-	color: #fff;
+	font-size: 24px;
+	color: #333;
 	left: 160px;
 	top: 71px;
 	z-index: 1;
+	font-weight: 300;
 }
 
+.start-bg{
+  position: fixed;
+  width: 100%;
+  left: 0;
+  top: 0;
+  background-size: cover;
+  background-image: url(../images/bg-startpage.png);
+  height: 1000px;
+}
+
+#nav .start-bg{
+	position: absolute;
+}
 /****************************
 * PAYMENT FORM
 ****************************/
