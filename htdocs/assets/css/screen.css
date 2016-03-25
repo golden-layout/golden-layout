@@ -199,78 +199,55 @@ html, body{
 * FOOTER
 ****************************/
 #footer{
-	height: 160px;
 	clear: left;
-	padding: 5px;
-	background: url(../images/bg_dark_pattern.png);
+	background: #222;
+	padding: 5px 0 15px;
 	border-top: 1px solid #000;
 	overflow: hidden;
 	box-shadow: inset 0 4px 24px rgba(0,0,0,0.7);
 }
 
 #footer *{
-	color: #CCC;
-	font: 11px/15px Arial, sans-serif;
+	color: #777;
+	font: 11px/15px Roboto, sans-serif;
 	margin: 0;
 	padding: 0;
 	list-style-type: none;
 }
 
-#footer b{
-	font-weight: bold;
-}
-
 #footer .copyright{
 	text-align: center;
-	font-size: 10px;
-	color: #AAA;
 	margin: 10px 0;
-}
-
-#footer h4{
-	font-size: 14px;
 	font-weight: bold;
-	color: #AAA;
-	margin-bottom: 10px;
-}
-#footer ul.footerItems{
-	width: 960px;
-	margin: 10px auto;
 }
 
-#footer ul.footerItems > li{
+#footer .footer-content{
+	width: 800px;
+	margin: 0 auto;
+}
+
+.footerItems{
+	overflow: hidden;
+}
+
+.footerItems li{
 	float: left;
-	width: 299px;
-	height: 100px;
-	padding: 0 10px;
-	border-right: 1px solid #AAA;
+	width: 33.32%;
 }
 
-#footer ul.footerItems > li p{
-	margin-bottom: 3px;
-}
-#footer ul.footerItems > li.about{
-	border: none;
-}
-
-#footer .social a{
+.footerItems li > *{
 	display: block;
-	padding: 5px 0 5px 25px;
-	background-position:left center;
-	background-repeat: no-repeat;
 }
 
-#footer .social .twitter a{
-	background-image: url( ../images/icon_small_twitter.png);
+.footerItems li:nth-child( 2 ) > *{
+	text-align: center;
 }
 
-#footer .social .github a{
-	background-image: url( ../images/icon_small_github.png);
+.footerItems li:nth-child( 3 ) > *{
+	text-align: right;
 }
 
-#footer .social .bower a{
-	background-image: url( ../images/icon_small_bower.png);
-}
+
 /****************************
 * EXAMPLE ON STARTPAGE
 ****************************/

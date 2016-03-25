@@ -215,56 +215,28 @@ componentState<span class="token punctuation" >:</span> <span class="token punct
 		<div id="footerPush"></div>
 	</div>
 	<div id="footer">
-		<div class="copyright">&copy;2014 Hoxton One Ltd. All rights reserved.</div>
-		<ul class="footerItems">
-			<li class="news">
-				<h4>GoldenLayout on...</h4>
-				<ul class="social">
-					<li class="twitter">
-						<a href="https://twitter.com/goldenlayout">Twitter</a>
-					</li>
-					<li class="github">
-						<a href="https://github.com/hoxton-one/golden-layout">Github</a>
-					</li>
-					<li class="bower">
-						<a href="http://bower.io/search/?q=golden-layout">Bower: golden-layout</a>
-					</li>
-				</ul>
-			</li>
-
-			<li class="contact">
-				<h4>Contact</h4>
-				<p>
-					Like to learn more?
-					<a href="mailto:info@golden-layout.com">info@golden-layout.com</a>
-				</p>
-				<p>
-					Support for licensees
-					<a href="mailto:support@golden-layout.com">support@golden-layout.com</a>
-				</p>
-				<p>
-					For technical questions please also check the comment section at the bottom of docs and tutorials
-				</p>
-			</li>
-
-			<li class="footerItem about">
-				<h4>About</h4>
-				<p>
-					GoldenLayout is developed by <b>Hoxton One Ltd.</b>, a small Company based in London's dodgy, yet glorious East.
-				</p>
-				<p>
-					<b>Registered Offices</b>:
-					Suite 7,
-					KD Tower,
-					Cotterells,
-					Hemel Hempstead,
-					Herts,
-					HP1 1FW
-				</p>
-				<p>Registered in England and Wales, Company Nr 09121068</p>
-				
-			</li>
-		</ul>
+		<div class="footer-content">
+			<div class="copyright">&copy;<span class="year"></span> deepstreamHub GmbH i. Gr.</div>
+			<script type="text/javascript">
+			$('.year').html( (new Date()).getFullYear() );
+			</script>
+			<ul class="footerItems">
+				<li>
+					<a href="https://github.com/deepstreamIO/golden-layout">Github</a>
+					<a href="https://www.npmjs.com/package/golden-layout">NPM</a>
+					<div>bower/npm: <code>'golden-layout'</code></div>
+				</li>
+				<li>
+					<div>deepstreamHub GmbH i. Gr.</div>
+					<div>Lindenstrasse 20-25</div>
+					<div>10969 Berlin</div>
+				</li>
+				<li>
+					<a href="mailto:info@deepstreamhub.com">info@deepstreamhub.com</a>
+					<a href="https://deepstreamhub.com/">deepstreamHub.com</a>
+				</li>
+			</ul>
+		</div>
 	</div>
 
 	<script type="text/javascript" src="../assets/js/Modal.js"></script>

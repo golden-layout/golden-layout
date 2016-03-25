@@ -46,28 +46,39 @@
 	</ul>
 </div>
 
-<ul id="getting-started">
-	<li class="">Getting started with JS</li>
-	<li class="center">Getting started with React</li>
-	<li class="">Getting started with Angular</li>
-</ul>
+<div id="getting-started">
+	<a href="tutorials/getting-started.html" class="js">
+		<div></div>
+		<p>get started with <b>Vanilla JS</b></p>
+	</a>
+	<a href="tutorials/getting-started-react.html" class="center react">
+		<div></div>
+		<p>get started with <b>React</b></p>
+	</a>
+	<a href="tutorials/getting-started-angular.html" class="angular">
+		<div></div>
+		<p>get started with <b>Angular</b></p>
+	</a>
+</div>
 
 <div id="used-by">
 	<div class="center">
-		<ul>
-			<li>NASA</li>
-			<li>Bank of America</li>
-			<li>ICAP</li>
-			<li>JP Morgan</li>
-			<li>impossible.io</li>
-			<li>BNY Mellon</li>
-			<li>Tradovate</li>
-			<li>Fidelity</li>
-			<li>Domain Tools</li>
-		</ul>
-		<iframe src="https://player.vimeo.com/video/143728632?title=0&byline=0&portrait=0" width="600" height="337" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+		<div class="col left">
+			<h4>used by</h4>
+			<img src="assets/images/used-by-logos.png" alt="used-by" width="600" height="337" />
+		</div>
+		<div class="col right">
+			<h4>built with GoldenLayout</h4>
+			<div class="video"></div>
+		</div>
 	</div>
 </div>
+
+<script type="text/javascript">
+	$('#used-by .video' ).click(function(){
+		$(this).html('<iframe src="https://player.vimeo.com/video/143728632?autoplay=1&title=0&byline=0&portrait=0" width="514" height="331" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>');
+	});
+</script>
 
 <link rel="stylesheet" type="text/css" href="{{link 'asset' 'css/startpage.css'}}" />
 <link type="text/css" rel="stylesheet" href="{{link 'asset' 'css/goldenlayout-base.css'}}" />
