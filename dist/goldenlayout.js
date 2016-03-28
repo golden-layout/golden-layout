@@ -1573,6 +1573,16 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 	}
 });
 
+lm.errors.ConfigurationError = function( message, node ) {
+	Error.call( this );
+
+	this.name = 'Configuration Error';
+	this.message = message;
+	this.node = node;
+};
+
+lm.errors.ConfigurationError.prototype = new Error();
+
 /**
  * Pops a content item out into a new browser window.
  * This is achieved by
@@ -2349,9 +2359,8 @@ lm.controls.HeaderButton = function( header, label, cssClass, action ) {
 };
 
 lm.utils.copy( lm.controls.HeaderButton.prototype, {
-	
 	_$destroy: function() {
-		this.element.off( this._action );
+		this.element.off();
 		this.element.remove();
 	}
 });
@@ -2607,16 +2616,6 @@ lm.utils.copy( lm.controls.TransitionIndicator.prototype, {
 		};
 	}
 });
-lm.errors.ConfigurationError = function( message, node ) {
-	Error.call( this );
-
-	this.name = 'Configuration Error';
-	this.message = message;
-	this.node = node;
-};
-
-lm.errors.ConfigurationError.prototype = new Error();
-
 
 /**
  * This is the baseclass that all content items inherit from.

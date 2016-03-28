@@ -8,9 +8,8 @@ lm.controls.HeaderButton = function( header, label, cssClass, action ) {
 };
 
 lm.utils.copy( lm.controls.HeaderButton.prototype, {
-	
 	_$destroy: function() {
-		this.element.off( this._action );
+		this.element.off();
 		this.element.remove();
 	}
 });
