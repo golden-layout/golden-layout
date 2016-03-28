@@ -1,4 +1,4 @@
-(function($){var lm={"config":{},"container":{},"controls":{},"errors":{},"items":{},"utils":{}};
+(function($){var lm={"config":{},"container":{},"errors":{},"controls":{},"items":{},"utils":{}};
 
 lm.utils.F = function () {};
 	
@@ -444,7 +444,7 @@ lm.LayoutManager = function( config, container ) {
 	this.isInitialised = false;
 	this._isFullPage = false;
 	this._resizeTimeoutId = null;
-	this._components = {};
+	this._components = { 'lm-react-component': lm.utils.ReactComponentHandler };
 	this._itemAreas = [];
 	this._resizeFunction = lm.utils.fnBind( this._onResize, this );
 	this._maximisedItem = null;
@@ -464,7 +464,7 @@ lm.LayoutManager = function( config, container ) {
 	this.dropTargetIndicator = null;
 	this.transitionIndicator = null;
 	this.tabDropPlaceholder = $( '<div class="lm_drop_tab_placeholder"></div>' );
-	
+
 	if( this.isSubWindow === true ) {
 		$( 'body' ).css( 'visibility', 'hidden' );
 	}
@@ -514,7 +514,7 @@ lm.LayoutManager.unminifyConfig = function( config ) {
 };
 
 lm.utils.copy( lm.LayoutManager.prototype, {
-	
+
 	/**
 	 * Register a component with the layout manager. If a configuration node
 	 * of type component is reached it will look up componentName and create the
@@ -576,7 +576,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		config.content = [];
 		next = function( configNode, item ) {
 			var key, i;
-			
+
 			for( key in item.config ) {
 				if( key !== 'content' ) {
 					configNode[ key ] = item.config[ key ];
@@ -585,7 +585,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 
 			if( item.contentItems.length ) {
 				configNode.content = [];
-				
+
 				for( i = 0; i < item.contentItems.length; i++ ) {
 					configNode.content[ i ] = {};
 					next( configNode.content[ i ], item.contentItems[ i ] );
@@ -640,7 +640,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	 * to the document.ready event
 	 *
 	 * @public
-	 * 
+	 *
 	 * @returns {void}
 	 */
 	init: function() {
@@ -654,7 +654,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 			this._createSubWindows();
 			this._subWindowsCreated = true;
 		}
-		
+
 
 		/**
 		 * If the document isn't ready yet, wait for it.
@@ -740,7 +740,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 
 	/**
 	 * Recoursively creates new item tree structures based on a provided
-	 * ItemConfiguration object 
+	 * ItemConfiguration object
 	 *
 	 * @public
 	 * @param   {Object} config ItemConfig
@@ -766,12 +766,12 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		/**
 		 * We add an additional stack around every component that's not within a stack anyways
 		 */
-		if( 
+		if(
 			// If this is a component
 			config.type === 'component' &&
 
 			// and it's not already within a stack
-			!( parent instanceof lm.items.Stack ) && 
+			!( parent instanceof lm.items.Stack ) &&
 
 			// and we have a parent
 			!!parent &&
@@ -797,10 +797,10 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	 *
 	 * @param   {Object|lm.itemsAbstractContentItem} configOrContentItem
 	 * @param   {[Object]} dimensions A map with width, height, left and top
-	 * @param 	{[String]} parentId the id of the element this item will be appended to 
+	 * @param 	{[String]} parentId the id of the element this item will be appended to
 	 *                             when popIn is called
 	 * @param 	{[Number]} indexInParent The position of this item within its parent element
-	 
+
 	 * @returns {lm.controls.BrowserPopout}
 	 */
 	createPopout: function( configOrContentItem, dimensions, parentId, indexInParent ) {
@@ -819,7 +819,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		if( isItem ) {
 			config = this.toConfig( configOrContentItem ).content;
 			parentId = lm.utils.getUniqueId();
-			
+
 			/**
 			 * If the item is the only component within a stack or for some
 			 * other reason the only child of its parent the parent will be destroyed
@@ -845,7 +845,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 			}
 		}
 
-		
+
 
 		if( !dimensions && isItem ) {
 			windowLeft = window.screenX || window.screenLeft;
@@ -859,7 +859,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 				height: configOrContentItem.element.height()
 			};
 		}
-		
+
 		if( !dimensions && !isItem ) {
 			dimensions = {
 				left: window.screenX || window.screenLeft + 20,
@@ -874,7 +874,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		}
 
 		browserPopout = new lm.controls.BrowserPopout( config, dimensions, parentId, indexInParent, this );
-		
+
 		browserPopout.on( 'initialised', function(){
 			self.emit( 'windowOpened', browserPopout );
 		});
@@ -1025,7 +1025,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		}
 
 		for( i = 0; i < allContentItems.length; i++ ) {
-			
+
 			if( !( allContentItems[ i ].isStack ) ) {
 				continue;
 			}
@@ -1047,7 +1047,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	 * item and returns an initialised instance of the contentItem
 	 *
 	 * @packagePrivate
-	 * 
+	 *
 	 * @param   {lm.items.AbtractContentItem|Object} contentItemOrConfig
 	 * @param   {lm.items.AbtractContentItem} parent Only necessary when passing in config
 	 *
@@ -1077,7 +1077,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	 * listening for window.close / unload events in a cross browser compatible fashion.
 	 *
 	 * @packagePrivate
-	 * 
+	 *
 	 * @returns {void}
 	 */
 	_$reconcilePopoutWindows: function() {
@@ -1095,7 +1095,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 			this.emit( 'stateChanged' );
 			this.openPopouts = openPopouts;
 		}
-		
+
 	},
 
 	/***************************
@@ -1144,7 +1144,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	 * Debounces resize events
 	 *
 	 * @private
-	 * 
+	 *
 	 * @returns {void}
 	 */
 	_onResize: function() {
@@ -1163,7 +1163,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	 */
 	_createConfig: function( config ) {
 		var windowConfigKey = lm.utils.getQueryStringParam( 'gl-window' );
-	
+
 		if( windowConfigKey ) {
 			this.isSubWindow = true;
 			config = localStorage.getItem( windowConfigKey );
@@ -1173,6 +1173,20 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		}
 
 		config = $.extend( true, {}, lm.config.defaultConfig, config );
+
+		var nextNode = function( node ) {
+			for( var key in node ) {
+				if( typeof node[ key ] === 'object' ) {
+					nextNode( node[ key ] );
+				}
+				else if( key === 'type' && node[ key ] === 'react-component' ) {
+					node.type = 'component';
+					node.componentName = 'lm-react-component';
+				}
+			}
+		}
+
+		nextNode( config );
 
 		if( config.settings.hasHeaders === false ) {
 			config.dimensions.headerHeight = 0;
@@ -1194,7 +1208,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 				'<div class="lm_icon"></div>' +
 				'<div class="lm_bg"></div>' +
 			'</div>');
-		
+
 		popInButton.click(lm.utils.fnBind(function(){
 			this.emit( 'popIn' );
 		}, this));
@@ -1235,7 +1249,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 			popout = this.config.openPopouts[ i ];
 
 			this.createPopout(
-				popout.content, 
+				popout.content,
 				popout.dimensions,
 				popout.parentId,
 				popout.indexInParent
@@ -1291,7 +1305,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 			} else {
 				errorMsg = 'Configuration parameter \'content\' must be an array';
 			}
-			
+
 			throw new lm.errors.ConfigurationError( errorMsg, config );
 		}
 
@@ -1337,11 +1351,6 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	}
 })();
 
-lm.config.itemDefaultConfig = {
-	isClosable: true,
-	reorderEnabled: true,
-	title: ''
-};
 lm.config.defaultConfig = {
 	openPopouts:[],
 	settings:{
@@ -1371,6 +1380,11 @@ lm.config.defaultConfig = {
 		popout: 'open in new window',
 		popin: 'pop in'
 	}
+};
+lm.config.itemDefaultConfig = {
+	isClosable: true,
+	reorderEnabled: true,
+	title: ''
 };
 lm.container.ItemContainer = function( config, parent, layoutManager ) {
 	lm.utils.EventEmitter.call( this );
@@ -3268,6 +3282,12 @@ lm.utils.copy( lm.items.Component.prototype, {
 		return null;
 	}
 });
+lm.items.ReactComponent = function( layoutManager, config, parent ) {
+	config.type = 'component';
+	config.componentName = 'lm-react-component';
+
+	return new lm.items.Component( layoutManager, config, parent );
+};
 lm.items.Root = function( layoutManager, config, containerElement ) {
 	lm.items.AbstractContentItem.call( this, layoutManager, config, null );
 	this.isRoot = true;
@@ -4491,4 +4511,19 @@ lm.utils.EventHub.prototype._propagateToChildren = function( args ) {
 			childGl.eventHub._$onEventFromParent( args );
 		}
 	}
-};})(window.$);
+};
+lm.utils.ReactComponentHandler = function( container, state ) {
+	if( !container._config.component ) {
+		throw new Error( 'No react component specified. type: react-component needs a field `component`' );
+	}
+	this._reactClass = container._config.component;
+	this._container = container;
+	this._initialState = state;
+	this._container.on( 'open', this._render, this );
+};
+
+lm.utils.copy( lm.utils.ReactComponentHandler.prototype, {
+	_render: function() {
+		ReactDOM.render( this._reactClass, this._container.getElement()[ 0 ]);
+	},
+});})(window.$);

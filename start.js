@@ -1,48 +1,100 @@
 
-var myLayout;
-
 $(function(){
-	var config = {
-			content: [{
-					type: 'row',
-					isClosable: false,
-					content: [{
-							type:'component',
-							componentName: 'example',
-							componentState: { text: 'Component 1' }
-					},
-					{
-							type:'component',
-							componentName: 'example',
-							componentState: { text: 'Component 2' }
-					}]
-			}]
-	};
+  var config = {
+    content:[
+      {
+        type: 'row',
+        content:[
+        {
+            width: 80,
+            type: 'column',
+            content:[
+              {
+                title: 'Fnts 100',
+                type: 'component',
+                componentName: 'hey',
+              },
+              {
+                type: 'row',
+                content:[
+                  {
+                    type: 'component',
+                    title: 'Golden',
+                    componentName: 'hey',
+                    width: 30,
+                    componentState: { bg: 'golden_layout_spiral.png' }
+                  },
+                  {
+                    title: 'Layout',
+                    type: 'component',
+                    componentName: 'hey',
+                    componentState: { bg: 'golden_layout_text.png' }
+                  }
+                ]
+              },
+              {
+                type: 'stack',
+                content:[
+                  {
+                    type: 'component',
+                    title: 'Acme, inc.',
+                    componentName: 'hey',
+                    componentState: {
+                      companyName: 'Stock X'
+                    }
+                  },
+                  {
+                    
+                    type: 'component',
+                    title: 'LexCorp plc.',
+                    componentName: 'hey',
+                    componentState: {
+                      companyName: 'Stock Y'
+                    }
+                  },
+                  {
+                    type: 'component',
+                    title: 'Springshield plc.',
+                    componentName: 'hey',
+                    componentState: {
+                      companyName: 'Stock Z'
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            width: 20,
+            type: 'column',
+            content: [
+              {
+                type: 'component',
+                title: 'Performance',
+                componentName: 'hey'
+              },
+              {
+                height: 40,
+                type: 'component',
+                title: 'Market',
+                componentName: 'hey'
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  };
 
-	var addMenuItem = function( title, text ) {
-			var element = $( '<li>' + text + '</li>' );
-			$( '#menuContainer' ).append( element );
+  window.myLayout = new GoldenLayout( config );
 
-			var newItemConfig = {
-					title: title,
-					type: 'component',
-					componentName: 'example',
-					componentState: { text: text }
-			};
-		
-			element.click(function(){
-					myLayout.root.contentItems[ 0 ].addChild( newItemConfig );
-			});
-	};
-	
-	myLayout = new window.GoldenLayout( config, $('#layoutContainer') );
+  myLayout.registerComponent( 'hey', function( container, state ) {
+    if( state.bg ) {
+      container
+        .getElement()
+        .text( 'hey');
+    }
+  });
 
-	myLayout.registerComponent( 'example', function( container, state ){
-			container.getElement().html( '<h2>' + state.text + '</h2>');
-	});
-
-	myLayout.init();
-	addMenuItem( 'Add me!', 'You\'ve added me!' );
-	addMenuItem( 'Me too!', 'You\'ve added me too!' );
+  myLayout.init();
 });
-
