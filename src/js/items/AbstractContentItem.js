@@ -10,6 +10,7 @@
  * @param {lm.item} parent
  *
  * @event stateChanged
+ * @event beforeItemDestroyed
  * @event itemDestroyed
  * @event itemCreated
  * @event componentCreated
@@ -412,13 +413,29 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 	},
 
 	_$hide: function() {
-		this.callDownwards( '_$hide', [], true, true );
+		this._callOnActiveComponents( 'hide' );
 		this.element.hide();
+		this.layoutManager.updateSize();
 	},
 
 	_$show: function() {
-		this.callDownwards( '_$show', [], true, true );
+		this._callOnActiveComponents( 'show' );
 		this.element.show();
+		this.layoutManager.updateSize();
+	},
+
+	_callOnActiveComponents: function( methodName ) {
+		var stacks = this.getItemsByType( 'stack' ),
+			activeContentItem,
+			i;
+
+		for( i = 0; i < stacks.length; i++ ) {
+			activeContentItem = stacks[ i ].getActiveContentItem();
+
+			if( activeContentItem && activeContentItem.isComponent ) {
+				activeContentItem.container[ methodName ]();
+			}
+		}
 	},
 	
 	/**
@@ -427,6 +444,7 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 	 * @returns {void}
 	 */
 	_$destroy: function() {
+		this.emitBubblingEvent( 'beforeItemDestroyed' );
 		this.callDownwards( '_$destroy', [], true, true );
 		this.element.remove();
 		this.emitBubblingEvent( 'itemDestroyed' );
