@@ -1169,7 +1169,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 			config = localStorage.getItem( windowConfigKey );
 			config = JSON.parse( config );
 			config = ( new lm.utils.ConfigMinifier() ).unminifyConfig( config );
-			localStorage.removeItem( windowConfigKey );
+		//	localStorage.removeItem( windowConfigKey );
 		}
 
 		config = $.extend( true, {}, lm.config.defaultConfig, config );
@@ -3243,10 +3243,10 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
  */
 lm.items.Component = function( layoutManager, config, parent ) {
 	lm.items.AbstractContentItem.call( this, layoutManager, config, parent );
-	
+
 	var ComponentConstructor = layoutManager.getComponent( this.config.componentName ),
 		componentConfig = $.extend( true, {}, this.config.componentState || {} );
-		
+
 	componentConfig.componentName = this.config.componentName;
 	this.componentName = this.config.componentName;
 
@@ -3263,7 +3263,7 @@ lm.items.Component = function( layoutManager, config, parent ) {
 lm.utils.extend( lm.items.Component, lm.items.AbstractContentItem );
 
 lm.utils.copy( lm.items.Component.prototype, {
-	
+
 	close: function() {
 		this.parent.removeChild( this );
 	},
@@ -3301,12 +3301,6 @@ lm.utils.copy( lm.items.Component.prototype, {
 		return null;
 	}
 });
-lm.items.ReactComponent = function( layoutManager, config, parent ) {
-	config.type = 'component';
-	config.componentName = 'lm-react-component';
-
-	return new lm.items.Component( layoutManager, config, parent );
-};
 lm.items.Root = function( layoutManager, config, containerElement ) {
 	lm.items.AbstractContentItem.call( this, layoutManager, config, null );
 	this.isRoot = true;
@@ -4535,18 +4529,100 @@ lm.utils.EventHub.prototype._propagateToChildren = function( args ) {
 		}
 	}
 };
+/**
+ * A specialised GoldenLayout component that binds GoldenLayout container
+ * lifecycle events to react components
+ *
+ * @constructor
+ *
+ * @param {lm.container.ItemContainer} container
+ * @param {Object} state state is not required for react components
+ */
 lm.utils.ReactComponentHandler = function( container, state ) {
-	if( !container._config.component ) {
-		throw new Error( 'No react component specified. type: react-component needs a field `component`' );
-	}
-	this._reactClass = container._config.component;
+	this._reactComponent = null;
+	this._originalComponentWillUpdate = null;
 	this._container = container;
 	this._initialState = state;
+	this._reactClass = this._getReactClass();
 	this._container.on( 'open', this._render, this );
+	this._container.on( 'destroy', this._destroy, this );
 };
 
 lm.utils.copy( lm.utils.ReactComponentHandler.prototype, {
+
+	/**
+	 * Creates the react class and component and hydrates it with
+	 * the initial state - if one is present
+	 *
+	 * By default, react's getInitialState will be used
+	 *
+	 * @private
+	 * @returns {void}
+	 */
 	_render: function() {
-		ReactDOM.render( this._reactClass, this._container.getElement()[ 0 ]);
+		this._reactComponent = ReactDOM.render( this._getReactComponent(), this._container.getElement()[ 0 ]);
+		this._originalComponentWillUpdate = this._reactComponent.componentWillUpdate || function(){};
+		this._reactComponent.componentWillUpdate = this._onUpdate.bind( this );
+		if( this._container.getState() ) {
+			this._reactComponent.setState( this._container.getState() );
+		}
 	},
+
+	/**
+	 * Removes the component from the DOM and thus invokes React's unmount lifecycle
+	 *
+	 * @private
+	 * @returns {void}
+	 */
+	_destroy: function() {
+		ReactDOM.unmountComponentAtNode( this._container.getElement()[ 0 ]);
+		this._container.off( 'open', this._render, this );
+		this._container.off( 'destroy', this._destroy, this );
+	},
+
+	/**
+	 * Hooks into React's state management and applies the componentstate
+	 * to GoldenLayout
+	 *
+	 * @private
+	 * @returns {void}
+	 */
+	_onUpdate: function( nextProps, nextState ) {
+		this._container.setState( nextState );
+		this._originalComponentWillUpdate( nextProps, nextState );
+	},
+	/**
+	 * Retrieves the react class from GoldenLayout's registry
+	 *
+	 * @private
+	 * @returns {React.Class}
+	 */
+	_getReactClass: function() {
+		var componentName = this._container._config.component;
+		var reactClass;
+
+		if( !componentName ) {
+			throw new Error( 'No react component name. type: react-component needs a field `component`' );
+		}
+
+		reactClass = this._container.layoutManager.getComponent( componentName );
+
+		if( !reactClass ) {
+			throw new Error( 'React component "' + componentName + '" not found. ' +
+				'Please register all components with GoldenLayout using `registerComponent(name, component)`' );
+		}
+
+		return reactClass;
+	},
+
+	/**
+	 * Copies and extends the properties array and returns the React element
+	 *
+	 * @private
+	 * @returns {React.Element}
+	 */
+	_getReactComponent: function() {
+		var props = $.extend({glContainer: this._container}, this._container._config.props );
+		return React.createElement( this._reactClass, props );
+	}
 });})(window.$);

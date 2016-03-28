@@ -746,7 +746,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 			config = localStorage.getItem( windowConfigKey );
 			config = JSON.parse( config );
 			config = ( new lm.utils.ConfigMinifier() ).unminifyConfig( config );
-			localStorage.removeItem( windowConfigKey );
+		//	localStorage.removeItem( windowConfigKey );
 		}
 
 		config = $.extend( true, {}, lm.config.defaultConfig, config );

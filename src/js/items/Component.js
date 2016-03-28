@@ -5,10 +5,10 @@
  */
 lm.items.Component = function( layoutManager, config, parent ) {
 	lm.items.AbstractContentItem.call( this, layoutManager, config, parent );
-	
+
 	var ComponentConstructor = layoutManager.getComponent( this.config.componentName ),
 		componentConfig = $.extend( true, {}, this.config.componentState || {} );
-		
+
 	componentConfig.componentName = this.config.componentName;
 	this.componentName = this.config.componentName;
 
@@ -25,7 +25,7 @@ lm.items.Component = function( layoutManager, config, parent ) {
 lm.utils.extend( lm.items.Component, lm.items.AbstractContentItem );
 
 lm.utils.copy( lm.items.Component.prototype, {
-	
+
 	close: function() {
 		this.parent.removeChild( this );
 	},
