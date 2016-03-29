@@ -13,6 +13,7 @@
 	<li class="head">CONFIGURATION</li>
 	<li><a data-desc="Nesting and sizing rows and columns in a golden ratio" data-category="CONFIGURATION" href="#849a1cd2afcc95b474f621635ef5b590">Golden Spiral</a></li>
 	<li><a data-desc="Syncing two layouts by serialisation" data-category="CONFIGURATION" href="#cffd4ce1a70e0738b3f40e67e17a20d0">Synced layouts</a></li>
+	<li><a data-desc="Nested Stacks" data-category="CONFIGURATION" href="#b40c19e79915493e9d3ae0220773358f">Nested Stacks</a></li>
 	<li class="head">ADDING ITEMS</li>
 	<li><a data-desc="Drag items from the menu onto the layout <a href='../tutorials/dynamically-adding-components.html'>(tutorial)</a>" data-category="ADDING ITEMS" href="#d508753b29c3001c24218bf3a6b25141">By drag</a></li>
 	<li><a data-desc="Select an item by clicking its headerbar and add items to it <a href='../tutorials/dynamically-adding-components.html'>(tutorial)</a>" data-category="ADDING ITEMS" href="#9dd68b285dc421364ac9ec13f2bdc999">By selection</a></li>
@@ -20,10 +21,21 @@
 	<li class="head">CUSTOM FUNCTIONALITY</li>
 	<li><a data-desc="Adding a custom color picker to the header <a href='../tutorials/adding-controls-to-header.html'>(tutorial)</a>" data-category="CUSTOM FUNCTIONALITY" href="#e15391fb136593e265013408cf68e561">Extending Header</a></li>
 	<li><a data-desc="Adding a message counter to every tab color <a href='../tutorials/extending-tabs.html'>(tutorial)</a>" data-category="CUSTOM FUNCTIONALITY" href="#9cb7e16c6e3a5ad427297cc4d390b971">Extending Tabs</a></li>
+	<li><a data-desc="Programmatically re-arranging components without reload" data-category="CUSTOM FUNCTIONALITY" href="#01249881a541bafcdf827c8b9020ad8a">Programmatic reorder</a></li>
+	<li><a data-desc="Toggle between rows and columns without reload" data-category="CUSTOM FUNCTIONALITY" href="#2e5d0456964b59f9eec1ecb44e1d31eb">Programmatic reorder 2</a></li>
+	<li><a data-desc="Disable adding components to a specific stack" data-category="CUSTOM FUNCTIONALITY" href="#30979a043f34750045dbe57aba4b1ee5">Disable Drop on header</a></li>
+	<li><a data-desc="Only close stack if user confirms" data-category="CUSTOM FUNCTIONALITY" href="#d66d6ee7794a8e000d72e9aa51c9bb9c">Conditional Closing</a></li>
+	<li><a data-desc="Custom Splitter Graphics" data-category="CUSTOM FUNCTIONALITY" href="#c33aff76e62e4fdf0635ac9f2df67dda">Custom Splitters</a></li>
+	<li><a data-desc="Configure Css Classes" data-category="CUSTOM FUNCTIONALITY" href="#ea776c82a4ff6ee489cc9ee68a0dcbc5">Configured Css Classes</a></li>
+	<li><a data-desc="Scrolling within panels" data-category="CUSTOM FUNCTIONALITY" href="#b8d8f23d4354d58f6a53f96a3e83753d">Panel Scrolling</a></li>
+	<li><a data-desc="Add tooltips via title attributes" data-category="CUSTOM FUNCTIONALITY" href="#21c1fbbbfaebca00a7183c9707bbef98">Custom Tooltips</a></li>
 	<li class="head">INTEGRATION</li>
+	<li><a data-desc="Simple ReactJS example" data-category="INTEGRATION" href="#qZXEyv">Simple ReactJS example</a></li>
+	<li><a data-desc="Complex ReactJS example" data-category="INTEGRATION" href="#XdabGJ">Complex ReactJS example</a></li>
 	<li><a data-desc="Showing Yahoo stockprices on HighCharts in GoldenLayout <a href='../tutorials/highcharts.html'>(tutorial)</a>" data-category="INTEGRATION" href="#c0c2f3811adfef1f8fc3d78c47686409">Highcharts and YQL</a></li>
 	<li><a data-desc="Integrating SlickGrid with GoldenLayout <a href='../tutorials/slickgrid.html'>(tutorial)</a>" data-category="INTEGRATION" href="#8a90e7c51e2b8ba6c964e840793d22de">SlickGrid</a></li>
 	<li><a data-desc="Multi-Module Angular app in GoldenLayout <a href='../tutorials/angular-complex.html'>(tutorial)</a>" data-category="INTEGRATION" href="#9cc03061dd363f9b3d014ad4c6b7937d">Angular</a></li>
+	<li><a data-desc="Using Webix with GoldenLayout" data-category="INTEGRATION" href="#d954972fbb6d7dc4b9efd0cc73b3091b">Webix</a></li>
 </ul>
 <div class="exampleStage">
 	<div class="exampleDescription">
@@ -57,7 +69,7 @@ $(function(){
 	};
 
 	resize = function() {
-		var height = $(window).height() - ( $('.exampleDescription').height() + $('.topSection').height());
+		var height = $(window).height() - ( $('.exampleDescription').height() + $('#nav').height());
 		var width = $(window).width() - 200;
 		
 		element.content.width( $(window).width() ).height( height ).css( 'overflow', 'hidden');

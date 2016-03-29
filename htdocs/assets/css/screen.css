@@ -73,7 +73,7 @@ html, body{
 #nav{
     height: 44px;
     margin-bottom: -30px;
-    z-index: 1;
+    z-index: 10;
     overflow: hidden;
     position: fixed;
     width: 100%;
@@ -84,8 +84,16 @@ html, body{
 }
 
 #nav.standalone{
-	margin-bottom: 0;
-	height: 40px;
+    margin-bottom: 0;
+    height: 40px;
+    border-bottom: 1px solid #999;
+    box-shadow: 0 0px 5px rgba(0,0,0,0.2);
+    background: #6B0E79;
+    position: relative;
+}
+
+#nav.standalone .start-bg{
+	display: none;
 }
 
 #nav.standalone img{
@@ -390,12 +398,11 @@ html, body{
 * EXAMPLES PAGE
 ****************************/
 .examplesNavigation{
-	background: #000;
-	width: 200px;
-	height: 100%;
-	padding: 0;
-	overflow: hidden;
-	float: left;
+    background: #000;
+    width: 200px;
+    padding: 0;
+    overflow: auto;
+    float: left;
 }
 
 .examplesNavigation li,
@@ -418,7 +425,7 @@ html, body{
 }
 
 .examplesNavigation li.active a{
-	color:#ff8e3c;
+	color:#c8b0f9;
 }
 
 .examplesNavigation li a:hover{
@@ -471,7 +478,7 @@ html, body{
 }
 
 .exampleDescription .name{
-	color:#ff8e3c;
+	color:#c8b0f9;
 }
 
 .exampleDescription .desc{
