@@ -60,6 +60,7 @@ lm.utils.copy( lm.utils.ReactComponentHandler.prototype, {
 		this._container.setState( nextState );
 		this._originalComponentWillUpdate( nextProps, nextState );
 	},
+
 	/**
 	 * Retrieves the react class from GoldenLayout's registry
 	 *
@@ -91,7 +92,11 @@ lm.utils.copy( lm.utils.ReactComponentHandler.prototype, {
 	 * @returns {React.Element}
 	 */
 	_getReactComponent: function() {
-		var props = $.extend({glContainer: this._container}, this._container._config.props );
+		var defaultProps = {
+			glEventHub: this._container.layoutManager.eventHub,
+			glContainer: this._container,
+		};
+		var props = $.extend( defaultProps, this._container._config.props );
 		return React.createElement( this._reactClass, props );
 	}
 });

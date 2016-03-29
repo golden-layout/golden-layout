@@ -1169,7 +1169,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 			config = localStorage.getItem( windowConfigKey );
 			config = JSON.parse( config );
 			config = ( new lm.utils.ConfigMinifier() ).unminifyConfig( config );
-		//	localStorage.removeItem( windowConfigKey );
+			localStorage.removeItem( windowConfigKey );
 		}
 
 		config = $.extend( true, {}, lm.config.defaultConfig, config );
@@ -1572,16 +1572,6 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 		}
 	}
 });
-
-lm.errors.ConfigurationError = function( message, node ) {
-	Error.call( this );
-
-	this.name = 'Configuration Error';
-	this.message = message;
-	this.node = node;
-};
-
-lm.errors.ConfigurationError.prototype = new Error();
 
 /**
  * Pops a content item out into a new browser window.
@@ -2616,6 +2606,16 @@ lm.utils.copy( lm.controls.TransitionIndicator.prototype, {
 		};
 	}
 });
+lm.errors.ConfigurationError = function( message, node ) {
+	Error.call( this );
+
+	this.name = 'Configuration Error';
+	this.message = message;
+	this.node = node;
+};
+
+lm.errors.ConfigurationError.prototype = new Error();
+
 
 /**
  * This is the baseclass that all content items inherit from.
@@ -4590,6 +4590,7 @@ lm.utils.copy( lm.utils.ReactComponentHandler.prototype, {
 		this._container.setState( nextState );
 		this._originalComponentWillUpdate( nextProps, nextState );
 	},
+
 	/**
 	 * Retrieves the react class from GoldenLayout's registry
 	 *
@@ -4621,7 +4622,11 @@ lm.utils.copy( lm.utils.ReactComponentHandler.prototype, {
 	 * @returns {React.Element}
 	 */
 	_getReactComponent: function() {
-		var props = $.extend({glContainer: this._container}, this._container._config.props );
+		var defaultProps = {
+			glEventHub: this._container.layoutManager.eventHub,
+			glContainer: this._container,
+		};
+		var props = $.extend( defaultProps, this._container._config.props );
 		return React.createElement( this._reactClass, props );
 	}
 });})(window.$);
