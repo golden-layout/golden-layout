@@ -1,30 +1,3 @@
-Ok, let’s start with the basics: 
-Building Blocks
-Layouts in GoldenLayout are created out of three building blocks: Rows, Columns and Stacks
-<img row>
-Rows arrange components horizontally along the x-axis
-<img col>
-Columns arrange components vertically along the y-axis
-<img stack>
-Stacks arrange components on top of each other along the z-axis
-
-All three of these building blocks can be nested within each other infinitely.
-<img nesting>
-Config to Model
-Have you ever used HTML? Manipulated the DOM using JavaScript? Perfect – then you know how GoldenLayout works.
-GoldenLayouts are created out of JSON config (think HTML) that looks like this:
-<code sample config>
-The JSON config is processed and the layout engine builds up an object tree from it. This object tree remains interactive and can (if required) be manipulated using JavaScript (think DOM), e.g. 
-<code sample manipulation>
-Components & Containers
-The actual things that live within the panels that GoldenLayout creates are called “components”. You need to register your component’s constructor or factory function with GoldenLayout beforehand and then just tell it in the configuration where to put that component and which state it should be initialised with. It is of course possible to use the same component multiple times within a layout and just initialise it with different parameters (e.g. the same weather widget, once for Berlin, once for San Francisco)
-Each component lives within a “container”, an object that allows it to interact with its surrounding and comes with methods such as `close()`, `setTitle(title)` or `setState()`
-State
-Each component can maintain a state. This state is serialized and used when the layout is saved or when the component is transferred to a new popout window. If you are using GoldenLayout with ReactJS, state is implicitly managed for you, for every other use, your component has to explicitly call `container.setState( state )` or `container.extendState( state )` on every state change
-And that’s it. Let’s look into how this is actually done in code
-
-
-
 Getting started
 =====================================
 Getting started with GoldenLayout is a breeze, but a bit off handholding is always nice. This tutorial takes you through the initial steps until you're up and running with your first managed layout.
@@ -34,7 +7,7 @@ GoldenLayout needs jQuery to work - that’s it. Either include it directly, usi
 
     <script type="text/javascript" src="http://code.jquery.com/jquery-1.11.1.min.js">
     </script>
-    
+
 or, if you’re using RequireJs, make jQuery available as a path, e.g. by adding this to your require config
 
 	paths: {

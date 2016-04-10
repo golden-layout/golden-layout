@@ -43,6 +43,7 @@
 				<li ><a href="../examples">Demos</a></li>
 				<li ><a href="../tutorials">Tutorials</a></li>
 				<li ><a href="../docs">Docs</a></li>
+				<li ><a href="../faq">Faq</a></li>
 			</ul>
 		</div>
 		
@@ -63,11 +64,13 @@
 			To our knowledge there isn't another layout manager / framework that supports browser based multi window / multi screen webapps
 		</p>
 	</li>
-	<li>
-		<h3>How do I use GoldenLayout with Angular 2?</h3>
-		<p>
-		I wish I knew. If you’re an Angular 2 Guru, your contribution would be very welcome. Please find an associated Github issue <a href="https://github.com/deepstreamIO/golden-layout/issues/75">here</a>
-		</p>
+	<li class="angular">
+			<a  name="angular">
+				<h3>How do I use GoldenLayout with Angular 2?</h3>
+			</a>
+			<p>
+			I wish I knew. If you’re an Angular 2 Guru your contribution would be very welcome. Please find an associated Github issue <a href="https://github.com/deepstreamIO/golden-layout/issues/75">here</a>
+			</p>
 	</li>
 	<li>
 		<h3>How can I contribute to GoldenLayout</h3>
@@ -87,6 +90,23 @@
 	</li>
 
 </ul>
+<style type="text/css">
+.angular a{
+	display: block;
+}
+.angular.target{
+	background: #D6C7D8;
+}
+.angular.target h3{
+	color: #6B0E79 !important;
+}
+
+</style>
+<script type="text/javascript">
+	if( document.location.hash.indexOf( 'angular' ) !== -1 ) {
+		$( '.angular' ).addClass( 'target' );
+	}
+</script>
 <ul>
 	<li>
 		<h3>How does this pop out window stuff actually work?</h3>
