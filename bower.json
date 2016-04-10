@@ -1,12 +1,12 @@
 {
   "name": "golden-layout",
-  "version": "1.0.2",
+  "version": "1.5.0",
   "homepage": "https://golden-layout.com",
   "authors": [
-    "Hoxton One Ltd. <info@golden-layout.com>"
+    "deepstreamHub GmbH"
   ],
-  "description": "the ultimate javascript layout manager",
-  "main": "dist/goldenlayout.min.js",
+  "description": "a multi-screen/multi-window javascript layout manager",
+  "main": "./dist/goldenlayout.min.js",
   "moduleType": [
     "amd",
     "globals"
@@ -21,9 +21,9 @@
     "popup"
   ],
   "dependencies": {
-    "jquery": "latest"
+    "jquery": "*"
   },
-  "license": "CC",
+  "license": "MIT",
   "ignore": [
     "**/.*",
     "node_modules",

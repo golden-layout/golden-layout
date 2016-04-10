@@ -1,7 +1,7 @@
 {
   "name": "golden-layout",
-  "version": "1.0.10",
-  "author": "Hoxton One Ltd.",
+  "version": "1.5.0",
+  "author": "deepstreamHub GmbH",
   "license": "MIT",
   "devDependencies": {
     "grunt": "~0.4.2",
@@ -20,7 +20,7 @@
     "karma-jasmine": "~0.1.5",
     "walker": "1.0.6"
   },
-  "description": "The ultimate JavaScript layout manager \r https://golden-layout.com",
+  "description": "A multi-screen javascript Layout manager \r https://golden-layout.com",
   "main": "./dist/goldenlayout.js",
   "directories": {
     "test": "test"
@@ -33,7 +33,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/hoxton-one/golden-layout.git"
+    "url": "https://github.com/deepstreamIO/golden-layout.git"
   },
   "keywords": [
     "layout manager",
@@ -43,9 +43,9 @@
     "popouts"
   ],
   "bugs": {
-    "url": "https://github.com/hoxton-one/golden-layout/issues"
+    "url": "https://github.com/deepstreamIO/golden-layout/issues"
   },
-  "homepage": "https://github.com/hoxton-one/golden-layout",
+  "homepage": "https://github.com/deepstreamIO/golden-layout",
   "npmName": "golden-layout",
   "npmFileMap": [
     {

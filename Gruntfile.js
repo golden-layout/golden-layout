@@ -23,7 +23,7 @@ module.exports = function(grunt) {
 			options: {
 			tagName: 'v<%= version %>',
 			github: { 
-				repo: 'hoxton-one/golden-layout',
+				repo: 'deepstreamIO/golden-layout',
 				usernameVar: 'GITHUB_USERNAME',
 				passwordVar: 'GITHUB_PASSWORD'
 			}
