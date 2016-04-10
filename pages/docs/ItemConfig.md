@@ -2,10 +2,18 @@ Item Configuration
 ===========================================
 	var layout = new GoldenLayout({
 		content: [{
+			//Non ReactJS
 			type: 'component',
-			content: [],
 			componentName: 'someName',
 			componentState: { some: 'value' },
+
+			//ReactJS
+			type: 'react-component',
+			component: 'name of your component',
+			props: {},
+
+			//General
+			content: [],
 			id: 'some id',
 			width: 30,
 			height: 30,
@@ -22,7 +30,7 @@ General
 argument: type
 type: String
 optional: false
-desc: The type of the item. Possible values are 'row', 'column', 'stack' and 'component'
+desc: The type of the item. Possible values are 'row', 'column', 'stack', 'component' and 'react-component'
 
 argument: content
 type: Array
@@ -58,7 +66,7 @@ desc: The title of the item as displayed on its tab and on popout windows
 
 &nbsp;
 
-Component Specific
+Components without ReactJS
 -------------------------------------------
 argument: componentName
 type: String
@@ -69,6 +77,20 @@ argument: componentState
 type: Object
 optional: true
 desc: A serialisable object. Will be passed to the component constructor function and will be the value returned by container.getState().
+
+&nbsp;
+
+Components with ReactJS
+-------------------------------------------
+argument: component
+type: String
+optional: false
+desc: The name of the component as specified in layout.registerComponent. Mandatory if type is 'react-component'
+
+argument: props
+type: Object
+optional: true
+desc: Properties that will be passed to the component and accessible using `this.props`
 
 &nbsp;
 
