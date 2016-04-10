@@ -1011,10 +1011,10 @@ html, body{
 }
 
 #faq li h3{
-	color: #999;
-	font-size: 16px;
-	font-weight: 100;
-	line-height: 24px;
+    color: #666;
+    font-size: 16px;
+    font-weight: 300;
+    line-height: 24px;
 }
 
 #faq li p{
