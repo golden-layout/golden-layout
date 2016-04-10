@@ -309,7 +309,14 @@ body .lm_header .lm_tab.lm_active .lm_close_tab{
   background-image: url(../images/getting-started-react.png);
 }
 
+#getting-started a.angular{
+  background: none;
+  border: 1px dashed rgba(255,255,255,0.5);
+  box-sizing: border-box;
+  color: rgba(255,255,255,0.5);
+}
 #getting-started a.angular div{
+
   background-image: url(../images/getting-started-angular.png);
 }
 

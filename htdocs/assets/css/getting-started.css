@@ -1,0 +1,20 @@
+
+#wrapper > #content ul.building-blocks{
+	overflow: hidden;
+}
+
+#wrapper > #content ul.building-blocks li{
+	list-style-type: none;
+    float: left;
+    width: 154px;
+    margin: 10px 33px;
+    text-align: center;
+}
+
+#wrapper > #content ul.building-blocks li p{
+	text-align: left;
+}
+
+#wrapper > #content ul.building-blocks li p em{
+	font-weight: bold;
+}

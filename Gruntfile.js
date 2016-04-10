@@ -42,7 +42,7 @@ module.exports = function(grunt) {
 				]
 			}
 		},
-			
+
 
 		/**
 		 * Copy all assets and flattened pages
@@ -63,11 +63,11 @@ module.exports = function(grunt) {
 			glAssets: {
 				files: [
 					{expand: true, src: ['**'], cwd: glRoot + '/dist/', dest: './htdocs/assets/js' },
-					{expand: true, src: [ 
-						'goldenlayout-base.css', 
-						'goldenlayout-dark-theme.css', 
-						'goldenlayout-light-theme.css', 
-						//'goldenlayout-translucent-theme.css' 
+					{expand: true, src: [
+						'goldenlayout-base.css',
+						'goldenlayout-dark-theme.css',
+						'goldenlayout-light-theme.css',
+						//'goldenlayout-translucent-theme.css'
 					], cwd: glRoot + '/src/css/', dest: './htdocs/assets/css' },
 				]
 			},
@@ -75,11 +75,11 @@ module.exports = function(grunt) {
 				files: [
 					{expand: true, src: ['**'], cwd: glRoot + '/dist/', dest: versionPath + '/js' },
 					{expand: true, src: [ 'LICENSE-CC-NC-4.0.md', 'LICENSE-GPL-3.0.md' ], cwd: './htdocs/assets/license', dest: versionPath },
-					{expand: true, src: [ 
-						'goldenlayout-base.css', 
-						'goldenlayout-dark-theme.css', 
-						'goldenlayout-light-theme.css', 
-						//'goldenlayout-translucent-theme.css' 
+					{expand: true, src: [
+						'goldenlayout-base.css',
+						'goldenlayout-dark-theme.css',
+						'goldenlayout-light-theme.css',
+						//'goldenlayout-translucent-theme.css'
 					], cwd: glRoot + '/src/css/', dest: versionPath + '/css' },
 				]
 			},
@@ -89,7 +89,7 @@ module.exports = function(grunt) {
 				]
 			}
 		}
-		
+
 	});
 
 
@@ -161,7 +161,7 @@ module.exports = function(grunt) {
 		'checkVersion',
 		'writeVersion',
 		'copy:release',
-		'compress', 
+		'compress',
 		'clean:latest',
 		'copy:latest',
 		'build'

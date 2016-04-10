@@ -981,3 +981,42 @@ html, body{
 .purchaseError b{
 	font-weight: bold;
 }
+
+/**********************************
+* FAQ
+**********************************/
+#faq{
+	width: 800px;
+	margin: 20px auto;
+	overflow: hidden;
+}
+
+#faq *{
+	font: 14px/20px Roboto, sans-serif;
+	color: #333;
+}
+
+#faq ul{
+	width: 40%;
+	margin: 5% 0;
+	float: left;
+}
+
+#faq li{
+	margin-bottom: 30px;
+}
+
+#faq ol li{
+	list-style-type: lower-alpha;
+}
+
+#faq li h3{
+	color: #999;
+	font-size: 16px;
+	font-weight: 100;
+	line-height: 24px;
+}
+
+#faq li p{
+	margin-bottom: 10px;
+}
