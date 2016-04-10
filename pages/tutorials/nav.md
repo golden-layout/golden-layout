@@ -3,6 +3,9 @@
 	<li {{#if fileIs_getting-started}}class="active"{{/if}}>
 		<a href="getting-started.html">Getting Started</a>
 	</li>
+	<li {{#if fileIs_getting-started}}class="active"{{/if}}>
+		<a href="getting-started-react.html">Getting Started ReactJS</a>
+	</li>
 	<li {{#if fileIs_saving-state}}class="active"{{/if}}>
 		<a href="saving-state.html">Saving State</a>
 	</li>
