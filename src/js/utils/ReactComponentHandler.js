@@ -58,7 +58,7 @@ lm.utils.copy( lm.utils.ReactComponentHandler.prototype, {
 	 */
 	_onUpdate: function( nextProps, nextState ) {
 		this._container.setState( nextState );
-		this._originalComponentWillUpdate.call( this._reactComponent, nextProps, nextState );
+		this._originalComponentWillUpdate( nextProps, nextState );
 	},
 
 	/**
