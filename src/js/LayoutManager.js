@@ -758,7 +758,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 
 		var nextNode = function( node ) {
 			for( var key in node ) {
-				if( typeof node[ key ] === 'object' ) {
+				if( key !== 'props' && typeof node[ key ] === 'object' ) {
 					nextNode( node[ key ] );
 				}
 				else if( key === 'type' && node[ key ] === 'react-component' ) {

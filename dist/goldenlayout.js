@@ -1181,7 +1181,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 
 		var nextNode = function( node ) {
 			for( var key in node ) {
-				if( typeof node[ key ] === 'object' ) {
+				if( key !== 'props' && typeof node[ key ] === 'object' ) {
 					nextNode( node[ key ] );
 				}
 				else if( key === 'type' && node[ key ] === 'react-component' ) {
@@ -1356,11 +1356,6 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	}
 })();
 
-lm.config.itemDefaultConfig = {
-	isClosable: true,
-	reorderEnabled: true,
-	title: ''
-};
 lm.config.defaultConfig = {
 	openPopouts:[],
 	settings:{
@@ -1390,6 +1385,11 @@ lm.config.defaultConfig = {
 		popout: 'open in new window',
 		popin: 'pop in'
 	}
+};
+lm.config.itemDefaultConfig = {
+	isClosable: true,
+	reorderEnabled: true,
+	title: ''
 };
 lm.container.ItemContainer = function( config, parent, layoutManager ) {
 	lm.utils.EventEmitter.call( this );
@@ -1577,16 +1577,6 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 		}
 	}
 });
-
-lm.errors.ConfigurationError = function( message, node ) {
-	Error.call( this );
-
-	this.name = 'Configuration Error';
-	this.message = message;
-	this.node = node;
-};
-
-lm.errors.ConfigurationError.prototype = new Error();
 
 /**
  * Pops a content item out into a new browser window.
@@ -2621,6 +2611,16 @@ lm.utils.copy( lm.controls.TransitionIndicator.prototype, {
 		};
 	}
 });
+lm.errors.ConfigurationError = function( message, node ) {
+	Error.call( this );
+
+	this.name = 'Configuration Error';
+	this.message = message;
+	this.node = node;
+};
+
+lm.errors.ConfigurationError.prototype = new Error();
+
 
 /**
  * This is the baseclass that all content items inherit from.
@@ -4593,7 +4593,7 @@ lm.utils.copy( lm.utils.ReactComponentHandler.prototype, {
 	 */
 	_onUpdate: function( nextProps, nextState ) {
 		this._container.setState( nextState );
-		this._originalComponentWillUpdate( nextProps, nextState );
+		this._originalComponentWillUpdate.call( this._reactComponent, nextProps, nextState );
 	},
 
 	/**
