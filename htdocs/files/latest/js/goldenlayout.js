@@ -755,6 +755,11 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 			throw new lm.errors.ConfigurationError( 'Missing parameter \'type\'', config );
 		}
 
+		if (config.type === 'react-component') {
+			config.type = 'component';
+			config.componentName = 'lm-react-component';
+		}
+
 		if( !this._typeToItem[ config.type ] ) {
 			typeErrorMsg = 'Unknown type \'' + config.type + '\'. ' +
 				'Valid types are ' + lm.utils.objectKeys( this._typeToItem ).join( ',' );
@@ -1176,7 +1181,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 
 		var nextNode = function( node ) {
 			for( var key in node ) {
-				if( typeof node[ key ] === 'object' ) {
+				if( key !== 'props' && typeof node[ key ] === 'object' ) {
 					nextNode( node[ key ] );
 				}
 				else if( key === 'type' && node[ key ] === 'react-component' ) {
@@ -4588,7 +4593,7 @@ lm.utils.copy( lm.utils.ReactComponentHandler.prototype, {
 	 */
 	_onUpdate: function( nextProps, nextState ) {
 		this._container.setState( nextState );
-		this._originalComponentWillUpdate( nextProps, nextState );
+		this._originalComponentWillUpdate.call( this._reactComponent, nextProps, nextState );
 	},
 
 	/**

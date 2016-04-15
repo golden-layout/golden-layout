@@ -53,11 +53,11 @@
 		<h2>Latest Version</h2>
 		<a href="../files/latest/GoldenLayout.zip" class="latest">
 			<div>Download GoldenLayout.zip</div>
-			<small>V 0.1.5 (10.4.2016)</small>
+			<small>V 1.5.1 (15.4.2016)</small>
 		</a>
 		<h2 class="second">Bower / NPM</h2>
 		<div class="bower">
-			<pre>"golden-layout": "0.1.5"</pre>
+			<pre>"golden-layout": "1.5.1"</pre>
 		</div>
 
 		<h2>Individual Files</h2>
@@ -78,6 +78,10 @@
 
 		<div class="previous">
 			GoldenLayout V&nbsp;&nbsp;<select>
+				
+				<option value="1.5.1">
+					1.5.1 (15.4.2016)
+				</option>
 				
 				<option value="0.1.5">
 					0.1.5 (10.4.2016)
@@ -190,6 +194,12 @@
 
 		<h2>Change log</h2>
 		<div class="changeLog">
+		<strong>Version 1.5.1</strong>
+		<ul>
+			<li>Fixes React component type is not recognised by createContentItem <a class="githubIssue" href="https://github.com/hoxton-one/golden-layout/issues/87">#87</a></li>
+			<li>Fixes a stack overflow when iterating over React properties <a class="githubIssue" href="https://github.com/hoxton-one/golden-layout/issues/92">#92</a></li>
+			<li>Fixes an incorrect 'this' argument when calling the original React components 'componentWillUpdate' method <a class="githubIssue" href="https://github.com/hoxton-one/golden-layout/issues/92">#92</a></li>
+		</ul>
 		<strong>Version 1.5.0</strong>
 		<ul>
 			<li>Added support for ReactJS components</li>
