@@ -59,39 +59,41 @@ lm.utils.copy( lm.utils.DragListener.prototype, {
 
 	onMouseMove: function(oEvent)
 	{
-		oEvent.preventDefault();
+		if (this._timeout != null) {
+			oEvent.preventDefault();
 
-		var coordinates = this._getCoordinates( oEvent );
+			var coordinates = this._getCoordinates(oEvent);
 
-		this._nX = coordinates.x - this._nOriginalX;
-		this._nY = coordinates.y - this._nOriginalY;
+			this._nX = coordinates.x - this._nOriginalX;
+			this._nY = coordinates.y - this._nOriginalY;
 
-		if( this._bDragging === false ) {
-			if(
-				Math.abs( this._nX ) > this._nDistance ||
-				Math.abs( this._nY ) > this._nDistance
-			){
-				clearTimeout( this._timeout );
-				this._startDrag();
+			if (this._bDragging === false) {
+				if (
+					Math.abs(this._nX) > this._nDistance ||
+					Math.abs(this._nY) > this._nDistance
+				) {
+					clearTimeout(this._timeout);
+					this._startDrag();
+				}
 			}
-		}
 
-		if( this._bDragging )
-		{
-			this.emit('drag', this._nX, this._nY, oEvent );
+			if (this._bDragging) {
+				this.emit('drag', this._nX, this._nY, oEvent);
+			}
 		}
 	},
 
 	onMouseUp: function(oEvent)
 	{
-		clearTimeout( this._timeout );
-		this._eBody.removeClass( 'lm_dragging' );
-		this._oDocument.unbind( 'mousemove touchmove', this._fMove);
-		
-		if( this._bDragging === true )
-		{
-			this._bDragging = false;
-			this.emit('dragStop', oEvent, this._nOriginalX + this._nX);
+		if (this._timeout != null) {
+			clearTimeout(this._timeout);
+			this._eBody.removeClass('lm_dragging');
+			this._oDocument.unbind('mousemove touchmove', this._fMove);
+
+			if (this._bDragging === true) {
+				this._bDragging = false;
+				this.emit('dragStop', oEvent, this._nOriginalX + this._nX);
+			}
 		}
 	},
 
