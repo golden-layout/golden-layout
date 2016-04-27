@@ -136,6 +136,8 @@ lm.utils.copy( lm.controls.DragProxy.prototype, {
 		}
 		
 		this.element.remove();
+
+		this._layoutManager.emit('itemDropped', this._contentItem);
 	},
 	
 	/**
