@@ -332,6 +332,11 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 			throw new lm.errors.ConfigurationError( 'Missing parameter \'type\'', config );
 		}
 
+		if (config.type === 'react-component') {
+			config.type = 'component';
+			config.componentName = 'lm-react-component';
+		}
+
 		if( !this._typeToItem[ config.type ] ) {
 			typeErrorMsg = 'Unknown type \'' + config.type + '\'. ' +
 				'Valid types are ' + lm.utils.objectKeys( this._typeToItem ).join( ',' );
