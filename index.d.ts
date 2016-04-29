@@ -367,7 +367,7 @@ declare namespace GoldenLayout {
         /**
          * This items configuration in its current state
          */
-        config: ItemConfigType
+        config: ItemConfigType;
 
         /**
          * The type of the item. Can be row, column, stack, component or root

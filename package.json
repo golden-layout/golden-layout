@@ -18,7 +18,7 @@
     "karma-coverage": "0.2.4",
     "karma-ie-launcher": "~0.1.5",
     "karma-jasmine": "~0.1.5",
-	"tslint": "^3.7.3",
+    "tslint": "^3.7.3",
     "tslint-config-typings": "^0.2.2",
     "typescript": "^1.8.9",
     "typings": "^0.7.12",
