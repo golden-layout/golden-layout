@@ -37,7 +37,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "tslint": "tslint \"**/*.ts\" -e \"node_modules/**\" -e \"typings/**\"",
     "prepublish": "typings install",
-    "publish": "npm -s run tslint && echo please publish to typings/registry"
+    "publish": "npm -s run tslint"
   },
   "repository": {
     "type": "git",
