@@ -18,10 +18,15 @@
     "karma-coverage": "0.2.4",
     "karma-ie-launcher": "~0.1.5",
     "karma-jasmine": "~0.1.5",
+    "tslint": "^3.7.3",
+    "tslint-config-typings": "^0.2.2",
+    "typescript": "^1.8.9",
+    "typings": "^0.7.12",
     "walker": "1.0.6"
   },
   "description": "A multi-screen javascript Layout manager \r https://golden-layout.com",
   "main": "./dist/goldenlayout.js",
+  "typings": "./index.d.ts",
   "directories": {
     "test": "test"
   },
@@ -29,7 +34,10 @@
     "jquery": "*"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "tslint": "tslint \"**/*.ts\" -e \"node_modules/**\" -e \"typings/**\"",
+    "prepublish": "typings install",
+    "publish": "npm -s run tslint"
   },
   "repository": {
     "type": "git",
@@ -61,6 +69,12 @@
         "goldenlayout.base.css",
         "goldenlayout-dark-theme.css",
         "goldenlayout-light-theme.css"
+      ]
+    },
+	{
+      "basePath": "/",
+      "files": [
+        "typings.json"
       ]
     }
   ],
