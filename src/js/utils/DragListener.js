@@ -84,6 +84,7 @@ lm.utils.copy( lm.utils.DragListener.prototype, {
 	{
 		clearTimeout( this._timeout );
 		this._eBody.removeClass( 'lm_dragging' );
+		this._eElement.removeClass( 'lm_dragging' );
 		this._oDocument.unbind( 'mousemove touchmove', this._fMove);
 		
 		if( this._bDragging === true )
@@ -97,6 +98,7 @@ lm.utils.copy( lm.utils.DragListener.prototype, {
 	{
 		this._bDragging = true;
 		this._eBody.addClass( 'lm_dragging' );
+		this._eElement.addClass( 'lm_dragging' );
 		this.emit('dragStart', this._nOriginalX, this._nOriginalY);
 	},
 
