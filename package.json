@@ -71,7 +71,7 @@
         "goldenlayout-light-theme.css"
       ]
     },
-	{
+	  {
       "basePath": "/",
       "files": [
         "typings.json"
