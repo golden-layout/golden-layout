@@ -2,6 +2,59 @@
 // Project: https://golden-layout.com/
 
 declare class GoldenLayout {
+    /**
+     * The topmost item in the layout item tree. In browser terms: Think of the GoldenLayout instance as window
+     * object and of goldenLayout.root as the document.
+     */
+    root: GoldenLayout.ContentItem;
+
+    /**
+     * A reference to the (jQuery) DOM element containing the layout
+     */
+    container: JQuery;
+
+    /**
+     * True once the layout item tree has been created and the initialised event has been fired
+     */
+    isInitialised: boolean;
+
+    /**
+     * A reference to the current, extended top level config.
+     *
+     * Don't rely on this object for state saving / serialisation. Use layout.toConfig() instead.
+     */
+    config: GoldenLayout.Config;
+
+    /**
+     * The currently selected item or null if no item is selected. Only relevant if settings.selectionEnabled is set
+     * to true.
+     */
+    selectedItem: GoldenLayout.ContentItem;
+
+    /**
+     * The current outer width of the layout in pixels.
+     */
+    width: number;
+
+    /**
+     * The current outer height of the layout in pixels.
+     */
+    height: number;
+
+    /**
+     * An array of BrowserWindow instances
+     */
+    openPopouts: GoldenLayout.BrowserWindow[];
+
+    /**
+     * True if the layout has been opened as a popout by another layout.
+     */
+    isSubWindow: boolean;
+
+    /**
+     * A singleton instance of EventEmitter that works across windows
+     */
+    eventHub: GoldenLayout.EventEmitter;
 
     /**
      * @param config A GoldenLayout configuration object
@@ -84,60 +137,6 @@ declare class GoldenLayout {
      * @param contentItem A ContentItem instance
      */
     selectItem(contentItem: GoldenLayout.ContentItem): void;
-
-    /**
-     * The topmost item in the layout item tree. In browser terms: Think of the GoldenLayout instance as window
-     * object and of goldenLayout.root as the document.
-     */
-    root: GoldenLayout.ContentItem;
-
-    /**
-     * A reference to the (jQuery) DOM element containing the layout
-     */
-    container: JQuery;
-
-    /**
-     * True once the layout item tree has been created and the initialised event has been fired
-     */
-    isInitialised: boolean;
-
-    /**
-     * A reference to the current, extended top level config.
-     *
-     * Don't rely on this object for state saving / serialisation. Use layout.toConfig() instead.
-     */
-    config: GoldenLayout.Config;
-
-    /**
-     * The currently selected item or null if no item is selected. Only relevant if settings.selectionEnabled is set
-     * to true.
-     */
-    selectedItem: GoldenLayout.ContentItem;
-
-    /**
-     * The current outer width of the layout in pixels.
-     */
-    width: number;
-
-    /**
-     * The current outer height of the layout in pixels.
-     */
-    height: number;
-
-    /**
-     * An array of BrowserWindow instances
-     */
-    openPopouts: GoldenLayout.BrowserWindow[];
-
-    /**
-     * True if the layout has been opened as a popout by another layout.
-     */
-    isSubWindow: boolean;
-
-    /**
-     * A singleton instance of EventEmitter that works across windows
-     */
-    eventHub: GoldenLayout.EventEmitter;
 
     /**
      * Static method on the GoldenLayout constructor! This method will iterate through a GoldenLayout config object
