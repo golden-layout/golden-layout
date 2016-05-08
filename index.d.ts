@@ -495,7 +495,7 @@ declare namespace GoldenLayout {
         /**
          * Removes the item from its current position in the layout and opens it in a window
          */
-        popout(): void;
+        popout(): BrowserWindow;
 
         /**
          * Maximises the item or minimises it if it's already maximised
@@ -587,7 +587,7 @@ declare namespace GoldenLayout {
          * A reference to the tab that controls this container. Will initially be null
          * (and populated once a tab event has been fired).
          */
-        tab: any; // TODO: Type?
+        tab: Tab;
 
         /**
          * The current title of the container
@@ -655,6 +655,137 @@ declare namespace GoldenLayout {
 
     export interface BrowserWindow {
 
+      /**
+       * True if the window has been opened and its GoldenLayout instance initialised.
+       */
+      isInitialised: boolean;
+
+      /**
+       * Creates a window configuration object from the Popout.
+       */
+      toConfig(): {dimensions: {width: number, height: number, left: number, top: number}, content: Config, parentId: string, indexInParent: number};
+
+      /**
+       * Returns the GoldenLayout instance from the child window
+       */
+      getGlInstance(): GoldenLayout;
+
+      /**
+       * Returns the native Window object
+       */
+      getWindow(): Window;
+
+      /**
+       * Closes the popout
+       */
+      close(): void;
+
+      /**
+       * Returns the popout to its original position as specified in parentId and indexInParent
+       */
+       popIn(): void;
+    }
+
+    export interface Header {
+      /**
+       * A reference to the LayoutManager instance
+       */
+      layoutManager: GoldenLayout;
+
+      /**
+       * A reference to the Stack this Header belongs to
+       */
+      parent: ContentItem;
+
+
+      /**
+       * An array of the Tabs within this header
+       */
+      tabs: Tab[];
+
+      /**
+       * The currently selected activeContentItem
+       */
+      activeContentItem: ContentItem;
+
+      /**
+       * The outer (jQuery) DOM element of this Header
+       */
+      element: JQuery;
+
+      /**
+       * The (jQuery) DOM element containing the tabs
+       */
+      tabsContainer: JQuery;
+
+      /**
+       * The (jQuery) DOM element containing the close, maximise and popout button
+       */
+      controlsContainer: JQuery;
+
+      /**
+       * Hides the currently selected contentItem, shows the specified one and highlights its tab.
+       * @param contentItem The content item that will be selected
+       */
+      setActiveContentItem(contentItem: ContentItem): void;
+
+      /**
+       * Creates a new tab and associates it with a content item
+       * @param contentItem The content item the tab will be associated with
+       * @param index A zero based index, specifying the position of the new tab
+       */
+      createTab(contentItem: ContentItem, index?: number): void;
+
+      /**
+       * Finds a tab by its contentItem and removes it
+       * @param contentItem The content item the tab is associated with
+       */
+      removeTab(contentItem: ContentItem): void;
+    }
+
+    export interface Tab {
+
+      /**
+       * True if this tab is the selected tab
+       */
+      isActive: boolean;
+
+      /**
+       * A reference to the header this tab is a child of
+       */
+      header: Header;
+
+      /**
+       * A reference to the content item this tab relates to
+       */
+      contentItem: ContentItem;
+
+      /**
+       * The tabs outer (jQuery) DOM element
+       */
+      element: JQuery;
+
+      /**
+       * The (jQuery) DOM element containing the title
+       */
+      titleElement: JQuery;
+
+      /**
+       * The (jQuery) DOM element that closes the tab
+       */
+      closeElement: JQuery;
+
+      /**
+       * Sets the tab's title. Does not affect the contentItem's title!
+       * @param title The new title
+       */
+      setTitle(title: string): void;
+
+      /**
+        * Sets this tab's active state. To programmatically switch tabs, use header.setActiveContentItem( item ) instead.
+        * @param isActive Whether the tab is active
+        */
+      setActive(isActive: boolean): void;
     }
 
     export interface EventEmitter {
