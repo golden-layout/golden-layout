@@ -781,9 +781,9 @@ declare namespace GoldenLayout {
       setTitle(title: string): void;
 
       /**
-        * Sets this tab's active state. To programmatically switch tabs, use header.setActiveContentItem( item ) instead.
-        * @param isActive Whether the tab is active
-        */
+       * Sets this tab's active state. To programmatically switch tabs, use header.setActiveContentItem( item ) instead.
+       * @param isActive Whether the tab is active
+       */
       setActive(isActive: boolean): void;
     }
 
