@@ -313,6 +313,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		this.tabDropPlaceholder.remove();
 		this.dropTargetIndicator.destroy();
 		this.transitionIndicator.destroy();
+		this.eventHub.destroy();
 	},
 
 	/**

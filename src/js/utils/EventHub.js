@@ -19,7 +19,8 @@ lm.utils.EventHub = function( layoutManager ) {
 	this._dontPropagateToParent = null;
 	this._childEventSource = null;
 	this.on( lm.utils.EventEmitter.ALL_EVENT, lm.utils.fnBind( this._onEventFromThis, this ) );
-	$(window).on( 'gl_child_event', lm.utils.fnBind( this._onEventFromChild, this ) );
+	this._boundOnEventFromChild = lm.utils.fnBind( this._onEventFromChild, this );
+	$(window).on( 'gl_child_event', this._boundOnEventFromChild );
 };
 
 /**
@@ -119,4 +120,16 @@ lm.utils.EventHub.prototype._propagateToChildren = function( args ) {
 			childGl.eventHub._$onEventFromParent( args );
 		}
 	}
+};
+
+
+/**
+ * Destroys the EventHub
+ *
+ * @public
+ * @returns {void}
+ */
+
+lm.utils.EventHub.prototype.destroy = function() {
+	$(window).off( 'gl_child_event', this._boundOnEventFromChild );
 };
