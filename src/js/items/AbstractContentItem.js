@@ -422,6 +422,7 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 		this._callOnActiveComponents( 'show' );
 		this.element.show();
 		this.layoutManager.updateSize();
+		this._callOnActiveComponents( 'showed' );
 	},
 
 	_callOnActiveComponents: function( methodName ) {

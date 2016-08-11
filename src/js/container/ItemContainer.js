@@ -54,6 +54,7 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 		this.emit( 'show' );
 		this.isHidden = false;
 		this._element.show();
+		this.emit( 'showed' );
 	},
 
 	/**
