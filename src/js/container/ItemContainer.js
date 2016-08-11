@@ -54,7 +54,11 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 		this.emit( 'show' );
 		this.isHidden = false;
 		this._element.show();
-		this.emit( 'showed' );
+		// call only showed, if the contaner has a valid size
+		if(this.height != 0 || this.width != 00){
+			this.emit( 'showed' );
+		}
+		
 	},
 
 	/**
