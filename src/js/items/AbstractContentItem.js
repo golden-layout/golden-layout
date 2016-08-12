@@ -198,6 +198,13 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 		this.contentItems[ index ] = newChild;
 		newChild.parent = this;
 
+		/*
+		 * Update tab reference
+		 */
+		if (this.isStack) {
+			this.header.tabs[ index ].contentItem = newChild;
+		}
+
 		//TODO This doesn't update the config... refactor to leave item nodes untouched after creation
 		if( newChild.parent.isInitialised === true && newChild.isInitialised === false ) {
 			newChild._$init();

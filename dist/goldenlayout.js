@@ -391,6 +391,7 @@ lm.utils.copy( lm.utils.DragListener.prototype, {
 	{
 		clearTimeout( this._timeout );
 		this._eBody.removeClass( 'lm_dragging' );
+		this._oDocument.find('iframe').css('pointer-events', '');
 		this._oDocument.unbind( 'mousemove touchmove', this._fMove);
 		
 		if( this._bDragging === true )
@@ -404,6 +405,7 @@ lm.utils.copy( lm.utils.DragListener.prototype, {
 	{
 		this._bDragging = true;
 		this._eBody.addClass( 'lm_dragging' );
+		this._oDocument.find('iframe').css('pointer-events', 'none');
 		this.emit('dragStart', this._nOriginalX, this._nOriginalY);
 	},
 
@@ -1356,6 +1358,11 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	}
 })();
 
+lm.config.itemDefaultConfig = {
+	isClosable: true,
+	reorderEnabled: true,
+	title: ''
+};
 lm.config.defaultConfig = {
 	openPopouts:[],
 	settings:{
@@ -1385,11 +1392,6 @@ lm.config.defaultConfig = {
 		popout: 'open in new window',
 		popin: 'pop in'
 	}
-};
-lm.config.itemDefaultConfig = {
-	isClosable: true,
-	reorderEnabled: true,
-	title: ''
 };
 lm.container.ItemContainer = function( config, parent, layoutManager ) {
 	lm.utils.EventEmitter.call( this );
@@ -1963,6 +1965,8 @@ lm.utils.copy( lm.controls.DragProxy.prototype, {
 		}
 		
 		this.element.remove();
+
+		this._layoutManager.emit('itemDropped', this._contentItem);
 	},
 	
 	/**
@@ -2820,6 +2824,13 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 		 */
 		this.contentItems[ index ] = newChild;
 		newChild.parent = this;
+
+		/*
+		 * Update tab reference
+		 */
+		if (this.isStack) {
+			this.header.tabs[ index ].contentItem = newChild;
+		}
 
 		//TODO This doesn't update the config... refactor to leave item nodes untouched after creation
 		if( newChild.parent.isInitialised === true && newChild.isInitialised === false ) {
