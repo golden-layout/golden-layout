@@ -85,14 +85,15 @@ lm.utils.copy( lm.utils.DragListener.prototype, {
 
 	onMouseUp: function(oEvent)
 	{
-		if (this._timeout != null) {
+		if(this._timeout != null) {
 			clearTimeout(this._timeout);
 			this._eBody.removeClass('lm_dragging');
-			this._oDocument.unbind('mousemove touchmove', this._fMove);
+			this._oDocument.find( 'iframe' ).css( 'pointer-events', '' );
+			this._oDocument.unbind( 'mousemove touchmove', this._fMove );
 
-			if (this._bDragging === true) {
+			if(this._bDragging === true) {
 				this._bDragging = false;
-				this.emit('dragStop', oEvent, this._nOriginalX + this._nX);
+				this.emit( 'dragStop', oEvent, this._nOriginalX + this._nX );
 			}
 		}
 	},
@@ -101,6 +102,7 @@ lm.utils.copy( lm.utils.DragListener.prototype, {
 	{
 		this._bDragging = true;
 		this._eBody.addClass( 'lm_dragging' );
+		this._oDocument.find( 'iframe' ).css( 'pointer-events', 'none' );
 		this.emit('dragStart', this._nOriginalX, this._nOriginalY);
 	},
 
