@@ -8,6 +8,7 @@
 
 .lm_content{
 	overflow: hidden;
+	position: relative;
 }
 
 .lm_dragging, .lm_dragging *{
