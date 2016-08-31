@@ -1,6 +1,6 @@
 {
   "name": "golden-layout",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "author": "deepstreamHub GmbH",
   "license": "MIT",
   "devDependencies": {
@@ -71,7 +71,7 @@
         "goldenlayout-light-theme.css"
       ]
     },
-	{
+    {
       "basePath": "/",
       "files": [
         "typings.json"
