@@ -213,7 +213,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 			itemSizes.push( itemSize );
 		}
 
-		additionalPixel = ( this._isColumn ? totalHeight : totalWidth ) - totalAssigned;
+		additionalPixel = Math.floor( ( this._isColumn ? totalHeight : totalWidth ) - totalAssigned );
 
 		for( i = 0; i < this.contentItems.length; i++ ) {
 			if( additionalPixel - i > 0 ) {
