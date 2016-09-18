@@ -1,4 +1,4 @@
-var Walker = require( 'Walker' ),
+var Walker = require( 'walker' ),
 	path = require( 'path' ),
 	fs = require( 'fs' ),
 	handlebars = require( 'handlebars' ),
