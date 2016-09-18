@@ -1,4 +1,4 @@
-(function($){var lm={"config":{},"container":{},"errors":{},"controls":{},"items":{},"utils":{}};
+(function($){var lm={"config":{},"controls":{},"errors":{},"utils":{},"items":{},"container":{}};
 
 lm.utils.F = function () {};
 	
@@ -359,45 +359,49 @@ lm.utils.copy( lm.utils.DragListener.prototype, {
 		this._oDocument.on('mousemove touchmove', this._fMove);
 		this._oDocument.one('mouseup touchend', this._fUp);
 
-		this._timeout = setTimeout( lm.utils.fnBind( this._startDrag, this ), this._nDelay );
+		if (oEvent.button == 0) {
+			this._timeout = setTimeout(lm.utils.fnBind(this._startDrag, this), this._nDelay);
+		}
 	},
 
 	onMouseMove: function(oEvent)
 	{
-		oEvent.preventDefault();
+		if (this._timeout != null) {
+			oEvent.preventDefault();
 
-		var coordinates = this._getCoordinates( oEvent );
+			var coordinates = this._getCoordinates(oEvent);
 
-		this._nX = coordinates.x - this._nOriginalX;
-		this._nY = coordinates.y - this._nOriginalY;
+			this._nX = coordinates.x - this._nOriginalX;
+			this._nY = coordinates.y - this._nOriginalY;
 
-		if( this._bDragging === false ) {
-			if(
-				Math.abs( this._nX ) > this._nDistance ||
-				Math.abs( this._nY ) > this._nDistance
-			){
-				clearTimeout( this._timeout );
-				this._startDrag();
+			if (this._bDragging === false) {
+				if (
+					Math.abs(this._nX) > this._nDistance ||
+					Math.abs(this._nY) > this._nDistance
+				) {
+					clearTimeout(this._timeout);
+					this._startDrag();
+				}
 			}
-		}
 
-		if( this._bDragging )
-		{
-			this.emit('drag', this._nX, this._nY, oEvent );
+			if (this._bDragging) {
+				this.emit('drag', this._nX, this._nY, oEvent);
+			}
 		}
 	},
 
 	onMouseUp: function(oEvent)
 	{
-		clearTimeout( this._timeout );
-		this._eBody.removeClass( 'lm_dragging' );
-		this._oDocument.find('iframe').css('pointer-events', '');
-		this._oDocument.unbind( 'mousemove touchmove', this._fMove);
-		
-		if( this._bDragging === true )
-		{
-			this._bDragging = false;
-			this.emit('dragStop', oEvent, this._nOriginalX + this._nX);
+		if(this._timeout != null) {
+			clearTimeout( this._timeout );
+			this._eBody.removeClass( 'lm_dragging' );
+			this._oDocument.find( 'iframe' ).css( 'pointer-events', '' );
+			this._oDocument.unbind( 'mousemove touchmove', this._fMove );
+
+			if( this._bDragging === true ) {
+				this._bDragging = false;
+				this.emit( 'dragStop', oEvent, this._nOriginalX + this._nX );
+			}
 		}
 	},
 
@@ -405,7 +409,7 @@ lm.utils.copy( lm.utils.DragListener.prototype, {
 	{
 		this._bDragging = true;
 		this._eBody.addClass( 'lm_dragging' );
-		this._oDocument.find('iframe').css('pointer-events', 'none');
+		this._oDocument.find( 'iframe' ).css( 'pointer-events', 'none' );
 		this.emit('dragStart', this._nOriginalX, this._nOriginalY);
 	},
 
@@ -1962,11 +1966,19 @@ lm.utils.copy( lm.controls.DragProxy.prototype, {
 		 */
 		} else if ( this._originalParent ){
 			this._originalParent.addChild( this._contentItem );
+
+		/**
+		 * The drag didn't ultimately end up with adding the content item to
+		 * any container. In order to ensure clean up happens, destroy the
+		 * content item.
+		 */
+		} else {
+			this._contentItem._$destroy();
 		}
 		
 		this.element.remove();
 
-		this._layoutManager.emit('itemDropped', this._contentItem);
+		this._layoutManager.emit( 'itemDropped', this._contentItem );
 	},
 	
 	/**
@@ -2008,6 +2020,7 @@ lm.utils.copy( lm.controls.DragProxy.prototype, {
 		this._contentItem.callDownwards( 'setSize' );
 	}
 });
+
 /**
  * Allows for any DOM item to create a component on drag
  * start tobe dragged into the Layout
@@ -2828,7 +2841,7 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 		/*
 		 * Update tab reference
 		 */
-		if (this.isStack) {
+		if ( this.isStack ) {
 			this.header.tabs[ index ].contentItem = newChild;
 		}
 
