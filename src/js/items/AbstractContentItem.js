@@ -201,7 +201,7 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 		/*
 		 * Update tab reference
 		 */
-		if (this.isStack) {
+		if ( this.isStack ) {
 			this.header.tabs[ index ].contentItem = newChild;
 		}
 
