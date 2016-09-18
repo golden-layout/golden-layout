@@ -125,6 +125,14 @@ lm.utils.copy( lm.controls.DragProxy.prototype, {
 		 */
 		} else if ( this._originalParent ){
 			this._originalParent.addChild( this._contentItem );
+
+		/**
+		 * The drag didn't ultimately end up with adding the content item to
+		 * any container. In order to ensure clean up happens, destroy the
+		 * content item.
+		 */
+		} else {
+			this._contentItem._$destroy();
 		}
 		
 		this.element.remove();
