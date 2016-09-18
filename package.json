@@ -6,6 +6,7 @@
   "devDependencies": {
     "grunt": "~0.4.2",
     "grunt-contrib-watch": "0.5.3",
+    "grunt-karma": "^2.0.0",
     "grunt-release": "0.7.0",
     "gulp": "^3.9.1",
     "gulp-concat": "^2.6.0",
@@ -13,11 +14,13 @@
     "gulp-uglify": "^1.5.3",
     "gulp-watch": "^4.3.5",
     "handlebars": "2.0.0-alpha.2",
-    "karma": "0.12.16",
+    "karma": "0.13.*",
     "karma-chrome-launcher": "~0.1.4",
     "karma-coverage": "0.2.4",
+    "karma-firefox-launcher": "^1.0.0",
     "karma-ie-launcher": "~0.1.5",
     "karma-jasmine": "~0.1.5",
+    "karma-phantomjs-launcher": "^1.0.2",
     "tslint": "^3.7.3",
     "tslint-config-typings": "^0.2.2",
     "typescript": "^1.8.9",
@@ -34,7 +37,7 @@
     "jquery": "*"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "grunt test",
     "tslint": "tslint \"**/*.ts\" -e \"node_modules/**\" -e \"typings/**\"",
     "prepublish": "typings install",
     "publish": "npm -s run tslint"
@@ -71,7 +74,7 @@
         "goldenlayout-light-theme.css"
       ]
     },
-	{
+    {
       "basePath": "/",
       "files": [
         "typings.json"

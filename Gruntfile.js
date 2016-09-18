@@ -8,8 +8,8 @@ module.exports = function(grunt) {
 		pkg: grunt.file.readJSON('package.json'),
 
 		/***********************
-		* WATCH
-		***********************/
+		 * WATCH
+		 ***********************/
 		watch: {
 			tasks: [ 'build' ],
 			files: [ './src/**' ],
@@ -17,26 +17,46 @@ module.exports = function(grunt) {
 		},
 
 		/***********************
-		* WATCH
-		***********************/
-		release: {
-			options: {
-			tagName: 'v<%= version %>',
-			github: { 
-				repo: 'deepstreamIO/golden-layout',
-				usernameVar: 'GITHUB_USERNAME',
-				passwordVar: 'GITHUB_PASSWORD'
-			}
-		}
-  	}
+		 * RELEASE
+		 ***********************/
+        release: {
+            options: {
+                tagName: 'v<%= version %>',
+                github: { 
+                    repo: 'deepstreamIO/golden-layout',
+                    usernameVar: 'GITHUB_USERNAME',
+                    passwordVar: 'GITHUB_PASSWORD'
+                }
+            }
+        },
+
+		/***********************
+		 * KARMA
+		 ***********************/
+        karma: {
+            unit: {
+                configFile: 'karma.conf.js',
+                background: true,
+                singleRun: false
+            },
+            travis: {
+                configFile: 'karma.conf.js',
+                singleRun: true,
+                browsers: ['PhantomJS']
+            }
+        }
 
 	});
 
 	// Load the plugin that provides the "uglify" task.
 	grunt.loadNpmTasks('grunt-contrib-watch');
+
 	grunt.loadNpmTasks('grunt-release');
+	grunt.loadNpmTasks('grunt-karma');
 
 	// Default task(s).
 	grunt.registerTask('default', ['watch']);
 
+    // travis support
+    grunt.registerTask('test', ['karma:travis']);
 };
