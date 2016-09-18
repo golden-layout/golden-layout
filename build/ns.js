@@ -1,1 +1,1 @@
-var lm={"config":{},"container":{},"errors":{},"controls":{},"items":{},"utils":{}};
+var lm={"config":{},"controls":{},"errors":{},"utils":{},"items":{},"container":{}};

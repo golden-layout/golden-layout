@@ -28,7 +28,7 @@ var namespace = function( segments, node ) {
 module.exports = function() {
 
 	var walker = Walker( jsPath ), // jshint ignore:line
-		data = { files: [ '\\utils\\utils.js', '\\items\\AbstractContentItem.js' ], directories: {} },
+		data = { files: [ '/utils/utils.js', '/items/AbstractContentItem.js' ], directories: {} },
 		done = this.async();
 
 	walker.on( 'file', function( file ){
