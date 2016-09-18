@@ -6,8 +6,9 @@
   "devDependencies": {
     "grunt": "~0.4.2",
     "grunt-contrib-watch": "0.5.3",
+    "grunt-gulp": "^1.0.1",
     "grunt-karma": "^2.0.0",
-    "grunt-release": "0.7.0",
+    "grunt-release": "0.13.*",
     "gulp": "^3.9.1",
     "gulp-concat": "^2.6.0",
     "gulp-continuous-concat": "^0.1.1",

@@ -1,3 +1,4 @@
+// Deprecated but left here for now; use the gulp tasks in the Gruntfile.
 var gulp = require('gulp');
 var concat = require('gulp-concat');
 var cConcat = require('gulp-continuous-concat');
