@@ -1,5 +1,5 @@
 var async = require( 'async' );
-var glRoot = '../../../dev/golden-layout';
+var glRoot = process.env.GL_ROOT || 'golden-layout';
 
 module.exports = function(grunt) {
 

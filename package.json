@@ -1,9 +1,8 @@
 {
   "name": "golden-layout-website",
   "version": "0.0.1",
-  "private": true,
   "dependencies": {
-    "grunt": "^1.0.1",
+    "grunt": "^0.4.0",
     "async": "0.7.0",
     "walk": "2.3.3",
     "handlebars": "2.0.0-alpha.2",
