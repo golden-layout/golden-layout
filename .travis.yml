@@ -1,6 +1,7 @@
 language: node_js
 before_install:
 - git clone https://github.com/deepstreamIO/golden-layout.git
+- npm install -g grunt-cli
 node_js:
 - '4'
 script:
