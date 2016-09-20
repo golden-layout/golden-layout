@@ -1,5 +1,6 @@
 var hbs = require( 'handlebars' );
 var path = require( 'path' );
+
 hbs.registerHelper( 'link', function( type, target ) {
 	var url, folder;
 
@@ -8,7 +9,7 @@ hbs.registerHelper( 'link', function( type, target ) {
 	}
 
 	if( type === 'asset' ) {
-		folder = module.exports.outputDir + '\\assets';
+		folder = module.exports.outputDir + '/assets';
 	}
 
 	url = path.relative( module.exports.cwd, folder );
