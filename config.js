@@ -5,6 +5,6 @@ module.exports = {
 	apiOutputDir: './htdocs/pages/docs',
 	apidocsInputFileExt: '.md',
 	apidocsOutputFileExt: '.html',
-	deploymentDir: '../../goldenlayout',
+	deploymentDir: 'generated-goldenlayout-website',
 	isDevelopment: true
 };

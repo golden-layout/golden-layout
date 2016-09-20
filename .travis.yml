@@ -15,7 +15,7 @@ deploy:
   bucket: golden-layout.com
   skip_cleanup: true
   acl: public_read
-  local_dir: htdocs
+  local_dir: generated-goldenlayout-website
   region: eu-central-1
   on:
     tags: true
