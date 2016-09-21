@@ -122,4 +122,20 @@ describe( 'the EventEmitter works', function(){
 			myObject.unbind( 'someEvent', myListener.callback );
 		}).not.toThrow();
 	});
+	
+	it( 'throws an exception when attempting to bind a non-function', function() {
+		var myObject = new EmitterImplementor();
+		
+		expect(function(){
+			myObject.on( 'someEvent', 1 );
+		}).toThrow();
+
+		expect(function(){
+			myObject.on( 'someEvent', undefined );
+		}).toThrow();
+		
+		expect(function(){
+			myObject.on( 'someEvent', {} );
+		}).toThrow();
+	});
 });

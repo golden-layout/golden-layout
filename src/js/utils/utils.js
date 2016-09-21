@@ -92,6 +92,16 @@ lm.utils.indexOf = function( needle, haystack ) {
 	}
 };
 
+if ( typeof /./ != 'function' && typeof Int8Array != 'object' ) {
+  lm.utils.isFunction = function ( obj ) {
+    return typeof obj == 'function' || false;
+  };
+} else {
+	lm.utils.isFunction = function ( obj ) {
+		return toString.call(obj) === '[object Function]';
+	};
+}
+
 lm.utils.fnBind = function( fn, context, boundArgs ) {
 
 	if( Function.prototype.bind !== undefined ) {
