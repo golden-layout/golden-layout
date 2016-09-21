@@ -39,7 +39,7 @@ lm.utils.copy( lm.controls.Header.prototype, {
 	 * Creates a new tab and associates it with a contentItem
 	 *
 	 * @param   {lm.item.AbstractContentItem} contentItem
-	 * @param   {Integer} index The position of the tab
+	 * @param   {Integer} index The position of the tab (optional)
 	 *
 	 * @returns {void}
 	 */
