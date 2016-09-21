@@ -35,7 +35,7 @@
 	z-index: 2;
 }
 
-.lm_splitter:hover{
+.lm_splitter:hover, .lm_splitter.lm_dragging{
 	background: orange;
 }
 

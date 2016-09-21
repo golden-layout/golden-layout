@@ -19,7 +19,7 @@
 	transition: opacity 200ms ease;
 }
 
-.lm_splitter:hover{
+.lm_splitter:hover, .lm_splitter.lm_dragging{
 	opacity: 0.4;
 	background: #fff;
 }
