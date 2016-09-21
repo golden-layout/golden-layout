@@ -1,6 +1,5 @@
 var gulp = require( 'gulp' );
 var concat = require( 'gulp-concat' );
-var cConcat = require( 'gulp-continuous-concat' );
 var uglify = require( 'gulp-uglify' );
 var insert = require( 'gulp-insert' );
 var watch = require( 'gulp-watch' );

@@ -5,13 +5,13 @@ var Walker = require( 'walker' ),
 	basePath = path.resolve( __dirname, '..' ),
 	jsPath = path.join( basePath, 'src/js' ),
 	fileOptions = { encoding: 'utf-8' },
-	indexContent = fs.readFileSync( path.join( basePath, 'index.hbs'), fileOptions ),
+	indexContent = fs.readFileSync( path.join( basePath, 'index.hbs' ), fileOptions ),
 	indexTemplate = handlebars.compile( indexContent ),
-	indexWritePath = path.join( basePath, 'index.html');
+	indexWritePath = path.join( basePath, 'index.html' );
 
-handlebars.registerHelper( 'toJSON', function( input ){
+handlebars.registerHelper( 'toJSON', function( input ) {
 	return new handlebars.SafeString( JSON.stringify( input ) );
-});
+} );
 
 var namespace = function( segments, node ) {
 	for( var i = 0; i < segments.length; i++ ) {
@@ -28,24 +28,34 @@ var namespace = function( segments, node ) {
 module.exports = function() {
 
 	var walker = Walker( jsPath ), // jshint ignore:line
-		data = { files: [ '/utils/utils.js', '/items/AbstractContentItem.js' ], directories: {} },
-		done = this.async();
+		data = { files: [], directories: [] },
+		done = this.async(),
+		earlyFiles = [ '/utils/utils.js', '/items/AbstractContentItem.js' ];
 
-	walker.on( 'file', function( file ){
+	walker.on( 'file', function( file ) {
 		var filePath = file.replace( jsPath, '' );
 
-		if( data.files.indexOf( filePath ) === -1 ) {
+		if( earlyFiles.indexOf( filePath ) === -1 ) {
 			data.files.push( filePath );
 		}
-	});
+	} );
 
-	walker.on( 'dir', function( dir ){
-		namespace( dir.replace( jsPath, '' ).split( path.sep ), data.directories );
-	});
+	walker.on( 'dir', function( dir ) {
+		data.directories.push( dir );
+	} );
 
-	walker.on( 'end', function(){
+	walker.on( 'end', function() {
+		data.files.sort();
+		data.files = earlyFiles.concat( data.files );
+		data.directories.sort();
+
+		var directories = {};
+		data.directories.forEach( function( dir ) {
+			namespace( dir.replace( jsPath, '' ).split( path.sep ), directories );
+		} );
+		data.directories = directories;
 		var ns = 'var lm=' + JSON.stringify( data.directories ) + ';';
 		fs.writeFileSync( __dirname + '/ns.js', ns );
 		fs.writeFile( indexWritePath, indexTemplate( data ), done );
-	});
+	} );
 };
