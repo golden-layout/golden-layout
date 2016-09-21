@@ -32,7 +32,7 @@
 
 .lm_splitter{
 	position: relative;
-	z-index: 2;
+	z-index: 20;
 }
 
 .lm_splitter:hover, .lm_splitter.lm_dragging{
@@ -145,7 +145,7 @@
 ***********************************/
 .lm_dragProxy{
 	position: absolute;
-	z-index: 3;
+	z-index: 30;
 	top: 0;
 	left: 0;
 }
@@ -161,7 +161,7 @@
 
 .lm_dropTargetIndicator{
 	position: absolute;
-	z-index: 2;
+	z-index: 20;
 	display: none;
 }
 
@@ -180,7 +180,7 @@
 	display: none;
 	width: 20px;
 	height: 20px;
-	z-index: 2;
+	z-index: 20;
 }
 
 
@@ -202,9 +202,9 @@
 }
 
 .lm_popin > .lm_bg{
-	z-index: 1;
+	z-index: 10;
 }
 
 .lm_popin > .lm_icon{
-	z-index: 2;
+	z-index: 20;
 }
