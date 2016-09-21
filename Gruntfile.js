@@ -31,7 +31,7 @@ module.exports = function( grunt ) {
 			 * WATCH
 			 ***********************/
 			watch: {
-				tasks: [ 'build' ],
+				tasks: [ 'dist', 'test' ],
 				files: [ './src/**' ],
 				options: { livereload: 5051 },
 			},
@@ -105,4 +105,7 @@ module.exports = function( grunt ) {
 
 	// travis support
 	grunt.registerTask( 'test', [ 'karma:travis' ] );
+
+    // distribution support
+	grunt.registerTask( 'dist', [ 'build', 'gulp' ] );
 };
