@@ -1,4 +1,4 @@
-(function($){var lm={"config":{},"controls":{},"errors":{},"utils":{},"items":{},"container":{}};
+(function($){var lm={"config":{},"container":{},"controls":{},"errors":{},"items":{},"utils":{}};
 
 lm.utils.F = function () {};
 	
@@ -92,6 +92,16 @@ lm.utils.indexOf = function( needle, haystack ) {
 		return -1;
 	}
 };
+
+if ( typeof /./ != 'function' && typeof Int8Array != 'object' ) {
+  lm.utils.isFunction = function ( obj ) {
+    return typeof obj == 'function' || false;
+  };
+} else {
+	lm.utils.isFunction = function ( obj ) {
+		return toString.call(obj) === '[object Function]';
+	};
+}
 
 lm.utils.fnBind = function( fn, context, boundArgs ) {
 
@@ -200,13 +210,17 @@ lm.utils.EventEmitter = function()
 	 * Listen for events
 	 *
 	 * @param   {String} sEvent    The name of the event to listen to
-	 * @param   {Function} fCallback The callback to execute when the event occurs
+	 * @param   {Function} fCallback The callback to execute when the event occurs 
 	 * @param   {[Object]} oContext The value of the this pointer within the callback function
 	 *
 	 * @returns {void}
 	 */
 	this.on = function( sEvent, fCallback, oContext )
 	{
+		if ( !lm.utils.isFunction(fCallback) ) {
+			throw new Error( 'Tried to listen to event ' + sEvent + ' with non-function callback ' + fCallback );
+		}
+		
 		if( !this._mSubscriptions[ sEvent ] )
 		{
 			this._mSubscriptions[ sEvent ] = [];
@@ -247,11 +261,11 @@ lm.utils.EventEmitter = function()
 	};
 
 	/**
-	 * Removes a listener for an event
+	 * Removes a listener for an event, or all listeners if no callback and context is provided.
 	 *
 	 * @param   {String} sEvent    The name of the event
-	 * @param   {Function} fCallback The previously registered callback method
-	 * @param   {Object} oContext  The previously registered context
+	 * @param   {Function} fCallback The previously registered callback method (optional)
+	 * @param   {Object} oContext  The previously registered context (optional)
 	 *
 	 * @returns {void}
 	 */
@@ -267,7 +281,7 @@ lm.utils.EventEmitter = function()
 		{
 			if
 			(
-				this._mSubscriptions[ sEvent ][ i ].fn === fCallback &&
+				( !fCallback || this._mSubscriptions[ sEvent ][ i ].fn === fCallback ) &&
 				( !oContext || oContext === this._mSubscriptions[ sEvent ][ i ].ctx )
 			)
 			{
@@ -395,6 +409,7 @@ lm.utils.copy( lm.utils.DragListener.prototype, {
 		if(this._timeout != null) {
 			clearTimeout( this._timeout );
 			this._eBody.removeClass( 'lm_dragging' );
+			this._eElement.removeClass( 'lm_dragging' );
 			this._oDocument.find( 'iframe' ).css( 'pointer-events', '' );
 			this._oDocument.unbind( 'mousemove touchmove', this._fMove );
 
@@ -409,6 +424,7 @@ lm.utils.copy( lm.utils.DragListener.prototype, {
 	{
 		this._bDragging = true;
 		this._eBody.addClass( 'lm_dragging' );
+		this._eElement.addClass( 'lm_dragging' );
 		this._oDocument.find( 'iframe' ).css( 'pointer-events', 'none' );
 		this.emit('dragStart', this._nOriginalX, this._nOriginalY);
 	},
@@ -2143,7 +2159,7 @@ lm.utils.copy( lm.controls.Header.prototype, {
 	 * Creates a new tab and associates it with a contentItem
 	 *
 	 * @param   {lm.item.AbstractContentItem} contentItem
-	 * @param   {Integer} index The position of the tab
+	 * @param   {Integer} index The position of the tab (optional)
 	 *
 	 * @returns {void}
 	 */
