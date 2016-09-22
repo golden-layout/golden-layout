@@ -32,7 +32,7 @@ module.exports = function( grunt ) {
 			 ***********************/
 			watch: {
 				tasks: [ 'dist', 'test' ],
-				files: [ './src/**' ],
+				files: [ './src/**', './test/**' ],
 				options: { livereload: 5051 },
 			},
 

@@ -48,6 +48,11 @@ lm.utils.copy( lm.items.Component.prototype, {
 		this.container.show();
 		lm.items.AbstractContentItem.prototype._$show.call( this );
 	},
+	
+	_$shown: function() {
+		this.container.shown();
+		lm.items.AbstractContentItem.prototype._$shown.call( this );
+	},
 
 	_$destroy: function() {
 		this.container.emit( 'destroy' );
