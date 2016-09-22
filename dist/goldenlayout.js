@@ -469,6 +469,7 @@ lm.LayoutManager = function( config, container ) {
 	this._components = { 'lm-react-component': lm.utils.ReactComponentHandler };
 	this._itemAreas = [];
 	this._resizeFunction = lm.utils.fnBind( this._onResize, this );
+	this._unloadFunction = lm.utils.fnBind( this._onUnload, this );
 	this._maximisedItem = null;
 	this._maximisePlaceholder = $( '<div class="lm_maximise_place"></div>' );
 	this._creationTimeoutPassed = false;
@@ -490,8 +491,6 @@ lm.LayoutManager = function( config, container ) {
 	if( this.isSubWindow === true ) {
 		$( 'body' ).css( 'visibility', 'hidden' );
 	}
-
-	$( window ).on( 'unload beforeunload', lm.utils.fnBind( this._onUnload, this) );
 
 	this._typeToItem = {
 		'column': lm.utils.fnBind( lm.items.RowOrColumn, this, [ true ] ),
@@ -753,11 +752,13 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		}
 		this._onUnload();
 		$( window ).off( 'resize', this._resizeFunction );
+		$( window ).off( 'unload beforeunload', this._unloadFunction );
 		this.root.callDownwards( '_$destroy', [], true );
 		this.root.contentItems = [];
 		this.tabDropPlaceholder.remove();
 		this.dropTargetIndicator.destroy();
 		this.transitionIndicator.destroy();
+		this.eventHub.destroy();
 	},
 
 	/**
@@ -1165,6 +1166,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		if( this._isFullPage ) {
 			$(window).resize( this._resizeFunction );
 		}
+		$(window).on( 'unload beforeunload', this._unloadFunction );
 	},
 
 	/**
@@ -2522,6 +2524,10 @@ lm.utils.copy( lm.controls.Tab.prototype,{
 	_$destroy: function() {
 		this.element.off( 'click', this._onTabClickFn );
 		this.closeElement.off( 'click', this._onCloseClickFn );
+		if( this._dragListener ) {
+			this._dragListener.off( 'dragStart', this._onDragStart );
+			this._dragListener = null;
+		}
 		this.element.remove();
 	},
 
@@ -4472,7 +4478,8 @@ lm.utils.EventHub = function( layoutManager ) {
 	this._dontPropagateToParent = null;
 	this._childEventSource = null;
 	this.on( lm.utils.EventEmitter.ALL_EVENT, lm.utils.fnBind( this._onEventFromThis, this ) );
-	$(window).on( 'gl_child_event', lm.utils.fnBind( this._onEventFromChild, this ) );
+	this._boundOnEventFromChild = lm.utils.fnBind( this._onEventFromChild, this );
+	$(window).on( 'gl_child_event', this._boundOnEventFromChild );
 };
 
 /**
@@ -4572,6 +4579,18 @@ lm.utils.EventHub.prototype._propagateToChildren = function( args ) {
 			childGl.eventHub._$onEventFromParent( args );
 		}
 	}
+};
+
+
+/**
+ * Destroys the EventHub
+ *
+ * @public
+ * @returns {void}
+ */
+
+lm.utils.EventHub.prototype.destroy = function() {
+	$(window).off( 'gl_child_event', this._boundOnEventFromChild );
 };
 /**
  * A specialised GoldenLayout component that binds GoldenLayout container
