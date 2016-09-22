@@ -792,7 +792,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 
 
 		/**
-		 * We add an additional stack around every component that's not within a stack anyways
+		 * We add an additional stack around every component that's not within a stack anyways.
 		 */
 		if(
 			// If this is a component
@@ -809,7 +809,6 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		) {
 			config = {
 				type: 'stack',
-				isClosable: config.isClosable,
 				width: config.width,
 				height: config.height,
 				content: [ config ]
@@ -1471,6 +1470,10 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 		this.emit( 'show' );
 		this.isHidden = false;
 		this._element.show();
+		// call shown only if the container has a valid size
+		if(this.height != 0 || this.width != 0) {
+			this.emit( 'shown' );
+		}
 	},
 
 	/**
@@ -1889,6 +1892,7 @@ lm.controls.DragProxy = function( x, y, dragListener, layoutManager, contentItem
 
 	this.element = $( lm.controls.DragProxy._template );
 	this.element.css({ left: x, top: y });
+	this.element.find( '.lm_tab' ).attr( 'title', lm.utils.stripTags( this._contentItem.config.title ) );
 	this.element.find( '.lm_title' ).html( this._contentItem.config.title );
 	this.childElementContainer = this.element.find( '.lm_content' );
 	this.childElementContainer.append( contentItem.element );
@@ -2144,6 +2148,7 @@ lm.controls.Header = function( layoutManager, parent ) {
 	this.parent.on( 'resize', this._updateTabSizes, this );
 	this.tabs = [];
 	this.activeContentItem = null;
+	this.closeButton = null;
 
 	this._createControls();
 };
@@ -2160,8 +2165,8 @@ lm.utils.copy( lm.controls.Header.prototype, {
 	/**
 	 * Creates a new tab and associates it with a contentItem
 	 *
-	 * @param   {lm.item.AbstractContentItem} contentItem
-	 * @param   {Integer} index The position of the tab (optional)
+	 * @param	{lm.item.AbstractContentItem} contentItem
+	 * @param	{Integer} index The position of the tab
 	 *
 	 * @returns {void}
 	 */
@@ -2201,7 +2206,7 @@ lm.utils.copy( lm.controls.Header.prototype, {
 	/**
 	 * Finds a tab based on the contentItem its associated with and removes it.
 	 *
-	 * @param   {lm.item.AbstractContentItem} contentItem
+	 * @param	{lm.item.AbstractContentItem} contentItem
 	 *
 	 * @returns {void}
 	 */
@@ -2236,6 +2241,23 @@ lm.utils.copy( lm.controls.Header.prototype, {
 
 		this._updateTabSizes();
 		this.parent.emitBubblingEvent( 'stateChanged' );
+	},
+
+	/**
+	 * Programmatically set closability.
+	 *
+	 * @package private
+	 * @param {Boolean} isClosable Whether to enable/disable closability.
+	 *
+	 * @returns {Boolean} Whether the action was successful
+	 */
+	_$setClosable: function( isClosable ) {
+		if ( this.closeButton && this._isClosable() ) {
+			this.closeButton.element[ isClosable ? "show" : "hide" ]();
+			return true;
+		}
+
+		return false;
 	},
 
 	/**
@@ -2299,11 +2321,21 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		/**
 		 * Close button
 		 */
-		if( this.parent.config.isClosable && this.layoutManager.config.settings.showCloseIcon ) {
+		if( this._isClosable() ) {
 			closeStack = lm.utils.fnBind( this.parent.remove, this.parent );
 			label = this.layoutManager.config.labels.close;
-			new lm.controls.HeaderButton( this, label, 'lm_close', closeStack );
+			this.closeButton = new lm.controls.HeaderButton( this, label, 'lm_close', closeStack );
 		}
+	},
+
+	/**
+	 * Checks whether the header is closable based on the parent config and 
+	 * the global config.
+	 *
+	 * @returns {Boolean} Whether the header is closable.
+	 */
+	_isClosable: function() {
+		return this.parent.config.isClosable && this.layoutManager.config.settings.showCloseIcon;
 	},
 
 	_onPopoutClick: function() {
@@ -2314,10 +2346,11 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		}
 	},
 
+
 	/**
 	 * Invoked when the header's background is clicked (not it's tabs or controls)
 	 *
-	 * @param   {jQuery DOM event} event
+	 * @param	{jQuery DOM event} event
 	 *
 	 * @returns {void}
 	 */
@@ -2455,7 +2488,7 @@ lm.controls.Tab = function( header, contentItem ) {
 
 	this.element.click( this._onTabClickFn );
 
-	if( this._layoutManager.config.settings.showCloseIcon === true ) {
+	if( this.contentItem.config.isClosable ) {
 		this.closeElement.click( this._onCloseClickFn );
 	} else {
 		this.closeElement.remove();
@@ -3094,6 +3127,7 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 		this._callOnActiveComponents( 'show' );
 		this.element.show();
 		this.layoutManager.updateSize();
+		this._callOnActiveComponents( 'shown' );
 	},
 
 	_callOnActiveComponents: function( methodName ) {
@@ -3338,6 +3372,11 @@ lm.utils.copy( lm.items.Component.prototype, {
 	_$show: function() {
 		this.container.show();
 		lm.items.AbstractContentItem.prototype._$show.call( this );
+	},
+	
+	_$shown: function() {
+		this.container.shown();
+		lm.items.AbstractContentItem.prototype._$shown.call( this );
 	},
 
 	_$destroy: function() {
@@ -3755,6 +3794,22 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 			after: this.contentItems[ index + 1 ]
 		};
 	},
+
+	/**
+	 * Gets the minimum dimensions for the given item configuration array
+	 * @param item
+	 * @private
+	 */
+	_getMinimumDimensions: function (arr) {
+		var minWidth = 0, minHeight = 0;
+
+		for (var i = 0; i < arr.length; ++i) {
+			minWidth = Math.max(arr[i].minWidth || 0, minWidth);
+			minHeight = Math.max(arr[i].minHeight || 0, minHeight);
+		}
+
+		return { horizontal: minWidth, vertical: minHeight };
+	},
 	
 	/**
 	 * Invoked when a splitter's dragListener fires dragStart. Calculates the splitters
@@ -3767,10 +3822,16 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	_onSplitterDragStart: function( splitter ) {
 		var items = this._getItemsForSplitter( splitter ),
 			minSize = this.layoutManager.config.dimensions[ this._isColumn ? 'minItemHeight' : 'minItemWidth' ];
-	
+
+		var beforeMinDim = this._getMinimumDimensions(items.before.config.content);
+		var beforeMinSize = this._isColumn ? beforeMinDim.vertical : beforeMinDim.horizontal;
+
+		var afterMinDim = this._getMinimumDimensions(items.after.config.content);
+		var afterMinSize = this._isColumn ? afterMinDim.vertical : afterMinDim.horizontal;
+
 		this._splitterPosition = 0;
-		this._splitterMinPosition = -1 * ( items.before.element[ this._dimension ]() - minSize );
-		this._splitterMaxPosition = items.after.element[ this._dimension ]() - minSize;
+		this._splitterMinPosition = -1 * ( items.before.element[ this._dimension ]() - (beforeMinSize || minSize) );
+		this._splitterMaxPosition = items.after.element[ this._dimension ]() - (afterMinSize || minSize);
 	},
 	
 	/**
@@ -3841,6 +3902,7 @@ lm.items.Stack = function( layoutManager, config, parent ) {
 	}
 
 	this.element.append( this.childElementContainer );
+	this._$validateClosability();
 };
 
 lm.utils.extend( lm.items.Stack, lm.items.AbstractContentItem );
@@ -3912,6 +3974,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		this.header.createTab( contentItem, index );
 		this.setActiveContentItem( contentItem );
 		this.callDownwards( 'setSize' );
+		this._$validateClosability();
 		this.emitBubblingEvent( 'stateChanged' );
 	},
 
@@ -3926,7 +3989,34 @@ lm.utils.copy( lm.items.Stack.prototype, {
 			this._activeContentItem = null;
 		}
 		
+		this._$validateClosability();
 		this.emitBubblingEvent( 'stateChanged' );
+	},
+
+	/**
+	 * Validates that the stack is still closable or not. If a stack is able
+	 * to close, but has a non closable component added to it, the stack is no
+	 * longer closable until all components are closable.
+	 *
+	 * @returns {void}
+	 */
+	_$validateClosability: function() {
+		var contentItem,
+			isClosable,
+			len,
+			i;
+
+		isClosable = this.header._isClosable();
+
+		for ( i = 0, len = this.contentItems.length; i < len; i++ ) {
+			if (!isClosable) { 
+				break; 
+			}
+
+			isClosable = this.contentItems[ i ].config.isClosable;
+		}
+
+		this.header._$setClosable( isClosable );
 	},
 
 	_$destroy: function() {
@@ -3952,7 +4042,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 	 * Same thing for rows and left / right drop segments... so in total there are 9 things that can potentially happen
 	 * (left, top, right, bottom) * is child of the right parent (row, column) + header drop
 	 * 
-	 * @param   {lm.item} contentItem
+	 * @param	{lm.item} contentItem
 	 *
 	 * @returns {void}
 	 */
@@ -4032,8 +4122,8 @@ lm.utils.copy( lm.items.Stack.prototype, {
 	 * If the user hovers above the header part of the stack, indicate drop positions for tabs.
 	 * otherwise indicate which segment of the body the dragged item would be dropped on
 	 *
-	 * @param   {Int} x Absolute Screen X
-	 * @param   {Int} y Absolute Screen Y
+	 * @param	{Int} x Absolute Screen X
+	 * @param	{Int} y Absolute Screen Y
 	 *
 	 * @returns {void}
 	 */
