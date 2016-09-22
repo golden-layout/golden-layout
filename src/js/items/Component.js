@@ -49,9 +49,9 @@ lm.utils.copy( lm.items.Component.prototype, {
 		lm.items.AbstractContentItem.prototype._$show.call( this );
 	},
 	
-	_$showed: function() {
-		this.container.showed();
-		lm.items.AbstractContentItem.prototype._$showed.call( this );
+	_$shown: function() {
+		this.container.shown();
+		lm.items.AbstractContentItem.prototype._$shown.call( this );
 	},
 
 	_$destroy: function() {
