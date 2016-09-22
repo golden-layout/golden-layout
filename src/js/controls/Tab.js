@@ -102,6 +102,10 @@ lm.utils.copy( lm.controls.Tab.prototype,{
 	_$destroy: function() {
 		this.element.off( 'click', this._onTabClickFn );
 		this.closeElement.off( 'click', this._onCloseClickFn );
+		if( this._dragListener ) {
+			this._dragListener.off( 'dragStart', this._onDragStart );
+			this._dragListener = null;
+		}
 		this.element.remove();
 	},
 
