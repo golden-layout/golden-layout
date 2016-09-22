@@ -347,7 +347,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 
 
 		/**
-		 * We add an additional stack around every component that's not within a stack anyways
+		 * We add an additional stack around every component that's not within a stack anyways.
 		 */
 		if(
 			// If this is a component
@@ -364,7 +364,6 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		) {
 			config = {
 				type: 'stack',
-				isClosable: config.isClosable,
 				width: config.width,
 				height: config.height,
 				content: [ config ]
