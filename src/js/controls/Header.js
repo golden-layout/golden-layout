@@ -22,6 +22,7 @@ lm.controls.Header = function( layoutManager, parent ) {
 	this.parent.on( 'resize', this._updateTabSizes, this );
 	this.tabs = [];
 	this.activeContentItem = null;
+	this.closeButton = null;
 
 	this._createControls();
 };
@@ -38,8 +39,8 @@ lm.utils.copy( lm.controls.Header.prototype, {
 	/**
 	 * Creates a new tab and associates it with a contentItem
 	 *
-	 * @param   {lm.item.AbstractContentItem} contentItem
-	 * @param   {Integer} index The position of the tab (optional)
+	 * @param	{lm.item.AbstractContentItem} contentItem
+	 * @param	{Integer} index The position of the tab
 	 *
 	 * @returns {void}
 	 */
@@ -79,7 +80,7 @@ lm.utils.copy( lm.controls.Header.prototype, {
 	/**
 	 * Finds a tab based on the contentItem its associated with and removes it.
 	 *
-	 * @param   {lm.item.AbstractContentItem} contentItem
+	 * @param	{lm.item.AbstractContentItem} contentItem
 	 *
 	 * @returns {void}
 	 */
@@ -114,6 +115,23 @@ lm.utils.copy( lm.controls.Header.prototype, {
 
 		this._updateTabSizes();
 		this.parent.emitBubblingEvent( 'stateChanged' );
+	},
+
+	/**
+	 * Programmatically set closability.
+	 *
+	 * @package private
+	 * @param {Boolean} isClosable Whether to enable/disable closability.
+	 *
+	 * @returns {Boolean} Whether the action was successful
+	 */
+	_$setClosable: function( isClosable ) {
+		if ( this.closeButton && this._isClosable() ) {
+			this.closeButton.element[ isClosable ? "show" : "hide" ]();
+			return true;
+		}
+
+		return false;
 	},
 
 	/**
@@ -177,11 +195,21 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		/**
 		 * Close button
 		 */
-		if( this.parent.config.isClosable && this.layoutManager.config.settings.showCloseIcon ) {
+		if( this._isClosable() ) {
 			closeStack = lm.utils.fnBind( this.parent.remove, this.parent );
 			label = this.layoutManager.config.labels.close;
-			new lm.controls.HeaderButton( this, label, 'lm_close', closeStack );
+			this.closeButton = new lm.controls.HeaderButton( this, label, 'lm_close', closeStack );
 		}
+	},
+
+	/**
+	 * Checks whether the header is closable based on the parent config and 
+	 * the global config.
+	 *
+	 * @returns {Boolean} Whether the header is closable.
+	 */
+	_isClosable: function() {
+		return this.parent.config.isClosable && this.layoutManager.config.settings.showCloseIcon;
 	},
 
 	_onPopoutClick: function() {
@@ -192,10 +220,11 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		}
 	},
 
+
 	/**
 	 * Invoked when the header's background is clicked (not it's tabs or controls)
 	 *
-	 * @param   {jQuery DOM event} event
+	 * @param	{jQuery DOM event} event
 	 *
 	 * @returns {void}
 	 */
