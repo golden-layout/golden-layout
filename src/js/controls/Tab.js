@@ -33,7 +33,7 @@ lm.controls.Tab = function( header, contentItem ) {
 
 	this.element.click( this._onTabClickFn );
 
-	if( this._layoutManager.config.settings.showCloseIcon === true ) {
+	if( this.contentItem.config.isClosable ) {
 		this.closeElement.click( this._onCloseClickFn );
 	} else {
 		this.closeElement.remove();
