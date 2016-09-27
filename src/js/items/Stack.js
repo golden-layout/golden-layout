@@ -219,7 +219,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 			this.parent.callDownwards( 'setSize' );
 		/*
 		 * This handles items that are dropped on top or bottom of a row or left / right of a column. We need
-		 * to create the appropriate contentItem for them to life in
+		 * to create the appropriate contentItem for them to live in
 		 */
 		} else {
 			type = isVertical ? 'column' : 'row';

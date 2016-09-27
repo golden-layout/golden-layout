@@ -16,8 +16,12 @@ testTools.createLayout = function( config ) {
 	return myLayout;
 };
 
-testTools.TestComponent = function( container ){
-	container.getElement().html( 'that worked' );
+testTools.TestComponent = function( container, state ){
+	if ( state === undefined ) {
+		container.getElement().html( 'that worked' );
+	} else {
+		container.getElement().html( state.html );
+	}
 	this.isTestComponentInstance = true;
 };
 

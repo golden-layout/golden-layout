@@ -50,7 +50,7 @@ lm.items.AbstractContentItem = function( layoutManager, config, parent ) {
 lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 	
 	/**
-	 * Set the size of the component and its children, called recoursively
+	 * Set the size of the component and its children, called recursively
 	 *
 	 * @abstract
 	 * @returns void
@@ -60,7 +60,7 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 	},
 
 	/**
-	 * Calls a method recoursively downwards on the tree
+	 * Calls a method recursively downwards on the tree
 	 *
 	 * @param   {String} functionName      the name of the function to be called
 	 * @param   {[Array]}functionArguments optional arguments that are passed to every function
@@ -488,7 +488,7 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 
 	/**
 	 * The tree of content items is created in two steps: First all content items are instantiated,
-	 * then init is called recoursively from top to bottem. This is the basic init function,
+	 * then init is called recursively from top to bottem. This is the basic init function,
 	 * it can be used, extended or overwritten by the content items
 	 * 
 	 * Its behaviour depends on the content item

@@ -507,7 +507,7 @@ lm.LayoutManager.__lm = lm;
 
 /**
  * Takes a GoldenLayout configuration object and
- * replaces its keys and values recoursively with
+ * replaces its keys and values recursively with
  * one letter codes
  *
  * @static
@@ -654,7 +654,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 
 	/**
 	 * Creates the actual layout. Must be called after all initial components
-	 * are registered. Recourses through the configuration and sets up
+	 * are registered. Recurses through the configuration and sets up
 	 * the item tree.
 	 *
 	 * If called before the document is ready it adds itself as a listener
@@ -762,7 +762,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	},
 
 	/**
-	 * Recoursively creates new item tree structures based on a provided
+	 * Recursively creates new item tree structures based on a provided
 	 * ItemConfiguration object
 	 *
 	 * @public
@@ -921,7 +921,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	 * by 'dragging' the DOM element into the layout
 	 *
 	 * @param   {jQuery DOM element} element
-	 * @param   {Object} itemConfig for the new item to be created
+	 * @param   {Object|Function} itemConfig for the new item to be created, or a function which will provide it
 	 *
 	 * @returns {void}
 	 */
@@ -1071,11 +1071,12 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 
 	/**
 	 * Takes a contentItem or a configuration and optionally a parent
-	 * item and returns an initialised instance of the contentItem
+	 * item and returns an initialised instance of the contentItem.
+	 * If the contentItem is a function, it is first called
 	 *
 	 * @packagePrivate
 	 *
-	 * @param   {lm.items.AbtractContentItem|Object} contentItemOrConfig
+	 * @param   {lm.items.AbtractContentItem|Object|Function} contentItemOrConfig
 	 * @param   {lm.items.AbtractContentItem} parent Only necessary when passing in config
 	 *
 	 * @returns {lm.items.AbtractContentItem}
@@ -1083,6 +1084,10 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	_$normalizeContentItem: function( contentItemOrConfig, parent ) {
 		if( !contentItemOrConfig ) {
 			throw new Error( 'No content item defined' );
+		}
+
+		if( lm.utils.isFunction( contentItemOrConfig ) ) {
+			contentItemOrConfig = contentItemOrConfig();
 		}
 
 		if( contentItemOrConfig instanceof lm.items.AbstractContentItem ) {
@@ -1318,7 +1323,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	},
 
 	/**
-	 * Kicks of the initial, recoursive creation chain
+	 * Kicks of the initial, recursive creation chain
 	 *
 	 * @param   {Object} config GoldenLayout Config
 	 *
@@ -1379,6 +1384,11 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	}
 })();
 
+lm.config.itemDefaultConfig = {
+	isClosable: true,
+	reorderEnabled: true,
+	title: ''
+};
 lm.config.defaultConfig = {
 	openPopouts:[],
 	settings:{
@@ -1408,11 +1418,6 @@ lm.config.defaultConfig = {
 		popout: 'open in new window',
 		popin: 'pop in'
 	}
-};
-lm.config.itemDefaultConfig = {
-	isClosable: true,
-	reorderEnabled: true,
-	title: ''
 };
 lm.container.ItemContainer = function( config, parent, layoutManager ) {
 	lm.utils.EventEmitter.call( this );
@@ -2020,7 +2025,7 @@ lm.utils.copy( lm.controls.DragProxy.prototype, {
 	},
 	
 	/**
-	 * Removes the item from it's original position within the tree
+	 * Removes the item from its original position within the tree
 	 *
 	 * @private
 	 *
@@ -2764,7 +2769,7 @@ lm.items.AbstractContentItem = function( layoutManager, config, parent ) {
 lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 	
 	/**
-	 * Set the size of the component and its children, called recoursively
+	 * Set the size of the component and its children, called recursively
 	 *
 	 * @abstract
 	 * @returns void
@@ -2774,7 +2779,7 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 	},
 
 	/**
-	 * Calls a method recoursively downwards on the tree
+	 * Calls a method recursively downwards on the tree
 	 *
 	 * @param   {String} functionName      the name of the function to be called
 	 * @param   {[Array]}functionArguments optional arguments that are passed to every function
@@ -3202,7 +3207,7 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 
 	/**
 	 * The tree of content items is created in two steps: First all content items are instantiated,
-	 * then init is called recoursively from top to bottem. This is the basic init function,
+	 * then init is called recursively from top to bottem. This is the basic init function,
 	 * it can be used, extended or overwritten by the content items
 	 * 
 	 * Its behaviour depends on the content item
@@ -3625,7 +3630,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	},
 	
 	/**
-	 * Invoked recoursively by the layout manager. AbstractContentItem.init appends
+	 * Invoked recursively by the layout manager. AbstractContentItem.init appends
 	 * the contentItem's DOM elements to the container, RowOrColumn init adds splitters
 	 * in between them
 	 *
@@ -4118,7 +4123,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 			this.parent.callDownwards( 'setSize' );
 		/*
 		 * This handles items that are dropped on top or bottom of a row or left / right of a column. We need
-		 * to create the appropriate contentItem for them to life in
+		 * to create the appropriate contentItem for them to live in
 		 */
 		} else {
 			type = isVertical ? 'column' : 'row';
@@ -4435,7 +4440,7 @@ lm.utils.copy( lm.utils.ConfigMinifier.prototype, {
 
 	/**
 	 * Takes a GoldenLayout configuration object and
-	 * replaces its keys and values recoursively with
+	 * replaces its keys and values recursively with
 	 * one letter counterparts
 	 *
 	 * @param   {Object} config A GoldenLayout config object
@@ -4463,7 +4468,7 @@ lm.utils.copy( lm.utils.ConfigMinifier.prototype, {
 	},
 
 	/**
-	 * Recoursive function, called for every level of the config structure
+	 * Recursive function, called for every level of the config structure
 	 *
 	 * @param   {Array|Object} orig
 	 * @param   {Array|Object} min
@@ -4493,7 +4498,7 @@ lm.utils.copy( lm.utils.ConfigMinifier.prototype, {
 
 			/**
 			 * For Arrays and Objects, create a new Array/Object
-			 * on the minified object and recourse into it
+			 * on the minified object and recurse into it
 			 */
 			if( typeof from[ key ] === 'object' ) {
 				to[ minKey ] = from[ key ] instanceof Array ? [] : {};

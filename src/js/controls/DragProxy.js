@@ -158,7 +158,7 @@ lm.utils.copy( lm.controls.DragProxy.prototype, {
 	},
 	
 	/**
-	 * Removes the item from it's original position within the tree
+	 * Removes the item from its original position within the tree
 	 *
 	 * @private
 	 *

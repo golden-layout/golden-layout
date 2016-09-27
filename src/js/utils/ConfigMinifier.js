@@ -62,7 +62,7 @@ lm.utils.copy( lm.utils.ConfigMinifier.prototype, {
 
 	/**
 	 * Takes a GoldenLayout configuration object and
-	 * replaces its keys and values recoursively with
+	 * replaces its keys and values recursively with
 	 * one letter counterparts
 	 *
 	 * @param   {Object} config A GoldenLayout config object
@@ -90,7 +90,7 @@ lm.utils.copy( lm.utils.ConfigMinifier.prototype, {
 	},
 
 	/**
-	 * Recoursive function, called for every level of the config structure
+	 * Recursive function, called for every level of the config structure
 	 *
 	 * @param   {Array|Object} orig
 	 * @param   {Array|Object} min
@@ -120,7 +120,7 @@ lm.utils.copy( lm.utils.ConfigMinifier.prototype, {
 
 			/**
 			 * For Arrays and Objects, create a new Array/Object
-			 * on the minified object and recourse into it
+			 * on the minified object and recurse into it
 			 */
 			if( typeof from[ key ] === 'object' ) {
 				to[ minKey ] = from[ key ] instanceof Array ? [] : {};

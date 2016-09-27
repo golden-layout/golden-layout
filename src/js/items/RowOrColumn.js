@@ -157,7 +157,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	},
 	
 	/**
-	 * Invoked recoursively by the layout manager. AbstractContentItem.init appends
+	 * Invoked recursively by the layout manager. AbstractContentItem.init appends
 	 * the contentItem's DOM elements to the container, RowOrColumn init adds splitters
 	 * in between them
 	 *
