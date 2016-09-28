@@ -43,7 +43,11 @@ lm.utils.copy( lm.controls.DragSource.prototype, {
 	 * @returns {void}
 	 */
 	_onDragStart: function( x, y ) {
-		var contentItem = this._layoutManager._$normalizeContentItem( this._itemConfig ),
+		var itemConfig = this._itemConfig;
+		if( lm.utils.isFunction( itemConfig ) ) {
+			itemConfig = itemConfig();
+		}
+		var contentItem = this._layoutManager._$normalizeContentItem( $.extend( true, {}, itemConfig ) ),
 			dragProxy = new lm.controls.DragProxy( x, y, this._dragListener, this._layoutManager, contentItem, null );
 		
 		this._layoutManager.transitionIndicator.transitionElements( this._element, dragProxy.element );
