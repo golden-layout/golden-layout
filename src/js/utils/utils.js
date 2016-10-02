@@ -29,8 +29,15 @@ lm.utils.objectKeys = function( object ) {
 	}
 };
 
+lm.utils.getHashValue = function( key ) {
+	var matches = location.hash.match( new RegExp( key + '=([^&]*)' ) );
+	return matches ? matches[ 1 ] : null;
+};
+
 lm.utils.getQueryStringParam = function( param ) {
-	if( !window.location.search ) {
+	if( window.location.hash ) {
+		return lm.utils.getHashValue( param );
+	} else if( !window.location.search ) {
 		return null;
 	}
 
