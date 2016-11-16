@@ -314,6 +314,16 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		this.dropTargetIndicator.destroy();
 		this.transitionIndicator.destroy();
 		this.eventHub.destroy();
+		
+		if (this._dragSources) {
+			this._dragSources.forEach(function (dragSource) {
+				dragSource._dragListener.destroy();
+				dragSource._element = null;
+				dragSource._itemConfig = null;
+				dragSource._dragListener = null;
+			});
+			this._dragSources = null;
+		}
 	},
 
 	/**
@@ -481,8 +491,15 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	 * @returns {void}
 	 */
 	createDragSource: function( element, itemConfig ) {
+		if (!this._dragSources) {
+			this._dragSources = [];
+		}
+		
 		this.config.settings.constrainDragToContainer = false;
-		new lm.controls.DragSource( $( element ), itemConfig, this );
+		var dragSource = new lm.controls.DragSource( $( element ), itemConfig, this );
+		this._dragSources.push(dragSource);
+		
+		return dragSource;
 	},
 
 	/**
