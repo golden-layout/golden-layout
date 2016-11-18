@@ -481,6 +481,7 @@ lm.LayoutManager = function( config, container ) {
 	this._maximisePlaceholder = $( '<div class="lm_maximise_place"></div>' );
 	this._creationTimeoutPassed = false;
 	this._subWindowsCreated = false;
+	this._dragSources = [];
 
 	this.width = null;
 	this.height = null;
@@ -767,15 +768,13 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		this.transitionIndicator.destroy();
 		this.eventHub.destroy();
 		
-		if (this._dragSources) {
-			this._dragSources.forEach(function (dragSource) {
-				dragSource._dragListener.destroy();
-				dragSource._element = null;
-				dragSource._itemConfig = null;
-				dragSource._dragListener = null;
-			});
-			this._dragSources = null;
-		}
+		this._dragSources.forEach(function (dragSource) {
+			dragSource._dragListener.destroy();
+			dragSource._element = null;
+			dragSource._itemConfig = null;
+			dragSource._dragListener = null;
+		});
+		this._dragSources = [];
 	},
 
 	/**
@@ -943,10 +942,6 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	 * @returns {void}
 	 */
 	createDragSource: function( element, itemConfig ) {
-		if (!this._dragSources) {
-			this._dragSources = [];
-		}
-		
 		this.config.settings.constrainDragToContainer = false;
 		var dragSource = new lm.controls.DragSource( $( element ), itemConfig, this );
 		this._dragSources.push(dragSource);
