@@ -2312,7 +2312,7 @@ lm.utils.copy( lm.controls.Header.prototype, {
 	 * @returns {void}
 	 */
 	_$destroy: function() {
-		this.emit( 'destroy' );
+		this.emit( 'destroy', this );
 	
 		for( var i = 0; i < this.tabs.length; i++ ) {
 			this.tabs[ i ]._$destroy();
@@ -3424,7 +3424,7 @@ lm.utils.copy( lm.items.Component.prototype, {
 	},
 
 	_$destroy: function() {
-		this.container.emit( 'destroy' );
+		this.container.emit( 'destroy', this );
 		lm.items.AbstractContentItem.prototype._$destroy.call( this );
 	},
 
