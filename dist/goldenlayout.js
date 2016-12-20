@@ -4712,7 +4712,7 @@ lm.utils.EventHub.prototype._propagateToChildren = function( args ) {
 	for( i = 0; i < this._layoutManager.openPopouts.length; i++ ) {
 		childGl = this._layoutManager.openPopouts[ i ].getGlInstance();
 
-		if( childGl !== this._childEventSource ) {
+		if( childGl && childGl !== this._childEventSource ) {
 			childGl.eventHub._$onEventFromParent( args );
 		}
 	}
