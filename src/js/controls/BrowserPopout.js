@@ -31,6 +31,10 @@ lm.controls.BrowserPopout = function( config, dimensions, parentId, indexInParen
 lm.utils.copy( lm.controls.BrowserPopout.prototype, {
 
 	toConfig: function() {
+		if( this.isInitialised === false ) {
+			throw new Error( 'Can\'t create config, layout not yet initialised' );
+			return;
+		};
 		return {
 			dimensions:{
 				width: this.getGlInstance().width,
