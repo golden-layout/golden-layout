@@ -737,7 +737,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		}
 
 		if( this.isInitialised === true ) {
-			this.root.callDownwards( 'setSize' );
+			this.root.callDownwards( 'setSize', [this.width, this.height] );
 
 			if( this._maximisedItem ) {
 				this._maximisedItem.element.width( this.container.width() );
@@ -3175,7 +3175,6 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 		this._callOnActiveComponents( 'show' );
 		this.element.show();
 		this.layoutManager.updateSize();
-		this._callOnActiveComponents( 'shown' );
 	},
 
 	_callOnActiveComponents: function( methodName ) {
@@ -3468,9 +3467,9 @@ lm.utils.copy( lm.items.Root.prototype, {
 		this.emitBubblingEvent( 'stateChanged' );
 	},
 
-	setSize: function() {
-		var width = this._containerElement.width(),
-			height = this._containerElement.height();
+	setSize: function(width, height) {
+		width = (typeof width === 'undefined') ? this._containerElement.width() : width;
+		height = (typeof height === 'undefined') ? this._containerElement.height() : height;
 
 		this.element.width( width );
 		this.element.height( height );
