@@ -1370,7 +1370,11 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		this.root.callDownwards( '_$init' );
 
 		if( config.maximisedItemId === '__glMaximised' ) {
-			this.root.getItemsById( config.maximisedItemId )[ 0 ].toggleMaximise();
+			/* so if delete an item while it's maximized and try to restore it, this goes wild */
+			/* TODO should fix this for real */
+			if(this.root.getItemsById( config.maximisedItemId )[ 0 ]) {
+				this.root.getItemsById(config.maximisedItemId)[0].toggleMaximise();
+			}
 		}
 	},
 
