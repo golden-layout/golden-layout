@@ -17,22 +17,28 @@ $(function () {
 
   window.myLayout = new GoldenLayout( config );
 
-  myLayout.registerComponent( 'hey', function( container, state ) {
-    if( state.bg ) {
-      container
-        .getElement()
-        .text( 'hey');
-    }
+  myLayout.registerComponent( 'html', function( container, state ) {
+	  container
+		  .getElement()
+		  .html( state.html ? state.html.join( '\n' ) : '<p>' + container._config.title + '</p>' );
+
+		if (state.style) {
+			$('head').append('<style type="text/css">\n' + state.style.join( '\n' ) + '\n</style>');
+		}
+
+		if (state.className) {
+			container.getElement().addClass(state.className);
+		}
   });
 
   myLayout.init();
 
   function getQueryParams() {
     var params = {};
-    window.location.search.replace(/^\?/, '').split('&').forEach(function (pair) {
-      var parts = pair.split('=');
-      if (parts.length > 1) {
-        params[decodeURIComponent(parts[0]).toLowerCase()] = decodeURIComponent(parts[1]);
+    window.location.search.replace( /^\?/, '' ).split( '&' ).forEach(function (pair) {
+      var parts = pair.split( '=' );
+      if( parts.length > 1 ) {
+        params[decodeURIComponent( parts[ 0 ] ).toLowerCase() ] = decodeURIComponent( parts[ 1 ] );
       }
     });
 
@@ -52,7 +58,7 @@ $(function () {
               {
                 title: 'Fnts 100',
                 type: 'component',
-                componentName: 'hey',
+                componentName: 'html',
               },
               {
                 type: 'row',
@@ -60,14 +66,14 @@ $(function () {
                   {
                     type: 'component',
                     title: 'Golden',
-                    componentName: 'hey',
+                    componentName: 'html',
                     width: 30,
                     componentState: { bg: 'golden_layout_spiral.png' }
                   },
                   {
                     title: 'Layout',
                     type: 'component',
-                    componentName: 'hey',
+                    componentName: 'html',
                     componentState: { bg: 'golden_layout_text.png' }
                   }
                 ]
@@ -78,7 +84,7 @@ $(function () {
                   {
                     type: 'component',
                     title: 'Acme, inc.',
-                    componentName: 'hey',
+                    componentName: 'html',
                     componentState: {
                       companyName: 'Stock X'
                     }
@@ -87,7 +93,7 @@ $(function () {
 
                     type: 'component',
                     title: 'LexCorp plc.',
-                    componentName: 'hey',
+                    componentName: 'html',
                     componentState: {
                       companyName: 'Stock Y'
                     }
@@ -95,7 +101,7 @@ $(function () {
                   {
                     type: 'component',
                     title: 'Springshield plc.',
-                    componentName: 'hey',
+                    componentName: 'html',
                     componentState: {
                       companyName: 'Stock Z'
                     }
@@ -111,13 +117,13 @@ $(function () {
                 {
                   type: 'component',
                   title: 'Performance',
-                  componentName: 'hey'
+                  componentName: 'html'
                 },
                 {
                   height: 40,
                   type: 'component',
                   title: 'Market',
-                  componentName: 'hey'
+                  componentName: 'html'
                 }
               ]
             }
@@ -146,7 +152,7 @@ $(function () {
 						  {
 							  title: 'Fnts 100',
 							  type: 'component',
-							  componentName: 'hey',
+							  componentName: 'html',
 						  },
 						  {
 							  type: 'row',
@@ -154,7 +160,7 @@ $(function () {
 								  {
 									  type: 'component',
 									  title: 'Golden',
-									  componentName: 'hey',
+									  componentName: 'html',
 									  width: 30,
 									  componentState: { bg: 'golden_layout_spiral.png' }
 								  }
@@ -166,7 +172,7 @@ $(function () {
 								  {
 									  type: 'component',
 									  title: 'Acme, inc.',
-									  componentName: 'hey',
+									  componentName: 'html',
 									  componentState: {
 										  companyName: 'Stock X'
 									  }
@@ -174,7 +180,7 @@ $(function () {
 								  {
 									  type: 'component',
 									  title: 'LexCorp plc.',
-									  componentName: 'hey',
+									  componentName: 'html',
 									  componentState: {
 										  companyName: 'Stock Y'
 									  }
@@ -182,7 +188,7 @@ $(function () {
 								  {
 									  type: 'component',
 									  title: 'Springshield plc.',
-									  componentName: 'hey',
+									  componentName: 'html',
 									  componentState: {
 										  companyName: 'Stock Z'
 									  }
@@ -195,14 +201,32 @@ $(function () {
 					  width: 30,
 					  title: 'Layout',
 					  type: 'component',
-					  componentName: 'hey',
+					  componentName: 'html',
 					  componentState: { bg: 'golden_layout_text.png' }
 				  },
 				  {
 					  width: 20,
 					  type: 'component',
 					  title: 'Market',
-					  componentName: 'hey'
+					  componentName: 'html',
+					  componentState: {
+							className: 'market-content',
+					  	style: [
+								'.market-content label {',
+								'  margin-top: 10px;',
+								'  display: block;',
+								'  text-align: left;',
+								'}',
+								'.market-content input {',
+								'  width: 250px;',
+								'  border: 1px solid red',
+								'}'
+					  	],
+						  html: [
+							  '<label for="name">Name<label>',
+							  '<input id="name" type="text"></input>'
+						  ]
+					  }
 				  },
 				  {
 					  width: 20,
@@ -212,13 +236,13 @@ $(function () {
 							  height: 20,
 							  type: 'component',
 							  title: 'Performance',
-							  componentName: 'hey'
+							  componentName: 'html'
 						  },
 						  {
 							  height: 80,
 							  type: 'component',
 							  title: 'Profile',
-							  componentName: 'hey'
+							  componentName: 'html'
 						  }
 					  ]
 				  }
@@ -241,7 +265,7 @@ $(function () {
               {
                 title: 'Fnts 100',
                 type: 'component',
-                componentName: 'hey',
+                componentName: 'html',
               },
               {
                 type: 'row',
@@ -249,7 +273,7 @@ $(function () {
                   {
                     type: 'component',
                     title: 'Golden',
-                    componentName: 'hey',
+                    componentName: 'html',
                     width: 30,
                     componentState: { bg: 'golden_layout_spiral.png' }
                   }
@@ -261,7 +285,7 @@ $(function () {
                   {
                     type: 'component',
                     title: 'Acme, inc.',
-                    componentName: 'hey',
+                    componentName: 'html',
                     componentState: {
                       companyName: 'Stock X'
                     }
@@ -270,7 +294,7 @@ $(function () {
 
                     type: 'component',
                     title: 'LexCorp plc.',
-                    componentName: 'hey',
+                    componentName: 'html',
                     componentState: {
                       companyName: 'Stock Y'
                     }
@@ -278,7 +302,7 @@ $(function () {
                   {
                     type: 'component',
                     title: 'Springshield plc.',
-                    componentName: 'hey',
+                    componentName: 'html',
                     componentState: {
                       companyName: 'Stock Z'
                     }
@@ -294,48 +318,48 @@ $(function () {
               {
                 type: 'component',
                 title: 'Market',
-                componentName: 'hey'
+                componentName: 'html'
               },
               {
                 type: 'component',
                 title: 'Performance',
-                componentName: 'hey'
+                componentName: 'html'
               },
               {
                 type: 'component',
                 title: 'Trend',
-                componentName: 'hey'
+                componentName: 'html'
               },
               {
                 type: 'component',
                 title: 'Balance',
-                componentName: 'hey'
+                componentName: 'html'
               },
               {
                 type: 'component',
                 title: 'Budget',
-                componentName: 'hey'
+                componentName: 'html'
               },
               {
                 type: 'component',
                 title: 'Curve',
-                componentName: 'hey'
+                componentName: 'html'
               },
               {
                 type: 'component',
                 title: 'Standing',
-                componentName: 'hey'
+                componentName: 'html'
               },
               {
                 type: 'component',
                 title: 'Lasting',
-                componentName: 'hey',
+                componentName: 'html',
                 componentState: { bg: 'golden_layout_spiral.png' }
               },
               {
                 type: 'component',
                 title: 'Profile',
-                componentName: 'hey'
+                componentName: 'html'
               }
             ]
           },
@@ -343,7 +367,7 @@ $(function () {
             width: 30,
             title: 'Layout',
             type: 'component',
-            componentName: 'hey',
+            componentName: 'html',
             componentState: { bg: 'golden_layout_text.png' }
           }
           ]

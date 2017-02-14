@@ -141,7 +141,7 @@
 	visibility: hidden;
 }
 
-.lm_header .lm_controls .lm_tabdropdown:before {
+.lm_controls .lm_tabdropdown:before {
   color: white;
   content: '';
   width: 0;
@@ -157,7 +157,7 @@
   position: absolute;
   top: 20px;
   right: 0;
-  z-index: 5;
+  z-index: 100;
   overflow: hidden;
 }
 
@@ -165,10 +165,12 @@
   clear: both;
   padding-right: 10px;
   margin: 0;
+	white-space: nowrap;
+	border-radius: 0;
 }
 
 .lm_header .lm_tabdropdown_list .lm_tab .lm_title {
-  width: 100px;
+  width: 150px;
 }
 
 .lm_header .lm_tabdropdown_list .lm_close_tab {

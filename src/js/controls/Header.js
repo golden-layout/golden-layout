@@ -298,7 +298,8 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			i,
 			showTabDropdown,
 		  swapTab,
-			tabWidth;
+			tabWidth,
+		  hasVisibleTab = false;
 
 		this._lastVisibleTabIndex = -1;
 
@@ -315,12 +316,13 @@ lm.utils.copy( lm.controls.Header.prototype, {
 
 			totalTabWidth += tabWidth;
 
-			// If the tab won't fit, put it in the dropdown for tabs.
-			if (totalTabWidth > availableWidth) {
+			// If the tab won't fit, put it in the dropdown for tabs, making sure there is always at least one tab visible.
+			if (totalTabWidth > availableWidth && hasVisibleTab) {
 				tabElement.data('lastTabWidth', tabWidth);
 				this.tabDropdownContainer.append(tabElement);
 			}
 			else {
+				hasVisibleTab = true;
 				this._lastVisibleTabIndex = i;
 				tabElement.removeData('lastTabWidth');
 			  this.tabsContainer.append(tabElement);

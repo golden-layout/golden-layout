@@ -188,46 +188,62 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	 */
 	_setAbsoluteSizes: function() {
 		var i,
-			totalSplitterSize = ( this.contentItems.length - 1 ) * this._splitterSize,
+			sizeData = this._calculateAbsoluteSizes();
+
+		for( i = 0; i < this.contentItems.length; i++ ) {
+			if (sizeData.additionalPixel - i > 0) {
+				sizeData.itemSizes[i]++;
+			}
+
+			if( this._isColumn ) {
+				this.contentItems[ i ].element.width( sizeData.totalWidth );
+				this.contentItems[ i ].element.height( sizeData.itemSizes[ i ] );
+			} else {
+				this.contentItems[ i ].element.width( sizeData.itemSizes[ i ] );
+				this.contentItems[ i ].element.height( sizeData.totalHeight );
+			}
+		}
+	},
+
+	/**
+	 * Calculates the absolute sizes of all of the children of this Item.
+	 * @returns {object} - Set with absolute sizes and additional pixels.
+	 */
+	_calculateAbsoluteSizes: function() {
+		var i,
+			totalSplitterSize = (this.contentItems.length - 1) * this._splitterSize,
 			totalWidth = this.element.width(),
 			totalHeight = this.element.height(),
 			totalAssigned = 0,
 			additionalPixel,
 			itemSize,
 			itemSizes = [];
-	
-		if( this._isColumn ) {
+
+		if (this._isColumn) {
 			totalHeight -= totalSplitterSize;
 		} else {
 			totalWidth -= totalSplitterSize;
 		}
-	
-		for( i = 0; i < this.contentItems.length; i++ ) {
-			if( this._isColumn ) {
-				itemSize = Math.floor( totalHeight * ( this.contentItems[ i ].config.height / 100 ) );
+
+		for (i = 0; i < this.contentItems.length; i++) {
+			if (this._isColumn) {
+				itemSize = Math.floor(totalHeight * (this.contentItems[i].config.height / 100));
 			} else {
-				itemSize = Math.floor( totalWidth * ( this.contentItems[ i ].config.width / 100 ) );
+				itemSize = Math.floor(totalWidth * (this.contentItems[i].config.width / 100));
 			}
 
 			totalAssigned += itemSize;
-			itemSizes.push( itemSize );
+			itemSizes.push(itemSize);
 		}
 
-		additionalPixel = Math.floor( ( this._isColumn ? totalHeight : totalWidth ) - totalAssigned );
+		additionalPixel = Math.floor((this._isColumn ? totalHeight : totalWidth) - totalAssigned);
 
-		for( i = 0; i < this.contentItems.length; i++ ) {
-			if( additionalPixel - i > 0 ) {
-				itemSizes[ i ]++;
-			}
-
-			if( this._isColumn ) {
-				this.contentItems[ i ].element.width( totalWidth );
-				this.contentItems[ i ].element.height( itemSizes[ i ] );
-			} else {
-				this.contentItems[ i ].element.width( itemSizes[ i ] );
-				this.contentItems[ i ].element.height( totalHeight );
-			}
-		}
+		return {
+			itemSizes: itemSizes,
+			additionalPixel: additionalPixel,
+			totalWidth: totalWidth,
+			totalHeight: totalHeight
+		};
 	},
 	
 	/**
@@ -270,6 +286,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 		 * Everything adds up to hundred, all good :-)
 		 */
 		if( Math.round( total ) === 100 ) {
+			this._respectMinItemWidth();
 			return;
 		}
 	
@@ -280,6 +297,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 			for( i = 0; i < itemsWithoutSetDimension.length; i++ ) {
 				itemsWithoutSetDimension[ i ].config[ dimension ] = ( 100 - total ) / itemsWithoutSetDimension.length;
 			}
+			this._respectMinItemWidth();
 			return;
 		}
 	
@@ -301,6 +319,88 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 		 */
 		for( i = 0; i < this.contentItems.length; i++ ) {
 			this.contentItems[ i ].config[ dimension ] = ( this.contentItems[ i ].config[ dimension ] / total ) * 100;
+		}
+
+		this._respectMinItemWidth();
+	},
+
+	/**
+	 * Adjusts the column widths to respect the dimensions minItemWidth if set.
+	 * @returns {} 
+	 */
+	_respectMinItemWidth: function() {
+		var minItemWidth = this.layoutManager.config.dimensions ? (this.layoutManager.config.dimensions.minItemWidth || 0) : 0,
+			sizeData = null, 
+			entriesOverMin = [], 
+			totalOverMin = 0,
+			totalUnderMin = 0,
+			remainingWidth = 0,
+			itemSize = 0,
+			contentItem = null,
+			reducePercent,
+			reducedWidth,
+			allEntries = [],
+			entry;
+
+		if ( this._isColumn || !minItemWidth || this.contentItems.length <= 1) {
+			return;
+		}
+
+		sizeData = this._calculateAbsoluteSizes();
+
+		/**
+		 * Figure out how much we are under the min item size total and how much room we have to use.
+		 */
+		for( i = 0; i < this.contentItems.length; i++ ) {
+
+			contentItem = this.contentItems[ i ];
+			itemSize = sizeData.itemSizes[ i ];
+
+			if( itemSize < minItemWidth ) {
+				totalUnderMin += minItemWidth - itemSize;
+				entry = { width: minItemWidth };
+				
+			}
+			else {
+				totalOverMin += itemSize - minItemWidth;
+				entry = { width: itemSize };
+				entriesOverMin.push(entry);
+			}
+
+			allEntries.push(entry);
+		}
+
+		/**
+		 * If there is nothing under min, or there is not enough over to make up the difference, do nothing.
+		 */
+		if (totalUnderMin === 0 || totalUnderMin > totalOverMin) {
+			return;
+		}
+
+		/**
+		 * Evenly reduce all columns that are over the min item width to make up the difference.
+		 */
+		reducePercent = totalUnderMin / totalOverMin;
+		remainingWidth = totalUnderMin;
+		for( i = 0; i < entriesOverMin.length; i++ ) {
+			entry = entriesOverMin[i];
+			reducedWidth = Math.round( ( entry.width - minItemWidth ) * reducePercent );
+			remainingWidth -= reducedWidth;
+			entry.width -= reducedWidth;
+		}
+
+		/**
+		 * Take anything remaining from the last item.
+		 */
+		if (remainingWidth !== 0) {
+			allEntries[allEntries.length - 1].width -= remainingWidth;
+		}
+
+		/**
+		 * Set every items size relative to 100 relative to its size to total
+		 */
+		for (i = 0; i < this.contentItems.length; i++) {
+			this.contentItems[i].config.width = (allEntries[i].width / sizeData.totalWidth) * 100;
 		}
 	},
 	
