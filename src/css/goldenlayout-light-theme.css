@@ -99,6 +99,10 @@
 	filter: alpha(opacity=100);
 }
 
+.lm_header .lm_controls .lm_tabdropdown:before {
+  color: black;
+}
+
 .lm_controls > li{
 	background-position: center center;
 	background-repeat: no-repeat;

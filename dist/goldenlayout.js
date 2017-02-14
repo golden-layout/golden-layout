@@ -2458,12 +2458,12 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			minimiseLabel,
 			maximise,
 			maximiseButton,
-      tabDropdownLabel,
-      showTabDropdown;
+			tabDropdownLabel,
+			showTabDropdown;
 
 		/**
-	   * Dropdown to show additional tabs.
-	   */
+		* Dropdown to show additional tabs.
+		*/
 		showTabDropdown = lm.utils.fnBind( this._showAdditionalTabsDropdown, this );
 		tabDropdownLabel = this.layoutManager.config.labels.tabDropdown;
 		this.tabDropdownButton = new lm.controls.HeaderButton( this, tabDropdownLabel, 'lm_tabdropdown', showTabDropdown );
@@ -2507,19 +2507,19 @@ lm.utils.copy( lm.controls.Header.prototype, {
 	},
 
 	/**
-   * Shows drop down for additional tabs when there are too many to display.
-   * 
-   * @returns {void} 
-   */
+	* Shows drop down for additional tabs when there are too many to display.
+	* 
+	* @returns {void} 
+	*/
 	_showAdditionalTabsDropdown: function () {
 		this.tabDropdownContainer.show();
 	},
 
 	/**
-   * Hides drop down for additional tabs when there are too many to display.
-   * 
-   * @returns {void} 
-   */
+	* Hides drop down for additional tabs when there are too many to display.
+	* 
+	* @returns {void} 
+	*/
 	_hideAdditionalTabsDropdown: function (e) {
 		this.tabDropdownContainer.hide();
 	},
@@ -2571,7 +2571,7 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			tabElement,
 			i,
 			showTabDropdown,
-		  swapTab,
+			swapTab,
 			tabWidth;
 
 		this._lastVisibleTabIndex = -1;
@@ -2602,8 +2602,8 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		}
 
 		/*
-     * Show the tab dropdown icon if not all tabs fit.
-     */
+		* Show the tab dropdown icon if not all tabs fit.
+		*/
 		showTabDropdown = totalTabWidth > availableWidth;
 		this.tabDropdownButton.element[showTabDropdown ? 'show' : 'hide']();
 	}

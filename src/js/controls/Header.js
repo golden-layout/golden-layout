@@ -184,16 +184,16 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			minimiseLabel,
 			maximise,
 			maximiseButton,
-      tabDropdownLabel,
-      showTabDropdown;
+			tabDropdownLabel,
+			showTabDropdown;
 
-	  /**
-	   * Dropdown to show additional tabs.
-	   */
+		/**
+		* Dropdown to show additional tabs.
+		*/
 		showTabDropdown = lm.utils.fnBind( this._showAdditionalTabsDropdown, this );
-	  tabDropdownLabel = this.layoutManager.config.labels.tabDropdown;
-	  this.tabDropdownButton = new lm.controls.HeaderButton( this, tabDropdownLabel, 'lm_tabdropdown', showTabDropdown );
-	  this.tabDropdownButton.element.hide();
+		tabDropdownLabel = this.layoutManager.config.labels.tabDropdown;
+		this.tabDropdownButton = new lm.controls.HeaderButton( this, tabDropdownLabel, 'lm_tabdropdown', showTabDropdown );
+		this.tabDropdownButton.element.hide();
 
 		/**
 		 * Popout control to launch component in new window.
@@ -232,23 +232,23 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		}
 	},
 
-  /**
-   * Shows drop down for additional tabs when there are too many to display.
-   * 
-   * @returns {void} 
-   */
-  _showAdditionalTabsDropdown: function() {
-    this.tabDropdownContainer.show();
-  },
+	 /**
+	  * Shows drop down for additional tabs when there are too many to display.
+	  * 
+	  * @returns {void} 
+	  */
+	 _showAdditionalTabsDropdown: function() {
+	   this.tabDropdownContainer.show();
+	 },
 
-  /**
-   * Hides drop down for additional tabs when there are too many to display.
-   * 
-   * @returns {void} 
-   */
-  _hideAdditionalTabsDropdown: function(e) {
-    this.tabDropdownContainer.hide();
-  },
+	 /**
+	  * Hides drop down for additional tabs when there are too many to display.
+	  * 
+	  * @returns {void} 
+	  */
+	 _hideAdditionalTabsDropdown: function(e) {
+	   this.tabDropdownContainer.hide();
+	 },
 
 	/**
 	 * Checks whether the header is closable based on the parent config and 
@@ -327,11 +327,11 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			}
 		}
 
-	  /*
-     * Show the tab dropdown icon if not all tabs fit.
-     */
-	  showTabDropdown = totalTabWidth > availableWidth;
-    this.tabDropdownButton.element[showTabDropdown ? 'show' : 'hide']();
+		/*
+		* Show the tab dropdown icon if not all tabs fit.
+		*/
+		showTabDropdown = totalTabWidth > availableWidth;
+		this.tabDropdownButton.element[showTabDropdown ? 'show' : 'hide']();
 	}
 });
 

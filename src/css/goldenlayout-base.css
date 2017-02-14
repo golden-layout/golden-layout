@@ -157,12 +157,14 @@
   position: absolute;
   top: 20px;
   right: 0;
-  z-index: 1;
+  z-index: 5;
+  overflow: hidden;
 }
 
 .lm_header .lm_tabdropdown_list .lm_tab {
   clear: both;
   padding-right: 10px;
+  margin: 0;
 }
 
 .lm_header .lm_tabdropdown_list .lm_tab .lm_title {
