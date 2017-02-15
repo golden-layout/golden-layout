@@ -17,13 +17,19 @@ lm.controls.Header = function( layoutManager, parent ) {
 	
 	this.element.height( layoutManager.config.dimensions.headerHeight );
 	this.tabsContainer = this.element.find( '.lm_tabs' );
+	this.tabDropdownContainer = this.element.find( '.lm_tabdropdown_list' );
+	this.tabDropdownContainer.hide();
 	this.controlsContainer = this.element.find( '.lm_controls' );
 	this.parent = parent;
 	this.parent.on( 'resize', this._updateTabSizes, this );
 	this.tabs = [];
 	this.activeContentItem = null;
 	this.closeButton = null;
+	this.tabDropdownButton = null;
+	$(document).mouseup( lm.utils.fnBind( this._hideAdditionalTabsDropdown, this ) );
 
+	this._lastVisibleTabIndex = -1;
+	this._tabControlOffset = 10;
 	this._createControls();
 };
 
@@ -31,6 +37,7 @@ lm.controls.Header._template = [
 	'<div class="lm_header">',
 		'<ul class="lm_tabs"></ul>',
 		'<ul class="lm_controls"></ul>',
+	  '<ul class="lm_tabdropdown_list"></ul>',
 	'</div>'
 ].join( '' );
 
@@ -102,7 +109,7 @@ lm.utils.copy( lm.controls.Header.prototype, {
 	 * @param {lm.item.AbstractContentItem} contentItem
 	 */
 	setActiveContentItem: function( contentItem ) {
-		var i, isActive;
+		var i, j, isActive, activeTab;
 
 		for( i = 0; i < this.tabs.length; i++ ) {
 			isActive = this.tabs[ i ].contentItem === contentItem;
@@ -113,7 +120,20 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			}
 		}
 
-		this._updateTabSizes();
+	  /**
+		 * If the tab selected was in the dropdown, move everything down one to make way for this one to be the first.
+		 * This will make sure the most used tabs stay visible.
+		 */
+		if (this._lastVisibleTabIndex !== -1 && this.parent.config.activeItemIndex > this._lastVisibleTabIndex) {
+			activeTab = this.tabs[this.parent.config.activeItemIndex];
+			for (j = this.parent.config.activeItemIndex; j > 0; j--) {
+				this.tabs[j] = this.tabs[j - 1];
+			}
+			this.tabs[0] = activeTab;
+			this.parent.config.activeItemIndex = 0;
+		}
+
+	  this._updateTabSizes();
 		this.parent.emitBubblingEvent( 'stateChanged' );
 	},
 
@@ -142,7 +162,7 @@ lm.utils.copy( lm.controls.Header.prototype, {
 	 * @returns {void}
 	 */
 	_$destroy: function() {
-		this.emit( 'destroy' );
+		this.emit( 'destroy', this );
 	
 		for( var i = 0; i < this.tabs.length; i++ ) {
 			this.tabs[ i ]._$destroy();
@@ -163,7 +183,17 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			maximiseLabel,
 			minimiseLabel,
 			maximise,
-			maximiseButton;
+			maximiseButton,
+			tabDropdownLabel,
+			showTabDropdown;
+
+		/**
+		* Dropdown to show additional tabs.
+		*/
+		showTabDropdown = lm.utils.fnBind( this._showAdditionalTabsDropdown, this );
+		tabDropdownLabel = this.layoutManager.config.labels.tabDropdown;
+		this.tabDropdownButton = new lm.controls.HeaderButton( this, tabDropdownLabel, 'lm_tabdropdown', showTabDropdown );
+		this.tabDropdownButton.element.hide();
 
 		/**
 		 * Popout control to launch component in new window.
@@ -202,6 +232,24 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		}
 	},
 
+	 /**
+	  * Shows drop down for additional tabs when there are too many to display.
+	  * 
+	  * @returns {void} 
+	  */
+	 _showAdditionalTabsDropdown: function() {
+	   this.tabDropdownContainer.show();
+	 },
+
+	 /**
+	  * Hides drop down for additional tabs when there are too many to display.
+	  * 
+	  * @returns {void} 
+	  */
+	 _hideAdditionalTabsDropdown: function(e) {
+	   this.tabDropdownContainer.hide();
+	 },
+
 	/**
 	 * Checks whether the header is closable based on the parent config and 
 	 * the global config.
@@ -235,8 +283,8 @@ lm.utils.copy( lm.controls.Header.prototype, {
 	},
 
 	/**
-	 * Shrinks the tabs if the available space is not sufficient
-	 *
+	 * Pushes the tabs to the tab dropdown if the available space is not sufficient
+	 * 
 	 * @returns {void}
 	 */
 	_updateTabSizes: function() {
@@ -244,44 +292,46 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			return;
 		}
 		
-		var availableWidth = this.element.outerWidth() - this.controlsContainer.outerWidth(),
+		var availableWidth = this.element.outerWidth() - this.controlsContainer.outerWidth() - this._tabControlOffset,
 			totalTabWidth = 0,
 			tabElement,
 			i,
-			marginLeft,
-			gap;
+			showTabDropdown,
+		  swapTab,
+			tabWidth;
+
+		this._lastVisibleTabIndex = -1;
 
 		for( i = 0; i < this.tabs.length; i++ ) {
 			tabElement = this.tabs[ i ].element;
 
 			/*
-			 * In order to show every tab's close icon, decrement the z-index from left to right
+			 * Retain tab width when hidden so it can be restored.
 			 */
-			tabElement.css( 'z-index', this.tabs.length - i );
-			totalTabWidth += tabElement.outerWidth() + parseInt( tabElement.css( 'margin-right' ), 10 );
-		}
-
-		gap = ( totalTabWidth - availableWidth ) / ( this.tabs.length - 1 );
-
-		for( i = 0; i < this.tabs.length; i++ ) {
-
-			/*
-			 * The active tab keeps it's original width
-			 */
-			if( !this.tabs[ i ].isActive && gap > 0 ) {
-				marginLeft = '-' + Math.floor( gap )+ 'px';
-			} else {
-				marginLeft = '';
+			tabWidth = tabElement.data('lastTabWidth');
+			if (!tabWidth) {
+				tabWidth = tabElement.outerWidth() + parseInt(tabElement.css('margin-right'), 10);
 			}
 
-			this.tabs[ i ].element.css( 'margin-left', marginLeft );
+			totalTabWidth += tabWidth;
+
+			// If the tab won't fit, put it in the dropdown for tabs.
+			if (totalTabWidth > availableWidth) {
+				tabElement.data('lastTabWidth', tabWidth);
+				this.tabDropdownContainer.append(tabElement);
+			}
+			else {
+				this._lastVisibleTabIndex = i;
+				tabElement.removeData('lastTabWidth');
+			  this.tabsContainer.append(tabElement);
+			}
 		}
 
-		if( availableWidth < totalTabWidth ) {
-			this.element.css( 'overflow', 'hidden' );
-		} else {
-			this.element.css( 'overflow', 'visible' );
-		}
+		/*
+		* Show the tab dropdown icon if not all tabs fit.
+		*/
+		showTabDropdown = totalTabWidth > availableWidth;
+		this.tabDropdownButton.element[showTabDropdown ? 'show' : 'hide']();
 	}
 });
 

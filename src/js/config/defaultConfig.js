@@ -25,6 +25,7 @@ lm.config.defaultConfig = {
 		maximise: 'maximise',
 		minimise: 'minimise',
 		popout: 'open in new window',
-		popin: 'pop in'
+		popin: 'pop in',
+		tabDropdown: 'additional tabs'
 	}
 };
