@@ -11,7 +11,7 @@ lm.config.defaultConfig = {
 		showPopoutIcon: true,
 		showMaximiseIcon: true,
 		showCloseIcon: true,
-    responsive: false
+    responsiveMode: 'onload' // Can be onload, always, or none.
 	},
 	dimensions: {
 		borderWidth: 5,
