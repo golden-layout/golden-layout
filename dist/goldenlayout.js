@@ -718,7 +718,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		this._bindEvents();
 		this.isInitialised = true;
 		this._adjustColumnsResponsive();
-		this.emit( 'initialised' );
+		this.emit('initialised');
 	},
 
 	/**
@@ -748,7 +748,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 				this._maximisedItem.callDownwards( 'setSize' );
 			}
 
-			this._adjustColumnsResponsive();
+		  this._adjustColumnsResponsive();
 		}
 	},
 
@@ -1400,7 +1400,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
    */
 	_adjustColumnsResponsive: function () {
 
-	  // If there is no min width set, or not content items, do nothing.
+    // If there is no min width set, or not content items, do nothing.
 		if (!this._useResponsiveLayout() || this._updatingColumnsResponsive || !this.config.dimensions ||
         !this.config.dimensions.minItemWidth || this.root.contentItems.length === 0 || !this.root.contentItems[0].isRow) {
 			this._firstLoad = false;
@@ -1409,28 +1409,28 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 
 		this._firstLoad = false;
 
-	  // If there is only one column, do nothing.
+    // If there is only one column, do nothing.
 	  var columnCount = this.root.contentItems[0].contentItems.length;
 	  if (columnCount <= 1) {
-	    return;
+      return;
 	  }
 
-	  // If they all still fit, do nothing.
+    // If they all still fit, do nothing.
 	  var minItemWidth = this.config.dimensions.minItemWidth;
 	  var totalMinWidth = columnCount * minItemWidth;
-	  if (totalMinWidth <= this.width) {
-	    return;
-	  }
+    if (totalMinWidth <= this.width) {
+      return;
+    }
 
 	  // Prevent updates while it is already happening.
-	  this._updatingColumnsResponsive = true;
+    this._updatingColumnsResponsive = true;
 
 	  // Figure out how many columns to stack, and put them all in the first stack container.
-	  var finalColumnCount = Math.max(Math.floor(this.width / minItemWidth), 1);
-	  var stackColumnCount = columnCount - finalColumnCount;
+    var finalColumnCount = Math.max(Math.floor(this.width / minItemWidth), 1);
+    var stackColumnCount = columnCount - finalColumnCount;
 
-	  var rootContentItem = this.root.contentItems[0];
-	  var firstStackContainer = this._findAllStackContainers()[0];
+    var rootContentItem = this.root.contentItems[0];
+    var firstStackContainer = this._findAllStackContainers()[0];
 	  for (var i = 0; i < stackColumnCount; i++) {
 	    // Stack from right.
 	    var column = rootContentItem.contentItems[rootContentItem.contentItems.length - 1];
@@ -1446,8 +1446,8 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	 * 
 	 * @returns {bool} - True if responsive layout should be used; otherwise false.
 	 */
-	_useResponsiveLayout: function () {
-		return this.config.settings && (this.config.settings.responsiveMode == 'always' || (this.config.settings.responsiveMode == 'onload' && this._firstLoad));
+	_useResponsiveLayout: function() {
+		return this.config.settings && ( this.config.settings.responsiveMode == 'always' || ( this.config.settings.responsiveMode == 'onload' && this._firstLoad ) );
 	},
 
   /**
@@ -1456,18 +1456,18 @@ lm.utils.copy( lm.LayoutManager.prototype, {
    * @param {object} node - Node to search for content items.
    * @returns {void}
    */
-	_addChildContentItemsToContainer: function (container, node) {
-	  if (node.type === 'stack') {
-	    node.contentItems.forEach(function (item) {
-	      container.addChild(item);
-	    });
-	  }
-	  else {
-	    node.contentItems.forEach(lm.utils.fnBind(function (item) {
-	      this._addChildContentItemsToContainer(container, item);
-	    }, this));
-	  }
-	},
+  _addChildContentItemsToContainer: function(container, node) {
+    if (node.type === 'stack') {
+      node.contentItems.forEach(function(item) {
+        container.addChild(item);
+      });
+    }
+    else {
+      node.contentItems.forEach(lm.utils.fnBind(function (item) {
+        this._addChildContentItemsToContainer(container, item);
+      }, this));
+    }    
+  },
 
   /**
    * Finds all the stack containers.
@@ -1477,7 +1477,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	  var stackContainers = [];
 	  this._findAllStackContainersRecursive(stackContainers, this.root);
 
-	  return stackContainers;
+    return stackContainers;
 	},
 
   /**
@@ -1490,14 +1490,14 @@ lm.utils.copy( lm.LayoutManager.prototype, {
    */
 	_findAllStackContainersRecursive: function (stackContainers, node) {
 	  node.contentItems.forEach(lm.utils.fnBind(function (item) {
-	    if (item.type == 'stack') {
-	      stackContainers.push(item);
-	    }
-	    else if (!item.isComponent) {
-	      this._findAllStackContainersRecursive(stackContainers, item);
-	    }
-	  }, this));
-	}
+        if (item.type == 'stack') {
+          stackContainers.push(item);
+        }
+        else if (!item.isComponent) {
+          this._findAllStackContainersRecursive(stackContainers, item);
+        }
+    }, this));
+  }
 });
 
 /**
@@ -1532,7 +1532,7 @@ lm.config.defaultConfig = {
 		showPopoutIcon: true,
 		showMaximiseIcon: true,
 		showCloseIcon: true,
-		responsiveMode: 'onload' // Can be onload, always, or none.
+    responsiveMode: 'onload' // Can be onload, always, or none.
 	},
 	dimensions: {
 		borderWidth: 5,
