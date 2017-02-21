@@ -1439,6 +1439,7 @@ lm.config.defaultConfig = {
 		tabDropdown: 'additional tabs'
 	}
 };
+
 lm.container.ItemContainer = function( config, parent, layoutManager ) {
 	lm.utils.EventEmitter.call( this );
 
@@ -2201,7 +2202,7 @@ lm.controls.Header = function( layoutManager, parent ) {
 	this.activeContentItem = null;
 	this.closeButton = null;
 	this.tabDropdownButton = null;
-	$(document).mouseup(lm.utils.fnBind(this._hideAdditionalTabsDropdown, this));
+	$(document).mouseup( lm.utils.fnBind( this._hideAdditionalTabsDropdown, this ) );
 
 	this._lastVisibleTabIndex = -1;
 	this._tabControlOffset = 10;
@@ -2212,7 +2213,7 @@ lm.controls.Header._template = [
 	'<div class="lm_header">',
 		'<ul class="lm_tabs"></ul>',
 		'<ul class="lm_controls"></ul>',
-		'<ul class="lm_tabdropdown_list"></ul>',
+	  '<ul class="lm_tabdropdown_list"></ul>',
 	'</div>'
 ].join( '' );
 
@@ -2286,16 +2287,16 @@ lm.utils.copy( lm.controls.Header.prototype, {
 	setActiveContentItem: function( contentItem ) {
 		var i, j, isActive, activeTab;
 
-		for (i = 0; i < this.tabs.length; i++) {
-			isActive = this.tabs[i].contentItem === contentItem;
-			this.tabs[i].setActive(isActive);
-			if (isActive === true) {
+		for( i = 0; i < this.tabs.length; i++ ) {
+			isActive = this.tabs[ i ].contentItem === contentItem;
+			this.tabs[ i ].setActive( isActive );
+			if( isActive === true ) {
 				this.activeContentItem = contentItem;
 				this.parent.config.activeItemIndex = i;
 			}
 		}
 
-		/**
+	  /**
 		 * If the tab selected was in the dropdown, move everything down one to make way for this one to be the first.
 		 * This will make sure the most used tabs stay visible.
 		 */
@@ -2308,8 +2309,8 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			this.parent.config.activeItemIndex = 0;
 		}
 
-		this._updateTabSizes();
-		this.parent.emitBubblingEvent('stateChanged');
+	  this._updateTabSizes();
+		this.parent.emitBubblingEvent( 'stateChanged' );
 	},
 
 	/**
@@ -2407,23 +2408,23 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		}
 	},
 
-	/**
-	* Shows drop down for additional tabs when there are too many to display.
-	* 
-	* @returns {void} 
-	*/
-	_showAdditionalTabsDropdown: function () {
-		this.tabDropdownContainer.show();
-	},
+	 /**
+	  * Shows drop down for additional tabs when there are too many to display.
+	  * 
+	  * @returns {void} 
+	  */
+	 _showAdditionalTabsDropdown: function() {
+	   this.tabDropdownContainer.show();
+	 },
 
-	/**
-	* Hides drop down for additional tabs when there are too many to display.
-	* 
-	* @returns {void} 
-	*/
-	_hideAdditionalTabsDropdown: function (e) {
-		this.tabDropdownContainer.hide();
-	},
+	 /**
+	  * Hides drop down for additional tabs when there are too many to display.
+	  * 
+	  * @returns {void} 
+	  */
+	 _hideAdditionalTabsDropdown: function(e) {
+	   this.tabDropdownContainer.hide();
+	 },
 
 	/**
 	 * Checks whether the header is closable based on the parent config and 
@@ -2459,26 +2460,26 @@ lm.utils.copy( lm.controls.Header.prototype, {
 
 	/**
 	 * Pushes the tabs to the tab dropdown if the available space is not sufficient
-	 *
+	 * 
 	 * @returns {void}
 	 */
 	_updateTabSizes: function() {
-		if (this.tabs.length === 0) {
+		if( this.tabs.length === 0 ) {
 			return;
 		}
-
+		
 		var availableWidth = this.element.outerWidth() - this.controlsContainer.outerWidth() - this._tabControlOffset,
 			totalTabWidth = 0,
 			tabElement,
 			i,
 			showTabDropdown,
-			swapTab,
+		  swapTab,
 			tabWidth;
 
 		this._lastVisibleTabIndex = -1;
 
-		for (i = 0; i < this.tabs.length; i++) {
-			tabElement = this.tabs[i].element;
+		for( i = 0; i < this.tabs.length; i++ ) {
+			tabElement = this.tabs[ i ].element;
 
 			/*
 			 * Retain tab width when hidden so it can be restored.
@@ -2498,7 +2499,7 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			else {
 				this._lastVisibleTabIndex = i;
 				tabElement.removeData('lastTabWidth');
-				this.tabsContainer.append(tabElement);
+			  this.tabsContainer.append(tabElement);
 			}
 		}
 
@@ -3996,7 +3997,7 @@ lm.items.Stack = function( layoutManager, config, parent ) {
 	this.childElementContainer = $( '<div class="lm_items"></div>' );
 	this.header = new lm.controls.Header( layoutManager, this );
 
-	if( layoutManager.config.settings.hasHeaders === true ) {
+	if( layoutManager.config.settings.hasHeaders === true && config.hasHeaders !== false ) {
 		this.element.append( this.header.element );
 	}
 
@@ -4011,7 +4012,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 	setSize: function() {
 		var i,
 			contentWidth = this.element.width(),
-			contentHeight = this.element.height() - this.layoutManager.config.dimensions.headerHeight;
+			contentHeight = (this.config.hasHeaders !== false) ? this.element.height() - this.layoutManager.config.dimensions.headerHeight : this.element.height();
 
 		this.childElementContainer.width( contentWidth );
 		this.childElementContainer.height( contentHeight );
