@@ -109,7 +109,7 @@ lm.utils.copy( lm.utils.DragListener.prototype, {
 	},
 
 	_getCoordinates: function( event ) {
-		event = event.originalEvent.touches ? event.originalEvent.touches[0] : event;
+		event = event.originalEvent && event.originalEvent.touches ? event.originalEvent.touches[0] : event;
 		return {
 			x: event.pageX,
 			y: event.pageY

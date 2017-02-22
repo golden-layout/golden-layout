@@ -437,7 +437,7 @@ lm.utils.copy( lm.utils.DragListener.prototype, {
 	},
 
 	_getCoordinates: function( event ) {
-		event = event.originalEvent.touches ? event.originalEvent.touches[0] : event;
+		event = event.originalEvent && event.originalEvent.touches ? event.originalEvent.touches[0] : event;
 		return {
 			x: event.pageX,
 			y: event.pageY
@@ -2079,7 +2079,7 @@ lm.utils.copy( lm.controls.DragProxy.prototype, {
 	 */
 	_onDrag: function( offsetX, offsetY, event ) {
 
-		event = event.originalEvent.touches ? event.originalEvent.touches[0] : event;
+		event = event.originalEvent && event.originalEvent.touches ? event.originalEvent.touches[0] : event;
 
 		var x = event.pageX,
 			y = event.pageY,
