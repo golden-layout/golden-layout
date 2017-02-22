@@ -101,7 +101,7 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 
 		totalPixel = this[direction] * ( 1 / ( rowOrColumnChild.config[direction] / 100 ) );
 		percentage = ( newSize / totalPixel ) * 100;
-		delta = ( rowOrColumnChild.config[direction] - percentage ) / rowOrColumn.contentItems.length;
+		delta = ( rowOrColumnChild.config[direction] - percentage ) / (rowOrColumn.contentItems.length - 1);
 
 		for( i = 0; i < rowOrColumn.contentItems.length; i++ ) {
 			if( rowOrColumn.contentItems[ i ] === rowOrColumnChild ) {
