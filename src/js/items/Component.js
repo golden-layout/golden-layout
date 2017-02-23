@@ -55,7 +55,7 @@ lm.utils.copy( lm.items.Component.prototype, {
 	},
 
 	_$destroy: function() {
-		this.container.emit( 'destroy' );
+		this.container.emit( 'destroy', this );
 		lm.items.AbstractContentItem.prototype._$destroy.call( this );
 	},
 

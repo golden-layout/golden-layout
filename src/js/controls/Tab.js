@@ -31,7 +31,7 @@ lm.controls.Tab = function( header, contentItem ) {
 	this._onTabClickFn = lm.utils.fnBind( this._onTabClick, this );
 	this._onCloseClickFn = lm.utils.fnBind( this._onCloseClick, this );
 
-	this.element.click( this._onTabClickFn );
+	this.element.mousedown( this._onTabClickFn );
 
 	if( this.contentItem.config.isClosable ) {
 		this.closeElement.click( this._onCloseClickFn );

@@ -24,9 +24,9 @@ lm.utils.copy( lm.items.Root.prototype, {
 		this.emitBubblingEvent( 'stateChanged' );
 	},
 
-	setSize: function() {
-		var width = this._containerElement.width(),
-			height = this._containerElement.height();
+	setSize: function(width, height) {
+		width = (typeof width === 'undefined') ? this._containerElement.width() : width;
+		height = (typeof height === 'undefined') ? this._containerElement.height() : height;
 
 		this.element.width( width );
 		this.element.height( height );
