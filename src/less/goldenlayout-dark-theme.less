@@ -10,7 +10,7 @@
 @color7:  #111111; // Appears 1 time
 @color8:  #452500; // Appears 1 time
 @color9:  #555555; // Appears 1 time
-@color10: #ffffff; // Appears 1 time
+@color10: #ffffff; // Appears 2 time
 
 // ".lm_dragging" is applied to BODY tag during Drag and is also directly applied to the root of the object being dragged
 
@@ -144,6 +144,12 @@
       background:@color1;
       color:@color3;
     }
+}
+
+// Dropdown arrow for additional tabs when too many to be displayed
+.lm_header .lm_controls .lm_tabdropdown:before 
+{
+  color:@color10;
 }
 
 // Pane controls (popout, maximize, minimize, close)
