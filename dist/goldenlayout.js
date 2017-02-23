@@ -372,7 +372,7 @@ lm.utils.copy( lm.utils.DragListener.prototype, {
 	{
 		oEvent.preventDefault();
 
-		if (oEvent.button == 0) {
+		if (oEvent.button == 0 || oEvent.type === "touchstart") {
 			var coordinates = this._getCoordinates( oEvent );
 
 			this._nOriginalX = coordinates.x;
@@ -437,17 +437,11 @@ lm.utils.copy( lm.utils.DragListener.prototype, {
 	},
 
 	_getCoordinates: function( event ) {
-		var coordinates = {};
-
-		if( event.type.substr( 0, 5 ) === 'touch' ) {
-			coordinates.x = event.originalEvent.targetTouches[ 0 ].pageX;
-			coordinates.y = event.originalEvent.targetTouches[ 0 ].pageY;
-		} else {
-			coordinates.x = event.pageX;
-			coordinates.y = event.pageY;
-		}
-
-		return coordinates;
+		event = event.originalEvent && event.originalEvent.touches ? event.originalEvent.touches[0] : event;
+		return {
+			x: event.pageX,
+			y: event.pageY
+		};
 	}
 });
 /**
@@ -1561,14 +1555,14 @@ lm.container.ItemContainer = function( config, parent, layoutManager ) {
 	this.parent = parent;
 	this.layoutManager = layoutManager;
 	this.isHidden = false;
-	
+
 	this._config = config;
 	this._element = $([
 		'<div class="lm_item_container">',
 			'<div class="lm_content"></div>',
 		'</div>'
 	].join( '' ));
-	
+
 	this._contentElement = this._element.find( '.lm_content' );
 };
 
@@ -1583,7 +1577,7 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 	getElement: function() {
 		return this._contentElement;
 	},
-	
+
 	/**
 	 * Hide the container. Notifies the containers content first
 	 * and then hides the DOM node. If the container is already hidden
@@ -1596,7 +1590,7 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 		this.isHidden = true;
 		this._element.hide();
 	},
-	
+
 	/**
 	 * Shows a previously hidden container. Notifies the
 	 * containers content first and then shows the DOM element.
@@ -1624,7 +1618,7 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 	 * @todo  Rework!!!
 	 * @param {Number} width  The new width in pixel
 	 * @param {Number} height The new height in pixel
-	 * 
+	 *
 	 * @returns {Boolean} resizeSuccesful
 	 */
 	setSize: function( width, height ) {
@@ -1640,7 +1634,7 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 		while( !rowOrColumn.isColumn && !rowOrColumn.isRow ) {
 			rowOrColumnChild = rowOrColumn;
 			rowOrColumn = rowOrColumn.parent;
-			
+
 
 			/**
 			 * No row or column has been found
@@ -1669,7 +1663,7 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 
 		return true;
 	},
-	
+
 	/**
 	 * Closes the container if it is closable. Can be called by
 	 * both the component within at as well as the contentItem containing
@@ -1730,7 +1724,7 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 	 *
 	 * @param {[Int]} width  in px
 	 * @param {[Int]} height in px
-	 * 
+	 *
 	 * @returns {void}
 	 */
 	_$setSize: function( width, height ) {
@@ -2084,6 +2078,9 @@ lm.utils.copy( lm.controls.DragProxy.prototype, {
 	 * @returns {void}
 	 */
 	_onDrag: function( offsetX, offsetY, event ) {
+
+		event = event.originalEvent && event.originalEvent.touches ? event.originalEvent.touches[0] : event;
+
 		var x = event.pageX,
 			y = event.pageY,
 			isWithinContainer = x > this._minX && x < this._maxX && y > this._minY && y < this._maxY;
@@ -2300,7 +2297,7 @@ lm.controls.Header = function( layoutManager, parent ) {
 
 	if( this.layoutManager.config.settings.selectionEnabled === true ) {
 		this.element.addClass( 'lm_selectable' );
-		this.element.click( lm.utils.fnBind( this._onHeaderClick, this ) );
+		this.element.on( 'click touchstart', lm.utils.fnBind( this._onHeaderClick, this ) );
 	}
 	
 	this.element.height( layoutManager.config.dimensions.headerHeight );
@@ -2629,7 +2626,7 @@ lm.controls.HeaderButton = function( header, label, cssClass, action ) {
 	this.element = $( '<li class="' + cssClass + '" title="' + label + '"></li>' );
 	this._header.on( 'destroy', this._$destroy, this );
 	this._action = action;
-	this.element.click( this._action );
+	this.element.on( 'click touchstart', this._action );
 	this._header.controlsContainer.append( this.element );
 };
 
@@ -2698,10 +2695,10 @@ lm.controls.Tab = function( header, contentItem ) {
 	this._onTabClickFn = lm.utils.fnBind( this._onTabClick, this );
 	this._onCloseClickFn = lm.utils.fnBind( this._onCloseClick, this );
 
-	this.element.mousedown( this._onTabClickFn );
+	this.element.on( 'mousedown touchstart', this._onTabClickFn );
 
 	if( this.contentItem.config.isClosable ) {
-		this.closeElement.click( this._onCloseClickFn );
+		this.closeElement.on( 'click touchstart', this._onCloseClickFn );
 	} else {
 		this.closeElement.remove();
 	}
@@ -2767,8 +2764,8 @@ lm.utils.copy( lm.controls.Tab.prototype,{
 	 * @returns {void}
 	 */
 	_$destroy: function() {
-		this.element.off( 'click', this._onTabClickFn );
-		this.closeElement.off( 'click', this._onCloseClickFn );
+		this.element.off( 'mousedown touchstart', this._onTabClickFn );
+		this.closeElement.off( 'click touchstart', this._onCloseClickFn );
 		if( this._dragListener ) {
 			this._dragListener.off( 'dragStart', this._onDragStart );
 			this._dragListener = null;
@@ -2808,8 +2805,8 @@ lm.utils.copy( lm.controls.Tab.prototype,{
 	 * @returns {void}
 	 */
 	_onTabClick: function( event ) {
-		// left mouse button
-		if( event.button === 0 ) {
+		// left mouse button or tap
+		if( event.button === 0 || event.type === 'touchstart' ) {
 			var activeContentItem = this.header.parent.getActiveContentItem();
 			if (this.contentItem !== activeContentItem) {
 				this.header.parent.setActiveContentItem( this.contentItem );
@@ -3150,7 +3147,8 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 	 *
 	 * @returns {void}
 	 */
-	toggleMaximise: function() {
+	toggleMaximise: function( e ) {
+		e.preventDefault();
 		if( this.isMaximised === true ) {
 			this.layoutManager._$minimiseItem( this );
 		} else {
