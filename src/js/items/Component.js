@@ -41,11 +41,13 @@ lm.utils.copy( lm.items.Component.prototype, {
 
 	_$hide: function() {
 		this.container.hide();
+		this.container.emit( 'hide', this);
 		lm.items.AbstractContentItem.prototype._$hide.call( this );
 	},
 
 	_$show: function() {
 		this.container.show();
+		this.container.emit( 'show', this );
 		lm.items.AbstractContentItem.prototype._$show.call( this );
 	},
 
