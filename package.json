@@ -5,6 +5,7 @@
   "license": "MIT",
   "devDependencies": {
     "grunt": "~0.4.2",
+    "grunt-contrib-less": "^1.4.1",
     "grunt-contrib-watch": "0.5.3",
     "grunt-gulp": "^1.0.1",
     "grunt-karma": "^2.0.0",
