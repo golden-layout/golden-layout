@@ -160,6 +160,40 @@
   }
 }
 
+.lm_stack.lm_left,
+.lm_stack.lm_right {
+  .lm_header {
+    width: 20px;
+    display: inline-block;
+    vertical-align: top;
+    height: 100%;
+    .lm_controls {
+      bottom:0;
+    }
+  }
+  .lm_items {
+    display: inline-block;
+  }
+}
+.lm_stack.lm_left .lm_header .lm_tabs {
+      transform: rotate(-90deg) scaleX(-1);
+      transform-origin: left top;
+      top: 0;
+      left: 0;
+      width:1000px; /*hack*/
+      .lm_tab {
+        transform: scaleX(-1);
+      }
+}
+.lm_stack.lm_right .lm_header .lm_tabs {
+      transform: rotate(90deg) scaleX(1);
+      transform-origin: left top;
+      top: 0;
+      left: 100%;
+      width:1000px; /*hack*/
+}
+
+
 .lm_drop_tab_placeholder {
   float: left;
   width: @width2;

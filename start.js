@@ -52,6 +52,7 @@ $(function () {
               {
                 title: 'Fnts 100',
                 type: 'component',
+                side: 'bottom',
                 componentName: 'hey',
               },
               {
@@ -60,12 +61,14 @@ $(function () {
                   {
                     type: 'component',
                     title: 'Golden',
+                    side: 'right',
                     componentName: 'hey',
                     width: 30,
                     componentState: { bg: 'golden_layout_spiral.png' }
                   },
                   {
                     title: 'Layout',
+                    side: 'left',
                     type: 'component',
                     componentName: 'hey',
                     componentState: { bg: 'golden_layout_text.png' }

@@ -15,7 +15,7 @@ lm.controls.Header = function( layoutManager, parent ) {
 		this.element.on( 'click touchstart', lm.utils.fnBind( this._onHeaderClick, this ) );
 	}
 	
-	this.element.height( layoutManager.config.dimensions.headerHeight );
+	this.element[parent._sided?'width':'height']( layoutManager.config.dimensions.headerHeight );
 	this.tabsContainer = this.element.find( '.lm_tabs' );
 	this.tabDropdownContainer = this.element.find( '.lm_tabdropdown_list' );
 	this.tabDropdownContainer.hide();
@@ -216,10 +216,6 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			this.parent.on( 'maximised', function(){
 				maximiseButton.element.attr( 'title', minimiseLabel );
 			});
-
-			this.parent.on( 'minimised', function(){
-				maximiseButton.element.attr( 'title', maximiseLabel );
-			});
 		}
 
 		/**
@@ -300,6 +296,8 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		  swapTab,
 			tabWidth;
 
+        if ( this.parent._sided )
+          availableWidth = this.element.outerHeight() - this.controlsContainer.outerHeight() - this._tabControlOffset;
 		this._lastVisibleTabIndex = -1;
 
 		for( i = 0; i < this.tabs.length; i++ ) {

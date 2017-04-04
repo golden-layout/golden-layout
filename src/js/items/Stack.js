@@ -4,6 +4,12 @@ lm.items.Stack = function( layoutManager, config, parent ) {
 	this.element = $( '<div class="lm_item lm_stack"></div>' );
 	this._activeContentItem = null;
 
+    if (config.content)
+    this._side = config.content[0].side;
+    this._sided = ['right','left'].indexOf(this._side)>=0;
+    if(this._sided)
+      this.element.addClass('lm_'+this._side);
+
 	this._dropZones = {};
 	this._dropSegment = null;
 	this._contentAreaDimensions = null;
@@ -18,6 +24,9 @@ lm.items.Stack = function( layoutManager, config, parent ) {
 		this.element.append( this.header.element );
 	}
 
+    if (['right','bottom'].indexOf(this._side)>=0)
+	  this.element.prepend( this.childElementContainer );
+	else
 	this.element.append( this.childElementContainer );
 	this._$validateClosability();
 };
@@ -28,8 +37,9 @@ lm.utils.copy( lm.items.Stack.prototype, {
 
 	setSize: function() {
 		var i,
-			contentWidth = this.element.width(),
-			contentHeight = (this.config.hasHeaders !== false) ? this.element.height() - this.layoutManager.config.dimensions.headerHeight : this.element.height();
+		    headerSize = (this.config.hasHeaders !== false) ? this.layoutManager.config.dimensions.headerHeight : 0,
+			contentWidth = this.element.width() - (this._sided ? headerSize : 0),
+			contentHeight = this.element.height() - (!this._sided ? headerSize : 0);
 
 		this.childElementContainer.width( contentWidth );
 		this.childElementContainer.height( contentHeight );
@@ -254,7 +264,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 
 				if( segment === 'header' ) {
 					this._dropSegment = 'header';
-					this._highlightHeaderDropZone( x );
+					this._highlightHeaderDropZone( this._sided ?y:x );
 				} else {
 					this._resetHeaderDropZone();
 					this._highlightBodyDropZone( segment );
@@ -417,9 +427,15 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		for( i = 0; i < tabsLength; i++ ) {
 			tabElement = this.header.tabs[ i ].element;
 			offset = tabElement.offset();
+			if (this._sided){
+			  tabLeft = offset.top;
+			  tabTop = offset.left;
+			  tabWidth = tabElement.height();
+			}else{
 			tabLeft = offset.left;
 			tabTop = offset.top;
 			tabWidth = tabElement.width();
+			}
 
 			if( x > tabLeft && x < tabLeft + tabWidth ) {
 				isAboveTab = true;
@@ -442,6 +458,16 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		}
 
 
+      if (this._sided){
+		placeHolderTop = this.layoutManager.tabDropPlaceholder.offset().top;
+
+		this.layoutManager.dropTargetIndicator.highlightArea({
+			x1: tabTop,
+			x2: tabTop + tabElement.innerHeight(),
+			y1: placeHolderTop,
+			y2: placeHolderTop + this.layoutManager.tabDropPlaceholder.width()
+		});
+      }else{
 		placeHolderLeft = this.layoutManager.tabDropPlaceholder.offset().left;
 
 		this.layoutManager.dropTargetIndicator.highlightArea({
@@ -450,6 +476,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 			y1: tabTop,
 			y2: tabTop + tabElement.innerHeight()
 		});
+	  }
 	},
 
 	_resetHeaderDropZone: function() {
