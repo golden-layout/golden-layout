@@ -119,6 +119,8 @@ lm.utils.copy( lm.controls.Tab.prototype,{
 	 * @returns {void}
 	 */
 	_onDragStart: function( x, y ) {
+		if( this.header.parent._header.frozen )
+			return null;
 		if( this.contentItem.parent.isMaximised === true ) {
 			this.contentItem.parent.toggleMaximise();
 		}

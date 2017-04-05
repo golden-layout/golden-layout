@@ -115,7 +115,7 @@ $(function () {
               content: [
                 {
                   type: 'component',
-                  header: { show: false  },
+                  header: { show: false, frozen: true },
                   title: 'Performance',
                   componentName: 'hey'
                 },
