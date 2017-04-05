@@ -3,9 +3,21 @@ lm.items.Stack = function( layoutManager, config, parent ) {
 
 	this.element = $( '<div class="lm_item lm_stack"></div>' );
 	this._activeContentItem = null;
-
-	if (config.content&&config.content[0])
-		this._side = config.content[0].side;
+	var cfg=layoutManager.config;
+	this._header = { // defaults' reconstruction from old configuration style
+		show: cfg.settings.hasHeaders === true && config.hasHeaders !== false,
+		popout: cfg.settings.showPopoutIcon && cfg.labels.popout,
+		maximise: cfg.settings.showMaximiseIcon && cfg.labels.maximise,
+		close: cfg.settings.showCloseIcon && cfg.labels.close,
+		minimise: cfg.labels.minimise,
+	};
+	if (cfg.header) // load simplified version of header configuration (https://github.com/deepstreamIO/golden-layout/pull/245)
+		lm.utils.copy(this._header,cfg.header);
+	if (config.header) // load from stack
+		lm.utils.copy(this._header,config.header);
+	if (config.content&&config.content[0]&&config.content[0].header) // load from component if stack emitted
+		lm.utils.copy(this._header,config.content[0].header);
+	this._side = this._header.show;
 	this._sided = ['right','left'].indexOf(this._side)>=0;
 	if(['right','left','bottom'].indexOf(this._side)>=0)
 		this.element.addClass('lm_'+this._side);
@@ -20,7 +32,7 @@ lm.items.Stack = function( layoutManager, config, parent ) {
 	this.childElementContainer = $( '<div class="lm_items"></div>' );
 	this.header = new lm.controls.Header( layoutManager, this );
 
-	if( layoutManager.config.settings.hasHeaders === true && config.hasHeaders !== false ) {
+	if( this._header.show ) {
 		this.element.append( this.header.element );
 	}
 
@@ -37,7 +49,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 
 	setSize: function() {
 		var i,
-		    headerSize = (this.config.hasHeaders !== false) ? this.layoutManager.config.dimensions.headerHeight : 0,
+			headerSize = this._header.show ? this.layoutManager.config.dimensions.headerHeight : 0,
 			contentWidth = this.element.width() - (this._sided ? headerSize : 0),
 			contentHeight = this.element.height() - (!this._sided ? headerSize : 0);
 
@@ -211,7 +223,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		 * The content item can be either a component or a stack. If it is a component, wrap it into a stack
 		 */
 		if( contentItem.isComponent ) {
-			stack = this.layoutManager.createContentItem({ type: 'stack' }, this );
+			stack = this.layoutManager.createContentItem({ type: 'stack', header: contentItem.config.header || {} }, this );
 			stack._$init();
 			stack.addChild( contentItem );
 			contentItem = stack;

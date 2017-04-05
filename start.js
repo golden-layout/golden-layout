@@ -51,8 +51,8 @@ $(function () {
             content: [
               {
                 title: 'Fnts 100',
+                header: { show: 'bottom' },
                 type: 'component',
-                side: 'bottom',
                 componentName: 'hey',
               },
               {
@@ -61,14 +61,15 @@ $(function () {
                   {
                     type: 'component',
                     title: 'Golden',
-                    side: 'right',
+                    header: { show: 'right' },
+                    isClosable: false,
                     componentName: 'hey',
                     width: 30,
                     componentState: { bg: 'golden_layout_spiral.png' }
                   },
                   {
                     title: 'Layout',
-                    side: 'left',
+                    header: { show: 'left' ,popout: false  },
                     type: 'component',
                     componentName: 'hey',
                     componentState: { bg: 'golden_layout_text.png' }
@@ -113,6 +114,7 @@ $(function () {
               content: [
                 {
                   type: 'component',
+                  header: { show: false  },
                   title: 'Performance',
                   componentName: 'hey'
                 },

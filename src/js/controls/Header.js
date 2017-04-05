@@ -173,6 +173,15 @@ lm.utils.copy( lm.controls.Header.prototype, {
 	},
 
 	/**
+	 * get settings from header
+	 *
+	 * @returns {string} when exists
+	 */
+	_getHeaderSetting: function(name) {
+		if ( name in this.parent._header)
+			return this.parent._header[name];
+	},
+	/**
 	 * Creates the popout, maximise and close buttons in the header's top right corner
 	 *
 	 * @returns {void}
@@ -199,19 +208,19 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		/**
 		 * Popout control to launch component in new window.
 		 */
-		if( this.layoutManager.config.settings.showPopoutIcon ) {
+		if( this._getHeaderSetting('popout') ) {
 			popout = lm.utils.fnBind( this._onPopoutClick, this );
-			label = this.layoutManager.config.labels.popout;
+			label = this._getHeaderSetting('popout');
 			new lm.controls.HeaderButton( this, label, 'lm_popout', popout );
 		}
 
 		/**
 		 * Maximise control - set the component to the full size of the layout
 		 */
-		if( this.layoutManager.config.settings.showMaximiseIcon ) {
+		if( this._getHeaderSetting('maximise') ) {
 			maximise = lm.utils.fnBind( this.parent.toggleMaximise, this.parent );
-			maximiseLabel = this.layoutManager.config.labels.maximise;
-			minimiseLabel = this.layoutManager.config.labels.minimise;
+			maximiseLabel = this._getHeaderSetting('maximise');
+			minimiseLabel = this._getHeaderSetting('minimise');
 			maximiseButton = new lm.controls.HeaderButton( this, maximiseLabel, 'lm_maximise', maximise );
 			
 			this.parent.on( 'maximised', function(){
@@ -228,7 +237,7 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		 */
 		if( this._isClosable() ) {
 			closeStack = lm.utils.fnBind( this.parent.remove, this.parent );
-			label = this.layoutManager.config.labels.close;
+			label = this._getHeaderSetting('close');
 			this.closeButton = new lm.controls.HeaderButton( this, label, 'lm_close', closeStack );
 		}
 	},
