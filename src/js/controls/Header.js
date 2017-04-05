@@ -177,9 +177,9 @@ lm.utils.copy( lm.controls.Header.prototype, {
 	 *
 	 * @returns {string} when exists
 	 */
-	_getHeaderSetting: function(name) {
-		if ( name in this.parent._header)
-			return this.parent._header[name];
+	_getHeaderSetting: function( name ) {
+		if ( name in this.parent._header )
+			return this.parent._header[ name ];
 	},
 	/**
 	 * Creates the popout, maximise and close buttons in the header's top right corner

@@ -111,6 +111,7 @@ $(function () {
             {
               width: 20,
               type: 'column',
+              splitters: [ 0 ],
               content: [
                 {
                   type: 'component',
