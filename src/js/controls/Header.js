@@ -15,7 +15,7 @@ lm.controls.Header = function( layoutManager, parent ) {
 		this.element.on( 'click touchstart', lm.utils.fnBind( this._onHeaderClick, this ) );
 	}
 	
-	this.element[parent._sided?'width':'height']( layoutManager.config.dimensions.headerHeight );
+	this.element[ parent._sided ? 'width' : 'height' ]( layoutManager.config.dimensions.headerHeight );
 	this.tabsContainer = this.element.find( '.lm_tabs' );
 	this.tabDropdownContainer = this.element.find( '.lm_tabdropdown_list' );
 	this.tabDropdownContainer.hide();
@@ -37,7 +37,7 @@ lm.controls.Header._template = [
 	'<div class="lm_header">',
 		'<ul class="lm_tabs"></ul>',
 		'<ul class="lm_controls">',
-	  '<ul class="lm_tabdropdown_list"></ul>',
+			'<ul class="lm_tabdropdown_list"></ul>',
 		'</ul>',
 	'</div>'
 ].join( '' );
@@ -208,19 +208,19 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		/**
 		 * Popout control to launch component in new window.
 		 */
-		if( this._getHeaderSetting('popout') ) {
+		if( this._getHeaderSetting( 'popout' ) ) {
 			popout = lm.utils.fnBind( this._onPopoutClick, this );
-			label = this._getHeaderSetting('popout');
+			label = this._getHeaderSetting( 'popout' );
 			new lm.controls.HeaderButton( this, label, 'lm_popout', popout );
 		}
 
 		/**
 		 * Maximise control - set the component to the full size of the layout
 		 */
-		if( this._getHeaderSetting('maximise') ) {
+		if( this._getHeaderSetting( 'maximise' ) ) {
 			maximise = lm.utils.fnBind( this.parent.toggleMaximise, this.parent );
-			maximiseLabel = this._getHeaderSetting('maximise');
-			minimiseLabel = this._getHeaderSetting('minimise');
+			maximiseLabel = this._getHeaderSetting( 'maximise' );
+			minimiseLabel = this._getHeaderSetting( 'minimise' );
 			maximiseButton = new lm.controls.HeaderButton( this, maximiseLabel, 'lm_maximise', maximise );
 			
 			this.parent.on( 'maximised', function(){
@@ -237,7 +237,7 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		 */
 		if( this._isClosable() ) {
 			closeStack = lm.utils.fnBind( this.parent.remove, this.parent );
-			label = this._getHeaderSetting('close');
+			label = this._getHeaderSetting( 'close' );
 			this.closeButton = new lm.controls.HeaderButton( this, label, 'lm_close', closeStack );
 		}
 	},
@@ -307,11 +307,11 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			tabElement,
 			i,
 			showTabDropdown,
-		  swapTab,
+			swapTab,
 			tabWidth;
 
-        if ( this.parent._sided )
-          availableWidth = this.element.outerHeight() - this.controlsContainer.outerHeight() - this._tabControlOffset;
+		if ( this.parent._sided )
+			availableWidth = this.element.outerHeight() - this.controlsContainer.outerHeight() - this._tabControlOffset;
 		this._lastVisibleTabIndex = -1;
 
 		for( i = 0; i < this.tabs.length; i++ ) {

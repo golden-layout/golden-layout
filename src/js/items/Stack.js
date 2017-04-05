@@ -3,7 +3,7 @@ lm.items.Stack = function( layoutManager, config, parent ) {
 
 	this.element = $( '<div class="lm_item lm_stack"></div>' );
 	this._activeContentItem = null;
-	var cfg=layoutManager.config;
+	var cfg = layoutManager.config;
 	this._header = { // defaults' reconstruction from old configuration style
 		show: cfg.settings.hasHeaders === true && config.hasHeaders !== false,
 		popout: cfg.settings.showPopoutIcon && cfg.labels.popout,
@@ -11,16 +11,16 @@ lm.items.Stack = function( layoutManager, config, parent ) {
 		close: cfg.settings.showCloseIcon && cfg.labels.close,
 		minimise: cfg.labels.minimise,
 	};
-	if (cfg.header) // load simplified version of header configuration (https://github.com/deepstreamIO/golden-layout/pull/245)
-		lm.utils.copy(this._header,cfg.header);
-	if (config.header) // load from stack
-		lm.utils.copy(this._header,config.header);
-	if (config.content&&config.content[0]&&config.content[0].header) // load from component if stack emitted
-		lm.utils.copy(this._header,config.content[0].header);
+	if ( cfg.header ) // load simplified version of header configuration (https://github.com/deepstreamIO/golden-layout/pull/245)
+		lm.utils.copy( this._header, cfg.header );
+	if ( config.header ) // load from stack
+		lm.utils.copy( this._header, config.header );
+	if ( config.content && config.content[ 0 ] && config.content[ 0 ].header ) // load from component if stack omitted
+		lm.utils.copy( this._header, config.content[ 0 ].header );
 	this._side = this._header.show;
-	this._sided = ['right','left'].indexOf(this._side)>=0;
-	if(['right','left','bottom'].indexOf(this._side)>=0)
-		this.element.addClass('lm_'+this._side);
+	this._sided = [ 'right', 'left' ].indexOf( this._side ) >= 0;
+	if( [ 'right', 'left', 'bottom' ].indexOf( this._side ) >= 0 )
+		this.element.addClass( 'lm_' + this._side );
 
 	this._dropZones = {};
 	this._dropSegment = null;
@@ -36,10 +36,10 @@ lm.items.Stack = function( layoutManager, config, parent ) {
 		this.element.append( this.header.element );
 	}
 
-    if (['right','bottom'].indexOf(this._side)>=0)
-	  this.element.prepend( this.childElementContainer );
+	if ( [ 'right', 'bottom' ].indexOf( this._side ) >= 0 )
+		this.element.prepend( this.childElementContainer );
 	else
-	this.element.append( this.childElementContainer );
+		this.element.append( this.childElementContainer );
 	this._$validateClosability();
 };
 
@@ -276,7 +276,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 
 				if( segment === 'header' ) {
 					this._dropSegment = 'header';
-					this._highlightHeaderDropZone( this._sided ?y:x );
+					this._highlightHeaderDropZone( this._sided ? y : x );
 				} else {
 					this._resetHeaderDropZone();
 					this._highlightBodyDropZone( segment );
@@ -439,14 +439,14 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		for( i = 0; i < tabsLength; i++ ) {
 			tabElement = this.header.tabs[ i ].element;
 			offset = tabElement.offset();
-			if (this._sided){
-			  tabLeft = offset.top;
-			  tabTop = offset.left;
-			  tabWidth = tabElement.height();
-			}else{
-			tabLeft = offset.left;
-			tabTop = offset.top;
-			tabWidth = tabElement.width();
+			if ( this._sided ) {
+				tabLeft = offset.top;
+				tabTop = offset.left;
+				tabWidth = tabElement.height();
+			} else {
+				tabLeft = offset.left;
+				tabTop = offset.top;
+				tabWidth = tabElement.width();
 			}
 
 			if( x > tabLeft && x < tabLeft + tabWidth ) {
@@ -470,16 +470,16 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		}
 
 
-      if (this._sided){
-		placeHolderTop = this.layoutManager.tabDropPlaceholder.offset().top;
-
-		this.layoutManager.dropTargetIndicator.highlightArea({
-			x1: tabTop,
-			x2: tabTop + tabElement.innerHeight(),
-			y1: placeHolderTop,
+		if ( this._sided ) {
+			placeHolderTop = this.layoutManager.tabDropPlaceholder.offset().top;
+			this.layoutManager.dropTargetIndicator.highlightArea({
+				x1: tabTop,
+				x2: tabTop + tabElement.innerHeight(),
+				y1: placeHolderTop,
 			y2: placeHolderTop + this.layoutManager.tabDropPlaceholder.width()
-		});
-      }else{
+			});
+			return;
+		}
 		placeHolderLeft = this.layoutManager.tabDropPlaceholder.offset().left;
 
 		this.layoutManager.dropTargetIndicator.highlightArea({
@@ -488,7 +488,6 @@ lm.utils.copy( lm.items.Stack.prototype, {
 			y1: tabTop,
 			y2: tabTop + tabElement.innerHeight()
 		});
-	  }
 	},
 
 	_resetHeaderDropZone: function() {
