@@ -36,8 +36,9 @@ lm.controls.Header = function( layoutManager, parent ) {
 lm.controls.Header._template = [
 	'<div class="lm_header">',
 		'<ul class="lm_tabs"></ul>',
-		'<ul class="lm_controls"></ul>',
+		'<ul class="lm_controls">',
 	  '<ul class="lm_tabdropdown_list"></ul>',
+		'</ul>',
 	'</div>'
 ].join( '' );
 
@@ -215,6 +216,10 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			
 			this.parent.on( 'maximised', function(){
 				maximiseButton.element.attr( 'title', minimiseLabel );
+			});
+
+			this.parent.on( 'minimised', function(){
+				maximiseButton.element.attr( 'title', maximiseLabel );
 			});
 		}
 

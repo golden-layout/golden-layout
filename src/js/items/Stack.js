@@ -4,11 +4,11 @@ lm.items.Stack = function( layoutManager, config, parent ) {
 	this.element = $( '<div class="lm_item lm_stack"></div>' );
 	this._activeContentItem = null;
 
-    if (config.content)
-    this._side = config.content[0].side;
-    this._sided = ['right','left'].indexOf(this._side)>=0;
-    if(this._sided)
-      this.element.addClass('lm_'+this._side);
+	if (config.content&&config.content[0])
+		this._side = config.content[0].side;
+	this._sided = ['right','left'].indexOf(this._side)>=0;
+	if(['right','left','bottom'].indexOf(this._side)>=0)
+		this.element.addClass('lm_'+this._side);
 
 	this._dropZones = {};
 	this._dropSegment = null;
