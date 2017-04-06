@@ -111,6 +111,16 @@
   }
 }
 
+.lm_dragProxy.lm_bottom,
+.lm_stack.lm_bottom {
+  .lm_header .lm_tab {
+    box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.3);
+    &.lm_active {
+      box-shadow: 0 2px 2px @color0;
+    }
+  }
+}
+
 // If Pane Header (container of Tabs for each pane) is selected (used only if addition of new Contents is made "by selection" and not "by drag")
 .lm_selected {
   .lm_header {
