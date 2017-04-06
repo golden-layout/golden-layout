@@ -4,7 +4,7 @@
 @width2: 100px; // Appears 1 time
 @width3: 14px; // Appears 1 time
 @width4: 18px; // Appears 1 time
-@width5: 25px; // Appears 1 time
+@width5: 15px; // Appears 1 time
 @width6: 2px; // Appears 1 time
 
 // Height variables (appears count calculates by raw css)
@@ -14,7 +14,7 @@
 @height3: 10px; // Appears 1 time
 @height4: 19px; // Appears 1 time
 @height5: 18px; // Appears 1 time
-@height6: 25px; // Appears 1 time
+@height6: 15px; // Appears 1 time
 
 .lm_root {
   position: relative;
@@ -64,7 +64,7 @@
       width: @width0;
       height: @height6;
       position: absolute;
-      top: -10px;
+      top: -5px;
       cursor: n-resize;
     }
   }
@@ -77,7 +77,7 @@
       width: @width5;
       height: @height0;
       position: absolute;
-      left: -10px;
+      left: -5px;
       cursor: e-resize;
     }
   }
@@ -87,6 +87,7 @@
 .lm_header {
   overflow: visible;
   position: relative;
+  z-index: 1;
 
   [class^=lm_] {
     box-sizing: content-box !important;
@@ -164,7 +165,7 @@
 .lm_stack.lm_right {
   .lm_header {
     width: 20px;
-    display: inline-block;
+    float: left;
     vertical-align: top;
     height: 100%;
     .lm_tabs {
@@ -177,7 +178,7 @@
     }
   }
   .lm_items {
-    display: inline-block;
+    float:left;
   }
 }
 .lm_stack.lm_left .lm_header {
@@ -186,6 +187,7 @@
     left: 0;
     .lm_tab {
       transform: scaleX(-1);
+      margin-top: -1px;
     }
   }
   .lm_controls .lm_tabdropdown_list {
@@ -198,19 +200,28 @@
   .lm_tabs {
     transform: rotate(90deg) scaleX(1);
     left: 100%;
+    margin-left: 2px;
   }
-  .lm_controls .lm_tabdropdown_list {
-    top:initial;
-    right:20px;
+  .lm_controls {
+    left: 3px;
+    .lm_tabdropdown_list {
+      top:initial;
+      right:20px;
+    }
   }
 }
 .lm_stack.lm_bottom .lm_header {
   .lm_tab {
     margin-top:0;
+    box-shadow: none;
+    border-top: none;
   }
-  .lm_controls .lm_tabdropdown_list {
-    top:initial;
-    bottom:20px;
+  .lm_controls {
+    top: 3px;
+    .lm_tabdropdown_list {
+      top:initial;
+      bottom:20px;
+    }
   }
 }
 
