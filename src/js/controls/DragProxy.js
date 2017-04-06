@@ -29,6 +29,12 @@ lm.controls.DragProxy = function( x, y, dragListener, layoutManager, contentItem
 	this._dragListener.on( 'dragStop', this._onDrop, this );
 
 	this.element = $( lm.controls.DragProxy._template );
+	if( originalParent && originalParent._side ) {
+	    this._sided = originalParent._sided;
+		this.element.addClass( 'lm_' + originalParent._side );
+		if( [ 'right', 'bottom' ].indexOf( originalParent._side ) >=0 )
+			this.element.find( '.lm_content' ).after( this.element.find( '.lm_header' ) );
+	}
 	this.element.css({ left: x, top: y });
 	this.element.find( '.lm_tab' ).attr( 'title', lm.utils.stripTags( this._contentItem.config.title ) );
 	this.element.find( '.lm_title' ).html( this._contentItem.config.title );
@@ -188,8 +194,8 @@ lm.utils.copy( lm.controls.DragProxy.prototype, {
 	 */
 	_setDimensions: function() {
 		var dimensions = this._layoutManager.config.dimensions,
-			width = dimensions.dragProxyWidth,
-			height = dimensions.dragProxyHeight - dimensions.headerHeight;
+			width = dimensions.dragProxyWidth - ( this._sided ? dimensions.headerHeight : 0 ),
+			height = dimensions.dragProxyHeight - ( !this._sided ? dimensions.headerHeight : 0 );
 	
 		this.childElementContainer.width( width );
 		this.childElementContainer.height( height );

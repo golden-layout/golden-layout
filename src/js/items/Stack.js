@@ -17,9 +17,9 @@ lm.items.Stack = function( layoutManager, config, parent ) {
 		lm.utils.copy( this._header, config.header );
 	if ( config.content && config.content[ 0 ] && config.content[ 0 ].header ) // load from component if stack omitted
 		lm.utils.copy( this._header, config.content[ 0 ].header );
-	this._side = this._header.show;
+	this._side = [ 'right', 'left', 'bottom' ].indexOf( this._header.show ) >= 0  && this._header.show;
 	this._sided = [ 'right', 'left' ].indexOf( this._side ) >= 0;
-	if( [ 'right', 'left', 'bottom' ].indexOf( this._side ) >= 0 )
+	if( this._side )
 		this.element.addClass( 'lm_' + this._side );
 
 	this._dropZones = {};
