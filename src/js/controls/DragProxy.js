@@ -194,9 +194,13 @@ lm.utils.copy( lm.controls.DragProxy.prototype, {
 	 */
 	_setDimensions: function() {
 		var dimensions = this._layoutManager.config.dimensions,
-			width = dimensions.dragProxyWidth - ( this._sided ? dimensions.headerHeight : 0 ),
-			height = dimensions.dragProxyHeight - ( !this._sided ? dimensions.headerHeight : 0 );
+			width = dimensions.dragProxyWidth,
+			height = dimensions.dragProxyHeight;
 	
+		this.element.width( width );
+		this.element.height( height );
+		width -= ( this._sided ? dimensions.headerHeight : 0 ),
+		height -= ( !this._sided ? dimensions.headerHeight : 0 );
 		this.childElementContainer.width( width );
 		this.childElementContainer.height( height );
 		this._contentItem.element.width( width );
