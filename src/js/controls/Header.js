@@ -15,12 +15,12 @@ lm.controls.Header = function( layoutManager, parent ) {
 		this.element.on( 'click touchstart', lm.utils.fnBind( this._onHeaderClick, this ) );
 	}
 	
-	this.element[ parent._sided ? 'width' : 'height' ]( layoutManager.config.dimensions.headerHeight );
 	this.tabsContainer = this.element.find( '.lm_tabs' );
 	this.tabDropdownContainer = this.element.find( '.lm_tabdropdown_list' );
 	this.tabDropdownContainer.hide();
 	this.controlsContainer = this.element.find( '.lm_controls' );
 	this.parent = parent;
+	this._$setupHeaderPosition();
 	this.parent.on( 'resize', this._updateTabSizes, this );
 	this.tabs = [];
 	this.activeContentItem = null;
@@ -136,6 +136,37 @@ lm.utils.copy( lm.controls.Header.prototype, {
 
 	  this._updateTabSizes();
 		this.parent.emitBubblingEvent( 'stateChanged' );
+	},
+
+	/**
+	 * Programmatically operate with header position.
+	 *
+	 * @param {string} position one of ('top','left','right','bottom') to set or empty to get it.
+	 *
+	 * @returns {string} previous header position
+	 */
+	position: function( position ) {
+		var previous = this.parent._header.show;
+		if ( previous && !this.parent._side )
+		  previous = 'top';
+		if ( position !== undefined && this.parent._header.show != position ) {
+			this.parent._header.show = position;
+			this.parent._setupHeaderPosition();
+		}
+		return previous;
+	},
+
+	/**
+	 * Programmatically set header position.
+	 *
+	 * @package private
+	 *
+	 * @returns {void}
+	 */
+	_$setupHeaderPosition: function() {
+		var size = function ( val ) { return val ? 'width' : 'height'; }
+		this.element.css( size( !this.parent._sided ), '' );
+		this.element[ size( this.parent._sided ) ]( this.layoutManager.config.dimensions.headerHeight );
 	},
 
 	/**
@@ -302,6 +333,7 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			return;
 		}
 		
+		this._$setupHeaderPosition();
 		var availableWidth = this.element.outerWidth() - this.controlsContainer.outerWidth() - this._tabControlOffset,
 			totalTabWidth = 0,
 			tabElement,

@@ -17,11 +17,24 @@ $(function () {
 
   window.myLayout = new GoldenLayout(config);
 
+  var rotate = function( container ) {
+    if ( !container ) return;
+    while ( container.parent && container.type != 'stack' )
+      container = container.parent;
+    if ( container.parent ) {
+      var p = container.header.position();
+      var sides=[ 'top', 'right', 'bottom', 'left', false ];
+      var n = sides[ ( sides.indexOf(p) + 1 ) % sides.length ];
+      container.header.position(n);
+    }
+  }
   myLayout.registerComponent('hey', function (container, state) {
     if (state.bg) {
       container
         .getElement()
-        .text('hey');
+        .text('hey')
+        .append('<br/>')
+        .append($('<button>').on('click',()=>rotate(container)).text('rotate header'));
     }
   });
 

@@ -17,10 +17,6 @@ lm.items.Stack = function( layoutManager, config, parent ) {
 		lm.utils.copy( this._header, config.header );
 	if ( config.content && config.content[ 0 ] && config.content[ 0 ].header ) // load from component if stack omitted
 		lm.utils.copy( this._header, config.content[ 0 ].header );
-	this._side = [ 'right', 'left', 'bottom' ].indexOf( this._header.show ) >= 0  && this._header.show;
-	this._sided = [ 'right', 'left' ].indexOf( this._side ) >= 0;
-	if( this._side )
-		this.element.addClass( 'lm_' + this._side );
 
 	this._dropZones = {};
 	this._dropSegment = null;
@@ -32,14 +28,9 @@ lm.items.Stack = function( layoutManager, config, parent ) {
 	this.childElementContainer = $( '<div class="lm_items"></div>' );
 	this.header = new lm.controls.Header( layoutManager, this );
 
-	if( this._header.show ) {
-		this.element.append( this.header.element );
-	}
-
-	if ( [ 'right', 'bottom' ].indexOf( this._side ) >= 0 )
-		this.element.prepend( this.childElementContainer );
-	else
-		this.element.append( this.childElementContainer );
+	this.element.append( this.header.element );
+	this.element.append( this.childElementContainer );
+	this._setupHeaderPosition();
 	this._$validateClosability();
 };
 
@@ -494,6 +485,21 @@ lm.utils.copy( lm.items.Stack.prototype, {
 
 	_resetHeaderDropZone: function() {
 		this.layoutManager.tabDropPlaceholder.remove();
+	},
+
+	_setupHeaderPosition: function() {
+		var side = [ 'right', 'left', 'bottom' ].indexOf( this._header.show ) >= 0  && this._header.show;
+		this.header.element.toggle( !!this._header.show );
+		this._side = side;
+		this._sided = [ 'right', 'left' ].indexOf( this._side ) >= 0;
+		this.element.removeClass( 'lm_left lm_right lm_bottom' );
+		if( this._side )
+			this.element.addClass( 'lm_' + this._side );
+		if ( this.element.find( '.lm_header' ).length && this.childElementContainer ) {
+			var headerPosition = [ 'right', 'bottom' ].indexOf( this._side ) >= 0 ? 'before' : 'after';
+			this.header.element[ headerPosition ]( this.childElementContainer );
+			this.callDownwards( 'setSize' );
+		}
 	},
 
 	_highlightBodyDropZone: function( segment ) {
