@@ -72,7 +72,6 @@
     font-size: 13px;
     background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAcCAIAAAAvP0KbAAAANklEQVR4nHXGsQ0AMAgDQcuFh2EC9p+HhpIGaCMlKV5/cHdKoiQC+DYzl8+/nJk0M0YEu5tVtXqyIehfJSkOAAAAAElFTkSuQmCC);
     color: @color6;
-    height: 22px;
     margin: 0;
     padding-bottom: 4px;
 
@@ -110,7 +109,12 @@
     }
   }
 }
-
+.lm_stack.lm_left,
+.lm_stack.lm_right {
+  .lm_header {
+    background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAABCAIAAABCJ1mGAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4QQHEjUmFgXMqwAAADBJREFUCNdth7ENADAMwkjOIf9/xQMsqEPVTPVg2TUz3V0PANcb310nAWCbpKQktg/HHA+z1P+XmwAAAABJRU5ErkJggg==);
+  }
+}
 // If Pane Header (container of Tabs for each pane) is selected (used only if addition of new Contents is made "by selection" and not "by drag")
 .lm_selected {
   .lm_header {

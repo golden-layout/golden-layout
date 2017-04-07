@@ -20,7 +20,6 @@ lm.controls.Header = function( layoutManager, parent ) {
 	this.tabDropdownContainer.hide();
 	this.controlsContainer = this.element.find( '.lm_controls' );
 	this.parent = parent;
-	this._$setupHeaderPosition();
 	this.parent.on( 'resize', this._updateTabSizes, this );
 	this.tabs = [];
 	this.activeContentItem = null;
@@ -154,19 +153,6 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			this.parent._setupHeaderPosition();
 		}
 		return previous;
-	},
-
-	/**
-	 * Programmatically set header position.
-	 *
-	 * @package private
-	 *
-	 * @returns {void}
-	 */
-	_$setupHeaderPosition: function() {
-		var size = function ( val ) { return val ? 'width' : 'height'; }
-		this.element.css( size( !this.parent._sided ), '' );
-		this.element[ size( this.parent._sided ) ]( this.layoutManager.config.dimensions.headerHeight );
 	},
 
 	/**
@@ -333,7 +319,9 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			return;
 		}
 		
-		this._$setupHeaderPosition();
+		var size = function ( val ) { return val ? 'width' : 'height'; }
+		this.element.css( size( !this.parent._sided ), '' );
+		this.element[ size( this.parent._sided ) ]( this.layoutManager.config.dimensions.headerHeight );
 		var availableWidth = this.element.outerWidth() - this.controlsContainer.outerWidth() - this._tabControlOffset,
 			totalTabWidth = 0,
 			tabElement,

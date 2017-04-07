@@ -28,13 +28,21 @@ $(function () {
       container.header.position(n);
     }
   }
+  var nexttheme = function() {
+    var link=$('link[href*=theme]'),href=link.attr('href').split('-');
+    var themes=['dark','light','soda','translucent'];
+    href[1] = themes[ ( themes.indexOf(href[1]) + 1 ) % themes.length ];
+    link.attr('href',href.join('-'));
+  }
   myLayout.registerComponent('hey', function (container, state) {
     if (state.bg) {
       container
         .getElement()
         .text('hey')
         .append('<br/>')
-        .append($('<button>').on('click',()=>rotate(container)).text('rotate header'));
+        .append($('<button>').on('click',()=>rotate(container)).text('rotate header'))
+        .append('<br/>')
+        .append($('<button>').on('click',nexttheme).text('next theme'));
     }
   });
 
