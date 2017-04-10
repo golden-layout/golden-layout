@@ -132,11 +132,9 @@ $(function () {
             {
               width: 20,
               type: 'column',
-              splitters: [ 0 ],
               content: [
                 {
                   type: 'component',
-                  header: { show: false, frozen: true },
                   title: 'Performance',
                   componentName: 'hey'
                 },
