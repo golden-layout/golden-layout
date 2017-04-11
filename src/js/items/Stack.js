@@ -28,6 +28,14 @@ lm.items.Stack = function( layoutManager, config, parent ) {
 	this.childElementContainer = $( '<div class="lm_items"></div>' );
 	this.header = new lm.controls.Header( layoutManager, this );
 
+	this.element.on( 'mouseenter', lm.utils.fnBind( function() {
+		if ( this._docker && this._docker.docked )
+			this.childElementContainer.css( this._docker.dimension, this._docker.realSize );
+	}, this ) );
+	this.element.on( 'mouseleave', lm.utils.fnBind( function () {
+		if ( this._docker && this._docker.docked )
+			this.childElementContainer.css( this._docker.dimension, 0 );
+	},this ) );
 	this.element.append( this.header.element );
 	this.element.append( this.childElementContainer );
 	this._setupHeaderPosition();
@@ -38,12 +46,24 @@ lm.utils.extend( lm.items.Stack, lm.items.AbstractContentItem );
 
 lm.utils.copy( lm.items.Stack.prototype, {
 
+	dock: function(mode) {
+		if( this._header.dock )
+			if( this.parent instanceof lm.items.RowOrColumn )
+				this.parent.dock( this, mode );
+	},
 	setSize: function() {
+		if ( !this.element.is( ':visible' ) ) return;
 		var i,
 			headerSize = this._header.show ? this.layoutManager.config.dimensions.headerHeight : 0,
 			contentWidth = this.element.width() - (this._sided ? headerSize : 0),
 			contentHeight = this.element.height() - (!this._sided ? headerSize : 0);
 
+		if(this._docker && this._docker.docked )
+			if (this._docker.dimension == 'width')
+				contentWidth=this._docker.realSize;
+			else
+				if (this._docker.dimension == 'height')
+					contentHeight=this._docker.realSize;
 		this.childElementContainer.width( contentWidth );
 		this.childElementContainer.height( contentHeight );
 
@@ -105,6 +125,8 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		this.setActiveContentItem( contentItem );
 		this.callDownwards( 'setSize' );
 		this._$validateClosability();
+		if( parent instanceof lm.items.RowOrColumn )
+			this.parent._validateDocking();
 		this.emitBubblingEvent( 'stateChanged' );
 	},
 
@@ -152,6 +174,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 	_$destroy: function() {
 		lm.items.AbstractContentItem.prototype._$destroy.call( this );
 		this.header._$destroy();
+		this.element.off( 'mouseenter mouseleave' );
 	},
 
 
@@ -246,6 +269,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 			contentItem.config[ dimension ] = 50;
 			rowOrColumn.callDownwards( 'setSize' );
 		}
+		this.parent._validateDocking();
 	},
 
 	/**
