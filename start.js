@@ -82,7 +82,7 @@ $(function () {
                   {
                     type: 'component',
                     title: 'Golden',
-                    header: { show: 'right' },
+                    header: { show: 'left', dock:'docking', docked: true  },
                     isClosable: false,
                     componentName: 'hey',
                     width: 30,
@@ -90,7 +90,7 @@ $(function () {
                   },
                   {
                     title: 'Layout',
-                    header: { show: 'left' ,popout: false  },
+                    header: { show: 'right' ,popout: false, dock: true},
                     type: 'component',
                     componentName: 'hey',
                     componentState: { bg: 'golden_layout_text.png' }
@@ -134,6 +134,7 @@ $(function () {
               type: 'column',
               content: [
                 {
+                  header: { dock: 'docking' },
                   type: 'component',
                   title: 'Performance',
                   componentName: 'hey'
