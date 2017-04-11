@@ -13,6 +13,7 @@ Add `golden-layout` to your bower.json, or [download](https://golden-layout.com/
 * Comprehensive API
 * Powerful persistence
 * Works in IE8+, Firefox, Chrome
+* Reponsive design
 
 
 ## [Examples](https://golden-layout.com/examples/)

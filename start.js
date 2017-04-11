@@ -6,7 +6,7 @@ $(function () {
   switch (layout.toLowerCase()) {
     case 'responsive':
       config = createResponsiveConfig();
-			break;
+      break;
     case 'tab-dropdown':
       config = createTabDropdownConfig();
       break;

@@ -372,7 +372,7 @@ lm.utils.copy( lm.utils.DragListener.prototype, {
 	{
 		oEvent.preventDefault();
 
-		if (oEvent.button == 0) {
+		if (oEvent.button == 0 || oEvent.type === "touchstart") {
 			var coordinates = this._getCoordinates( oEvent );
 
 			this._nOriginalX = coordinates.x;
@@ -437,17 +437,11 @@ lm.utils.copy( lm.utils.DragListener.prototype, {
 	},
 
 	_getCoordinates: function( event ) {
-		var coordinates = {};
-
-		if( event.type.substr( 0, 5 ) === 'touch' ) {
-			coordinates.x = event.originalEvent.targetTouches[ 0 ].pageX;
-			coordinates.y = event.originalEvent.targetTouches[ 0 ].pageY;
-		} else {
-			coordinates.x = event.pageX;
-			coordinates.y = event.pageY;
-		}
-
-		return coordinates;
+		event = event.originalEvent && event.originalEvent.touches ? event.originalEvent.touches[0] : event;
+		return {
+			x: event.pageX,
+			y: event.pageY
+		};
 	}
 });
 /**
@@ -483,6 +477,7 @@ lm.LayoutManager = function( config, container ) {
 	this._subWindowsCreated = false;
 	this._dragSources = [];
 	this._updatingColumnsResponsive = false;
+	this._firstLoad = true;
 
 	this.width = null;
 	this.height = null;
@@ -747,7 +742,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 				this._maximisedItem.callDownwards( 'setSize' );
 			}
 
-			this._adjustColumnsResponsive();
+		  this._adjustColumnsResponsive();
 		}
 	},
 
@@ -1399,34 +1394,37 @@ lm.utils.copy( lm.LayoutManager.prototype, {
    */
 	_adjustColumnsResponsive: function () {
 
-	  // If there is no min width set, or not content items, do nothing.
-	  if (this._updatingColumnsResponsive || !this.config.settings || !this.config.settings.responsive || !this.config.dimensions ||
+    // If there is no min width set, or not content items, do nothing.
+		if (!this._useResponsiveLayout() || this._updatingColumnsResponsive || !this.config.dimensions ||
         !this.config.dimensions.minItemWidth || this.root.contentItems.length === 0 || !this.root.contentItems[0].isRow) {
-	    return;
-	  }
+			this._firstLoad = false;
+			return;
+		}
 
-	  // If there is only one column, do nothing.
+		this._firstLoad = false;
+
+    // If there is only one column, do nothing.
 	  var columnCount = this.root.contentItems[0].contentItems.length;
 	  if (columnCount <= 1) {
-	    return;
+      return;
 	  }
 
-	  // If they all still fit, do nothing.
+    // If they all still fit, do nothing.
 	  var minItemWidth = this.config.dimensions.minItemWidth;
 	  var totalMinWidth = columnCount * minItemWidth;
-	  if (totalMinWidth <= this.width) {
-	    return;
-	  }
+    if (totalMinWidth <= this.width) {
+      return;
+    }
 
 	  // Prevent updates while it is already happening.
-	  this._updatingColumnsResponsive = true;
+    this._updatingColumnsResponsive = true;
 
 	  // Figure out how many columns to stack, and put them all in the first stack container.
-	  var finalColumnCount = Math.max(Math.floor(this.width / minItemWidth), 1);
-	  var stackColumnCount = columnCount - finalColumnCount;
+    var finalColumnCount = Math.max(Math.floor(this.width / minItemWidth), 1);
+    var stackColumnCount = columnCount - finalColumnCount;
 
-	  var rootContentItem = this.root.contentItems[0];
-	  var firstStackContainer = this._findAllStackContainers()[0];
+    var rootContentItem = this.root.contentItems[0];
+    var firstStackContainer = this._findAllStackContainers()[0];
 	  for (var i = 0; i < stackColumnCount; i++) {
 	    // Stack from right.
 	    var column = rootContentItem.contentItems[rootContentItem.contentItems.length - 1];
@@ -1437,24 +1435,33 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	  this._updatingColumnsResponsive = false;
 	},
 
+	/**
+	 * Determines if responsive layout should be used.
+	 * 
+	 * @returns {bool} - True if responsive layout should be used; otherwise false.
+	 */
+	_useResponsiveLayout: function() {
+		return this.config.settings && ( this.config.settings.responsiveMode == 'always' || ( this.config.settings.responsiveMode == 'onload' && this._firstLoad ) );
+	},
+
   /**
    * Adds all children of a node to another container recursively.
    * @param {object} container - Container to add child content items to.
    * @param {object} node - Node to search for content items.
    * @returns {void}
    */
-	_addChildContentItemsToContainer: function (container, node) {
-	  if (node.type === 'stack') {
-	    node.contentItems.forEach(function (item) {
-	      container.addChild(item);
-	    });
-	  }
-	  else {
-	    node.contentItems.forEach(lm.utils.fnBind(function (item) {
-	      this._addChildContentItemsToContainer(container, item);
-	    }, this));
-	  }
-	},
+  _addChildContentItemsToContainer: function(container, node) {
+    if (node.type === 'stack') {
+      node.contentItems.forEach(function(item) {
+        container.addChild(item);
+      });
+    }
+    else {
+      node.contentItems.forEach(lm.utils.fnBind(function (item) {
+        this._addChildContentItemsToContainer(container, item);
+      }, this));
+    }    
+  },
 
   /**
    * Finds all the stack containers.
@@ -1464,7 +1471,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	  var stackContainers = [];
 	  this._findAllStackContainersRecursive(stackContainers, this.root);
 
-	  return stackContainers;
+    return stackContainers;
 	},
 
   /**
@@ -1477,14 +1484,14 @@ lm.utils.copy( lm.LayoutManager.prototype, {
    */
 	_findAllStackContainersRecursive: function (stackContainers, node) {
 	  node.contentItems.forEach(lm.utils.fnBind(function (item) {
-	    if (item.type == 'stack') {
-	      stackContainers.push(item);
-	    }
-	    else if (!item.isComponent) {
-	      this._findAllStackContainersRecursive(stackContainers, item);
-	    }
-	  }, this));
-	}
+        if (item.type == 'stack') {
+          stackContainers.push(item);
+        }
+        else if (!item.isComponent) {
+          this._findAllStackContainersRecursive(stackContainers, item);
+        }
+    }, this));
+  }
 });
 
 /**
@@ -1519,7 +1526,7 @@ lm.config.defaultConfig = {
 		showPopoutIcon: true,
 		showMaximiseIcon: true,
 		showCloseIcon: true,
-    responsive: true
+    responsiveMode: 'onload' // Can be onload, always, or none.
 	},
 	dimensions: {
 		borderWidth: 5,
@@ -1538,6 +1545,7 @@ lm.config.defaultConfig = {
 		tabDropdown: 'additional tabs'
 	}
 };
+
 lm.container.ItemContainer = function( config, parent, layoutManager ) {
 	lm.utils.EventEmitter.call( this );
 
@@ -1641,7 +1649,7 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 
 		totalPixel = this[direction] * ( 1 / ( rowOrColumnChild.config[direction] / 100 ) );
 		percentage = ( newSize / totalPixel ) * 100;
-		delta = ( rowOrColumnChild.config[direction] - percentage ) / rowOrColumn.contentItems.length;
+		delta = ( rowOrColumnChild.config[direction] - percentage ) / (rowOrColumn.contentItems.length - 1);
 
 		for( i = 0; i < rowOrColumn.contentItems.length; i++ ) {
 			if( rowOrColumn.contentItems[ i ] === rowOrColumnChild ) {
@@ -2070,6 +2078,9 @@ lm.utils.copy( lm.controls.DragProxy.prototype, {
 	 * @returns {void}
 	 */
 	_onDrag: function( offsetX, offsetY, event ) {
+
+		event = event.originalEvent && event.originalEvent.touches ? event.originalEvent.touches[0] : event;
+
 		var x = event.pageX,
 			y = event.pageY,
 			isWithinContainer = x > this._minX && x < this._maxX && y > this._minY && y < this._maxY;
@@ -2286,7 +2297,7 @@ lm.controls.Header = function( layoutManager, parent ) {
 
 	if( this.layoutManager.config.settings.selectionEnabled === true ) {
 		this.element.addClass( 'lm_selectable' );
-		this.element.click( lm.utils.fnBind( this._onHeaderClick, this ) );
+		this.element.on( 'click touchstart', lm.utils.fnBind( this._onHeaderClick, this ) );
 	}
 	
 	this.element.height( layoutManager.config.dimensions.headerHeight );
@@ -2300,7 +2311,7 @@ lm.controls.Header = function( layoutManager, parent ) {
 	this.activeContentItem = null;
 	this.closeButton = null;
 	this.tabDropdownButton = null;
-	$(document).mouseup(lm.utils.fnBind(this._hideAdditionalTabsDropdown, this));
+	$(document).mouseup( lm.utils.fnBind( this._hideAdditionalTabsDropdown, this ) );
 
 	this._lastVisibleTabIndex = -1;
 	this._tabControlOffset = 10;
@@ -2311,7 +2322,7 @@ lm.controls.Header._template = [
 	'<div class="lm_header">',
 		'<ul class="lm_tabs"></ul>',
 		'<ul class="lm_controls"></ul>',
-		'<ul class="lm_tabdropdown_list"></ul>',
+	  '<ul class="lm_tabdropdown_list"></ul>',
 	'</div>'
 ].join( '' );
 
@@ -2385,16 +2396,16 @@ lm.utils.copy( lm.controls.Header.prototype, {
 	setActiveContentItem: function( contentItem ) {
 		var i, j, isActive, activeTab;
 
-		for (i = 0; i < this.tabs.length; i++) {
-			isActive = this.tabs[i].contentItem === contentItem;
-			this.tabs[i].setActive(isActive);
-			if (isActive === true) {
+		for( i = 0; i < this.tabs.length; i++ ) {
+			isActive = this.tabs[ i ].contentItem === contentItem;
+			this.tabs[ i ].setActive( isActive );
+			if( isActive === true ) {
 				this.activeContentItem = contentItem;
 				this.parent.config.activeItemIndex = i;
 			}
 		}
 
-		/**
+	  /**
 		 * If the tab selected was in the dropdown, move everything down one to make way for this one to be the first.
 		 * This will make sure the most used tabs stay visible.
 		 */
@@ -2407,8 +2418,8 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			this.parent.config.activeItemIndex = 0;
 		}
 
-		this._updateTabSizes();
-		this.parent.emitBubblingEvent('stateChanged');
+	  this._updateTabSizes();
+		this.parent.emitBubblingEvent( 'stateChanged' );
 	},
 
 	/**
@@ -2506,23 +2517,23 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		}
 	},
 
-	/**
-	* Shows drop down for additional tabs when there are too many to display.
-	* 
-	* @returns {void} 
-	*/
-	_showAdditionalTabsDropdown: function () {
-		this.tabDropdownContainer.show();
-	},
+	 /**
+	  * Shows drop down for additional tabs when there are too many to display.
+	  * 
+	  * @returns {void} 
+	  */
+	 _showAdditionalTabsDropdown: function() {
+	   this.tabDropdownContainer.show();
+	 },
 
-	/**
-	* Hides drop down for additional tabs when there are too many to display.
-	* 
-	* @returns {void} 
-	*/
-	_hideAdditionalTabsDropdown: function (e) {
-		this.tabDropdownContainer.hide();
-	},
+	 /**
+	  * Hides drop down for additional tabs when there are too many to display.
+	  * 
+	  * @returns {void} 
+	  */
+	 _hideAdditionalTabsDropdown: function(e) {
+	   this.tabDropdownContainer.hide();
+	 },
 
 	/**
 	 * Checks whether the header is closable based on the parent config and 
@@ -2558,14 +2569,14 @@ lm.utils.copy( lm.controls.Header.prototype, {
 
 	/**
 	 * Pushes the tabs to the tab dropdown if the available space is not sufficient
-	 *
+	 * 
 	 * @returns {void}
 	 */
-	_updateTabSizes: function () {
+	_updateTabSizes: function() {
 		if (this.tabs.length === 0) {
 			return;
 		}
-
+		
 		var availableWidth = this.element.outerWidth() - this.controlsContainer.outerWidth() - this._tabControlOffset,
 			totalTabWidth = 0,
 			tabElement,
@@ -2577,8 +2588,8 @@ lm.utils.copy( lm.controls.Header.prototype, {
 
 		this._lastVisibleTabIndex = -1;
 
-		for (i = 0; i < this.tabs.length; i++) {
-			tabElement = this.tabs[i].element;
+		for( i = 0; i < this.tabs.length; i++ ) {
+			tabElement = this.tabs[ i ].element;
 
 			/*
 			 * Retain tab width when hidden so it can be restored.
@@ -2599,7 +2610,7 @@ lm.utils.copy( lm.controls.Header.prototype, {
 				hasVisibleTab = true;
 				this._lastVisibleTabIndex = i;
 				tabElement.removeData('lastTabWidth');
-				this.tabsContainer.append(tabElement);
+			  this.tabsContainer.append(tabElement);
 			}
 		}
 
@@ -2617,7 +2628,7 @@ lm.controls.HeaderButton = function( header, label, cssClass, action ) {
 	this.element = $( '<li class="' + cssClass + '" title="' + label + '"></li>' );
 	this._header.on( 'destroy', this._$destroy, this );
 	this._action = action;
-	this.element.click( this._action );
+	this.element.on( 'click touchstart', this._action );
 	this._header.controlsContainer.append( this.element );
 };
 
@@ -2686,10 +2697,10 @@ lm.controls.Tab = function( header, contentItem ) {
 	this._onTabClickFn = lm.utils.fnBind( this._onTabClick, this );
 	this._onCloseClickFn = lm.utils.fnBind( this._onCloseClick, this );
 
-	this.element.mousedown( this._onTabClickFn );
+	this.element.on( 'mousedown touchstart', this._onTabClickFn );
 
 	if( this.contentItem.config.isClosable ) {
-		this.closeElement.click( this._onCloseClickFn );
+		this.closeElement.on( 'click touchstart', this._onCloseClickFn );
 	} else {
 		this.closeElement.remove();
 	}
@@ -2755,8 +2766,8 @@ lm.utils.copy( lm.controls.Tab.prototype,{
 	 * @returns {void}
 	 */
 	_$destroy: function() {
-		this.element.off( 'click', this._onTabClickFn );
-		this.closeElement.off( 'click', this._onCloseClickFn );
+		this.element.off( 'mousedown touchstart', this._onTabClickFn );
+		this.closeElement.off( 'click touchstart', this._onCloseClickFn );
 		if( this._dragListener ) {
 			this._dragListener.off( 'dragStart', this._onDragStart );
 			this._dragListener = null;
@@ -2796,8 +2807,8 @@ lm.utils.copy( lm.controls.Tab.prototype,{
 	 * @returns {void}
 	 */
 	_onTabClick: function( event ) {
-		// left mouse button
-		if( event.button === 0 ) {
+		// left mouse button or tap
+		if( event.button === 0 || event.type === 'touchstart' ) {
 			var activeContentItem = this.header.parent.getActiveContentItem();
 			if (this.contentItem !== activeContentItem) {
 				this.header.parent.setActiveContentItem( this.contentItem );
@@ -3138,7 +3149,8 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 	 *
 	 * @returns {void}
 	 */
-	toggleMaximise: function() {
+	toggleMaximise: function( e ) {
+		e.preventDefault();
 		if( this.isMaximised === true ) {
 			this.layoutManager._$minimiseItem( this );
 		} else {
@@ -3555,7 +3567,10 @@ lm.utils.copy( lm.items.Component.prototype, {
 	},
 
 	setSize: function() {
-		this.container._$setSize( this.element.width(), this.element.height() );
+		if( this.element.is( ':visible' ) ) {
+			// Do not update size of hidden components to prevent unwanted reflows
+			this.container._$setSize( this.element.width(), this.element.height() );
+		}
 	},
 
 	_$init: function() {
@@ -4197,7 +4212,7 @@ lm.items.Stack = function( layoutManager, config, parent ) {
 	this.childElementContainer = $( '<div class="lm_items"></div>' );
 	this.header = new lm.controls.Header( layoutManager, this );
 
-	if( layoutManager.config.settings.hasHeaders === true ) {
+	if( layoutManager.config.settings.hasHeaders === true && config.hasHeaders !== false ) {
 		this.element.append( this.header.element );
 	}
 
@@ -4212,7 +4227,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 	setSize: function() {
 		var i,
 			contentWidth = this.element.width(),
-			contentHeight = this.element.height() - this.layoutManager.config.dimensions.headerHeight;
+			contentHeight = (this.config.hasHeaders !== false) ? this.element.height() - this.layoutManager.config.dimensions.headerHeight : this.element.height();
 
 		this.childElementContainer.width( contentWidth );
 		this.childElementContainer.height( contentHeight );

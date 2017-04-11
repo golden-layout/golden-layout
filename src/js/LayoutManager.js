@@ -30,7 +30,8 @@ lm.LayoutManager = function( config, container ) {
 	this._creationTimeoutPassed = false;
 	this._subWindowsCreated = false;
 	this._dragSources = [];
-  this._updatingColumnsResponsive = false;
+	this._updatingColumnsResponsive = false;
+	this._firstLoad = true;
 
 	this.width = null;
 	this.height = null;
@@ -948,10 +949,13 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	_adjustColumnsResponsive: function () {
 
     // If there is no min width set, or not content items, do nothing.
-	  if (this._updatingColumnsResponsive || !this.config.settings || !this.config.settings.responsive || !this.config.dimensions ||
+		if (!this._useResponsiveLayout() || this._updatingColumnsResponsive || !this.config.dimensions ||
         !this.config.dimensions.minItemWidth || this.root.contentItems.length === 0 || !this.root.contentItems[0].isRow) {
-      return;
-	  }
+			this._firstLoad = false;
+			return;
+		}
+
+		this._firstLoad = false;
 
     // If there is only one column, do nothing.
 	  var columnCount = this.root.contentItems[0].contentItems.length;
@@ -983,6 +987,15 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	  }
 
 	  this._updatingColumnsResponsive = false;
+	},
+
+	/**
+	 * Determines if responsive layout should be used.
+	 * 
+	 * @returns {bool} - True if responsive layout should be used; otherwise false.
+	 */
+	_useResponsiveLayout: function() {
+		return this.config.settings && ( this.config.settings.responsiveMode == 'always' || ( this.config.settings.responsiveMode == 'onload' && this._firstLoad ) );
 	},
 
   /**

@@ -14,7 +14,7 @@ lm.items.Stack = function( layoutManager, config, parent ) {
 	this.childElementContainer = $( '<div class="lm_items"></div>' );
 	this.header = new lm.controls.Header( layoutManager, this );
 
-	if( layoutManager.config.settings.hasHeaders === true ) {
+	if( layoutManager.config.settings.hasHeaders === true && config.hasHeaders !== false ) {
 		this.element.append( this.header.element );
 	}
 
@@ -29,7 +29,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 	setSize: function() {
 		var i,
 			contentWidth = this.element.width(),
-			contentHeight = this.element.height() - this.layoutManager.config.dimensions.headerHeight;
+			contentHeight = (this.config.hasHeaders !== false) ? this.element.height() - this.layoutManager.config.dimensions.headerHeight : this.element.height();
 
 		this.childElementContainer.width( contentWidth );
 		this.childElementContainer.height( contentHeight );
