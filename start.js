@@ -135,7 +135,7 @@ $(function () {
 	function createResponsiveConfig() {
 		return {
 			settings: {
-				responsive: true
+				responsiveMode: 'always'
 			},
 			dimensions: {
 				minItemWidth: 250
