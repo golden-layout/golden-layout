@@ -1,378 +1,376 @@
 
 $(function () {
-  var queryParams = getQueryParams();
-  var layout = queryParams.layout || '';
-  var config = null;
-  switch (layout.toLowerCase()) {
-    case 'responsive':
-      config = createResponsiveConfig();
-      break;
-    case 'tab-dropdown':
-      config = createTabDropdownConfig();
-      break;
-    default:
-      config = createStandardConfig();
-      break;
-  }
+	var queryParams = getQueryParams();
+	var layout = queryParams.layout || '';
+	var config = null;
+	switch( layout.toLowerCase() ) {
+		case 'responsive':
+			config = createResponsiveConfig();
+			break;
+		case 'tab-dropdown':
+			config = createTabDropdownConfig();
+			break;
+		default:
+			config = createStandardConfig();
+			break;
+	}
 
-  window.myLayout = new GoldenLayout( config );
+	window.myLayout = new GoldenLayout( config );
 
-  myLayout.registerComponent( 'html', function( container, state ) {
-	  container
-		  .getElement()
-		  .html( state.html ? state.html.join( '\n' ) : '<p>' + container._config.title + '</p>' );
+	myLayout.registerComponent( 'html', function( container, state ) {
+		container
+			.getElement()
+			.html( state.html ? state.html.join( '\n' ) : '<p>' + container._config.title + '</p>' );
 
-		if (state.style) {
-			$('head').append('<style type="text/css">\n' + state.style.join( '\n' ) + '\n</style>');
+		if( state.style ) {
+			$('head').append( '<style type="text/css">\n' + state.style.join( '\n' ) + '\n</style>' );
 		}
 
-		if (state.className) {
+		if( state.className ) {
 			container.getElement().addClass(state.className);
 		}
-  });
+	});
 
-  myLayout.init();
+	myLayout.init();
 
-  function getQueryParams() {
-    var params = {};
-    window.location.search.replace( /^\?/, '' ).split( '&' ).forEach(function (pair) {
-      var parts = pair.split( '=' );
-      if( parts.length > 1 ) {
-        params[decodeURIComponent( parts[ 0 ] ).toLowerCase() ] = decodeURIComponent( parts[ 1 ] );
-      }
-    });
+	function getQueryParams() {
+		var params = {};
+		window.location.search.replace( /^\?/, '' ).split( '&' ).forEach(function (pair) {
+			var parts = pair.split( '=' );
+			if( parts.length > 1 ) {
+				params[decodeURIComponent( parts[ 0 ] ).toLowerCase() ] = decodeURIComponent( parts[ 1 ] );
+			}
+		});
 
-    return params;
-  }
+		return params;
+	}
 
-  function createStandardConfig() {
-    return {
-      content: [
-        {
-          type: 'row',
-          content: [
-          {
-            width: 80,
-            type: 'column',
-            content: [
-              {
-                title: 'Fnts 100',
-                type: 'component',
-                componentName: 'html',
-              },
-              {
-                type: 'row',
-                content: [
-                  {
-                    type: 'component',
-                    title: 'Golden',
-                    componentName: 'html',
-                    width: 30,
-                    componentState: { bg: 'golden_layout_spiral.png' }
-                  },
-                  {
-                    title: 'Layout',
-                    type: 'component',
-                    componentName: 'html',
-                    componentState: { bg: 'golden_layout_text.png' }
-                  }
-                ]
-              },
-              {
-                type: 'stack',
-                content: [
-                  {
-                    type: 'component',
-                    title: 'Acme, inc.',
-                    componentName: 'html',
-                    componentState: {
-                      companyName: 'Stock X'
-                    }
-                  },
-                  {
+	function createStandardConfig() {
+		return {
+			content: [
+				{
+					type: 'row',
+					content: [
+						{
+							width: 80,
+							type: 'column',
+							content: [
+								{
+									title: 'Fnts 100',
+									type: 'component',
+									componentName: 'html',
+								},
+								{
+									type: 'row',
+									content: [
+										{
+											type: 'component',
+											title: 'Golden',
+											componentName: 'html',
+											width: 30,
+											componentState: { bg: 'golden_layout_spiral.png' }
+										},
+										{
+											title: 'Layout',
+											type: 'component',
+											componentName: 'html',
+											componentState: { bg: 'golden_layout_text.png' }
+										}
+									]
+								},
+								{
+									type: 'stack',
+									content: [
+										{
+											type: 'component',
+											title: 'Acme, inc.',
+											componentName: 'html',
+											componentState: {
+												companyName: 'Stock X'
+											}
+										},
+										{
+											type: 'component',
+											title: 'LexCorp plc.',
+											componentName: 'html',
+											componentState: {
+												companyName: 'Stock Y'
+											}
+										},
+										{
+											type: 'component',
+											title: 'Springshield plc.',
+											componentName: 'html',
+											componentState: {
+												companyName: 'Stock Z'
+											}
+										}
+									]
+								}
+							]
+						},
+						{
+							width: 20,
+							type: 'column',
+							content: [
+								{
+									type: 'component',
+									title: 'Performance',
+									componentName: 'html'
+								},
+								{
+									height: 40,
+									type: 'component',
+									title: 'Market',
+									componentName: 'html'
+								}
+							]
+						}
+					]
+				}
+			]
+		};
+	}
 
-                    type: 'component',
-                    title: 'LexCorp plc.',
-                    componentName: 'html',
-                    componentState: {
-                      companyName: 'Stock Y'
-                    }
-                  },
-                  {
-                    type: 'component',
-                    title: 'Springshield plc.',
-                    componentName: 'html',
-                    componentState: {
-                      companyName: 'Stock Z'
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-            {
-              width: 20,
-              type: 'column',
-              content: [
-                {
-                  type: 'component',
-                  title: 'Performance',
-                  componentName: 'html'
-                },
-                {
-                  height: 40,
-                  type: 'component',
-                  title: 'Market',
-                  componentName: 'html'
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    };
-  }
-
-  function createResponsiveConfig() {
-	  return {
-		  settings: {
-			  responsive: true
-		  },
-		  dimensions: {
-			  minItemWidth: 250
-		  },
-		  content: [
-		  {
-			  type: 'row',
-			  content: [
-				  {
-					  width: 30,
-					  type: 'column',
-					  content: [
-						  {
-							  title: 'Fnts 100',
-							  type: 'component',
-							  componentName: 'html',
-						  },
-						  {
-							  type: 'row',
-							  content: [
-								  {
-									  type: 'component',
-									  title: 'Golden',
-									  componentName: 'html',
-									  width: 30,
-									  componentState: { bg: 'golden_layout_spiral.png' }
-								  }
-							  ]
-						  },
-						  {
-							  type: 'stack',
-							  content: [
-								  {
-									  type: 'component',
-									  title: 'Acme, inc.',
-									  componentName: 'html',
-									  componentState: {
-										  companyName: 'Stock X'
-									  }
-								  },
-								  {
-									  type: 'component',
-									  title: 'LexCorp plc.',
-									  componentName: 'html',
-									  componentState: {
-										  companyName: 'Stock Y'
-									  }
-								  },
-								  {
-									  type: 'component',
-									  title: 'Springshield plc.',
-									  componentName: 'html',
-									  componentState: {
-										  companyName: 'Stock Z'
-									  }
-								  }
-							  ]
-						  }
-					  ]
-				  },
-				  {
-					  width: 30,
-					  title: 'Layout',
-					  type: 'component',
-					  componentName: 'html',
-					  componentState: { bg: 'golden_layout_text.png' }
-				  },
-				  {
-					  width: 20,
-					  type: 'component',
-					  title: 'Market',
-					  componentName: 'html',
-					  componentState: {
-							className: 'market-content',
-					  	style: [
-								'.market-content label {',
-								'  margin-top: 10px;',
-								'  display: block;',
-								'  text-align: left;',
-								'}',
-								'.market-content input {',
-								'  width: 250px;',
-								'  border: 1px solid red',
-								'}'
-					  	],
-						  html: [
-							  '<label for="name">Name<label>',
-							  '<input id="name" type="text"></input>'
-						  ]
-					  }
-				  },
-				  {
-					  width: 20,
-					  type: 'column',
-					  content: [
-						  {
-							  height: 20,
-							  type: 'component',
-							  title: 'Performance',
-							  componentName: 'html'
-						  },
-						  {
-							  height: 80,
-							  type: 'component',
-							  title: 'Profile',
-							  componentName: 'html'
-						  }
-					  ]
-				  }
-			  ]
-		  }
+	function createResponsiveConfig() {
+		return {
+			settings: {
+				responsive: true
+			},
+			dimensions: {
+				minItemWidth: 250
+			},
+			content: [
+				{
+					type: 'row',
+					content: [
+						{
+							width: 30,
+							type: 'column',
+							content: [
+								{
+									title: 'Fnts 100',
+									type: 'component',
+									componentName: 'html',
+								},
+								{
+									type: 'row',
+									content: [
+										{
+											type: 'component',
+											title: 'Golden',
+											componentName: 'html',
+											width: 30,
+											componentState: { bg: 'golden_layout_spiral.png' }
+										}
+									]
+								},
+								{
+									type: 'stack',
+									content: [
+										{
+											type: 'component',
+											title: 'Acme, inc.',
+											componentName: 'html',
+											componentState: {
+												companyName: 'Stock X'
+											}
+										},
+										{
+											type: 'component',
+											title: 'LexCorp plc.',
+											componentName: 'html',
+											componentState: {
+												companyName: 'Stock Y'
+											}
+										},
+										{
+											type: 'component',
+											title: 'Springshield plc.',
+											componentName: 'html',
+											componentState: {
+												companyName: 'Stock Z'
+											}
+										}
+									]
+								}
+							]
+						},
+						{
+							width: 30,
+							title: 'Layout',
+							type: 'component',
+							componentName: 'html',
+							componentState: { bg: 'golden_layout_text.png' }
+						},
+						{
+							width: 20,
+							type: 'component',
+							title: 'Market',
+							componentName: 'html',
+							componentState: {
+								className: 'market-content',
+								style: [
+									'.market-content label {',
+									'  margin-top: 10px;',
+									'  display: block;',
+									'  text-align: left;',
+									'}',
+									'.market-content input {',
+									'  width: 250px;',
+									'  border: 1px solid red',
+									'}'
+								],
+								html: [
+									'<label for="name">Name<label>',
+									'<input id="name" type="text"></input>'
+								]
+							}
+						},
+						{
+							width: 20,
+							type: 'column',
+							content: [
+								{
+									height: 20,
+									type: 'component',
+									title: 'Performance',
+									componentName: 'html'
+								},
+								{
+									height: 80,
+									type: 'component',
+									title: 'Profile',
+									componentName: 'html'
+								}
+							]
+						}
+					]
+				}
 			]
 	  };
   }
 
-  function createTabDropdownConfig() {
-    return {
-      content: [
-        {
-          type: 'row',
-          content: [
-          {
-            width: 30,
-            type: 'column',
-            content: [
-              {
-                title: 'Fnts 100',
-                type: 'component',
-                componentName: 'html',
-              },
-              {
-                type: 'row',
-                content: [
-                  {
-                    type: 'component',
-                    title: 'Golden',
-                    componentName: 'html',
-                    width: 30,
-                    componentState: { bg: 'golden_layout_spiral.png' }
-                  }
-                ]
-              },
-              {
-                type: 'stack',
-                content: [
-                  {
-                    type: 'component',
-                    title: 'Acme, inc.',
-                    componentName: 'html',
-                    componentState: {
-                      companyName: 'Stock X'
-                    }
-                  },
-                  {
-
-                    type: 'component',
-                    title: 'LexCorp plc.',
-                    componentName: 'html',
-                    componentState: {
-                      companyName: 'Stock Y'
-                    }
-                  },
-                  {
-                    type: 'component',
-                    title: 'Springshield plc.',
-                    componentName: 'html',
-                    componentState: {
-                      companyName: 'Stock Z'
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            width: 20,
-            type: 'stack',
-            content: [
-              {
-                type: 'component',
-                title: 'Market',
-                componentName: 'html'
-              },
-              {
-                type: 'component',
-                title: 'Performance',
-                componentName: 'html'
-              },
-              {
-                type: 'component',
-                title: 'Trend',
-                componentName: 'html'
-              },
-              {
-                type: 'component',
-                title: 'Balance',
-                componentName: 'html'
-              },
-              {
-                type: 'component',
-                title: 'Budget',
-                componentName: 'html'
-              },
-              {
-                type: 'component',
-                title: 'Curve',
-                componentName: 'html'
-              },
-              {
-                type: 'component',
-                title: 'Standing',
-                componentName: 'html'
-              },
-              {
-                type: 'component',
-                title: 'Lasting',
-                componentName: 'html',
-                componentState: { bg: 'golden_layout_spiral.png' }
-              },
-              {
-                type: 'component',
-                title: 'Profile',
-                componentName: 'html'
-              }
-            ]
-          },
-          {
-            width: 30,
-            title: 'Layout',
-            type: 'component',
-            componentName: 'html',
-            componentState: { bg: 'golden_layout_text.png' }
-          }
-          ]
-        }
-      ]
-    };
-  }
+	function createTabDropdownConfig() {
+		return {
+			content: [
+				{
+					type: 'row',
+					content: [
+						{
+							width: 30,
+							type: 'column',
+							content: [
+								{
+									title: 'Fnts 100',
+									type: 'component',
+									componentName: 'html',
+								},
+								{
+									type: 'row',
+									content: [
+										{
+											type: 'component',
+											title: 'Golden',
+											componentName: 'html',
+											width: 30,
+											componentState: { bg: 'golden_layout_spiral.png' }
+										}
+									]
+								},
+								{
+									type: 'stack',
+									content: [
+										{
+											type: 'component',
+											title: 'Acme, inc.',
+											componentName: 'html',
+											componentState: {
+												companyName: 'Stock X'
+											}
+										},
+										{
+											type: 'component',
+											title: 'LexCorp plc.',
+											componentName: 'html',
+											componentState: {
+												companyName: 'Stock Y'
+											}
+										},
+										{
+											type: 'component',
+											title: 'Springshield plc.',
+											componentName: 'html',
+											componentState: {
+												companyName: 'Stock Z'
+											}
+										}
+									]
+								}
+							]
+						},
+						{
+							width: 20,
+							type: 'stack',
+							content: [
+								{
+									type: 'component',
+									title: 'Market',
+									componentName: 'html'
+								},
+								{
+									type: 'component',
+									title: 'Performance',
+									componentName: 'html'
+								},
+								{
+									type: 'component',
+									title: 'Trend',
+									componentName: 'html'
+								},
+								{
+									type: 'component',
+									title: 'Balance',
+									componentName: 'html'
+								},
+								{
+									type: 'component',
+									title: 'Budget',
+									componentName: 'html'
+								},
+								{
+									type: 'component',
+									title: 'Curve',
+									componentName: 'html'
+								},
+								{
+									type: 'component',
+									title: 'Standing',
+									componentName: 'html'
+								},
+								{
+									type: 'component',
+									title: 'Lasting',
+									componentName: 'html',
+									componentState: { bg: 'golden_layout_spiral.png' }
+								},
+								{
+									type: 'component',
+									title: 'Profile',
+									componentName: 'html'
+								}
+							]
+						},
+						{
+							width: 30,
+							title: 'Layout',
+							type: 'component',
+							componentName: 'html',
+							componentState: { bg: 'golden_layout_text.png' }
+						}
+					]
+				}
+			]
+		};
+	}
 });

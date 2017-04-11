@@ -100,10 +100,10 @@ lm.utils.indexOf = function( needle, haystack ) {
 	}
 };
 
-if ( typeof /./ != 'function' && typeof Int8Array != 'object' ) {
-  lm.utils.isFunction = function ( obj ) {
-    return typeof obj == 'function' || false;
-  };
+if( typeof /./ != 'function' && typeof Int8Array != 'object' ) {
+	lm.utils.isFunction = function ( obj ) {
+		return typeof obj == 'function' || false;
+	};
 } else {
 	lm.utils.isFunction = function ( obj ) {
 		return toString.call(obj) === '[object Function]';
@@ -712,7 +712,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		this._bindEvents();
 		this.isInitialised = true;
 		this._adjustColumnsResponsive();
-		this.emit( 'initialised' );
+		this.emit('initialised');
 	},
 
 	/**
@@ -742,7 +742,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 				this._maximisedItem.callDownwards( 'setSize' );
 			}
 
-		  this._adjustColumnsResponsive();
+			this._adjustColumnsResponsive();
 		}
 	},
 
@@ -1387,52 +1387,52 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		}
 	},
 
-  /**
-   * Adjusts the number of columns to be lower to fit the screen and still maintain minItemWidth.
-   * 
+	/**
+	 * Adjusts the number of columns to be lower to fit the screen and still maintain minItemWidth.
+	 * 
 	 * @returns {void}
-   */
+	 */
 	_adjustColumnsResponsive: function () {
 
-    // If there is no min width set, or not content items, do nothing.
-		if (!this._useResponsiveLayout() || this._updatingColumnsResponsive || !this.config.dimensions ||
-        !this.config.dimensions.minItemWidth || this.root.contentItems.length === 0 || !this.root.contentItems[0].isRow) {
+		// If there is no min width set, or not content items, do nothing.
+		if( !this._useResponsiveLayout() || this._updatingColumnsResponsive || !this.config.dimensions ||
+			!this.config.dimensions.minItemWidth || this.root.contentItems.length === 0 || !this.root.contentItems[0].isRow ) {
 			this._firstLoad = false;
 			return;
 		}
 
 		this._firstLoad = false;
 
-    // If there is only one column, do nothing.
-	  var columnCount = this.root.contentItems[0].contentItems.length;
-	  if (columnCount <= 1) {
-      return;
-	  }
+		// If there is only one column, do nothing.
+		var columnCount = this.root.contentItems[0].contentItems.length;
+		if( columnCount <= 1 ) {
+			return;
+		}
 
-    // If they all still fit, do nothing.
-	  var minItemWidth = this.config.dimensions.minItemWidth;
-	  var totalMinWidth = columnCount * minItemWidth;
-    if (totalMinWidth <= this.width) {
-      return;
-    }
+		// If they all still fit, do nothing.
+		var minItemWidth = this.config.dimensions.minItemWidth;
+		var totalMinWidth = columnCount * minItemWidth;
+		if( totalMinWidth <= this.width ) {
+			return;
+		}
 
-	  // Prevent updates while it is already happening.
-    this._updatingColumnsResponsive = true;
+		// Prevent updates while it is already happening.
+		this._updatingColumnsResponsive = true;
 
-	  // Figure out how many columns to stack, and put them all in the first stack container.
-    var finalColumnCount = Math.max(Math.floor(this.width / minItemWidth), 1);
-    var stackColumnCount = columnCount - finalColumnCount;
+		// Figure out how many columns to stack, and put them all in the first stack container.
+		var finalColumnCount = Math.max(Math.floor(this.width / minItemWidth), 1);
+		var stackColumnCount = columnCount - finalColumnCount;
 
-    var rootContentItem = this.root.contentItems[0];
-    var firstStackContainer = this._findAllStackContainers()[0];
-	  for (var i = 0; i < stackColumnCount; i++) {
-	    // Stack from right.
-	    var column = rootContentItem.contentItems[rootContentItem.contentItems.length - 1];
-	    rootContentItem.removeChild(column);
-	    this._addChildContentItemsToContainer(firstStackContainer, column);
-	  }
+		var rootContentItem = this.root.contentItems[0];
+		var firstStackContainer = this._findAllStackContainers()[0];
+		for (var i = 0; i < stackColumnCount; i++) {
+			// Stack from right.
+			var column = rootContentItem.contentItems[rootContentItem.contentItems.length - 1];
+			rootContentItem.removeChild(column);
+			this._addChildContentItemsToContainer(firstStackContainer, column);
+		}
 
-	  this._updatingColumnsResponsive = false;
+		this._updatingColumnsResponsive = false;
 	},
 
 	/**
@@ -1444,54 +1444,54 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		return this.config.settings && ( this.config.settings.responsiveMode == 'always' || ( this.config.settings.responsiveMode == 'onload' && this._firstLoad ) );
 	},
 
-  /**
-   * Adds all children of a node to another container recursively.
-   * @param {object} container - Container to add child content items to.
-   * @param {object} node - Node to search for content items.
-   * @returns {void}
-   */
-  _addChildContentItemsToContainer: function(container, node) {
-    if (node.type === 'stack') {
-      node.contentItems.forEach(function(item) {
-        container.addChild(item);
-      });
-    }
-    else {
-      node.contentItems.forEach(lm.utils.fnBind(function (item) {
-        this._addChildContentItemsToContainer(container, item);
-      }, this));
-    }    
-  },
-
-  /**
-   * Finds all the stack containers.
-   * @returns {array} - The found stack containers.
-   */
-	_findAllStackContainers: function () {
-	  var stackContainers = [];
-	  this._findAllStackContainersRecursive(stackContainers, this.root);
-
-    return stackContainers;
+	/**
+	 * Adds all children of a node to another container recursively.
+	 * @param {object} container - Container to add child content items to.
+	 * @param {object} node - Node to search for content items.
+	 * @returns {void}
+	 */
+	_addChildContentItemsToContainer: function(container, node) {
+		if (node.type === 'stack') {
+			node.contentItems.forEach(function(item) {
+			container.addChild(item);
+			});
+		}
+		else {
+			node.contentItems.forEach(lm.utils.fnBind(function (item) {
+				this._addChildContentItemsToContainer(container, item);
+			}, this));
+		}
 	},
 
-  /**
-   * Finds all the stack containers.
-   * 
-   * @param {array} - Set of containers to populate.
-   * @param {object} - Current node to process.
-   * 
-   * @returns {void}
-   */
+	/**
+	 * Finds all the stack containers.
+	 * @returns {array} - The found stack containers.
+	 */
+	_findAllStackContainers: function () {
+		var stackContainers = [];
+		this._findAllStackContainersRecursive(stackContainers, this.root);
+
+		return stackContainers;
+	},
+
+	/**
+	 * Finds all the stack containers.
+	 * 
+	 * @param {array} - Set of containers to populate.
+	 * @param {object} - Current node to process.
+	 * 
+	 * @returns {void}
+	 */
 	_findAllStackContainersRecursive: function (stackContainers, node) {
-	  node.contentItems.forEach(lm.utils.fnBind(function (item) {
-        if (item.type == 'stack') {
-          stackContainers.push(item);
-        }
-        else if (!item.isComponent) {
-          this._findAllStackContainersRecursive(stackContainers, item);
-        }
-    }, this));
-  }
+		node.contentItems.forEach(lm.utils.fnBind(function (item) {
+			if( item.type == 'stack' ) {
+				stackContainers.push(item);
+			}
+			else if( !item.isComponent ) {
+				this._findAllStackContainersRecursive(stackContainers, item);
+			}
+		}, this));
+	}
 });
 
 /**
@@ -1508,11 +1508,6 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	}
 })();
 
-lm.config.itemDefaultConfig = {
-	isClosable: true,
-	reorderEnabled: true,
-	title: ''
-};
 lm.config.defaultConfig = {
 	openPopouts:[],
 	settings:{
@@ -1526,7 +1521,7 @@ lm.config.defaultConfig = {
 		showPopoutIcon: true,
 		showMaximiseIcon: true,
 		showCloseIcon: true,
-    responsiveMode: 'onload' // Can be onload, always, or none.
+		responsiveMode: 'onload' // Can be onload, always, or none.
 	},
 	dimensions: {
 		borderWidth: 5,
@@ -1546,6 +1541,11 @@ lm.config.defaultConfig = {
 	}
 };
 
+lm.config.itemDefaultConfig = {
+	isClosable: true,
+	reorderEnabled: true,
+	title: ''
+};
 lm.container.ItemContainer = function( config, parent, layoutManager ) {
 	lm.utils.EventEmitter.call( this );
 
@@ -2322,7 +2322,7 @@ lm.controls.Header._template = [
 	'<div class="lm_header">',
 		'<ul class="lm_tabs"></ul>',
 		'<ul class="lm_controls"></ul>',
-	  '<ul class="lm_tabdropdown_list"></ul>',
+		'<ul class="lm_tabdropdown_list"></ul>',
 	'</div>'
 ].join( '' );
 
@@ -2405,20 +2405,20 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			}
 		}
 
-	  /**
+		/**
 		 * If the tab selected was in the dropdown, move everything down one to make way for this one to be the first.
 		 * This will make sure the most used tabs stay visible.
 		 */
-		if (this._lastVisibleTabIndex !== -1 && this.parent.config.activeItemIndex > this._lastVisibleTabIndex) {
+		if( this._lastVisibleTabIndex !== -1 && this.parent.config.activeItemIndex > this._lastVisibleTabIndex ) {
 			activeTab = this.tabs[this.parent.config.activeItemIndex];
-			for (j = this.parent.config.activeItemIndex; j > 0; j--) {
+			for( j = this.parent.config.activeItemIndex; j > 0; j-- ) {
 				this.tabs[j] = this.tabs[j - 1];
 			}
 			this.tabs[0] = activeTab;
 			this.parent.config.activeItemIndex = 0;
 		}
 
-	  this._updateTabSizes();
+		this._updateTabSizes();
 		this.parent.emitBubblingEvent( 'stateChanged' );
 	},
 
@@ -2473,8 +2473,8 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			showTabDropdown;
 
 		/**
-		* Dropdown to show additional tabs.
-		*/
+		 * Dropdown to show additional tabs.
+		 */
 		showTabDropdown = lm.utils.fnBind( this._showAdditionalTabsDropdown, this );
 		tabDropdownLabel = this.layoutManager.config.labels.tabDropdown;
 		this.tabDropdownButton = new lm.controls.HeaderButton( this, tabDropdownLabel, 'lm_tabdropdown', showTabDropdown );
@@ -2517,23 +2517,23 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		}
 	},
 
-	 /**
-	  * Shows drop down for additional tabs when there are too many to display.
-	  * 
-	  * @returns {void} 
-	  */
-	 _showAdditionalTabsDropdown: function() {
-	   this.tabDropdownContainer.show();
-	 },
+	/**
+	 * Shows drop down for additional tabs when there are too many to display.
+	 * 
+	 * @returns {void} 
+	 */
+	_showAdditionalTabsDropdown: function() {
+		this.tabDropdownContainer.show();
+	},
 
-	 /**
-	  * Hides drop down for additional tabs when there are too many to display.
-	  * 
-	  * @returns {void} 
-	  */
-	 _hideAdditionalTabsDropdown: function(e) {
-	   this.tabDropdownContainer.hide();
-	 },
+	/**
+	 * Hides drop down for additional tabs when there are too many to display.
+	 * 
+	 * @returns {void} 
+	 */
+	_hideAdditionalTabsDropdown: function(e) {
+		this.tabDropdownContainer.hide();
+	},
 
 	/**
 	 * Checks whether the header is closable based on the parent config and 
@@ -2573,7 +2573,7 @@ lm.utils.copy( lm.controls.Header.prototype, {
 	 * @returns {void}
 	 */
 	_updateTabSizes: function() {
-		if (this.tabs.length === 0) {
+		if( this.tabs.length === 0 ) {
 			return;
 		}
 		
@@ -2582,9 +2582,9 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			tabElement,
 			i,
 			showTabDropdown,
-		  swapTab,
+			swapTab,
 			tabWidth,
-		  hasVisibleTab = false;
+			hasVisibleTab = false;
 
 		this._lastVisibleTabIndex = -1;
 
@@ -2610,7 +2610,7 @@ lm.utils.copy( lm.controls.Header.prototype, {
 				hasVisibleTab = true;
 				this._lastVisibleTabIndex = i;
 				tabElement.removeData('lastTabWidth');
-			  this.tabsContainer.append(tabElement);
+				this.tabsContainer.append(tabElement);
 			}
 		}
 
@@ -3665,13 +3665,13 @@ lm.utils.copy( lm.items.Root.prototype, {
 
 
 
-lm.items.RowOrColumn = function (isColumn, layoutManager, config, parent) {
-	lm.items.AbstractContentItem.call(this, layoutManager, config, parent);
+lm.items.RowOrColumn = function( isColumn, layoutManager, config, parent ) {
+	lm.items.AbstractContentItem.call( this, layoutManager, config, parent );
 
 	this.isRow = !isColumn;
 	this.isColumn = isColumn;
-
-	this.element = $('<div class="lm_item lm_' + (isColumn ? 'column' : 'row') + '"></div>');
+	
+	this.element = $( '<div class="lm_item lm_' + ( isColumn ? 'column' : 'row' ) + '"></div>' );
 	this.childElementContainer = this.element;
 	this._splitterSize = layoutManager.config.dimensions.borderWidth;
 	this._isColumn = isColumn;
@@ -3682,10 +3682,10 @@ lm.items.RowOrColumn = function (isColumn, layoutManager, config, parent) {
 	this._splitterMaxPosition = null;
 };
 
-lm.utils.extend(lm.items.RowOrColumn, lm.items.AbstractContentItem);
+lm.utils.extend( lm.items.RowOrColumn, lm.items.AbstractContentItem );
 
-lm.utils.copy(lm.items.RowOrColumn.prototype, {
-
+lm.utils.copy( lm.items.RowOrColumn.prototype, {
+	
 	/**
 	 * Add a new contentItem to the Row or Column
 	 *
@@ -3698,50 +3698,50 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
 	 *
 	 * @returns {void}
 	 */
-	addChild: function (contentItem, index, _$suspendResize) {
-
+	addChild: function( contentItem, index, _$suspendResize ) {
+	
 		var newItemSize, itemSize, i, splitterElement;
+	
+		contentItem = this.layoutManager._$normalizeContentItem( contentItem, this );
 
-		contentItem = this.layoutManager._$normalizeContentItem(contentItem, this);
-
-		if (index === undefined) {
+		if( index === undefined ) {
 			index = this.contentItems.length;
 		}
-
-		if (this.contentItems.length > 0) {
-			splitterElement = this._createSplitter(Math.max(0, index - 1)).element;
-
-			if (index > 0) {
-				this.contentItems[index - 1].element.after(splitterElement);
-				splitterElement.after(contentItem.element);
+	
+		if( this.contentItems.length > 0 ) {
+			splitterElement = this._createSplitter( Math.max( 0, index - 1 ) ).element;
+	
+			if( index > 0 ) {
+				this.contentItems[ index - 1 ].element.after( splitterElement );
+				splitterElement.after( contentItem.element );
 			} else {
-				this.contentItems[0].element.before(splitterElement);
-				splitterElement.before(contentItem.element);
+				this.contentItems[ 0 ].element.before( splitterElement );
+				splitterElement.before( contentItem.element );
 			}
 		} else {
-			this.childElementContainer.append(contentItem.element);
+			this.childElementContainer.append( contentItem.element );
 		}
-
-		lm.items.AbstractContentItem.prototype.addChild.call(this, contentItem, index);
-
-		newItemSize = (1 / this.contentItems.length) * 100;
-
-		if (_$suspendResize === true) {
-			this.emitBubblingEvent('stateChanged');
+		
+		lm.items.AbstractContentItem.prototype.addChild.call( this, contentItem, index );
+	
+		newItemSize = ( 1 / this.contentItems.length ) * 100;
+		
+		if( _$suspendResize === true ) {
+			this.emitBubblingEvent( 'stateChanged' );
 			return;
 		}
-
-		for (i = 0; i < this.contentItems.length; i++) {
-			if (this.contentItems[i] === contentItem) {
-				contentItem.config[this._dimension] = newItemSize;
+		
+		for( i = 0; i < this.contentItems.length; i++ ) {
+			if( this.contentItems[ i ] === contentItem ) {
+				contentItem.config[ this._dimension ] = newItemSize;
 			} else {
-				itemSize = this.contentItems[i].config[this._dimension] *= (100 - newItemSize) / 100;
-				this.contentItems[i].config[this._dimension] = itemSize;
+				itemSize = this.contentItems[ i ].config[ this._dimension ] *= ( 100 - newItemSize ) / 100;
+				this.contentItems[ i ].config[ this._dimension ] = itemSize;
 			}
 		}
-
-		this.callDownwards('setSize');
-		this.emitBubblingEvent('stateChanged');
+		
+		this.callDownwards( 'setSize' );
+		this.emitBubblingEvent( 'stateChanged' );
 	},
 
 	/**
@@ -3752,47 +3752,47 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
 	 *
 	 * @returns {void}
 	 */
-	removeChild: function (contentItem, keepChild) {
-		var removedItemSize = contentItem.config[this._dimension],
-			index = lm.utils.indexOf(contentItem, this.contentItems),
-			splitterIndex = Math.max(index - 1, 0),
+	removeChild: function( contentItem, keepChild ) {
+		var removedItemSize = contentItem.config[ this._dimension ],
+			index = lm.utils.indexOf( contentItem, this.contentItems ),
+			splitterIndex = Math.max( index - 1, 0 ),
 			i,
 			childItem;
 
-		if (index === -1) {
-			throw new Error('Can\'t remove child. ContentItem is not child of this Row or Column');
+		if( index === -1 ) {
+			throw new Error( 'Can\'t remove child. ContentItem is not child of this Row or Column' );
 		}
-
+		
 		/**
 		 * Remove the splitter before the item or after if the item happens
 		 * to be the first in the row/column
 		 */
-		if (this._splitter[splitterIndex]) {
-			this._splitter[splitterIndex]._$destroy();
-			this._splitter.splice(splitterIndex, 1);
+		if( this._splitter[ splitterIndex ] ) {
+			this._splitter[ splitterIndex ]._$destroy();
+			this._splitter.splice( splitterIndex, 1 );
 		}
-
+		
 		/**
 		 * Allocate the space that the removed item occupied to the remaining items
 		 */
-		for (i = 0; i < this.contentItems.length; i++) {
-			if (this.contentItems[i] !== contentItem) {
-				this.contentItems[i].config[this._dimension] += removedItemSize / (this.contentItems.length - 1);
+		for( i = 0; i < this.contentItems.length; i++ ) {
+			if( this.contentItems[ i ] !== contentItem ) {
+				this.contentItems[ i ].config[ this._dimension ] += removedItemSize / ( this.contentItems.length - 1 );
 			}
 		}
+	
+		lm.items.AbstractContentItem.prototype.removeChild.call( this, contentItem, keepChild );
 
-		lm.items.AbstractContentItem.prototype.removeChild.call(this, contentItem, keepChild);
-
-		if (this.contentItems.length === 1 && this.config.isClosable === true) {
-			childItem = this.contentItems[0];
+		if( this.contentItems.length === 1 && this.config.isClosable === true ) {
+			childItem = this.contentItems[ 0 ];
 			this.contentItems = [];
-			this.parent.replaceChild(this, childItem, true);
+			this.parent.replaceChild( this, childItem, true );
 		} else {
-			this.callDownwards('setSize');
-			this.emitBubblingEvent('stateChanged');
+			this.callDownwards( 'setSize' );
+			this.emitBubblingEvent( 'stateChanged' );
 		}
 	},
-
+	
 	/**
 	 * Replaces a child of this Row or Column with another contentItem
 	 *
@@ -3801,28 +3801,28 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
 	 *
 	 * @returns {void}
 	 */
-	replaceChild: function (oldChild, newChild) {
-		var size = oldChild.config[this._dimension];
-		lm.items.AbstractContentItem.prototype.replaceChild.call(this, oldChild, newChild);
-		newChild.config[this._dimension] = size;
-		this.callDownwards('setSize');
-		this.emitBubblingEvent('stateChanged');
+	replaceChild: function( oldChild, newChild ) {
+		var size = oldChild.config[ this._dimension ];
+		lm.items.AbstractContentItem.prototype.replaceChild.call( this, oldChild, newChild );
+		newChild.config[ this._dimension ] = size;
+		this.callDownwards( 'setSize' );
+		this.emitBubblingEvent( 'stateChanged' );
 	},
-
+	
 	/**
 	 * Called whenever the dimensions of this item or one of its parents change
 	 *
 	 * @returns {void}
 	 */
-	setSize: function () {
-		if (this.contentItems.length > 0) {
+	setSize: function() {
+		if( this.contentItems.length > 0 ) {
 			this._calculateRelativeSizes();
 			this._setAbsoluteSizes();
 		}
-		this.emitBubblingEvent('stateChanged');
-		this.emit('resize');
+		this.emitBubblingEvent( 'stateChanged' );
+		this.emit( 'resize' );
 	},
-
+	
 	/**
 	 * Invoked recursively by the layout manager. AbstractContentItem.init appends
 	 * the contentItem's DOM elements to the container, RowOrColumn init adds splitters
@@ -3832,18 +3832,18 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
 	 * @override AbstractContentItem._$init
 	 * @returns {void}
 	 */
-	_$init: function () {
-		if (this.isInitialised === true) return;
+	_$init: function() {
+		if( this.isInitialised === true ) return;
 
 		var i;
-
-		lm.items.AbstractContentItem.prototype._$init.call(this);
-
-		for (i = 0; i < this.contentItems.length - 1; i++) {
-			this.contentItems[i].element.after(this._createSplitter(i).element);
+	
+		lm.items.AbstractContentItem.prototype._$init.call( this );
+		
+		for( i = 0; i < this.contentItems.length - 1; i++ ) {
+			this.contentItems[ i ].element.after( this._createSplitter( i ).element );
 		}
 	},
-
+	
 	/**
 	 * Turns the relative sizes calculated by _calculateRelativeSizes into
 	 * absolute pixel values and applies them to the children's DOM elements
@@ -3853,21 +3853,21 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
 	 * @private
 	 * @returns {void}
 	 */
-	_setAbsoluteSizes: function () {
+	_setAbsoluteSizes: function() {
 		var i,
 			sizeData = this._calculateAbsoluteSizes();
 
-		for (i = 0; i < this.contentItems.length; i++) {
+		for( i = 0; i < this.contentItems.length; i++ ) {
 			if (sizeData.additionalPixel - i > 0) {
 				sizeData.itemSizes[i]++;
 			}
 
-			if (this._isColumn) {
-				this.contentItems[i].element.width(sizeData.totalWidth);
-				this.contentItems[i].element.height(sizeData.itemSizes[i]);
+			if( this._isColumn ) {
+				this.contentItems[ i ].element.width( sizeData.totalWidth );
+				this.contentItems[ i ].element.height( sizeData.itemSizes[ i ] );
 			} else {
-				this.contentItems[i].element.width(sizeData.itemSizes[i]);
-				this.contentItems[i].element.height(sizeData.totalHeight);
+				this.contentItems[ i ].element.width( sizeData.itemSizes[ i ] );
+				this.contentItems[ i ].element.height( sizeData.totalHeight );
 			}
 		}
 	},
@@ -3876,7 +3876,7 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
 	 * Calculates the absolute sizes of all of the children of this Item.
 	 * @returns {object} - Set with absolute sizes and additional pixels.
 	 */
-	_calculateAbsoluteSizes: function () {
+	_calculateAbsoluteSizes: function() {
 		var i,
 			totalSplitterSize = (this.contentItems.length - 1) * this._splitterSize,
 			totalWidth = this.element.width(),
@@ -3912,7 +3912,7 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
 			totalHeight: totalHeight
 		};
 	},
-
+	
 	/**
 	 * Calculates the relative sizes of all children of this Item. The logic
 	 * is as follows:
@@ -3934,58 +3934,58 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
 	 * @private
 	 * @returns {void}
 	 */
-	_calculateRelativeSizes: function () {
-
+	_calculateRelativeSizes: function() {
+		
 		var i,
 			total = 0,
 			itemsWithoutSetDimension = [],
 			dimension = this._isColumn ? 'height' : 'width';
-
-		for (i = 0; i < this.contentItems.length; i++) {
-			if (this.contentItems[i].config[dimension] !== undefined) {
-				total += this.contentItems[i].config[dimension];
+	
+		for( i = 0; i < this.contentItems.length; i++ ) {
+			if( this.contentItems[ i ].config[ dimension ] !== undefined ) {
+				total += this.contentItems[ i ].config[ dimension ];
 			} else {
-				itemsWithoutSetDimension.push(this.contentItems[i]);
+				itemsWithoutSetDimension.push( this.contentItems[ i ] );
 			}
 		}
-
+	
 		/**
 		 * Everything adds up to hundred, all good :-)
 		 */
-		if (Math.round(total) === 100) {
+		if( Math.round( total ) === 100 ) {
 			this._respectMinItemWidth();
 			return;
 		}
-
+	
 		/**
 		 * Allocate the remaining size to the items without a set dimension
 		 */
-		if (Math.round(total) < 100 && itemsWithoutSetDimension.length > 0) {
-			for (i = 0; i < itemsWithoutSetDimension.length; i++) {
-				itemsWithoutSetDimension[i].config[dimension] = (100 - total) / itemsWithoutSetDimension.length;
+		if( Math.round( total ) < 100 && itemsWithoutSetDimension.length > 0 ) {
+			for( i = 0; i < itemsWithoutSetDimension.length; i++ ) {
+				itemsWithoutSetDimension[ i ].config[ dimension ] = ( 100 - total ) / itemsWithoutSetDimension.length;
 			}
 			this._respectMinItemWidth();
 			return;
 		}
-
+	
 		/**
 		 * If the total is > 100, but there are also items without a set dimension left, assing 50
 		 * as their dimension and add it to the total
 		 *
 		 * This will be reset in the next step
 		 */
-		if (Math.round(total) > 100) {
-			for (i = 0; i < itemsWithoutSetDimension.length; i++) {
-				itemsWithoutSetDimension[i].config[dimension] = 50;
+		if( Math.round( total ) > 100 ) {
+			for( i = 0; i < itemsWithoutSetDimension.length; i++ ) {
+				itemsWithoutSetDimension[ i ].config[ dimension ] = 50;
 				total += 50;
 			}
 		}
-
+	
 		/**
 		 * Set every items size relative to 100 relative to its size to total
 		 */
-		for (i = 0; i < this.contentItems.length; i++) {
-			this.contentItems[i].config[dimension] = (this.contentItems[i].config[dimension] / total) * 100;
+		for( i = 0; i < this.contentItems.length; i++ ) {
+			this.contentItems[ i ].config[ dimension ] = ( this.contentItems[ i ].config[ dimension ] / total ) * 100;
 		}
 
 		this._respectMinItemWidth();
@@ -3995,10 +3995,10 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
 	 * Adjusts the column widths to respect the dimensions minItemWidth if set.
 	 * @returns {} 
 	 */
-	_respectMinItemWidth: function () {
+	_respectMinItemWidth: function() {
 		var minItemWidth = this.layoutManager.config.dimensions ? (this.layoutManager.config.dimensions.minItemWidth || 0) : 0,
-			sizeData = null,
-			entriesOverMin = [],
+			sizeData = null, 
+			entriesOverMin = [], 
 			totalOverMin = 0,
 			totalUnderMin = 0,
 			remainingWidth = 0,
@@ -4009,7 +4009,7 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
 			allEntries = [],
 			entry;
 
-		if (this._isColumn || !minItemWidth || this.contentItems.length <= 1) {
+		if ( this._isColumn || !minItemWidth || this.contentItems.length <= 1) {
 			return;
 		}
 
@@ -4018,15 +4018,15 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
 		/**
 		 * Figure out how much we are under the min item size total and how much room we have to use.
 		 */
-		for (i = 0; i < this.contentItems.length; i++) {
+		for( i = 0; i < this.contentItems.length; i++ ) {
 
-			contentItem = this.contentItems[i];
-			itemSize = sizeData.itemSizes[i];
+			contentItem = this.contentItems[ i ];
+			itemSize = sizeData.itemSizes[ i ];
 
-			if (itemSize < minItemWidth) {
+			if( itemSize < minItemWidth ) {
 				totalUnderMin += minItemWidth - itemSize;
 				entry = { width: minItemWidth };
-
+				
 			}
 			else {
 				totalOverMin += itemSize - minItemWidth;
@@ -4049,9 +4049,9 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
 		 */
 		reducePercent = totalUnderMin / totalOverMin;
 		remainingWidth = totalUnderMin;
-		for (i = 0; i < entriesOverMin.length; i++) {
+		for( i = 0; i < entriesOverMin.length; i++ ) {
 			entry = entriesOverMin[i];
-			reducedWidth = Math.round((entry.width - minItemWidth) * reducePercent);
+			reducedWidth = Math.round( ( entry.width - minItemWidth ) * reducePercent );
 			remainingWidth -= reducedWidth;
 			entry.width -= reducedWidth;
 		}
@@ -4070,7 +4070,7 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
 			this.contentItems[i].config.width = (allEntries[i].width / sizeData.totalWidth) * 100;
 		}
 	},
-
+	
 	/**
 	 * Instantiates a new lm.controls.Splitter, binds events to it and adds
 	 * it to the array of splitters at the position specified as the index argument
@@ -4081,16 +4081,16 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
 	 *
 	 * @returns {lm.controls.Splitter}
 	 */
-	_createSplitter: function (index) {
+	_createSplitter: function( index ) {
 		var splitter;
-		splitter = new lm.controls.Splitter(this._isColumn, this._splitterSize);
-		splitter.on('drag', lm.utils.fnBind(this._onSplitterDrag, this, [splitter]), this);
-		splitter.on('dragStop', lm.utils.fnBind(this._onSplitterDragStop, this, [splitter]), this);
-		splitter.on('dragStart', lm.utils.fnBind(this._onSplitterDragStart, this, [splitter]), this);
-		this._splitter.splice(index, 0, splitter);
+		splitter = new lm.controls.Splitter( this._isColumn, this._splitterSize );
+		splitter.on( 'drag', lm.utils.fnBind( this._onSplitterDrag, this, [ splitter ] ), this );
+		splitter.on( 'dragStop', lm.utils.fnBind( this._onSplitterDragStop, this, [ splitter ] ), this );
+		splitter.on( 'dragStart', lm.utils.fnBind( this._onSplitterDragStart, this, [ splitter ] ), this );
+		this._splitter.splice( index, 0, splitter );
 		return splitter;
 	},
-
+	
 	/**
 	 * Locates the instance of lm.controls.Splitter in the array of
 	 * registered splitters and returns a map containing the contentItem
@@ -4101,12 +4101,12 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
 	 *
 	 * @returns {Object} A map of contentItems that the splitter affects
 	 */
-	_getItemsForSplitter: function (splitter) {
-		var index = lm.utils.indexOf(splitter, this._splitter);
-
+	_getItemsForSplitter: function( splitter ) {
+		var index = lm.utils.indexOf( splitter, this._splitter );
+		
 		return {
-			before: this.contentItems[index],
-			after: this.contentItems[index + 1]
+			before: this.contentItems[ index ],
+			after: this.contentItems[ index + 1 ]
 		};
 	},
 
@@ -4125,7 +4125,7 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
 
 		return { horizontal: minWidth, vertical: minHeight };
 	},
-
+	
 	/**
 	 * Invoked when a splitter's dragListener fires dragStart. Calculates the splitters
 	 * movement area once (so that it doesn't need calculating on every mousemove event)
@@ -4134,9 +4134,9 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
 	 *
 	 * @returns {void}
 	 */
-	_onSplitterDragStart: function (splitter) {
-		var items = this._getItemsForSplitter(splitter),
-			minSize = this.layoutManager.config.dimensions[this._isColumn ? 'minItemHeight' : 'minItemWidth'];
+	_onSplitterDragStart: function( splitter ) {
+		var items = this._getItemsForSplitter( splitter ),
+			minSize = this.layoutManager.config.dimensions[ this._isColumn ? 'minItemHeight' : 'minItemWidth' ];
 
 		var beforeMinDim = this._getMinimumDimensions(items.before.config.content);
 		var beforeMinSize = this._isColumn ? beforeMinDim.vertical : beforeMinDim.horizontal;
@@ -4145,10 +4145,10 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
 		var afterMinSize = this._isColumn ? afterMinDim.vertical : afterMinDim.horizontal;
 
 		this._splitterPosition = 0;
-		this._splitterMinPosition = -1 * (items.before.element[this._dimension]() - (beforeMinSize || minSize));
-		this._splitterMaxPosition = items.after.element[this._dimension]() - (afterMinSize || minSize);
+		this._splitterMinPosition = -1 * ( items.before.element[ this._dimension ]() - (beforeMinSize || minSize) );
+		this._splitterMaxPosition = items.after.element[ this._dimension ]() - (afterMinSize || minSize);
 	},
-
+	
 	/**
 	 * Invoked when a splitter's DragListener fires drag. Updates the splitters DOM position,
 	 * but not the sizes of the elements the splitter controls in order to minimize resize events
@@ -4159,15 +4159,15 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
 	 *
 	 * @returns {void}
 	 */
-	_onSplitterDrag: function (splitter, offsetX, offsetY) {
+	_onSplitterDrag: function( splitter, offsetX, offsetY ) {
 		var offset = this._isColumn ? offsetY : offsetX;
-
-		if (offset > this._splitterMinPosition && offset < this._splitterMaxPosition) {
+	
+		if( offset > this._splitterMinPosition && offset < this._splitterMaxPosition ) {
 			this._splitterPosition = offset;
-			splitter.element.css(this._isColumn ? 'top' : 'left', offset);
+			splitter.element.css( this._isColumn ? 'top' : 'left', offset );
 		}
 	},
-
+	
 	/**
 	 * Invoked when a splitter's DragListener fires dragStop. Resets the splitters DOM position,
 	 * and applies the new sizes to the elements before and after the splitter and their children
@@ -4177,23 +4177,23 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
 	 *
 	 * @returns {void}
 	 */
-	_onSplitterDragStop: function (splitter) {
+	_onSplitterDragStop: function( splitter ) {
 
-		var items = this._getItemsForSplitter(splitter),
-			sizeBefore = items.before.element[this._dimension](),
-			sizeAfter = items.after.element[this._dimension](),
-			splitterPositionInRange = (this._splitterPosition + sizeBefore) / (sizeBefore + sizeAfter),
-			totalRelativeSize = items.before.config[this._dimension] + items.after.config[this._dimension];
-
-		items.before.config[this._dimension] = splitterPositionInRange * totalRelativeSize;
-		items.after.config[this._dimension] = (1 - splitterPositionInRange) * totalRelativeSize;
-
+		var items = this._getItemsForSplitter( splitter ),
+			sizeBefore = items.before.element[ this._dimension ](),
+			sizeAfter = items.after.element[ this._dimension ](),
+			splitterPositionInRange = ( this._splitterPosition + sizeBefore ) / ( sizeBefore + sizeAfter ),
+			totalRelativeSize = items.before.config[ this._dimension ] + items.after.config[ this._dimension ];
+	
+		items.before.config[ this._dimension ] = splitterPositionInRange * totalRelativeSize;
+		items.after.config[ this._dimension ] = ( 1 - splitterPositionInRange ) * totalRelativeSize;
+	
 		splitter.element.css({
 			'top': 0,
 			'left': 0
 		});
-
-		lm.utils.animFrame(lm.utils.fnBind(this.callDownwards, this, ['setSize']));
+		
+		lm.utils.animFrame( lm.utils.fnBind( this.callDownwards, this, [ 'setSize' ] ) );
 	}
 });
 lm.items.Stack = function( layoutManager, config, parent ) {

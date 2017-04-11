@@ -37,7 +37,7 @@ lm.controls.Header._template = [
 	'<div class="lm_header">',
 		'<ul class="lm_tabs"></ul>',
 		'<ul class="lm_controls"></ul>',
-	  '<ul class="lm_tabdropdown_list"></ul>',
+		'<ul class="lm_tabdropdown_list"></ul>',
 	'</div>'
 ].join( '' );
 
@@ -120,20 +120,20 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			}
 		}
 
-	  /**
+		/**
 		 * If the tab selected was in the dropdown, move everything down one to make way for this one to be the first.
 		 * This will make sure the most used tabs stay visible.
 		 */
-		if (this._lastVisibleTabIndex !== -1 && this.parent.config.activeItemIndex > this._lastVisibleTabIndex) {
+		if( this._lastVisibleTabIndex !== -1 && this.parent.config.activeItemIndex > this._lastVisibleTabIndex ) {
 			activeTab = this.tabs[this.parent.config.activeItemIndex];
-			for (j = this.parent.config.activeItemIndex; j > 0; j--) {
+			for( j = this.parent.config.activeItemIndex; j > 0; j-- ) {
 				this.tabs[j] = this.tabs[j - 1];
 			}
 			this.tabs[0] = activeTab;
 			this.parent.config.activeItemIndex = 0;
 		}
 
-	  this._updateTabSizes();
+		this._updateTabSizes();
 		this.parent.emitBubblingEvent( 'stateChanged' );
 	},
 
@@ -188,8 +188,8 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			showTabDropdown;
 
 		/**
-		* Dropdown to show additional tabs.
-		*/
+		 * Dropdown to show additional tabs.
+		 */
 		showTabDropdown = lm.utils.fnBind( this._showAdditionalTabsDropdown, this );
 		tabDropdownLabel = this.layoutManager.config.labels.tabDropdown;
 		this.tabDropdownButton = new lm.controls.HeaderButton( this, tabDropdownLabel, 'lm_tabdropdown', showTabDropdown );
@@ -232,23 +232,23 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		}
 	},
 
-	 /**
-	  * Shows drop down for additional tabs when there are too many to display.
-	  * 
-	  * @returns {void} 
-	  */
-	 _showAdditionalTabsDropdown: function() {
-	   this.tabDropdownContainer.show();
-	 },
+	/**
+	 * Shows drop down for additional tabs when there are too many to display.
+	 * 
+	 * @returns {void} 
+	 */
+	_showAdditionalTabsDropdown: function() {
+		this.tabDropdownContainer.show();
+	},
 
-	 /**
-	  * Hides drop down for additional tabs when there are too many to display.
-	  * 
-	  * @returns {void} 
-	  */
-	 _hideAdditionalTabsDropdown: function(e) {
-	   this.tabDropdownContainer.hide();
-	 },
+	/**
+	 * Hides drop down for additional tabs when there are too many to display.
+	 * 
+	 * @returns {void} 
+	 */
+	_hideAdditionalTabsDropdown: function(e) {
+		this.tabDropdownContainer.hide();
+	},
 
 	/**
 	 * Checks whether the header is closable based on the parent config and 
@@ -297,9 +297,9 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			tabElement,
 			i,
 			showTabDropdown,
-		  swapTab,
+			swapTab,
 			tabWidth,
-		  hasVisibleTab = false;
+			hasVisibleTab = false;
 
 		this._lastVisibleTabIndex = -1;
 
@@ -325,7 +325,7 @@ lm.utils.copy( lm.controls.Header.prototype, {
 				hasVisibleTab = true;
 				this._lastVisibleTabIndex = i;
 				tabElement.removeData('lastTabWidth');
-			  this.tabsContainer.append(tabElement);
+				this.tabsContainer.append(tabElement);
 			}
 		}
 
