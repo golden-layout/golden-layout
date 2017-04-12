@@ -507,6 +507,11 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		this.layoutManager.tabDropPlaceholder.remove();
 	},
 
+	toggleMaximise: function( e ) {
+		if( !this.isMaximised )
+			this.dock( false );
+		lm.items.AbstractContentItem.prototype.toggleMaximise.call( this, e );
+	},
 	_setupHeaderPosition: function() {
 		var side = [ 'right', 'left', 'bottom' ].indexOf( this._header.show ) >= 0  && this._header.show;
 		this.header.element.toggle( !!this._header.show );
