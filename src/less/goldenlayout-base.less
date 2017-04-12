@@ -52,7 +52,7 @@
 // Separator line (handle to change pane size)
 .lm_splitter {
   position: relative;
-  z-index: 20;
+  z-index: 2;
 
   &:hover, // When hovered by mouse...
   &.lm_dragging {
@@ -160,10 +160,12 @@
     }
   }
 }
+
+// change stack style to absolute positioning for docking transition ability
 .lm_stack {
   position: relative;
   >.lm_items {
-      overflow:hidden;
+      overflow: hidden;
   }
   &.lm_left {
     >.lm_items {
@@ -185,11 +187,11 @@
     }
   }
   &.lm_bottom {
-    .lm_items {
+    >.lm_items {
       position: absolute;
       bottom: 20px;
     }
-    .lm_header {
+    >.lm_header {
       position: absolute;
       bottom: 0;
     }
@@ -202,7 +204,7 @@
     z-index: 5;
   }
   > .lm_items {
-    z-index: 3;
+    *z-index: 3;
     transition: height .4s ease-in;
     border: 2px #666 solid;
     margin: -2px;
@@ -216,37 +218,32 @@
 }
 
 // Headers positions
-.lm_stack.lm_left,
-.lm_stack.lm_right {
-  .lm_header {
-    height: 100%;
-  }
-}
-.lm_dragProxy.lm_left,
-.lm_dragProxy.lm_right {
-  .lm_header {
-    float: left;
-  }
-  .lm_items {
-    float:left;
-  }
-}
-
-
-.lm_dragProxy.lm_left,
-.lm_dragProxy.lm_right,
-.lm_stack.lm_left,
-.lm_stack.lm_right {
-  .lm_header {
-    width: 20px;
-    vertical-align: top;
-    .lm_tabs {
-      transform-origin: left top;
-      top: 0;
-      width:1000px; /*hack*/
+.lm_left,
+.lm_right {
+  &.lm_stack {
+    .lm_header {
+      height: 100%;
     }
-    .lm_controls {
-      bottom:0;
+  }
+  &.lm_dragProxy {
+    .lm_header,
+    .lm_items {
+      float: left;
+    }
+  }
+  &.lm_dragProxy,
+  &.lm_stack {
+    .lm_header {
+      width: 20px;
+      vertical-align: top;
+      .lm_tabs {
+        transform-origin: left top;
+        top: 0;
+        width: 1000px; /*hack*/
+      }
+      .lm_controls {
+        bottom: 0;
+      }
     }
   }
 }

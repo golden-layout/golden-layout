@@ -28,13 +28,9 @@ lm.items.Stack = function( layoutManager, config, parent ) {
 	this.childElementContainer = $( '<div class="lm_items"></div>' );
 	this.header = new lm.controls.Header( layoutManager, this );
 
-	this.element.on( 'mouseenter', lm.utils.fnBind( function() {
+	this.element.on( 'mouseleave mouseenter', lm.utils.fnBind( function ( event ) {
 		if ( this._docker && this._docker.docked )
-			this.childElementContainer.css( this._docker.dimension, this._docker.realSize );
-	}, this ) );
-	this.element.on( 'mouseleave', lm.utils.fnBind( function () {
-		if ( this._docker && this._docker.docked )
-			this.childElementContainer.css( this._docker.dimension, 0 );
+			this.childElementContainer[ this._docker.dimension ] ( event.type == 'mouseenter' ? this._docker.realSize : 0 );
 	},this ) );
 	this.element.append( this.header.element );
 	this.element.append( this.childElementContainer );
@@ -53,22 +49,20 @@ lm.utils.copy( lm.items.Stack.prototype, {
 	},
 	setSize: function() {
 		if ( !this.element.is( ':visible' ) ) return;
-		var i,
-			headerSize = this._header.show ? this.layoutManager.config.dimensions.headerHeight : 0,
-			contentWidth = this.element.width() - (this._sided ? headerSize : 0),
-			contentHeight = this.element.height() - (!this._sided ? headerSize : 0);
+		var isDocked = this._docker && this._docker.docked,
+			content = { width: this.element.width(), height: this.element.height() };
 
-		if(this._docker && this._docker.docked )
-			if (this._docker.dimension == 'width')
-				contentWidth=this._docker.realSize;
-			else
-				if (this._docker.dimension == 'height')
-					contentHeight=this._docker.realSize;
-		this.childElementContainer.width( contentWidth );
-		this.childElementContainer.height( contentHeight );
+		if( this._header.show )
+			content[ this._sided ? 'width' : 'height' ] -= this.layoutManager.config.dimensions.headerHeight;
+		if( isDocked )
+			content[ this._docker.dimension ] = this._docker.realSize;
+		if( !isDocked || this._docker.dimension == 'height' )
+			this.childElementContainer.width( content.width );
+		if( !isDocked || this._docker.dimension == 'width' )
+			this.childElementContainer.height( content.height );
 
-		for( i = 0; i < this.contentItems.length; i++ ) {
-			this.contentItems[ i ].element.width( contentWidth ).height( contentHeight );
+		for(var i = 0; i < this.contentItems.length; i++ ) {
+			this.contentItems[ i ].element.width( content.width ).height( content.height );
 		}
 		this.emit( 'resize' );
 		this.emitBubblingEvent( 'stateChanged' );
@@ -125,7 +119,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		this.setActiveContentItem( contentItem );
 		this.callDownwards( 'setSize' );
 		this._$validateClosability();
-		if( parent instanceof lm.items.RowOrColumn )
+		if( this.parent instanceof lm.items.RowOrColumn )
 			this.parent._validateDocking();
 		this.emitBubblingEvent( 'stateChanged' );
 	},
@@ -142,6 +136,8 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		}
 		
 		this._$validateClosability();
+		if( this.parent instanceof lm.items.RowOrColumn )
+			this.parent._validateDocking();
 		this.emitBubblingEvent( 'stateChanged' );
 	},
 
