@@ -279,8 +279,6 @@ lm.utils.copy( lm.items.Stack.prototype, {
 	},
 
 	_$getArea: function() {
-		if( this._header.frozen )
-			return null;
 		if( this.element.is( ':visible' ) === false ) {
 			return null;
 		}
