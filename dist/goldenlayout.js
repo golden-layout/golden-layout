@@ -2027,6 +2027,12 @@ lm.controls.DragProxy = function( x, y, dragListener, layoutManager, contentItem
 	this._dragListener.on( 'dragStop', this._onDrop, this );
 
 	this.element = $( lm.controls.DragProxy._template );
+	if( originalParent && originalParent._side ) {
+	    this._sided = originalParent._sided;
+		this.element.addClass( 'lm_' + originalParent._side );
+		if( [ 'right', 'bottom' ].indexOf( originalParent._side ) >=0 )
+			this.element.find( '.lm_content' ).after( this.element.find( '.lm_header' ) );
+	}
 	this.element.css({ left: x, top: y });
 	this.element.find( '.lm_tab' ).attr( 'title', lm.utils.stripTags( this._contentItem.config.title ) );
 	this.element.find( '.lm_title' ).html( this._contentItem.config.title );
@@ -2187,8 +2193,12 @@ lm.utils.copy( lm.controls.DragProxy.prototype, {
 	_setDimensions: function() {
 		var dimensions = this._layoutManager.config.dimensions,
 			width = dimensions.dragProxyWidth,
-			height = dimensions.dragProxyHeight - dimensions.headerHeight;
+			height = dimensions.dragProxyHeight;
 	
+		this.element.width( width );
+		this.element.height( height );
+		width -= ( this._sided ? dimensions.headerHeight : 0 ),
+		height -= ( !this._sided ? dimensions.headerHeight : 0 );
 		this.childElementContainer.width( width );
 		this.childElementContainer.height( height );
 		this._contentItem.element.width( width );
@@ -2300,7 +2310,6 @@ lm.controls.Header = function( layoutManager, parent ) {
 		this.element.on( 'click touchstart', lm.utils.fnBind( this._onHeaderClick, this ) );
 	}
 	
-	this.element.height( layoutManager.config.dimensions.headerHeight );
 	this.tabsContainer = this.element.find( '.lm_tabs' );
 	this.tabDropdownContainer = this.element.find( '.lm_tabdropdown_list' );
 	this.tabDropdownContainer.hide();
@@ -2321,8 +2330,9 @@ lm.controls.Header = function( layoutManager, parent ) {
 lm.controls.Header._template = [
 	'<div class="lm_header">',
 		'<ul class="lm_tabs"></ul>',
-		'<ul class="lm_controls"></ul>',
-	  '<ul class="lm_tabdropdown_list"></ul>',
+		'<ul class="lm_controls">',
+			'<ul class="lm_tabdropdown_list"></ul>',
+		'</ul>',
 	'</div>'
 ].join( '' );
 
@@ -2423,6 +2433,24 @@ lm.utils.copy( lm.controls.Header.prototype, {
 	},
 
 	/**
+	 * Programmatically operate with header position.
+	 *
+	 * @param {string} position one of ('top','left','right','bottom') to set or empty to get it.
+	 *
+	 * @returns {string} previous header position
+	 */
+	position: function( position ) {
+		var previous = this.parent._header.show;
+		if ( previous && !this.parent._side )
+		  previous = 'top';
+		if ( position !== undefined && this.parent._header.show != position ) {
+			this.parent._header.show = position;
+			this.parent._setupHeaderPosition();
+		}
+		return previous;
+	},
+
+	/**
 	 * Programmatically set closability.
 	 *
 	 * @package private
@@ -2457,6 +2485,15 @@ lm.utils.copy( lm.controls.Header.prototype, {
 	},
 
 	/**
+	 * get settings from header
+	 *
+	 * @returns {string} when exists
+	 */
+	_getHeaderSetting: function( name ) {
+		if ( name in this.parent._header )
+			return this.parent._header[ name ];
+	},
+	/**
 	 * Creates the popout, maximise and close buttons in the header's top right corner
 	 *
 	 * @returns {void}
@@ -2483,19 +2520,19 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		/**
 		 * Popout control to launch component in new window.
 		 */
-		if( this.layoutManager.config.settings.showPopoutIcon ) {
+		if( this._getHeaderSetting( 'popout' ) ) {
 			popout = lm.utils.fnBind( this._onPopoutClick, this );
-			label = this.layoutManager.config.labels.popout;
+			label = this._getHeaderSetting( 'popout' );
 			new lm.controls.HeaderButton( this, label, 'lm_popout', popout );
 		}
 
 		/**
 		 * Maximise control - set the component to the full size of the layout
 		 */
-		if( this.layoutManager.config.settings.showMaximiseIcon ) {
+		if( this._getHeaderSetting( 'maximise' ) ) {
 			maximise = lm.utils.fnBind( this.parent.toggleMaximise, this.parent );
-			maximiseLabel = this.layoutManager.config.labels.maximise;
-			minimiseLabel = this.layoutManager.config.labels.minimise;
+			maximiseLabel = this._getHeaderSetting( 'maximise' );
+			minimiseLabel = this._getHeaderSetting( 'minimise' );
 			maximiseButton = new lm.controls.HeaderButton( this, maximiseLabel, 'lm_maximise', maximise );
 			
 			this.parent.on( 'maximised', function(){
@@ -2512,7 +2549,7 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		 */
 		if( this._isClosable() ) {
 			closeStack = lm.utils.fnBind( this.parent.remove, this.parent );
-			label = this.layoutManager.config.labels.close;
+			label = this._getHeaderSetting( 'close' );
 			this.closeButton = new lm.controls.HeaderButton( this, label, 'lm_close', closeStack );
 		}
 	},
@@ -2577,14 +2614,19 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			return;
 		}
 		
+		var size = function ( val ) { return val ? 'width' : 'height'; }
+		this.element.css( size( !this.parent._sided ), '' );
+		this.element[ size( this.parent._sided ) ]( this.layoutManager.config.dimensions.headerHeight );
 		var availableWidth = this.element.outerWidth() - this.controlsContainer.outerWidth() - this._tabControlOffset,
 			totalTabWidth = 0,
 			tabElement,
 			i,
 			showTabDropdown,
-		  swapTab,
+			swapTab,
 			tabWidth;
 
+		if ( this.parent._sided )
+			availableWidth = this.element.outerHeight() - this.controlsContainer.outerHeight() - this._tabControlOffset;
 		this._lastVisibleTabIndex = -1;
 
 		for( i = 0; i < this.tabs.length; i++ ) {
@@ -4099,6 +4141,20 @@ lm.items.Stack = function( layoutManager, config, parent ) {
 
 	this.element = $( '<div class="lm_item lm_stack"></div>' );
 	this._activeContentItem = null;
+	var cfg = layoutManager.config;
+	this._header = { // defaults' reconstruction from old configuration style
+		show: cfg.settings.hasHeaders === true && config.hasHeaders !== false,
+		popout: cfg.settings.showPopoutIcon && cfg.labels.popout,
+		maximise: cfg.settings.showMaximiseIcon && cfg.labels.maximise,
+		close: cfg.settings.showCloseIcon && cfg.labels.close,
+		minimise: cfg.labels.minimise,
+	};
+	if ( cfg.header ) // load simplified version of header configuration (https://github.com/deepstreamIO/golden-layout/pull/245)
+		lm.utils.copy( this._header, cfg.header );
+	if ( config.header ) // load from stack
+		lm.utils.copy( this._header, config.header );
+	if ( config.content && config.content[ 0 ] && config.content[ 0 ].header ) // load from component if stack omitted
+		lm.utils.copy( this._header, config.content[ 0 ].header );
 
 	this._dropZones = {};
 	this._dropSegment = null;
@@ -4110,11 +4166,9 @@ lm.items.Stack = function( layoutManager, config, parent ) {
 	this.childElementContainer = $( '<div class="lm_items"></div>' );
 	this.header = new lm.controls.Header( layoutManager, this );
 
-	if( layoutManager.config.settings.hasHeaders === true && config.hasHeaders !== false ) {
-		this.element.append( this.header.element );
-	}
-
+	this.element.append( this.header.element );
 	this.element.append( this.childElementContainer );
+	this._setupHeaderPosition();
 	this._$validateClosability();
 };
 
@@ -4124,8 +4178,9 @@ lm.utils.copy( lm.items.Stack.prototype, {
 
 	setSize: function() {
 		var i,
-			contentWidth = this.element.width(),
-			contentHeight = (this.config.hasHeaders !== false) ? this.element.height() - this.layoutManager.config.dimensions.headerHeight : this.element.height();
+			headerSize = this._header.show ? this.layoutManager.config.dimensions.headerHeight : 0,
+			contentWidth = this.element.width() - (this._sided ? headerSize : 0),
+			contentHeight = this.element.height() - (!this._sided ? headerSize : 0);
 
 		this.childElementContainer.width( contentWidth );
 		this.childElementContainer.height( contentHeight );
@@ -4297,7 +4352,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		 * The content item can be either a component or a stack. If it is a component, wrap it into a stack
 		 */
 		if( contentItem.isComponent ) {
-			stack = this.layoutManager.createContentItem({ type: 'stack' }, this );
+			stack = this.layoutManager.createContentItem({ type: 'stack', header: contentItem.config.header || {} }, this );
 			stack._$init();
 			stack.addChild( contentItem );
 			contentItem = stack;
@@ -4350,7 +4405,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 
 				if( segment === 'header' ) {
 					this._dropSegment = 'header';
-					this._highlightHeaderDropZone( x );
+					this._highlightHeaderDropZone( this._sided ? y : x );
 				} else {
 					this._resetHeaderDropZone();
 					this._highlightBodyDropZone( segment );
@@ -4513,9 +4568,15 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		for( i = 0; i < tabsLength; i++ ) {
 			tabElement = this.header.tabs[ i ].element;
 			offset = tabElement.offset();
-			tabLeft = offset.left;
-			tabTop = offset.top;
-			tabWidth = tabElement.width();
+			if ( this._sided ) {
+				tabLeft = offset.top;
+				tabTop = offset.left;
+				tabWidth = tabElement.height();
+			} else {
+				tabLeft = offset.left;
+				tabTop = offset.top;
+				tabWidth = tabElement.width();
+			}
 
 			if( x > tabLeft && x < tabLeft + tabWidth ) {
 				isAboveTab = true;
@@ -4538,6 +4599,16 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		}
 
 
+		if ( this._sided ) {
+			placeHolderTop = this.layoutManager.tabDropPlaceholder.offset().top;
+			this.layoutManager.dropTargetIndicator.highlightArea({
+				x1: tabTop,
+				x2: tabTop + tabElement.innerHeight(),
+				y1: placeHolderTop,
+			y2: placeHolderTop + this.layoutManager.tabDropPlaceholder.width()
+			});
+			return;
+		}
 		placeHolderLeft = this.layoutManager.tabDropPlaceholder.offset().left;
 
 		this.layoutManager.dropTargetIndicator.highlightArea({
@@ -4550,6 +4621,21 @@ lm.utils.copy( lm.items.Stack.prototype, {
 
 	_resetHeaderDropZone: function() {
 		this.layoutManager.tabDropPlaceholder.remove();
+	},
+
+	_setupHeaderPosition: function() {
+		var side = [ 'right', 'left', 'bottom' ].indexOf( this._header.show ) >= 0  && this._header.show;
+		this.header.element.toggle( !!this._header.show );
+		this._side = side;
+		this._sided = [ 'right', 'left' ].indexOf( this._side ) >= 0;
+		this.element.removeClass( 'lm_left lm_right lm_bottom' );
+		if( this._side )
+			this.element.addClass( 'lm_' + this._side );
+		if ( this.element.find( '.lm_header' ).length && this.childElementContainer ) {
+			var headerPosition = [ 'right', 'bottom' ].indexOf( this._side ) >= 0 ? 'before' : 'after';
+			this.header.element[ headerPosition ]( this.childElementContainer );
+			this.callDownwards( 'setSize' );
+		}
 	},
 
 	_highlightBodyDropZone: function( segment ) {
