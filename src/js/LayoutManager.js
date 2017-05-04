@@ -607,6 +607,22 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		return mathingArea;
 	},
 
+	_$createRootItemAreas: function() {
+		var areaSize = 50;
+		var sides = { y2: 0, x2: 0, y1: 'y2', x1: 'x2' };
+		for ( side in sides ) {
+			var area = this.root._$getArea();
+			area.side = side;
+			if( sides [ side ] )
+				area[ side ] = area[ sides [ side ] ] - areaSize;
+			else
+				area[ side ] = areaSize;
+			with( area )
+				surface = ( x2 - x1 ) * ( y2 - y1 ) ;
+			this._itemAreas.push( area );
+		}
+	},
+
 	_$calculateItemAreas: function() {
 		var i, area, allContentItems = this._getAllContentItems();
 		this._itemAreas = [];
@@ -622,6 +638,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 			this._itemAreas.push( this.root._$getArea() );
 			return;
 		}
+		this._$createRootItemAreas();
 
 		for( i = 0; i < allContentItems.length; i++ ) {
 
@@ -637,6 +654,12 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 				this._itemAreas = this._itemAreas.concat( area );
 			} else {
 				this._itemAreas.push( area );
+				var header = { };
+				lm.utils.copy( header, area );
+				lm.utils.copy( header, area.contentItem._contentAreaDimensions.header.highlightArea );
+				with( header )
+					surface = ( x2 - x1 ) * ( y2 - y1 ) ;
+				this._itemAreas.push( header );
 			}
 		}
 	},
