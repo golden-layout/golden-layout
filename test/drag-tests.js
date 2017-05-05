@@ -40,13 +40,13 @@ describe( 'supports drag creation', function() {
 
 		mouse = $.Event( 'mousemove' );
 		mouse.pageX = dragSrc.position().left + 50;
-		mouse.pageY = dragSrc.position().top;
+		mouse.pageY = dragSrc.position().top + 50;
 		dragSrc.trigger( mouse );
 
 		dragSrc.trigger( 'mouseup' );
 
 		expect( $( '.dragged' ).length ).toBe( 1 );
-		var node = testTools.verifyPath( "row.1", layout, expect );
+		var node = testTools.verifyPath( "row.0", layout, expect );
 		expect( node.element.find( ".dragged" ).length ).toBe( 1 );
 	} );
 
