@@ -241,7 +241,7 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 	 * @returns {void}
 	 */
 	toggleMaximise: function( e ) {
-		e.preventDefault();
+		e&&e.preventDefault();
 		if( this.isMaximised === true ) {
 			this.layoutManager._$minimiseItem( this );
 		} else {
