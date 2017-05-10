@@ -18,7 +18,7 @@ lm.items.Component = function( layoutManager, config, parent ) {
 
 	this.isComponent = true;
 	this.container = new lm.container.ItemContainer( this.config, this, layoutManager );
-	this.instance = new ComponentConstructor( this.container, componentConfig  );
+	this.instance = new ComponentConstructor( this.container, componentConfig );
 	this.element = this.container._element;
 };
 
@@ -51,7 +51,7 @@ lm.utils.copy( lm.items.Component.prototype, {
 		this.container.show();
 		lm.items.AbstractContentItem.prototype._$show.call( this );
 	},
-	
+
 	_$shown: function() {
 		this.container.shown();
 		lm.items.AbstractContentItem.prototype._$shown.call( this );
@@ -70,4 +70,4 @@ lm.utils.copy( lm.items.Component.prototype, {
 	_$getArea: function() {
 		return null;
 	}
-});
+} );

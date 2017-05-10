@@ -35,7 +35,7 @@ lm.LayoutManager = function( config, container ) {
 
 	this.width = null;
 	this.height = null;
-	this.root =  null;
+	this.root = null;
 	this.openPopouts = [];
 	this.selectedItem = null;
 	this.isSubWindow = false;
@@ -136,7 +136,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 			throw new Error( 'Can\'t create config, layout not yet initialised' );
 		}
 
-		if( root && !( root instanceof lm.items.AbstractContentItem ) ){
+		if( root && !( root instanceof lm.items.AbstractContentItem ) ) {
 			throw new Error( 'Root must be a ContentItem' );
 		}
 
@@ -239,7 +239,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		 * If the document isn't ready yet, wait for it.
 		 */
 		if( document.readyState === 'loading' || document.body === null ) {
-			$(document).ready( lm.utils.fnBind( this.init, this ));
+			$( document ).ready( lm.utils.fnBind( this.init, this ) );
 			return;
 		}
 
@@ -266,7 +266,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		this._bindEvents();
 		this.isInitialised = true;
 		this._adjustColumnsResponsive();
-		this.emit('initialised');
+		this.emit( 'initialised' );
 	},
 
 	/**
@@ -288,7 +288,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		}
 
 		if( this.isInitialised === true ) {
-			this.root.callDownwards( 'setSize', [this.width, this.height] );
+			this.root.callDownwards( 'setSize', [ this.width, this.height ] );
 
 			if( this._maximisedItem ) {
 				this._maximisedItem.element.width( this.container.width() );
@@ -296,7 +296,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 				this._maximisedItem.callDownwards( 'setSize' );
 			}
 
-		  this._adjustColumnsResponsive();
+			this._adjustColumnsResponsive();
 		}
 	},
 
@@ -320,13 +320,13 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		this.dropTargetIndicator.destroy();
 		this.transitionIndicator.destroy();
 		this.eventHub.destroy();
-		
-		this._dragSources.forEach(function (dragSource) {
+
+		this._dragSources.forEach( function( dragSource ) {
 			dragSource._dragListener.destroy();
 			dragSource._element = null;
 			dragSource._itemConfig = null;
 			dragSource._dragListener = null;
-		});
+		} );
 		this._dragSources = [];
 	},
 
@@ -347,7 +347,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 			throw new lm.errors.ConfigurationError( 'Missing parameter \'type\'', config );
 		}
 
-		if (config.type === 'react-component') {
+		if( config.type === 'react-component' ) {
 			config.type = 'component';
 			config.componentName = 'lm-react-component';
 		}
@@ -365,16 +365,16 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		 */
 		if(
 			// If this is a component
-			config.type === 'component' &&
+		config.type === 'component' &&
 
-			// and it's not already within a stack
-			!( parent instanceof lm.items.Stack ) &&
+		// and it's not already within a stack
+		!( parent instanceof lm.items.Stack ) &&
 
-			// and we have a parent
-			!!parent &&
+		// and we have a parent
+		!!parent &&
 
-			// and it's not the topmost item in a new window
-			!( this.isSubWindow === true && parent instanceof lm.items.Root )
+		// and it's not the topmost item in a new window
+		!( this.isSubWindow === true && parent instanceof lm.items.Root )
 		) {
 			config = {
 				type: 'stack',
@@ -393,9 +393,9 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	 *
 	 * @param   {Object|lm.itemsAbstractContentItem} configOrContentItem
 	 * @param   {[Object]} dimensions A map with width, height, left and top
-	 * @param 	{[String]} parentId the id of the element this item will be appended to
+	 * @param    {[String]} parentId the id of the element this item will be appended to
 	 *                             when popIn is called
-	 * @param 	{[Number]} indexInParent The position of this item within its parent element
+	 * @param    {[Number]} indexInParent The position of this item within its parent element
 
 	 * @returns {lm.controls.BrowserPopout}
 	 */
@@ -442,7 +442,6 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		}
 
 
-
 		if( !dimensions && isItem ) {
 			windowLeft = window.screenX || window.screenLeft;
 			windowTop = window.screenY || window.screenTop;
@@ -471,13 +470,13 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 
 		browserPopout = new lm.controls.BrowserPopout( config, dimensions, parentId, indexInParent, this );
 
-		browserPopout.on( 'initialised', function(){
+		browserPopout.on( 'initialised', function() {
 			self.emit( 'windowOpened', browserPopout );
-		});
+		} );
 
-		browserPopout.on( 'closed', function(){
+		browserPopout.on( 'closed', function() {
 			self._$reconcilePopoutWindows();
-		});
+		} );
 
 		this.openPopouts.push( browserPopout );
 
@@ -497,8 +496,8 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	createDragSource: function( element, itemConfig ) {
 		this.config.settings.constrainDragToContainer = false;
 		var dragSource = new lm.controls.DragSource( $( element ), itemConfig, this );
-		this._dragSources.push(dragSource);
-		
+		this._dragSources.push( dragSource );
+
 		return dragSource;
 	},
 
@@ -509,7 +508,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	 *
 	 * @param   {lm.item.AbstractContentItem} item#
 	 * @param   {[Boolean]} _$silent Wheather to notify the item of its selection
-	 * @event 	selectionChanged
+	 * @event    selectionChanged
 	 *
 	 * @returns {VOID}
 	 */
@@ -537,8 +536,8 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	},
 
 	/*************************
-	* PACKAGE PRIVATE
-	*************************/
+	 * PACKAGE PRIVATE
+	 *************************/
 	_$maximiseItem: function( contentItem ) {
 		if( this._maximisedItem !== null ) {
 			this._$minimiseItem( this._maximisedItem );
@@ -581,9 +580,9 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	 * @returns {void}
 	 */
 	_$closeWindow: function() {
-		window.setTimeout(function(){
+		window.setTimeout( function() {
 			window.close();
-		}, 1);
+		}, 1 );
 	},
 
 	_$getArea: function( x, y ) {
@@ -598,13 +597,29 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 				y > area.y1 &&
 				y < area.y2 &&
 				smallestSurface > area.surface
-			){
+			) {
 				smallestSurface = area.surface;
 				mathingArea = area;
 			}
 		}
 
 		return mathingArea;
+	},
+
+	_$createRootItemAreas: function() {
+		var areaSize = 50;
+		var sides = { y2: 0, x2: 0, y1: 'y2', x1: 'x2' };
+		for( side in sides ) {
+			var area = this.root._$getArea();
+			area.side = side;
+			if( sides [ side ] )
+				area[ side ] = area[ sides [ side ] ] - areaSize;
+			else
+				area[ side ] = areaSize;
+			with( area )
+				surface = ( x2 - x1 ) * ( y2 - y1 );
+			this._itemAreas.push( area );
+		}
 	},
 
 	_$calculateItemAreas: function() {
@@ -622,6 +637,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 			this._itemAreas.push( this.root._$getArea() );
 			return;
 		}
+		this._$createRootItemAreas();
 
 		for( i = 0; i < allContentItems.length; i++ ) {
 
@@ -637,6 +653,12 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 				this._itemAreas = this._itemAreas.concat( area );
 			} else {
 				this._itemAreas.push( area );
+				var header = {};
+				lm.utils.copy( header, area );
+				lm.utils.copy( header, area.contentItem._contentAreaDimensions.header.highlightArea );
+				with( header )
+					surface = ( x2 - x1 ) * ( y2 - y1 );
+				this._itemAreas.push( header );
 			}
 		}
 	},
@@ -703,8 +725,8 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	},
 
 	/***************************
-	* PRIVATE
-	***************************/
+	 * PRIVATE
+	 ***************************/
 	/**
 	 * Returns a flattened array of all content items,
 	 * regardles of level or type
@@ -740,9 +762,9 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	 */
 	_bindEvents: function() {
 		if( this._isFullPage ) {
-			$(window).resize( this._resizeFunction );
+			$( window ).resize( this._resizeFunction );
 		}
-		$(window).on( 'unload beforeunload', this._unloadFunction );
+		$( window ).on( 'unload beforeunload', this._unloadFunction );
 	},
 
 	/**
@@ -754,7 +776,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	 */
 	_onResize: function() {
 		clearTimeout( this._resizeTimeoutId );
-		this._resizeTimeoutId = setTimeout(lm.utils.fnBind( this.updateSize, this ), 100 );
+		this._resizeTimeoutId = setTimeout( lm.utils.fnBind( this.updateSize, this ), 100 );
 	},
 
 	/**
@@ -810,22 +832,22 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	 */
 	_adjustToWindowMode: function() {
 		var popInButton = $( '<div class="lm_popin" title="' + this.config.labels.popin + '">' +
-				'<div class="lm_icon"></div>' +
-				'<div class="lm_bg"></div>' +
-			'</div>');
+			'<div class="lm_icon"></div>' +
+			'<div class="lm_bg"></div>' +
+			'</div>' );
 
-		popInButton.click(lm.utils.fnBind(function(){
+		popInButton.click( lm.utils.fnBind( function() {
 			this.emit( 'popIn' );
-		}, this));
+		}, this ) );
 
 		document.title = lm.utils.stripTags( this.config.content[ 0 ].title );
 
 		$( 'head' ).append( $( 'body link, body style, template, .gl_keep' ) );
 
 		this.container = $( 'body' )
-				.html( '' )
-				.css( 'visibility', 'visible' )
-				.append( popInButton );
+			.html( '' )
+			.css( 'visibility', 'visible' )
+			.append( popInButton );
 
 		/*
 		 * This seems a bit pointless, but actually causes a reflow/re-evaluation getting around
@@ -883,12 +905,12 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		if( container[ 0 ] === document.body ) {
 			this._isFullPage = true;
 
-			$( 'html, body' ).css({
+			$( 'html, body' ).css( {
 				height: '100%',
-				margin:0,
+				margin: 0,
 				padding: 0,
 				overflow: 'hidden'
-			});
+			} );
 		}
 
 		this.container = container;
@@ -941,121 +963,123 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		}
 	},
 
-  /**
-   * Adjusts the number of columns to be lower to fit the screen and still maintain minItemWidth.
-   * 
+	/**
+	 * Adjusts the number of columns to be lower to fit the screen and still maintain minItemWidth.
+	 *
 	 * @returns {void}
-   */
-	_adjustColumnsResponsive: function () {
+	 */
+	_adjustColumnsResponsive: function() {
 
-    // If there is no min width set, or not content items, do nothing.
-		if (!this._useResponsiveLayout() || this._updatingColumnsResponsive || !this.config.dimensions ||
-        !this.config.dimensions.minItemWidth || this.root.contentItems.length === 0 || !this.root.contentItems[0].isRow) {
+		// If there is no min width set, or not content items, do nothing.
+		if( !this._useResponsiveLayout() || this._updatingColumnsResponsive || !this.config.dimensions || !this.config.dimensions.minItemWidth || this.root.contentItems.length === 0 || !this.root.contentItems[ 0 ].isRow ) {
 			this._firstLoad = false;
 			return;
 		}
 
 		this._firstLoad = false;
 
-    // If there is only one column, do nothing.
-	  var columnCount = this.root.contentItems[0].contentItems.length;
-	  if (columnCount <= 1) {
-      return;
-	  }
+		// If there is only one column, do nothing.
+		var columnCount = this.root.contentItems[ 0 ].contentItems.length;
+		if( columnCount <= 1 ) {
+			return;
+		}
 
-    // If they all still fit, do nothing.
-	  var minItemWidth = this.config.dimensions.minItemWidth;
-	  var totalMinWidth = columnCount * minItemWidth;
-    if (totalMinWidth <= this.width) {
-      return;
-    }
+		// If they all still fit, do nothing.
+		var minItemWidth = this.config.dimensions.minItemWidth;
+		var totalMinWidth = columnCount * minItemWidth;
+		if( totalMinWidth <= this.width ) {
+			return;
+		}
 
-	  // Prevent updates while it is already happening.
-    this._updatingColumnsResponsive = true;
+		// Prevent updates while it is already happening.
+		this._updatingColumnsResponsive = true;
 
-	  // Figure out how many columns to stack, and put them all in the first stack container.
-    var finalColumnCount = Math.max(Math.floor(this.width / minItemWidth), 1);
-    var stackColumnCount = columnCount - finalColumnCount;
+		// Figure out how many columns to stack, and put them all in the first stack container.
+		var finalColumnCount = Math.max( Math.floor( this.width / minItemWidth ), 1 );
+		var stackColumnCount = columnCount - finalColumnCount;
 
-    var rootContentItem = this.root.contentItems[0];
-    var firstStackContainer = this._findAllStackContainers()[0];
-	  for (var i = 0; i < stackColumnCount; i++) {
-	    // Stack from right.
-	    var column = rootContentItem.contentItems[rootContentItem.contentItems.length - 1];
-	    rootContentItem.removeChild(column);
-	    this._addChildContentItemsToContainer(firstStackContainer, column);
-	  }
+		var rootContentItem = this.root.contentItems[ 0 ];
+		var firstStackContainer = this._findAllStackContainers()[ 0 ];
+		for( var i = 0; i < stackColumnCount; i++ ) {
+			// Stack from right.
+			var column = rootContentItem.contentItems[ rootContentItem.contentItems.length - 1 ];
+			rootContentItem.removeChild( column );
+			this._addChildContentItemsToContainer( firstStackContainer, column );
+		}
 
-	  this._updatingColumnsResponsive = false;
+		this._updatingColumnsResponsive = false;
 	},
 
 	/**
 	 * Determines if responsive layout should be used.
-	 * 
+	 *
 	 * @returns {bool} - True if responsive layout should be used; otherwise false.
 	 */
 	_useResponsiveLayout: function() {
 		return this.config.settings && ( this.config.settings.responsiveMode == 'always' || ( this.config.settings.responsiveMode == 'onload' && this._firstLoad ) );
 	},
 
-  /**
-   * Adds all children of a node to another container recursively.
-   * @param {object} container - Container to add child content items to.
-   * @param {object} node - Node to search for content items.
-   * @returns {void}
-   */
-  _addChildContentItemsToContainer: function(container, node) {
-    if (node.type === 'stack') {
-      node.contentItems.forEach(function(item) {
-        container.addChild(item);
-      });
-    }
-    else {
-      node.contentItems.forEach(lm.utils.fnBind(function (item) {
-        this._addChildContentItemsToContainer(container, item);
-      }, this));
-    }    
-  },
-
-  /**
-   * Finds all the stack containers.
-   * @returns {array} - The found stack containers.
-   */
-	_findAllStackContainers: function () {
-	  var stackContainers = [];
-	  this._findAllStackContainersRecursive(stackContainers, this.root);
-
-    return stackContainers;
+	/**
+	 * Adds all children of a node to another container recursively.
+	 * @param {object} container - Container to add child content items to.
+	 * @param {object} node - Node to search for content items.
+	 * @returns {void}
+	 */
+	_addChildContentItemsToContainer: function( container, node ) {
+		if( node.type === 'stack' ) {
+			node.contentItems.forEach( function( item ) {
+				container.addChild( item );
+			} );
+		}
+		else {
+			node.contentItems.forEach( lm.utils.fnBind( function( item ) {
+				this._addChildContentItemsToContainer( container, item );
+			}, this ) );
+		}
 	},
 
-  /**
-   * Finds all the stack containers.
-   * 
-   * @param {array} - Set of containers to populate.
-   * @param {object} - Current node to process.
-   * 
-   * @returns {void}
-   */
-	_findAllStackContainersRecursive: function (stackContainers, node) {
-	  node.contentItems.forEach(lm.utils.fnBind(function (item) {
-        if (item.type == 'stack') {
-          stackContainers.push(item);
-        }
-        else if (!item.isComponent) {
-          this._findAllStackContainersRecursive(stackContainers, item);
-        }
-    }, this));
-  }
-});
+	/**
+	 * Finds all the stack containers.
+	 * @returns {array} - The found stack containers.
+	 */
+	_findAllStackContainers: function() {
+		var stackContainers = [];
+		this._findAllStackContainersRecursive( stackContainers, this.root );
+
+		return stackContainers;
+	},
+
+	/**
+	 * Finds all the stack containers.
+	 *
+	 * @param {array} - Set of containers to populate.
+	 * @param {object} - Current node to process.
+	 *
+	 * @returns {void}
+	 */
+	_findAllStackContainersRecursive: function( stackContainers, node ) {
+		node.contentItems.forEach( lm.utils.fnBind( function( item ) {
+			if( item.type == 'stack' ) {
+				stackContainers.push( item );
+			}
+			else if( !item.isComponent ) {
+				this._findAllStackContainersRecursive( stackContainers, item );
+			}
+		}, this ) );
+	}
+} );
 
 /**
  * Expose the Layoutmanager as the single entrypoint using UMD
  */
-(function () {
+(function() {
 	/* global define */
-	if ( typeof define === 'function' && define.amd) {
-		define([ 'jquery' ], function( jquery ){ $ = jquery; return lm.LayoutManager; }); // jshint ignore:line
-	} else if (typeof exports === 'object') {
+	if( typeof define === 'function' && define.amd ) {
+		define( [ 'jquery' ], function( jquery ) {
+			$ = jquery;
+			return lm.LayoutManager;
+		} ); // jshint ignore:line
+	} else if( typeof exports === 'object' ) {
 		module.exports = lm.LayoutManager;
 	} else {
 		window.GoldenLayout = lm.LayoutManager;

@@ -1,6 +1,6 @@
 lm.config.defaultConfig = {
-	openPopouts:[],
-	settings:{
+	openPopouts: [],
+	settings: {
 		hasHeaders: true,
 		constrainDragToContainer: true,
 		reorderEnabled: true,
@@ -11,7 +11,7 @@ lm.config.defaultConfig = {
 		showPopoutIcon: true,
 		showMaximiseIcon: true,
 		showCloseIcon: true,
-    responsiveMode: 'onload' // Can be onload, always, or none.
+		responsiveMode: 'onload' // Can be onload, always, or none.
 	},
 	dimensions: {
 		borderWidth: 5,

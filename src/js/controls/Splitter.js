@@ -22,4 +22,4 @@ lm.utils.copy( lm.controls.Splitter.prototype, {
 
 		return element;
 	}
-});
+} );
