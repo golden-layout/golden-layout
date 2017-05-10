@@ -34,9 +34,9 @@ lm.controls.Header = function( layoutManager, parent ) {
 
 lm.controls.Header._template = [
 	'<div class="lm_header">',
-		'<ul class="lm_tabs"></ul>',
-		'<ul class="lm_controls"></ul>',
-		'<ul class="lm_tabdropdown_list"></ul>',
+	'<ul class="lm_tabs"></ul>',
+	'<ul class="lm_controls"></ul>',
+	'<ul class="lm_tabdropdown_list"></ul>',
 	'</div>'
 ].join( '' );
 

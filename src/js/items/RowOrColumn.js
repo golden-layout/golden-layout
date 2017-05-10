@@ -191,8 +191,8 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 			sizeData = this._calculateAbsoluteSizes();
 
 		for( i = 0; i < this.contentItems.length; i++ ) {
-			if (sizeData.additionalPixel - i > 0) {
-				sizeData.itemSizes[i]++;
+			if( sizeData.additionalPixel - i > 0 ) {
+				sizeData.itemSizes[ i ]++;
 			}
 
 			if( this._isColumn ) {
@@ -229,14 +229,14 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 			if( this._isColumn ) {
 				itemSize = Math.floor( totalHeight * ( this.contentItems[ i ].config.height / 100 ) );
 			} else {
-				itemSize = Math.floor(totalWidth * (this.contentItems[i].config.width / 100));
+				itemSize = Math.floor( totalWidth * (this.contentItems[ i ].config.width / 100) );
 			}
 
 			totalAssigned += itemSize;
-			itemSizes.push(itemSize);
+			itemSizes.push( itemSize );
 		}
 
-		additionalPixel = Math.floor((this._isColumn ? totalHeight : totalWidth) - totalAssigned);
+		additionalPixel = Math.floor( (this._isColumn ? totalHeight : totalWidth) - totalAssigned );
 
 		return {
 			itemSizes: itemSizes,
@@ -326,12 +326,12 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 
 	/**
 	 * Adjusts the column widths to respect the dimensions minItemWidth if set.
-	 * @returns {} 
+	 * @returns {}
 	 */
 	_respectMinItemWidth: function() {
 		var minItemWidth = this.layoutManager.config.dimensions ? (this.layoutManager.config.dimensions.minItemWidth || 0) : 0,
-			sizeData = null, 
-			entriesOverMin = [], 
+			sizeData = null,
+			entriesOverMin = [],
 			totalOverMin = 0,
 			totalUnderMin = 0,
 			remainingWidth = 0,
@@ -342,7 +342,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 			allEntries = [],
 			entry;
 
-		if ( this._isColumn || !minItemWidth || this.contentItems.length <= 1) {
+		if( this._isColumn || !minItemWidth || this.contentItems.length <= 1 ) {
 			return;
 		}
 
@@ -359,21 +359,21 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 			if( itemSize < minItemWidth ) {
 				totalUnderMin += minItemWidth - itemSize;
 				entry = { width: minItemWidth };
-				
+
 			}
 			else {
 				totalOverMin += itemSize - minItemWidth;
 				entry = { width: itemSize };
-				entriesOverMin.push(entry);
+				entriesOverMin.push( entry );
 			}
 
-			allEntries.push(entry);
+			allEntries.push( entry );
 		}
 
 		/**
 		 * If there is nothing under min, or there is not enough over to make up the difference, do nothing.
 		 */
-		if (totalUnderMin === 0 || totalUnderMin > totalOverMin) {
+		if( totalUnderMin === 0 || totalUnderMin > totalOverMin ) {
 			return;
 		}
 
@@ -383,7 +383,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 		reducePercent = totalUnderMin / totalOverMin;
 		remainingWidth = totalUnderMin;
 		for( i = 0; i < entriesOverMin.length; i++ ) {
-			entry = entriesOverMin[i];
+			entry = entriesOverMin[ i ];
 			reducedWidth = Math.round( ( entry.width - minItemWidth ) * reducePercent );
 			remainingWidth -= reducedWidth;
 			entry.width -= reducedWidth;
@@ -392,15 +392,15 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 		/**
 		 * Take anything remaining from the last item.
 		 */
-		if (remainingWidth !== 0) {
-			allEntries[allEntries.length - 1].width -= remainingWidth;
+		if( remainingWidth !== 0 ) {
+			allEntries[ allEntries.length - 1 ].width -= remainingWidth;
 		}
 
 		/**
 		 * Set every items size relative to 100 relative to its size to total
 		 */
-		for (i = 0; i < this.contentItems.length; i++) {
-			this.contentItems[i].config.width = (allEntries[i].width / sizeData.totalWidth) * 100;
+		for( i = 0; i < this.contentItems.length; i++ ) {
+			this.contentItems[ i ].config.width = (allEntries[ i ].width / sizeData.totalWidth) * 100;
 		}
 	},
 
