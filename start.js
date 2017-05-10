@@ -39,7 +39,7 @@ $( function() {
 				.getElement()
 				.text( 'hey' )
 				.append( '<br/>' )
-				.append( $( '<button>' ).on( 'click', () = > rotate( container ) ).text( 'rotate header' )
+				.append( $( '<button>' ).on( 'click', () => rotate( container ) ).text( 'rotate header' )
 		)
 		.
 			append( '<br/>' )
