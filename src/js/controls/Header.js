@@ -34,10 +34,9 @@ lm.controls.Header = function( layoutManager, parent ) {
 
 lm.controls.Header._template = [
 	'<div class="lm_header">',
-	'<ul class="lm_tabs"></ul>',
-	'<ul class="lm_controls">',
-	'<ul class="lm_tabdropdown_list"></ul>',
-	'</ul>',
+		'<ul class="lm_tabs"></ul>',
+		'<ul class="lm_controls"></ul>',
+		'<ul class="lm_tabdropdown_list"></ul>',
 	'</div>'
 ].join( '' );
 
@@ -330,7 +329,8 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			i,
 			showTabDropdown,
 			swapTab,
-			tabWidth;
+			tabWidth,
+			hasVisibleTab = false;
 
 		if( this.parent._sided )
 			availableWidth = this.element.outerHeight() - this.controlsContainer.outerHeight() - this._tabControlOffset;
@@ -349,12 +349,13 @@ lm.utils.copy( lm.controls.Header.prototype, {
 
 			totalTabWidth += tabWidth;
 
-			// If the tab won't fit, put it in the dropdown for tabs.
-			if( totalTabWidth > availableWidth ) {
+			// If the tab won't fit, put it in the dropdown for tabs, making sure there is always at least one tab visible.
+			if( totalTabWidth > availableWidth && hasVisibleTab ) {
 				tabElement.data( 'lastTabWidth', tabWidth );
 				this.tabDropdownContainer.append( tabElement );
 			}
 			else {
+				hasVisibleTab = true;
 				this._lastVisibleTabIndex = i;
 				tabElement.removeData( 'lastTabWidth' );
 				this.tabsContainer.append( tabElement );

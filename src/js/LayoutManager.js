@@ -963,26 +963,27 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		}
 	},
 
-	/**
-	 * Adjusts the number of columns to be lower to fit the screen and still maintain minItemWidth.
-	 *
+  /**
+   * Adjusts the number of columns to be lower to fit the screen and still maintain minItemWidth.
+   * 
 	 * @returns {void}
-	 */
-	_adjustColumnsResponsive: function() {
+   */
+	_adjustColumnsResponsive: function () {
 
-		// If there is no min width set, or not content items, do nothing.
-		if( !this._useResponsiveLayout() || this._updatingColumnsResponsive || !this.config.dimensions || !this.config.dimensions.minItemWidth || this.root.contentItems.length === 0 || !this.root.contentItems[ 0 ].isRow ) {
+    // If there is no min width set, or not content items, do nothing.
+		if (!this._useResponsiveLayout() || this._updatingColumnsResponsive || !this.config.dimensions ||
+        !this.config.dimensions.minItemWidth || this.root.contentItems.length === 0 || !this.root.contentItems[0].isRow) {
 			this._firstLoad = false;
 			return;
 		}
 
 		this._firstLoad = false;
 
-		// If there is only one column, do nothing.
-		var columnCount = this.root.contentItems[ 0 ].contentItems.length;
-		if( columnCount <= 1 ) {
-			return;
-		}
+    // If there is only one column, do nothing.
+	  var columnCount = this.root.contentItems[0].contentItems.length;
+	  if (columnCount <= 1) {
+      return;
+	  }
 
 		// If they all still fit, do nothing.
 		var minItemWidth = this.config.dimensions.minItemWidth;
@@ -994,18 +995,18 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		// Prevent updates while it is already happening.
 		this._updatingColumnsResponsive = true;
 
-		// Figure out how many columns to stack, and put them all in the first stack container.
-		var finalColumnCount = Math.max( Math.floor( this.width / minItemWidth ), 1 );
-		var stackColumnCount = columnCount - finalColumnCount;
+	  // Figure out how many columns to stack, and put them all in the first stack container.
+    var finalColumnCount = Math.max(Math.floor(this.width / minItemWidth), 1);
+    var stackColumnCount = columnCount - finalColumnCount;
 
-		var rootContentItem = this.root.contentItems[ 0 ];
-		var firstStackContainer = this._findAllStackContainers()[ 0 ];
-		for( var i = 0; i < stackColumnCount; i++ ) {
-			// Stack from right.
-			var column = rootContentItem.contentItems[ rootContentItem.contentItems.length - 1 ];
-			rootContentItem.removeChild( column );
-			this._addChildContentItemsToContainer( firstStackContainer, column );
-		}
+    var rootContentItem = this.root.contentItems[0];
+    var firstStackContainer = this._findAllStackContainers()[0];
+	  for (var i = 0; i < stackColumnCount; i++) {
+	    // Stack from right.
+	    var column = rootContentItem.contentItems[rootContentItem.contentItems.length - 1];
+	    rootContentItem.removeChild(column);
+	    this._addChildContentItemsToContainer(firstStackContainer, column);
+	  }
 
 		this._updatingColumnsResponsive = false;
 	},
