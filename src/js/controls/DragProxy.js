@@ -135,14 +135,14 @@ lm.utils.copy( lm.controls.DragProxy.prototype, {
 		 * Valid drop area found
 		 */
 		if( this._area !== null ) {
-			this._area.contentItem._$onDrop( this._contentItem );
+			this._area.contentItem._$onDrop( this._contentItem, this._area );
 
 		/**
 		 * No valid drop area available at present, but one has been found before.
 		 * Use it
 		 */
 		} else if( this._lastValidArea !== null ) {
-			this._lastValidArea.contentItem._$onDrop( this._contentItem );
+			this._lastValidArea.contentItem._$onDrop( this._contentItem, this._lastValidArea );
 
 		/**
 		 * No valid drop area found during the duration of the drag. Return
