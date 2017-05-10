@@ -39,7 +39,7 @@ $( function() {
 				.getElement()
 				.text( 'hey' )
 				.append( '<br/>' )
-				.append( $( '<button>' ).on( 'click', () = > rotate( container ) ).text( 'rotate header' )
+				.append( $( '<button>' ).on( 'click', () => rotate( container ) ).text( 'rotate header' )
 		)
 		.
 			append( '<br/>' )
@@ -83,7 +83,7 @@ $( function() {
 										{
 											type: 'component',
 											title: 'Golden',
-                      header: { show: 'left', dock:'docking', docked: true  },
+											header: { show: 'left', dock:'docking', docked: true  },
 											isClosable: false,
 											componentName: 'hey',
 											width: 30,
@@ -91,7 +91,7 @@ $( function() {
 										},
 										{
 											title: 'Layout',
-                      header: { show: 'right', popout: false, dock:'docking' },
+											header: { show: 'right', popout: false, dock:'docking' },
 											type: 'component',
 											componentName: 'hey',
 											componentState: { bg: 'golden_layout_text.png' }

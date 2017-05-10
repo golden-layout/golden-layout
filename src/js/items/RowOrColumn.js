@@ -168,8 +168,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 		this.emitBubblingEvent( 'stateChanged' );
 		this.emit( 'resize' );
 	},
-
-  /**
+	/**
 	 * Dock or undock a child if it posiible
 	 *
 	 * @param   {lm.items.AbstractContentItem} contentItem
