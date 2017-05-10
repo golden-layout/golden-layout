@@ -15,7 +15,6 @@ lm.controls.Header = function( layoutManager, parent ) {
 		this.element.on( 'click touchstart', lm.utils.fnBind( this._onHeaderClick, this ) );
 	}
 	
-	this.element.height( layoutManager.config.dimensions.headerHeight );
 	this.tabsContainer = this.element.find( '.lm_tabs' );
 	this.tabDropdownContainer = this.element.find( '.lm_tabdropdown_list' );
 	this.tabDropdownContainer.hide();
@@ -36,8 +35,9 @@ lm.controls.Header = function( layoutManager, parent ) {
 lm.controls.Header._template = [
 	'<div class="lm_header">',
 		'<ul class="lm_tabs"></ul>',
-		'<ul class="lm_controls"></ul>',
-	  '<ul class="lm_tabdropdown_list"></ul>',
+		'<ul class="lm_controls">',
+			'<ul class="lm_tabdropdown_list"></ul>',
+		'</ul>',
 	'</div>'
 ].join( '' );
 
@@ -138,6 +138,24 @@ lm.utils.copy( lm.controls.Header.prototype, {
 	},
 
 	/**
+	 * Programmatically operate with header position.
+	 *
+	 * @param {string} position one of ('top','left','right','bottom') to set or empty to get it.
+	 *
+	 * @returns {string} previous header position
+	 */
+	position: function( position ) {
+		var previous = this.parent._header.show;
+		if ( previous && !this.parent._side )
+		  previous = 'top';
+		if ( position !== undefined && this.parent._header.show != position ) {
+			this.parent._header.show = position;
+			this.parent._setupHeaderPosition();
+		}
+		return previous;
+	},
+
+	/**
 	 * Programmatically set closability.
 	 *
 	 * @package private
@@ -172,6 +190,15 @@ lm.utils.copy( lm.controls.Header.prototype, {
 	},
 
 	/**
+	 * get settings from header
+	 *
+	 * @returns {string} when exists
+	 */
+	_getHeaderSetting: function( name ) {
+		if ( name in this.parent._header )
+			return this.parent._header[ name ];
+	},
+	/**
 	 * Creates the popout, maximise and close buttons in the header's top right corner
 	 *
 	 * @returns {void}
@@ -198,19 +225,19 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		/**
 		 * Popout control to launch component in new window.
 		 */
-		if( this.layoutManager.config.settings.showPopoutIcon ) {
+		if( this._getHeaderSetting( 'popout' ) ) {
 			popout = lm.utils.fnBind( this._onPopoutClick, this );
-			label = this.layoutManager.config.labels.popout;
+			label = this._getHeaderSetting( 'popout' );
 			new lm.controls.HeaderButton( this, label, 'lm_popout', popout );
 		}
 
 		/**
 		 * Maximise control - set the component to the full size of the layout
 		 */
-		if( this.layoutManager.config.settings.showMaximiseIcon ) {
+		if( this._getHeaderSetting( 'maximise' ) ) {
 			maximise = lm.utils.fnBind( this.parent.toggleMaximise, this.parent );
-			maximiseLabel = this.layoutManager.config.labels.maximise;
-			minimiseLabel = this.layoutManager.config.labels.minimise;
+			maximiseLabel = this._getHeaderSetting( 'maximise' );
+			minimiseLabel = this._getHeaderSetting( 'minimise' );
 			maximiseButton = new lm.controls.HeaderButton( this, maximiseLabel, 'lm_maximise', maximise );
 			
 			this.parent.on( 'maximised', function(){
@@ -227,7 +254,7 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		 */
 		if( this._isClosable() ) {
 			closeStack = lm.utils.fnBind( this.parent.remove, this.parent );
-			label = this.layoutManager.config.labels.close;
+			label = this._getHeaderSetting( 'close' );
 			this.closeButton = new lm.controls.HeaderButton( this, label, 'lm_close', closeStack );
 		}
 	},
@@ -292,14 +319,19 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			return;
 		}
 		
+		var size = function ( val ) { return val ? 'width' : 'height'; }
+		this.element.css( size( !this.parent._sided ), '' );
+		this.element[ size( this.parent._sided ) ]( this.layoutManager.config.dimensions.headerHeight );
 		var availableWidth = this.element.outerWidth() - this.controlsContainer.outerWidth() - this._tabControlOffset,
 			totalTabWidth = 0,
 			tabElement,
 			i,
 			showTabDropdown,
-		  swapTab,
+			swapTab,
 			tabWidth;
 
+		if ( this.parent._sided )
+			availableWidth = this.element.outerHeight() - this.controlsContainer.outerHeight() - this._tabControlOffset;
 		this._lastVisibleTabIndex = -1;
 
 		for( i = 0; i < this.tabs.length; i++ ) {

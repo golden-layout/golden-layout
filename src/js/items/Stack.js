@@ -3,6 +3,20 @@ lm.items.Stack = function( layoutManager, config, parent ) {
 
 	this.element = $( '<div class="lm_item lm_stack"></div>' );
 	this._activeContentItem = null;
+	var cfg = layoutManager.config;
+	this._header = { // defaults' reconstruction from old configuration style
+		show: cfg.settings.hasHeaders === true && config.hasHeaders !== false,
+		popout: cfg.settings.showPopoutIcon && cfg.labels.popout,
+		maximise: cfg.settings.showMaximiseIcon && cfg.labels.maximise,
+		close: cfg.settings.showCloseIcon && cfg.labels.close,
+		minimise: cfg.labels.minimise,
+	};
+	if ( cfg.header ) // load simplified version of header configuration (https://github.com/deepstreamIO/golden-layout/pull/245)
+		lm.utils.copy( this._header, cfg.header );
+	if ( config.header ) // load from stack
+		lm.utils.copy( this._header, config.header );
+	if ( config.content && config.content[ 0 ] && config.content[ 0 ].header ) // load from component if stack omitted
+		lm.utils.copy( this._header, config.content[ 0 ].header );
 
 	this._dropZones = {};
 	this._dropSegment = null;
@@ -14,11 +28,9 @@ lm.items.Stack = function( layoutManager, config, parent ) {
 	this.childElementContainer = $( '<div class="lm_items"></div>' );
 	this.header = new lm.controls.Header( layoutManager, this );
 
-	if( layoutManager.config.settings.hasHeaders === true && config.hasHeaders !== false ) {
-		this.element.append( this.header.element );
-	}
-
+	this.element.append( this.header.element );
 	this.element.append( this.childElementContainer );
+	this._setupHeaderPosition();
 	this._$validateClosability();
 };
 
@@ -28,8 +40,9 @@ lm.utils.copy( lm.items.Stack.prototype, {
 
 	setSize: function() {
 		var i,
-			contentWidth = this.element.width(),
-			contentHeight = (this.config.hasHeaders !== false) ? this.element.height() - this.layoutManager.config.dimensions.headerHeight : this.element.height();
+			headerSize = this._header.show ? this.layoutManager.config.dimensions.headerHeight : 0,
+			contentWidth = this.element.width() - (this._sided ? headerSize : 0),
+			contentHeight = this.element.height() - (!this._sided ? headerSize : 0);
 
 		this.childElementContainer.width( contentWidth );
 		this.childElementContainer.height( contentHeight );
@@ -201,7 +214,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		 * The content item can be either a component or a stack. If it is a component, wrap it into a stack
 		 */
 		if( contentItem.isComponent ) {
-			stack = this.layoutManager.createContentItem({ type: 'stack' }, this );
+			stack = this.layoutManager.createContentItem({ type: 'stack', header: contentItem.config.header || {} }, this );
 			stack._$init();
 			stack.addChild( contentItem );
 			contentItem = stack;
@@ -254,7 +267,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 
 				if( segment === 'header' ) {
 					this._dropSegment = 'header';
-					this._highlightHeaderDropZone( x );
+					this._highlightHeaderDropZone( this._sided ? y : x );
 				} else {
 					this._resetHeaderDropZone();
 					this._highlightBodyDropZone( segment );
@@ -417,9 +430,15 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		for( i = 0; i < tabsLength; i++ ) {
 			tabElement = this.header.tabs[ i ].element;
 			offset = tabElement.offset();
-			tabLeft = offset.left;
-			tabTop = offset.top;
-			tabWidth = tabElement.width();
+			if ( this._sided ) {
+				tabLeft = offset.top;
+				tabTop = offset.left;
+				tabWidth = tabElement.height();
+			} else {
+				tabLeft = offset.left;
+				tabTop = offset.top;
+				tabWidth = tabElement.width();
+			}
 
 			if( x > tabLeft && x < tabLeft + tabWidth ) {
 				isAboveTab = true;
@@ -442,6 +461,16 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		}
 
 
+		if ( this._sided ) {
+			placeHolderTop = this.layoutManager.tabDropPlaceholder.offset().top;
+			this.layoutManager.dropTargetIndicator.highlightArea({
+				x1: tabTop,
+				x2: tabTop + tabElement.innerHeight(),
+				y1: placeHolderTop,
+			y2: placeHolderTop + this.layoutManager.tabDropPlaceholder.width()
+			});
+			return;
+		}
 		placeHolderLeft = this.layoutManager.tabDropPlaceholder.offset().left;
 
 		this.layoutManager.dropTargetIndicator.highlightArea({
@@ -454,6 +483,21 @@ lm.utils.copy( lm.items.Stack.prototype, {
 
 	_resetHeaderDropZone: function() {
 		this.layoutManager.tabDropPlaceholder.remove();
+	},
+
+	_setupHeaderPosition: function() {
+		var side = [ 'right', 'left', 'bottom' ].indexOf( this._header.show ) >= 0  && this._header.show;
+		this.header.element.toggle( !!this._header.show );
+		this._side = side;
+		this._sided = [ 'right', 'left' ].indexOf( this._side ) >= 0;
+		this.element.removeClass( 'lm_left lm_right lm_bottom' );
+		if( this._side )
+			this.element.addClass( 'lm_' + this._side );
+		if ( this.element.find( '.lm_header' ).length && this.childElementContainer ) {
+			var headerPosition = [ 'right', 'bottom' ].indexOf( this._side ) >= 0 ? 'before' : 'after';
+			this.header.element[ headerPosition ]( this.childElementContainer );
+			this.callDownwards( 'setSize' );
+		}
 	},
 
 	_highlightBodyDropZone: function( segment ) {

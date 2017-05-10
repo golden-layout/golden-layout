@@ -17,11 +17,32 @@ $(function () {
 
   window.myLayout = new GoldenLayout(config);
 
+  var rotate = function( container ) {
+    if ( !container ) return;
+    while ( container.parent && container.type != 'stack' )
+      container = container.parent;
+    if ( container.parent ) {
+      var p = container.header.position();
+      var sides=[ 'top', 'right', 'bottom', 'left', false ];
+      var n = sides[ ( sides.indexOf(p) + 1 ) % sides.length ];
+      container.header.position(n);
+    }
+  }
+  var nexttheme = function() {
+    var link=$('link[href*=theme]'),href=link.attr('href').split('-');
+    var themes=['dark','light','soda','translucent'];
+    href[1] = themes[ ( themes.indexOf(href[1]) + 1 ) % themes.length ];
+    link.attr('href',href.join('-'));
+  }
   myLayout.registerComponent('hey', function (container, state) {
     if (state.bg) {
       container
         .getElement()
-        .text('hey');
+        .text('hey')
+        .append('<br/>')
+        .append($('<button>').on('click',()=>rotate(container)).text('rotate header'))
+        .append('<br/>')
+        .append($('<button>').on('click',nexttheme).text('next theme'));
     }
   });
 
@@ -51,6 +72,7 @@ $(function () {
             content: [
               {
                 title: 'Fnts 100',
+                header: { show: 'bottom' },
                 type: 'component',
                 componentName: 'hey',
               },
@@ -60,12 +82,15 @@ $(function () {
                   {
                     type: 'component',
                     title: 'Golden',
+                    header: { show: 'right' },
+                    isClosable: false,
                     componentName: 'hey',
                     width: 30,
                     componentState: { bg: 'golden_layout_spiral.png' }
                   },
                   {
                     title: 'Layout',
+                    header: { show: 'left' ,popout: false  },
                     type: 'component',
                     componentName: 'hey',
                     componentState: { bg: 'golden_layout_text.png' }

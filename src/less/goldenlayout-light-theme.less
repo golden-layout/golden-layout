@@ -30,6 +30,7 @@
 .lm_dragProxy {
   .lm_content {
     box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    box-sizing: border-box;
   }
 }
 
@@ -109,6 +110,15 @@
       .lm_close_tab {
         opacity: 1;
       }
+    }
+  }
+}
+
+.lm_dragProxy.lm_bottom,
+.lm_stack.lm_bottom {
+  .lm_header .lm_tab {
+    &.lm_active {
+      box-shadow: 2px 2px 2px -2px rgba(0, 0, 0, 0.2);
     }
   }
 }
