@@ -256,9 +256,6 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 		lm.items.AbstractContentItem.prototype._$init.call( this );
 		
 		for( i = 0; i < this.contentItems.length - 1; i++ ) {
-			if( this.config && this.config.splitters && i in this.config.splitters )
-				if ( !this.config.splitters[ i ] )
-					continue;
 			this.contentItems[ i ].element.after( this._createSplitter( i ).element );
 		}
 		for( i = 0; i < this.contentItems.length; i++ ) {
