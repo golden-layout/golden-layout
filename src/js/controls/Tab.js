@@ -55,10 +55,10 @@ lm.controls.Tab = function( header, contentItem ) {
  * @type {String}
  */
 lm.controls.Tab._template = '<li class="lm_tab"><i class="lm_left"></i>' +
-							'<span class="lm_title"></span><div class="lm_close_tab"></div>' +
-							'<i class="lm_right"></i></li>';
+	'<span class="lm_title"></span><div class="lm_close_tab"></div>' +
+	'<i class="lm_right"></i></li>';
 
-lm.utils.copy( lm.controls.Tab.prototype,{
+lm.utils.copy( lm.controls.Tab.prototype, {
 
 	/**
 	 * Sets the tab's title to the provided string and sets
@@ -89,7 +89,7 @@ lm.utils.copy( lm.controls.Tab.prototype,{
 		if( isActive ) {
 			this.element.addClass( 'lm_active' );
 		} else {
-			this.element.removeClass( 'lm_active');
+			this.element.removeClass( 'lm_active' );
 		}
 	},
 
@@ -144,11 +144,11 @@ lm.utils.copy( lm.controls.Tab.prototype,{
 		// left mouse button or tap
 		if( event.button === 0 || event.type === 'touchstart' ) {
 			var activeContentItem = this.header.parent.getActiveContentItem();
-			if (this.contentItem !== activeContentItem) {
+			if( this.contentItem !== activeContentItem ) {
 				this.header.parent.setActiveContentItem( this.contentItem );
 			}
 
-		// middle mouse button
+			// middle mouse button
 		} else if( event.button === 1 && this.contentItem.config.isClosable ) {
 			this._onCloseClick( event );
 		}
@@ -167,4 +167,4 @@ lm.utils.copy( lm.controls.Tab.prototype,{
 		event.stopPropagation();
 		this.header.parent.removeChild( this.contentItem );
 	}
-});
+} );

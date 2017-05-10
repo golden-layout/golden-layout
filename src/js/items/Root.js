@@ -19,12 +19,12 @@ lm.utils.copy( lm.items.Root.prototype, {
 		contentItem = this.layoutManager._$normalizeContentItem( contentItem, this );
 		this.childElementContainer.append( contentItem.element );
 		lm.items.AbstractContentItem.prototype.addChild.call( this, contentItem );
-		
+
 		this.callDownwards( 'setSize' );
 		this.emitBubblingEvent( 'stateChanged' );
 	},
 
-	setSize: function(width, height) {
+	setSize: function( width, height ) {
 		width = (typeof width === 'undefined') ? this._containerElement.width() : width;
 		height = (typeof height === 'undefined') ? this._containerElement.height() : height;
 
@@ -48,7 +48,10 @@ lm.utils.copy( lm.items.Root.prototype, {
 		var stack;
 
 		if( contentItem.isComponent ) {
-			stack = this.layoutManager.createContentItem({ type: 'stack', header: contentItem.config.header || {} }, this );
+			stack = this.layoutManager.createContentItem( {
+				type: 'stack',
+				header: contentItem.config.header || {}
+			}, this );
 			stack._$init();
 			stack.addChild( contentItem );
 			contentItem = stack;
@@ -62,15 +65,15 @@ lm.utils.copy( lm.items.Root.prototype, {
 			var insertBefore = area.side[ 1 ] == '2';
 			var column = this.contentItems[ 0 ];
 			if( !column instanceof lm.items.RowOrColumn || column.type != type ) {
-				var rowOrColumn = this.layoutManager.createContentItem({ type: type }, this );
+				var rowOrColumn = this.layoutManager.createContentItem( { type: type }, this );
 				this.replaceChild( column, rowOrColumn );
 				rowOrColumn.addChild( contentItem, insertBefore ? 0 : undefined, true );
 				rowOrColumn.addChild( column, insertBefore ? undefined : 0, true );
 				column.config[ dimension ] = 50;
 				contentItem.config[ dimension ] = 50;
 				rowOrColumn.callDownwards( 'setSize' );
-			}else{
-				var sibbling=column.contentItems[ insertBefore ? 0 : column.contentItems.length - 1]
+			} else {
+				var sibbling = column.contentItems[ insertBefore ? 0 : column.contentItems.length - 1 ]
 				column.addChild( contentItem, insertBefore ? 0 : undefined, true );
 				sibbling.config[ dimension ] *= 0.5;
 				contentItem.config[ dimension ] = sibbling.config[ dimension ];
@@ -78,6 +81,6 @@ lm.utils.copy( lm.items.Root.prototype, {
 			}
 		}
 	}
-});
+} );
 
 

@@ -2,11 +2,11 @@
  * Pops a content item out into a new browser window.
  * This is achieved by
  *
- * 	- Creating a new configuration with the content item as root element
- * 	- Serializing and minifying the configuration
- * 	- Opening the current window's URL with the configuration as a GET parameter
- * 	- GoldenLayout when opened in the new window will look for the GET parameter
- * 	  and use it instead of the provided configuration
+ *    - Creating a new configuration with the content item as root element
+ *    - Serializing and minifying the configuration
+ *    - Opening the current window's URL with the configuration as a GET parameter
+ *    - GoldenLayout when opened in the new window will look for the GET parameter
+ *      and use it instead of the provided configuration
  *
  * @param {Object} config GoldenLayout item config
  * @param {Object} dimensions A map with width, height, top and left
@@ -34,9 +34,9 @@ lm.utils.copy( lm.controls.BrowserPopout.prototype, {
 		if( this.isInitialised === false ) {
 			throw new Error( 'Can\'t create config, layout not yet initialised' );
 			return;
-		};
+		}
 		return {
-			dimensions:{
+			dimensions: {
 				width: this.getGlInstance().width,
 				height: this.getGlInstance().height,
 				left: this._popoutWindow.screenX || this._popoutWindow.screenLeft,
@@ -60,23 +60,24 @@ lm.utils.copy( lm.controls.BrowserPopout.prototype, {
 		if( this.getGlInstance() ) {
 			this.getGlInstance()._$closeWindow();
 		} else {
-			try{
+			try {
 				this.getWindow().close();
-			} catch( e ){}
+			} catch( e ) {
+			}
 		}
 	},
 
 	/**
-	 * Returns the popped out item to its original position. If the original 
+	 * Returns the popped out item to its original position. If the original
 	 * parent isn't available anymore it falls back to the layout's topmost element
 	 */
 	popIn: function() {
-		var childConfig, 
-			parentItem, 
+		var childConfig,
+			parentItem,
 			index = this._indexInParent;
 
 		if( this._parentId ) {
-			
+
 			/*
 			 * The $.extend call seems a bit pointless, but it's crucial to
 			 * copy the config returned by this.getGlInstance().toConfig()
@@ -88,7 +89,7 @@ lm.utils.copy( lm.controls.BrowserPopout.prototype, {
 			 */
 			childConfig = $.extend( true, {}, this.getGlInstance().toConfig() ).content[ 0 ];
 			parentItem = this._layoutManager.root.getItemsById( this._parentId )[ 0 ];
-			
+
 			/*
 			 * Fallback if parentItem is not available. Either add it to the topmost
 			 * item or make it the topmost item if the layout is empty
@@ -118,7 +119,7 @@ lm.utils.copy( lm.controls.BrowserPopout.prototype, {
 	_createWindow: function() {
 		var checkReadyInterval,
 			url = this._createUrl(),
-			
+
 			/**
 			 * Bogus title to prevent re-usage of existing window with the
 			 * same title. The actual title will be set by the new window's
@@ -129,7 +130,7 @@ lm.utils.copy( lm.controls.BrowserPopout.prototype, {
 			/**
 			 * The options as used in the window.open string
 			 */
-			options = this._serializeWindowOptions({
+			options = this._serializeWindowOptions( {
 				width: this._dimensions.width,
 				height: this._dimensions.height,
 				innerWidth: this._dimensions.width,
@@ -141,7 +142,7 @@ lm.utils.copy( lm.controls.BrowserPopout.prototype, {
 				resizable: 'yes',
 				scrollbars: 'no',
 				status: 'no'
-			});
+			} );
 
 		this._popoutWindow = window.open( url, title, options );
 
@@ -165,7 +166,7 @@ lm.utils.copy( lm.controls.BrowserPopout.prototype, {
 		 * window or raising an event on the window object - both would introduce knowledge
 		 * about the parent to the child window which we'd rather avoid
 		 */
-		checkReadyInterval = setInterval(lm.utils.fnBind(function(){
+		checkReadyInterval = setInterval( lm.utils.fnBind( function() {
 			if( this._popoutWindow.__glInstance && this._popoutWindow.__glInstance.isInitialised ) {
 				this._onInitialised();
 				clearInterval( checkReadyInterval );
@@ -202,8 +203,8 @@ lm.utils.copy( lm.controls.BrowserPopout.prototype, {
 			urlParts;
 
 		config = ( new lm.utils.ConfigMinifier() ).minifyConfig( config );
-		
-		try{
+
+		try {
 			localStorage.setItem( storageKey, JSON.stringify( config ) );
 		} catch( e ) {
 			throw new Error( 'Error while writing to localStorage ' + e.toString() );
@@ -215,7 +216,7 @@ lm.utils.copy( lm.controls.BrowserPopout.prototype, {
 		if( urlParts.length === 1 ) {
 			return urlParts[ 0 ] + '?gl-window=' + storageKey;
 
-		// URL contains GET-parameters
+			// URL contains GET-parameters
 		} else {
 			return document.location.href + '&gl-window=' + storageKey;
 		}
@@ -223,10 +224,10 @@ lm.utils.copy( lm.controls.BrowserPopout.prototype, {
 
 	/**
 	 * Move the newly created window roughly to
-	 * where the component used to be. 
+	 * where the component used to be.
 	 *
 	 * @private
-	 * 
+	 *
 	 * @returns {void}
 	 */
 	_positionWindow: function() {
@@ -250,10 +251,10 @@ lm.utils.copy( lm.controls.BrowserPopout.prototype, {
 	 * Invoked 50ms after the window unload event
 	 *
 	 * @private
-	 * 
+	 *
 	 * @returns {void}
 	 */
 	_onClose: function() {
 		setTimeout( lm.utils.fnBind( this.emit, this, [ 'closed' ] ), 50 );
 	}
-});
+} );

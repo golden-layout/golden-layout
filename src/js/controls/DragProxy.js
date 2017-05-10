@@ -8,7 +8,7 @@
  *
  * @param {Number} x              The initial x position
  * @param {Number} y              The initial y position
- * @param {lm.utils.DragListener} dragListener   
+ * @param {lm.utils.DragListener} dragListener
  * @param {lm.LayoutManager} layoutManager
  * @param {lm.item.AbstractContentItem} contentItem
  * @param {lm.item.AbstractContentItem} originalParent
@@ -30,12 +30,12 @@ lm.controls.DragProxy = function( x, y, dragListener, layoutManager, contentItem
 
 	this.element = $( lm.controls.DragProxy._template );
 	if( originalParent && originalParent._side ) {
-	    this._sided = originalParent._sided;
+		this._sided = originalParent._sided;
 		this.element.addClass( 'lm_' + originalParent._side );
-		if( [ 'right', 'bottom' ].indexOf( originalParent._side ) >=0 )
+		if( [ 'right', 'bottom' ].indexOf( originalParent._side ) >= 0 )
 			this.element.find( '.lm_content' ).after( this.element.find( '.lm_header' ) );
 	}
-	this.element.css({ left: x, top: y });
+	this.element.css( { left: x, top: y } );
 	this.element.find( '.lm_tab' ).attr( 'title', lm.utils.stripTags( this._contentItem.config.title ) );
 	this.element.find( '.lm_title' ).html( this._contentItem.config.title );
 	this.childElementContainer = this.element.find( '.lm_content' );
@@ -60,15 +60,15 @@ lm.controls.DragProxy = function( x, y, dragListener, layoutManager, contentItem
 };
 
 lm.controls.DragProxy._template = '<div class="lm_dragProxy">' +
-									'<div class="lm_header">' +
-										'<ul class="lm_tabs">' +
-											'<li class="lm_tab lm_active"><i class="lm_left"></i>' +
-											'<span class="lm_title"></span>' +
-											'<i class="lm_right"></i></li>' +
-										'</ul>' +
-									'</div>' +
-									'<div class="lm_content"></div>' +
-								'</div>';
+	'<div class="lm_header">' +
+	'<ul class="lm_tabs">' +
+	'<li class="lm_tab lm_active"><i class="lm_left"></i>' +
+	'<span class="lm_title"></span>' +
+	'<i class="lm_right"></i></li>' +
+	'</ul>' +
+	'</div>' +
+	'<div class="lm_content"></div>' +
+	'</div>';
 
 lm.utils.copy( lm.controls.DragProxy.prototype, {
 
@@ -87,7 +87,7 @@ lm.utils.copy( lm.controls.DragProxy.prototype, {
 	 */
 	_onDrag: function( offsetX, offsetY, event ) {
 
-		event = event.originalEvent && event.originalEvent.touches ? event.originalEvent.touches[0] : event;
+		event = event.originalEvent && event.originalEvent.touches ? event.originalEvent.touches[ 0 ] : event;
 
 		var x = event.pageX,
 			y = event.pageY,
@@ -111,7 +111,7 @@ lm.utils.copy( lm.controls.DragProxy.prototype, {
 	 * @returns {void}
 	 */
 	_setDropPosition: function( x, y ) {
-		this.element.css({ left: x, top: y });
+		this.element.css( { left: x, top: y } );
 		this._area = this._layoutManager._$getArea( x, y );
 
 		if( this._area !== null ) {
@@ -137,35 +137,35 @@ lm.utils.copy( lm.controls.DragProxy.prototype, {
 		if( this._area !== null ) {
 			this._area.contentItem._$onDrop( this._contentItem, this._area );
 
-		/**
-		 * No valid drop area available at present, but one has been found before.
-		 * Use it
-		 */
+			/**
+			 * No valid drop area available at present, but one has been found before.
+			 * Use it
+			 */
 		} else if( this._lastValidArea !== null ) {
 			this._lastValidArea.contentItem._$onDrop( this._contentItem, this._lastValidArea );
 
-		/**
-		 * No valid drop area found during the duration of the drag. Return
-		 * content item to its original position if a original parent is provided.
-		 * (Which is not the case if the drag had been initiated by createDragSource)
-		 */
-		} else if ( this._originalParent ){
+			/**
+			 * No valid drop area found during the duration of the drag. Return
+			 * content item to its original position if a original parent is provided.
+			 * (Which is not the case if the drag had been initiated by createDragSource)
+			 */
+		} else if( this._originalParent ) {
 			this._originalParent.addChild( this._contentItem );
 
-		/**
-		 * The drag didn't ultimately end up with adding the content item to
-		 * any container. In order to ensure clean up happens, destroy the
-		 * content item.
-		 */
+			/**
+			 * The drag didn't ultimately end up with adding the content item to
+			 * any container. In order to ensure clean up happens, destroy the
+			 * content item.
+			 */
 		} else {
 			this._contentItem._$destroy();
 		}
-		
+
 		this.element.remove();
 
 		this._layoutManager.emit( 'itemDropped', this._contentItem );
 	},
-	
+
 	/**
 	 * Removes the item from its original position within the tree
 	 *
@@ -174,17 +174,17 @@ lm.utils.copy( lm.controls.DragProxy.prototype, {
 	 * @returns {void}
 	 */
 	_updateTree: function() {
-		
+
 		/**
 		 * parent is null if the drag had been initiated by a external drag source
 		 */
 		if( this._contentItem.parent ) {
 			this._contentItem.parent.removeChild( this._contentItem, true );
 		}
-		
+
 		this._contentItem._$setParent( this );
 	},
-	
+
 	/**
 	 * Updates the Drag Proxie's dimensions
 	 *
@@ -196,10 +196,10 @@ lm.utils.copy( lm.controls.DragProxy.prototype, {
 		var dimensions = this._layoutManager.config.dimensions,
 			width = dimensions.dragProxyWidth,
 			height = dimensions.dragProxyHeight;
-	
+
 		this.element.width( width );
 		this.element.height( height );
-		width -= ( this._sided ? dimensions.headerHeight : 0 ),
+		width -= ( this._sided ? dimensions.headerHeight : 0 );
 		height -= ( !this._sided ? dimensions.headerHeight : 0 );
 		this.childElementContainer.width( width );
 		this.childElementContainer.height( height );
@@ -208,4 +208,4 @@ lm.utils.copy( lm.controls.DragProxy.prototype, {
 		this._contentItem.callDownwards( '_$show' );
 		this._contentItem.callDownwards( 'setSize' );
 	}
-});
+} );

@@ -7,14 +7,14 @@ lm.container.ItemContainer = function( config, parent, layoutManager ) {
 	this.parent = parent;
 	this.layoutManager = layoutManager;
 	this.isHidden = false;
-	
+
 	this._config = config;
-	this._element = $([
+	this._element = $( [
 		'<div class="lm_item_container">',
-			'<div class="lm_content"></div>',
+		'<div class="lm_content"></div>',
 		'</div>'
-	].join( '' ));
-	
+	].join( '' ) );
+
 	this._contentElement = this._element.find( '.lm_content' );
 };
 
@@ -29,7 +29,7 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 	getElement: function() {
 		return this._contentElement;
 	},
-	
+
 	/**
 	 * Hide the container. Notifies the containers content first
 	 * and then hides the DOM node. If the container is already hidden
@@ -42,7 +42,7 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 		this.isHidden = true;
 		this._element.hide();
 	},
-	
+
 	/**
 	 * Shows a previously hidden container. Notifies the
 	 * containers content first and then shows the DOM element.
@@ -55,7 +55,7 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 		this.isHidden = false;
 		this._element.show();
 		// call shown only if the container has a valid size
-		if(this.height != 0 || this.width != 0) {
+		if( this.height != 0 || this.width != 0 ) {
 			this.emit( 'shown' );
 		}
 	},
@@ -70,7 +70,7 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 	 * @todo  Rework!!!
 	 * @param {Number} width  The new width in pixel
 	 * @param {Number} height The new height in pixel
-	 * 
+	 *
 	 * @returns {Boolean} resizeSuccesful
 	 */
 	setSize: function( width, height ) {
@@ -86,7 +86,7 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 		while( !rowOrColumn.isColumn && !rowOrColumn.isRow ) {
 			rowOrColumnChild = rowOrColumn;
 			rowOrColumn = rowOrColumn.parent;
-			
+
 
 			/**
 			 * No row or column has been found
@@ -99,15 +99,15 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 		direction = rowOrColumn.isColumn ? "height" : "width";
 		newSize = direction === "height" ? height : width;
 
-		totalPixel = this[direction] * ( 1 / ( rowOrColumnChild.config[direction] / 100 ) );
+		totalPixel = this[ direction ] * ( 1 / ( rowOrColumnChild.config[ direction ] / 100 ) );
 		percentage = ( newSize / totalPixel ) * 100;
-		delta = ( rowOrColumnChild.config[direction] - percentage ) / (rowOrColumn.contentItems.length - 1);
+		delta = ( rowOrColumnChild.config[ direction ] - percentage ) / (rowOrColumn.contentItems.length - 1);
 
 		for( i = 0; i < rowOrColumn.contentItems.length; i++ ) {
 			if( rowOrColumn.contentItems[ i ] === rowOrColumnChild ) {
-				rowOrColumn.contentItems[ i ].config[direction] = percentage;
+				rowOrColumn.contentItems[ i ].config[ direction ] = percentage;
 			} else {
-				rowOrColumn.contentItems[ i ].config[direction] += delta;
+				rowOrColumn.contentItems[ i ].config[ direction ] += delta;
 			}
 		}
 
@@ -115,7 +115,7 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 
 		return true;
 	},
-	
+
 	/**
 	 * Closes the container if it is closable. Can be called by
 	 * both the component within at as well as the contentItem containing
@@ -176,7 +176,7 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 	 *
 	 * @param {[Int]} width  in px
 	 * @param {[Int]} height in px
-	 * 
+	 *
 	 * @returns {void}
 	 */
 	_$setSize: function( width, height ) {
@@ -187,4 +187,4 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 			this.emit( 'resize' );
 		}
 	}
-});
+} );
