@@ -53,11 +53,11 @@
 		<h2>Latest Version</h2>
 		<a href="../files/latest/GoldenLayout.zip" class="latest">
 			<div>Download GoldenLayout.zip</div>
-			<small>V 1.5.1 (15.4.2016)</small>
+			<small>V 1.5.8 (11.5.2017)</small>
 		</a>
 		<h2 class="second">Bower / NPM</h2>
 		<div class="bower">
-			<pre>"golden-layout": "1.5.1"</pre>
+			<pre>"golden-layout": "1.5.8"</pre>
 		</div>
 
 		<h2>Individual Files</h2>
@@ -78,6 +78,14 @@
 
 		<div class="previous">
 			GoldenLayout V&nbsp;&nbsp;<select>
+				
+				<option value="1.5.8">
+					1.5.8 (11.5.2017)
+				</option>
+				
+				<option value="1.5.5">
+					1.5.5 (22.9.2016)
+				</option>
 				
 				<option value="1.5.1">
 					1.5.1 (15.4.2016)
@@ -194,6 +202,45 @@
 
 		<h2>Change log</h2>
 		<div class="changeLog">
+		<strong>Version 1.5.8</strong>
+		<ul>
+			<li>You can now drag panes to the far edges and have them dock there. Drag to within the last few pixels to see the new drop area.</li>
+			<li>Improvements to resize pane mouse cursors.</li>
+			<li>Middle click support.</li>
+			<li>Adds a 'shown' method to ItemContainer</li>
+			<li>LayoutManager.updateSize fixed to work with width and height</li>
+			<li>Responsive design; enabled by default, can be disabled with config.</li>
+			<li>Tab dropdown option: stacks can be displayed as dropdowns.</li>
+			<li>CSS now generated from less</li>
+			<li>Hidden items no longer updated to prevent reflows.</li>
+		</ul>
+		<strong>Version 1.5.7</strong>
+		<ul>
+			<li>Fix issues with ContentItems created from DragSources.</li>
+			<li>Fix AngularJS Routing issue</li>
+			<li>Add object to destroy call so we know what item is being destroyed.</li>
+		</ul>
+		<strong>Version 1.5.6</strong>
+		<ul>
+			<li>Fix an issue dragging with buttons other than the left button.</li>
+			<li>Makes createDragListener able to take a function to call as well as an ItemConfig, to support dynamic item configuration on drag.</li>
+		</ul>
+		<strong>Version 1.5.5</strong>
+		<ul>
+			<li>Fixes Tabs can be closed by drag/dropping <a class="githubIssue" href="https://github.com/hoxton-one/golden-layout/issues/142">#142</a></li>
+			<li>Fixes Splitter bar appears behind some other windows when dragged <a class="githubIssue" href="https://github.com/hoxton-one/golden-layout/issues/141">#141</a></li>
+			<li>Fixes  Non-integral chrome zooms cause layout issues <a class="githubIssue" href="https://github.com/hoxton-one/golden-layout/issues/137">#137</a></li>
+			<li>Fixes Temporary "drag" items don't get destroyed if not dropped <a class="githubIssue" href="https://github.com/hoxton-one/golden-layout/issues/133">#133</a></li>
+			<li>Fix for click-holding on an item and not moving the mouse causing that item to be removed.</li>
+			<li>Merges PR Adds Round down the additionalPixel to prevent an extra pixel creeping in <a class="githubIssue" href="https://github.com/hoxton-one/golden-layout/issues/138">#138</a></li>
+			<li>Merges PR Fixes issue including files with incorrect capitalisation on case-sensitive platforms <a class="githubIssue" href="https://github.com/hoxton-one/golden-layout/issues/136">#136</a></li>
+			<li>Merges PR Added support for individual item minimum size <a class="githubIssue" href="https://github.com/hoxton-one/golden-layout/issues/130">#130</a></li>
+			<li>Merges PR Add position:relative to .lm_content to enable absolute positioning within the panels <a class="githubIssue" href="https://github.com/hoxton-one/golden-layout/issues/128">#128</a></li>
+			<li>Merges PR add a showed event <a class="githubIssue" href="https://github.com/hoxton-one/golden-layout/issues/124">#124</a></li>
+			<li>Merges PR Fixed three sources of memory leaks when destroying the LayoutManager <a class="githubIssue" href="https://github.com/hoxton-one/golden-layout/issues/119">#119</a></li>
+			<li>Merges PR Set title attribute on tab to match lm_tab in main layout. <a class="githubIssue" href="https://github.com/hoxton-one/golden-layout/issues/107">#107</a></li>
+			<li>Merges PR Typescript typing information <a class="githubIssue" href="https://github.com/hoxton-one/golden-layout/issues/103">#103</a></li>
+		</ul>
 		<strong>Version 1.5.1</strong>
 		<ul>
 			<li>Fixes React component type is not recognised by createContentItem <a class="githubIssue" href="https://github.com/hoxton-one/golden-layout/issues/87">#87</a></li>
@@ -285,16 +332,7 @@
 
 	<script type="text/javascript" src="../assets/js/Modal.js"></script>
 	
-	<script>
-	  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-	  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-	  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-	  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-	  ga('create', 'UA-63583386-5', 'auto');
-	  ga('send', 'pageview');
-
-	</script>
+		
 	
 </body>
 </html>
