@@ -15,6 +15,7 @@ lm.config.defaultConfig = {
 	},
 	dimensions: {
 		borderWidth: 5,
+		borderGrabWidth: 15,
 		minItemHeight: 10,
 		minItemWidth: 10,
 		headerHeight: 20,

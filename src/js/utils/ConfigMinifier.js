@@ -12,6 +12,7 @@ lm.utils.ConfigMinifier = function() {
 		'selectionEnabled',
 		'dimensions',
 		'borderWidth',
+		'borderGrabWidth',
 		'minItemHeight',
 		'minItemWidth',
 		'headerHeight',
@@ -36,7 +37,6 @@ lm.utils.ConfigMinifier = function() {
 		'parentId',
 		'activeItemIndex',
 		'reorderEnabled'
-
 
 
 
