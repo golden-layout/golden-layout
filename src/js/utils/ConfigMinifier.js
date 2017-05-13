@@ -43,6 +43,9 @@ lm.utils.ConfigMinifier = function() {
 
 		//Maximum 36 entries, do not cross this line!
 	];
+	if( this._keys.length > 36 ) {
+		throw new Error( 'Too many keys in config minifier map' );
+	}
 
 	this._values = [
 		true,
