@@ -7,6 +7,7 @@ lm.items.RowOrColumn = function( isColumn, layoutManager, config, parent ) {
 	this.element = $( '<div class="lm_item lm_' + ( isColumn ? 'column' : 'row' ) + '"></div>' );
 	this.childElementContainer = this.element;
 	this._splitterSize = layoutManager.config.dimensions.borderWidth;
+	this._splitterGrabSize = layoutManager.config.dimensions.borderGrabWidth;
 	this._isColumn = isColumn;
 	this._dimension = isColumn ? 'height' : 'width';
 	this._splitter = [];
@@ -416,7 +417,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	 */
 	_createSplitter: function( index ) {
 		var splitter;
-		splitter = new lm.controls.Splitter( this._isColumn, this._splitterSize );
+		splitter = new lm.controls.Splitter( this._isColumn, this._splitterSize, this._splitterGrabSize );
 		splitter.on( 'drag', lm.utils.fnBind( this._onSplitterDrag, this, [ splitter ] ), this );
 		splitter.on( 'dragStop', lm.utils.fnBind( this._onSplitterDragStop, this, [ splitter ] ), this );
 		splitter.on( 'dragStart', lm.utils.fnBind( this._onSplitterDragStart, this, [ splitter ] ), this );
