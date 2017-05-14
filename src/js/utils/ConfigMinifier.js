@@ -1,6 +1,7 @@
 /**
  * Minifies and unminifies configs by replacing frequent keys
- * and values with one letter substitutes
+ * and values with one letter substitutes. Config options must
+ * retain array position/index, add new options at the end.
  *
  * @constructor
  */
@@ -12,7 +13,6 @@ lm.utils.ConfigMinifier = function() {
 		'selectionEnabled',
 		'dimensions',
 		'borderWidth',
-		'borderGrabWidth',
 		'minItemHeight',
 		'minItemWidth',
 		'headerHeight',
@@ -36,7 +36,8 @@ lm.utils.ConfigMinifier = function() {
 		'openPopouts',
 		'parentId',
 		'activeItemIndex',
-		'reorderEnabled'
+		'reorderEnabled',
+		'borderGrabWidth',
 
 
 
