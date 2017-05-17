@@ -352,7 +352,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 		/**
 		 * Figure out how much we are under the min item size total and how much room we have to use.
 		 */
-		for( i = 0; i < this.contentItems.length; i++ ) {
+		for( var i = 0; i < this.contentItems.length; i++ ) {
 
 			contentItem = this.contentItems[ i ];
 			itemSize = sizeData.itemSizes[ i ];

@@ -1046,9 +1046,8 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 			if( sides [ side ] )
 				area[ side ] = area[ sides [ side ] ] - areaSize;
 			else
-				area[ side ] = areaSize;
-			with( area )
-				surface = ( x2 - x1 ) * ( y2 - y1 );
+				area[ side ] = areaSize;			
+			area.surface = ( area.x2 - area.x1 ) * ( area.y2 - area.y1 );
 			this._itemAreas.push( area );
 		}
 	},
@@ -1087,8 +1086,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 				var header = {};
 				lm.utils.copy( header, area );
 				lm.utils.copy( header, area.contentItem._contentAreaDimensions.header.highlightArea );
-				with( header )
-					surface = ( x2 - x1 ) * ( y2 - y1 );
+				header.surface = ( header.x2 - header.x1 ) * ( header.y2 - header.y1 );
 				this._itemAreas.push( header );
 			}
 		}
@@ -1517,6 +1515,11 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	}
 })();
 
+lm.config.itemDefaultConfig = {
+	isClosable: true,
+	reorderEnabled: true,
+	title: ''
+};
 lm.config.defaultConfig = {
 	openPopouts: [],
 	settings: {
@@ -1551,11 +1554,6 @@ lm.config.defaultConfig = {
 	}
 };
 
-lm.config.itemDefaultConfig = {
-	isClosable: true,
-	reorderEnabled: true,
-	title: ''
-};
 lm.container.ItemContainer = function( config, parent, layoutManager ) {
 	lm.utils.EventEmitter.call( this );
 
@@ -1746,16 +1744,6 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 		}
 	}
 } );
-
-lm.errors.ConfigurationError = function( message, node ) {
-	Error.call( this );
-
-	this.name = 'Configuration Error';
-	this.message = message;
-	this.node = node;
-};
-
-lm.errors.ConfigurationError.prototype = new Error();
 
 /**
  * Pops a content item out into a new browser window.
@@ -2977,6 +2965,16 @@ lm.utils.copy( lm.controls.TransitionIndicator.prototype, {
 		};
 	}
 } );
+lm.errors.ConfigurationError = function( message, node ) {
+	Error.call( this );
+
+	this.name = 'Configuration Error';
+	this.message = message;
+	this.node = node;
+};
+
+lm.errors.ConfigurationError.prototype = new Error();
+
 /**
  * This is the baseclass that all content items inherit from.
  * Most methods provide a subset of what the sub-classes do.
@@ -4118,7 +4116,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 		/**
 		 * Figure out how much we are under the min item size total and how much room we have to use.
 		 */
-		for( i = 0; i < this.contentItems.length; i++ ) {
+		for( var i = 0; i < this.contentItems.length; i++ ) {
 
 			contentItem = this.contentItems[ i ];
 			itemSize = sizeData.itemSizes[ i ];
