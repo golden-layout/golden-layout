@@ -1003,7 +1003,6 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		for( var i = 0; i < stackColumnCount; i++ ) {
 			// Stack from right.
 			var column = rootContentItem.contentItems[ rootContentItem.contentItems.length - 1 ];
-			rootContentItem.removeChild( column );
 			this._addChildContentItemsToContainer( firstStackContainer, column );
 		}
 
@@ -1029,6 +1028,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		if( node.type === 'stack' ) {
 			node.contentItems.forEach( function( item ) {
 				container.addChild( item );
+				node.removeChild( item, true );
 			} );
 		}
 		else {
