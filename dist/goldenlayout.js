@@ -1046,9 +1046,8 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 			if( sides [ side ] )
 				area[ side ] = area[ sides [ side ] ] - areaSize;
 			else
-				area[ side ] = areaSize;
-			with( area )
-				surface = ( x2 - x1 ) * ( y2 - y1 );
+				area[ side ] = areaSize;			
+			area.surface = ( area.x2 - area.x1 ) * ( area.y2 - area.y1 );
 			this._itemAreas.push( area );
 		}
 	},
@@ -1087,8 +1086,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 				var header = {};
 				lm.utils.copy( header, area );
 				lm.utils.copy( header, area.contentItem._contentAreaDimensions.header.highlightArea );
-				with( header )
-					surface = ( x2 - x1 ) * ( y2 - y1 );
+				header.surface = ( header.x2 - header.x1 ) * ( header.y2 - header.y1 );
 				this._itemAreas.push( header );
 			}
 		}
@@ -1539,6 +1537,7 @@ lm.config.defaultConfig = {
 	},
 	dimensions: {
 		borderWidth: 5,
+		borderGrabWidth: 15,
 		minItemHeight: 10,
 		minItemWidth: 10,
 		headerHeight: 20,
@@ -2691,9 +2690,10 @@ lm.utils.copy( lm.controls.HeaderButton.prototype, {
 		this.element.remove();
 	}
 } );
-lm.controls.Splitter = function( isVertical, size ) {
+lm.controls.Splitter = function( isVertical, size, grabSize ) {
 	this._isVertical = isVertical;
 	this._size = size;
+	this._grabSize = grabSize < size ? size : grabSize;
 
 	this.element = this._createElement();
 	this._dragListener = new lm.utils.DragListener( this.element );
@@ -2709,9 +2709,24 @@ lm.utils.copy( lm.controls.Splitter.prototype, {
 	},
 
 	_createElement: function() {
-		var element = $( '<div class="lm_splitter"><div class="lm_drag_handle"></div></div>' );
-		element.addClass( 'lm_' + ( this._isVertical ? 'vertical' : 'horizontal' ) );
-		element[ this._isVertical ? 'height' : 'width' ]( this._size );
+		var dragHandle = $( '<div class="lm_drag_handle"></div>' );
+		var element    = $( '<div class="lm_splitter"></div>' );
+		element.append(dragHandle);
+
+		var handleExcessSize = this._grabSize - this._size;
+		var handleExcessPos  = handleExcessSize / 2;
+
+		if( this._isVertical ) {
+			dragHandle.css( 'top', -handleExcessPos );
+			dragHandle.css( 'height', this._size + handleExcessSize );
+			element.addClass( 'lm_vertical' );
+			element[ 'height' ]( this._size );
+		} else {
+			dragHandle.css( 'left', -handleExcessPos );
+			dragHandle.css( 'width', this._size + handleExcessSize );
+			element.addClass( 'lm_horizontal' );
+			element[ 'width' ]( this._size );
+		}
 
 		return element;
 	}
@@ -3756,6 +3771,7 @@ lm.items.RowOrColumn = function( isColumn, layoutManager, config, parent ) {
 	this.element = $( '<div class="lm_item lm_' + ( isColumn ? 'column' : 'row' ) + '"></div>' );
 	this.childElementContainer = this.element;
 	this._splitterSize = layoutManager.config.dimensions.borderWidth;
+	this._splitterGrabSize = layoutManager.config.dimensions.borderGrabWidth;
 	this._isColumn = isColumn;
 	this._dimension = isColumn ? 'height' : 'width';
 	this._splitter = [];
@@ -4100,7 +4116,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 		/**
 		 * Figure out how much we are under the min item size total and how much room we have to use.
 		 */
-		for( i = 0; i < this.contentItems.length; i++ ) {
+		for( var i = 0; i < this.contentItems.length; i++ ) {
 
 			contentItem = this.contentItems[ i ];
 			itemSize = sizeData.itemSizes[ i ];
@@ -4165,7 +4181,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	 */
 	_createSplitter: function( index ) {
 		var splitter;
-		splitter = new lm.controls.Splitter( this._isColumn, this._splitterSize );
+		splitter = new lm.controls.Splitter( this._isColumn, this._splitterSize, this._splitterGrabSize );
 		splitter.on( 'drag', lm.utils.fnBind( this._onSplitterDrag, this, [ splitter ] ), this );
 		splitter.on( 'dragStop', lm.utils.fnBind( this._onSplitterDragStop, this, [ splitter ] ), this );
 		splitter.on( 'dragStart', lm.utils.fnBind( this._onSplitterDragStart, this, [ splitter ] ), this );
@@ -4278,6 +4294,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 		lm.utils.animFrame( lm.utils.fnBind( this.callDownwards, this, [ 'setSize' ] ) );
 	}
 } );
+
 lm.items.Stack = function( layoutManager, config, parent ) {
 	lm.items.AbstractContentItem.call( this, layoutManager, config, parent );
 
@@ -4801,7 +4818,8 @@ lm.utils.BubblingEvent.prototype.stopPropagation = function() {
 };
 /**
  * Minifies and unminifies configs by replacing frequent keys
- * and values with one letter substitutes
+ * and values with one letter substitutes. Config options must
+ * retain array position/index, add new options at the end.
  *
  * @constructor
  */
@@ -4836,14 +4854,17 @@ lm.utils.ConfigMinifier = function() {
 		'openPopouts',
 		'parentId',
 		'activeItemIndex',
-		'reorderEnabled'
-
+		'reorderEnabled',
+		'borderGrabWidth',
 
 
 
 
 		//Maximum 36 entries, do not cross this line!
 	];
+	if( this._keys.length > 36 ) {
+		throw new Error( 'Too many keys in config minifier map' );
+	}
 
 	this._values = [
 		true,
