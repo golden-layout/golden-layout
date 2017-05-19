@@ -286,6 +286,11 @@ $( function() {
 
 	function createTabDropdownConfig() {
 		return {
+			settings: {
+				tabOverlapAllowance: 25,
+				reorderOnTabMenuClick: false,
+				tabControlOffset: 5
+			},
 			content: [
 				{
 					type: 'row',
