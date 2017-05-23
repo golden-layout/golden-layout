@@ -83,6 +83,12 @@ html, body{
 	display: none;
 }
 
+#nav iframe{
+	position: absolute;
+	right: 10px;
+	top: 5px;
+}
+
 #nav.standalone{
     margin-bottom: 0;
     height: 40px;
