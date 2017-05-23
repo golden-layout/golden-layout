@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>GoldenLayout- a multi-window javascript layout manager for webapps</title>
+	
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<meta name="keywords" content="HTML5, JavaScript, Layout Manager, webapp" />
+	<meta name="description" content="GoldenLayout- a multi-window javascript layout manager for webapps" />
+	<meta name="author" content="Wolfram Hempel" />
+	<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+	<link rel="icon" href="/favicon.ico" type="image/x-icon">
+	<link href='https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700' rel='stylesheet' type='text/css'>
+	<link rel="stylesheet" type="text/css" href="../assets/css/screen.css" />
+	
+	<link rel="stylesheet" type="text/css" href="../assets/css/api.css" />
+	<link rel="stylesheet" type="text/css" href="../assets/css/syntaxhighlighter.css" />
+	
+	<script type="text/javascript">
+	document.createElement( 'header' );
+	document.createElement( 'nav' );
+	</script>
+	<script type="text/javascript" src="../assets/js/jquery.js"></script>
+</head>
+<body class="category_tutorials">
+	<div id="modal" class="loading">
+		<div class="background"></div>
+		<div class="content-wrapper">
+			<div class="head">
+				<div class="close"></div>
+				<span class="title"></span>
+			</div>
+			<div class="content"></div>
+		</div>
+	</div>
+	
+	<div id="outerWrapper">
+		
+
+		
+		<div id="nav" class="standalone">
+			<div class="start-bg"></div>
+			<ul>
+				<li ><a href="..">Start</a></li>
+				<li ><a href="../download">Download</a></li>
+				<li ><a href="../examples">Demos</a></li>
+				<li class="active"><a href="../tutorials">Tutorials</a></li>
+				<li ><a href="../docs">Docs</a></li>
+				<li ><a href="../faq">Faq</a></li>
+			</ul>
+			<iframe src="https://ghbtns.com/github-btn.html?user=deepstreamIO&repo=golden-layout&type=star&count=true&size=large" frameborder="0" scrolling="0" width="160px" height="30px"></iframe>
+
+		</div>
+		
+		<div id="wrapper" class="main">
+			<ul id="subnav">
+	<li class="head first">GoldenLayout</li>
+	<li >
+		<a href="getting-started.html">Getting Started</a>
+	</li>
+	<li >
+		<a href="getting-started-react.html">Getting Started ReactJS</a>
+	</li>
+	<li class="active">
+		<a href="saving-state.html">Saving State</a>
+	</li>
+	<li >
+		<a href="dynamically-adding-components.html">Adding Items</a>
+	</li>
+	<li >
+		<a href="adding-controls-to-header.html">Header Controls</a>
+	</li>
+	<li >
+		<a href="working-with-popouts.html">Popouts</a>
+	</li>
+	<li >
+		<a href="extending-tabs.html">Extending Tabs</a>
+	</li>
+
+	<li class="head">Usage with...</li>
+	<li >
+		<a href="requirejs.html">RequireJS</a>
+	</li>
+	<li >
+		<a href="angular-simple.html">Angular (simple)</a>
+	</li>
+	<li >
+		<a href="angular-complex.html">Angular (complex)</a>
+	</li>
+	<li >
+		<a href="highcharts.html">HighCharts</a>
+	</li>
+	<li >
+		<a href="slickgrid.html">SlickGrid</a>
+	</li>
+</ul>
+			<div id="content">
+				<h1>Saving State</h1><p>You’ve build a marvellous app, configured your layout and the user arranged things just the way he likes. Great!</p><p>But the next time he opens the app he wants to find everything just the way he left it. Or (if you’re feeling fancy) choose from a number of saved layouts.</p><p>GoldenLayout offers a powerful persistence mechanism for that. Not only every aspect of the layout, also the state of the components within it can be converted into a serialisable object that can be saved to a database, to local storage or wherever else your heart desires.</p><p>Here’s how it works:</p><h3>Creating the layout</h3><p>For this tutorial we&#39;ll use the layout created in <a href="getting-started.html">getting-started</a>.</p><pre><code><span class="token keyword" >var</span> config <span class="token operator" >=</span> <span class="token punctuation" >{</span>
+    content<span class="token punctuation" >:</span> <span class="token punctuation" >[</span><span class="token punctuation" >{</span>
+        type<span class="token punctuation" >:</span> <span class="token string" >'row'</span><span class="token punctuation" >,</span>
+        content<span class="token punctuation" >:</span><span class="token punctuation" >[</span><span class="token punctuation" >{</span>
+            type<span class="token punctuation" >:</span> <span class="token string" >'component'</span><span class="token punctuation" >,</span>
+            componentName<span class="token punctuation" >:</span> <span class="token string" >'testComponent'</span><span class="token punctuation" >,</span>
+            componentState<span class="token punctuation" >:</span> <span class="token punctuation" >{</span> label<span class="token punctuation" >:</span> <span class="token string" >'A'</span> <span class="token punctuation" >}</span>
+        <span class="token punctuation" >}</span><span class="token punctuation" >,</span><span class="token punctuation" >{</span>
+            type<span class="token punctuation" >:</span> <span class="token string" >'column'</span><span class="token punctuation" >,</span>
+            content<span class="token punctuation" >:</span><span class="token punctuation" >[</span><span class="token punctuation" >{</span>
+                type<span class="token punctuation" >:</span> <span class="token string" >'component'</span><span class="token punctuation" >,</span>
+                componentName<span class="token punctuation" >:</span> <span class="token string" >'testComponent'</span><span class="token punctuation" >,</span>
+                componentState<span class="token punctuation" >:</span> <span class="token punctuation" >{</span> label<span class="token punctuation" >:</span> <span class="token string" >'B'</span> <span class="token punctuation" >}</span>
+            <span class="token punctuation" >}</span><span class="token punctuation" >,</span><span class="token punctuation" >{</span>
+                type<span class="token punctuation" >:</span> <span class="token string" >'component'</span><span class="token punctuation" >,</span>
+                componentName<span class="token punctuation" >:</span> <span class="token string" >'testComponent'</span><span class="token punctuation" >,</span>
+                componentState<span class="token punctuation" >:</span> <span class="token punctuation" >{</span> label<span class="token punctuation" >:</span> <span class="token string" >'C'</span> <span class="token punctuation" >}</span>
+            <span class="token punctuation" >}</span><span class="token punctuation" >]</span>
+        <span class="token punctuation" >}</span><span class="token punctuation" >]</span>
+    <span class="token punctuation" >}</span><span class="token punctuation" >]</span>
+<span class="token punctuation" >}</span><span class="token punctuation" >;</span>
+</code></pre><p>var myLayout = new GoldenLayout( config );</p><h3>Listening for state changes</h3><p>Your layout instance and all the items within it emit events. These bubble up, just like DOM events. The event we&#39;re interested in at the moment is called <code>stateChanged</code>. It is emitted whenever something happens that modifies the saveable layout state. Listening to it works like this:</p><pre><code>myLayout<span class="token punctuation" >.</span><span class="token function" >on<span class="token punctuation" >(</span></span> <span class="token string" >'stateChanged'</span><span class="token punctuation" >,</span> <span class="token keyword" >function</span><span class="token punctuation" >(</span><span class="token punctuation" >)</span><span class="token punctuation" >{</span>
+   <span class="token comment" spellcheck="true"> //now save the state
+</span><span class="token punctuation" >}</span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+</code></pre><p>The actual state object is created by calling <code>myLayout.toConfig();</code>. For our example we&#39;ll store it in the browser&#39;s localStorage.</p><pre><code>myLayout<span class="token punctuation" >.</span><span class="token function" >on<span class="token punctuation" >(</span></span> <span class="token string" >'stateChanged'</span><span class="token punctuation" >,</span> <span class="token keyword" >function</span><span class="token punctuation" >(</span><span class="token punctuation" >)</span><span class="token punctuation" >{</span>
+    <span class="token keyword" >var</span> state <span class="token operator" >=</span> JSON<span class="token punctuation" >.</span><span class="token function" >stringify<span class="token punctuation" >(</span></span> myLayout<span class="token punctuation" >.</span><span class="token function" >toConfig<span class="token punctuation" >(</span></span><span class="token punctuation" >)</span> <span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+    localStorage<span class="token punctuation" >.</span><span class="token function" >setItem<span class="token punctuation" >(</span></span> <span class="token string" >'savedState'</span><span class="token punctuation" >,</span> state <span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+<span class="token punctuation" >}</span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+</code></pre><div class="info">You might wonder why you have to call <code>myLayout.toConfig()</code> explicitly rather than just getting the new state as a parameter of the <code>stateChanged</code> callback. This is because serialisinging entire layouts can be expensive - and <code>stateChanged</code> will fire a lot. It might therefor be a good idea to &#39;debounce&#39; your state save calls or offer a save-button, depending on your performance requirements.</div>
+
+<h3>Creating Layouts from saved states</h3><p>So now the next time the user opens the app there&#39;s a choice. Either he has used it before and the app&#39;s state is stored
+in localStorage or he&#39;s using it for the first time and we provide a default config.</p><pre><code><span class="token keyword" >var</span> myLayout<span class="token punctuation" >,</span>
+    savedState <span class="token operator" >=</span> localStorage<span class="token punctuation" >.</span><span class="token function" >getItem<span class="token punctuation" >(</span></span> <span class="token string" >'savedState'</span> <span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+
+<span class="token keyword" >if</span><span class="token punctuation" >(</span> savedState <span class="token operator" >!</span><span class="token operator" >==</span> <span class="token keyword" >null</span> <span class="token punctuation" >)</span> <span class="token punctuation" >{</span>
+    myLayout <span class="token operator" >=</span> <span class="token keyword" >new</span> <span class="token class-name" >GoldenLayout</span><span class="token punctuation" >(</span> JSON<span class="token punctuation" >.</span><span class="token function" >parse<span class="token punctuation" >(</span></span> savedState <span class="token punctuation" >)</span> <span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+<span class="token punctuation" >}</span> <span class="token keyword" >else</span> <span class="token punctuation" >{</span>
+    myLayout <span class="token operator" >=</span> <span class="token keyword" >new</span> <span class="token class-name" >GoldenLayout</span><span class="token punctuation" >(</span> config <span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+<span class="token punctuation" >}</span>
+</code></pre><h3>Saving Component States</h3><p>So far we&#39;ve only saved the layout&#39;s state, but what about the components within it, the ones you&#39;ve build? Well, remember the <code>componentState: { label: &#39;C&#39; }</code> entry that you&#39;ve configured? This is just the initial state, the component itself can update it by calling <code>container.extendState( state );</code> or <code>container.setState( state );</code>.</p><p>This stores it and emits a <code>stateChanged</code> event that bubbles up to the layout manager.</p><p>Let&#39;s update our testComponent to show a text input with a persistant value:</p><pre><code>myLayout<span class="token punctuation" >.</span><span class="token function" >registerComponent<span class="token punctuation" >(</span></span> <span class="token string" >'testComponent'</span><span class="token punctuation" >,</span> <span class="token keyword" >function</span><span class="token punctuation" >(</span> container<span class="token punctuation" >,</span> state <span class="token punctuation" >)</span><span class="token punctuation" >{</span>
+
+   <span class="token comment" spellcheck="true"> // Create the input
+</span>    <span class="token keyword" >var</span> input <span class="token operator" >=</span> $<span class="token punctuation" >(</span> <span class="token string" >'&lt;input type="text" />'</span> <span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+
+   <span class="token comment" spellcheck="true"> // Set the initial / saved state
+</span>    <span class="token keyword" >if</span><span class="token punctuation" >(</span> state<span class="token punctuation" >.</span>label <span class="token punctuation" >)</span> <span class="token punctuation" >{</span>
+        input<span class="token punctuation" >.</span><span class="token function" >val<span class="token punctuation" >(</span></span> state<span class="token punctuation" >.</span>label <span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+    <span class="token punctuation" >}</span>
+
+   <span class="token comment" spellcheck="true"> // Store state updates
+</span>    input<span class="token punctuation" >.</span><span class="token function" >on<span class="token punctuation" >(</span></span> <span class="token string" >'change'</span><span class="token punctuation" >,</span> <span class="token keyword" >function</span><span class="token punctuation" >(</span><span class="token punctuation" >)</span><span class="token punctuation" >{</span>
+        container<span class="token punctuation" >.</span><span class="token function" >extendState<span class="token punctuation" >(</span></span><span class="token punctuation" >{</span>
+            label<span class="token punctuation" >:</span> input<span class="token punctuation" >.</span><span class="token function" >val<span class="token punctuation" >(</span></span><span class="token punctuation" >)</span>
+        <span class="token punctuation" >}</span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+    <span class="token punctuation" >}</span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+
+   <span class="token comment" spellcheck="true"> // Append it to the DOM
+</span>    container<span class="token punctuation" >.</span><span class="token function" >getElement<span class="token punctuation" >(</span></span><span class="token punctuation" >)</span><span class="token punctuation" >.</span><span class="token function" >append<span class="token punctuation" >(</span></span> input <span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+<span class="token punctuation" >}</span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+</code></pre><h3>And initialise the layout</h3><pre><code>myLayout<span class="token punctuation" >.</span><span class="token function" >init<span class="token punctuation" >(</span></span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+</code></pre><h3>The result</h3><p><p data-height="268" data-theme-id="7376" data-slug-hash="7c599be2a33fb57a47dfb43a53df2437" data-default-tab="result" class='codepen'>See the Pen <a href='http://codepen.io/wolframhempel/pen/7c599be2a33fb57a47dfb43a53df2437/'>Saving State</a> by Wolfram Hempel (<a href='http://codepen.io/wolframhempel'>@wolframhempel</a>) on <a href='http://codepen.io'>CodePen</a>.</p></p><script async src="//codepen.io/assets/embed/ei.js"></script>
+				
+				<h3>Comments and Questions</h3>
+				<div id="disqusContainer">
+					<div id="disqus_thread"></div>
+				    <script type="text/javascript">
+				        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+				        var disqus_shortname = 'goldenlayoutcom'; // required: replace example with your forum shortname
+
+				        /* * * DON'T EDIT BELOW THIS LINE * * */
+				        (function() {
+				            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+				            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+				            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+				        })();
+				    </script>
+				    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+				    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+			    
+					
+					
+				</div>
+			</div>
+		</div>
+		<script type="text/javascript" src="../assets/js/docs.js"></script>
+		
+		<div id="footerPush"></div>
+	</div>
+	<div id="footer">
+		<div class="footer-content">
+			<div class="copyright">&copy;<span class="year"></span> deepstreamHub GmbH</div>
+			<script type="text/javascript">
+			$('.year').html( (new Date()).getFullYear() );
+			</script>
+			<ul class="footerItems">
+				<li>
+					<a href="https://github.com/deepstreamIO/golden-layout">Github</a>
+					<a href="https://www.npmjs.com/package/golden-layout">NPM</a>
+					<div>bower/npm: <code>'golden-layout'</code></div>
+				</li>
+				<li>
+					<div>deepstreamHub GmbH</div>
+					<div>Lindenstrasse 20-25</div>
+					<div>10969 Berlin</div>
+				</li>
+				<li>
+					<a href="mailto:info@deepstreamhub.com">info@deepstreamhub.com</a>
+					<a href="https://deepstreamhub.com/">deepstreamHub.com</a><br />
+					<a href="https://twitter.com/wolframhempel">by @wolframhempel</a>
+
+				</li>
+			</ul>
+		</div>
+	</div>
+
+	<script type="text/javascript" src="../assets/js/Modal.js"></script>
+	
+	<script>
+	  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+	  ga('create', 'UA-63583386-5', 'auto');
+	  ga('send', 'pageview');
+
+	</script>
+	
+</body>
+</html>

@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>GoldenLayout- a multi-window javascript layout manager for webapps</title>
+	
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<meta name="keywords" content="HTML5, JavaScript, Layout Manager, webapp" />
+	<meta name="description" content="GoldenLayout- a multi-window javascript layout manager for webapps" />
+	<meta name="author" content="Wolfram Hempel" />
+	<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+	<link rel="icon" href="/favicon.ico" type="image/x-icon">
+	<link href='https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700' rel='stylesheet' type='text/css'>
+	<link rel="stylesheet" type="text/css" href="../assets/css/screen.css" />
+	
+	<script type="text/javascript">
+	document.createElement( 'header' );
+	document.createElement( 'nav' );
+	</script>
+	<script type="text/javascript" src="../assets/js/jquery.js"></script>
+</head>
+<body class="category_examples">
+	<div id="modal" class="loading">
+		<div class="background"></div>
+		<div class="content-wrapper">
+			<div class="head">
+				<div class="close"></div>
+				<span class="title"></span>
+			</div>
+			<div class="content"></div>
+		</div>
+	</div>
+	
+	<div id="outerWrapper">
+		
+
+		
+		<div id="nav" class="standalone">
+			<div class="start-bg"></div>
+			<ul>
+				<li ><a href="..">Start</a></li>
+				<li ><a href="../download">Download</a></li>
+				<li class="active"><a href="../examples">Demos</a></li>
+				<li ><a href="../tutorials">Tutorials</a></li>
+				<li ><a href="../docs">Docs</a></li>
+				<li ><a href="../faq">Faq</a></li>
+			</ul>
+			<iframe src="https://ghbtns.com/github-btn.html?user=deepstreamIO&repo=golden-layout&type=star&count=true&size=large" frameborder="0" scrolling="0" width="160px" height="30px"></iframe>
+
+		</div>
+		
+		<div class="content main">
+			<ul class="examplesNavigation">
+	<li class="head">ESSENTIALS</li>
+	<li><a data-desc="Basic building block: row <a href='../tutorials/getting-started.html'>(tutorial)</a>" data-category="ESSENTIALS" href="#6fb265dbf110900619f00ed3f2c258ba">row</a></li>
+	<li><a data-desc="Basic building block: column <a href='../tutorials/getting-started.html'>(tutorial)</a>" data-category="ESSENTIALS" href="#0ad20a5d5652d68ff83ec3ff23bba4a3">column</a></li>
+	<li><a data-desc="Basic building block: stack <a href='../tutorials/getting-started.html'>(tutorial)</a>" data-category="ESSENTIALS" href="#ee9d05f44e56d8ac08817e76f86bcbbe">stack</a></li>
+	<li><a data-desc="Serialise component and layout state and store it in LocalStorage <a href='../tutorials/saving-state.html'>(tutorial)</a>" data-category="ESSENTIALS" href="#7c599be2a33fb57a47dfb43a53df2437">saving state</a></li>
+	<li class="head">THEMES</li>
+	<li><a data-desc="Flat dark theme" data-category="THEMES" href="#bd6de6bd28eaeecf67c598d45c4dd195">Simple Dark Theme</a></li>	
+	<li><a data-desc="Flat light theme" data-category="THEMES" href="#197a39fa9ce4bf1b39a207593e41f5e3">Simple Light Theme</a></li>
+		
+	<li class="head">CONFIGURATION</li>
+	<li><a data-desc="Nesting and sizing rows and columns in a golden ratio" data-category="CONFIGURATION" href="#849a1cd2afcc95b474f621635ef5b590">Golden Spiral</a></li>
+	<li><a data-desc="Syncing two layouts by serialisation" data-category="CONFIGURATION" href="#cffd4ce1a70e0738b3f40e67e17a20d0">Synced layouts</a></li>
+	<li><a data-desc="Nested Stacks" data-category="CONFIGURATION" href="#b40c19e79915493e9d3ae0220773358f">Nested Stacks</a></li>
+	<li class="head">ADDING ITEMS</li>
+	<li><a data-desc="Drag items from the menu onto the layout <a href='../tutorials/dynamically-adding-components.html'>(tutorial)</a>" data-category="ADDING ITEMS" href="#d508753b29c3001c24218bf3a6b25141">By drag</a></li>
+	<li><a data-desc="Select an item by clicking its headerbar and add items to it <a href='../tutorials/dynamically-adding-components.html'>(tutorial)</a>" data-category="ADDING ITEMS" href="#9dd68b285dc421364ac9ec13f2bdc999">By selection</a></li>
+	<li><a data-desc="Add items to a pre-defined element <a href='../tutorials/dynamically-adding-components.html'>(tutorial)</a>" data-category="ADDING ITEMS" href="#cdcb9de8e7b305d2ec81b4ae4e392832">To element</a></li>
+	<li class="head">CUSTOM FUNCTIONALITY</li>
+	<li><a data-desc="Adding a custom color picker to the header <a href='../tutorials/adding-controls-to-header.html'>(tutorial)</a>" data-category="CUSTOM FUNCTIONALITY" href="#e15391fb136593e265013408cf68e561">Extending Header</a></li>
+	<li><a data-desc="Adding a message counter to every tab color <a href='../tutorials/extending-tabs.html'>(tutorial)</a>" data-category="CUSTOM FUNCTIONALITY" href="#9cb7e16c6e3a5ad427297cc4d390b971">Extending Tabs</a></li>
+	<li><a data-desc="Programmatically re-arranging components without reload" data-category="CUSTOM FUNCTIONALITY" href="#01249881a541bafcdf827c8b9020ad8a">Programmatic reorder</a></li>
+	<li><a data-desc="Toggle between rows and columns without reload" data-category="CUSTOM FUNCTIONALITY" href="#2e5d0456964b59f9eec1ecb44e1d31eb">Programmatic reorder 2</a></li>
+	<li><a data-desc="Disable adding components to a specific stack" data-category="CUSTOM FUNCTIONALITY" href="#30979a043f34750045dbe57aba4b1ee5">Disable Drop on header</a></li>
+	<li><a data-desc="Only close stack if user confirms" data-category="CUSTOM FUNCTIONALITY" href="#d66d6ee7794a8e000d72e9aa51c9bb9c">Conditional Closing</a></li>
+	<li><a data-desc="Custom Splitter Graphics" data-category="CUSTOM FUNCTIONALITY" href="#c33aff76e62e4fdf0635ac9f2df67dda">Custom Splitters</a></li>
+	<li><a data-desc="Configure Css Classes" data-category="CUSTOM FUNCTIONALITY" href="#ea776c82a4ff6ee489cc9ee68a0dcbc5">Configured Css Classes</a></li>
+	<li><a data-desc="Scrolling within panels" data-category="CUSTOM FUNCTIONALITY" href="#b8d8f23d4354d58f6a53f96a3e83753d">Panel Scrolling</a></li>
+	<li><a data-desc="Add tooltips via title attributes" data-category="CUSTOM FUNCTIONALITY" href="#21c1fbbbfaebca00a7183c9707bbef98">Custom Tooltips</a></li>
+	<li class="head">INTEGRATION</li>
+	<li><a data-desc="Simple ReactJS example" data-category="INTEGRATION" href="#qZXEyv">Simple ReactJS example</a></li>
+	<li><a data-desc="Complex ReactJS example" data-category="INTEGRATION" href="#XdabGJ">Complex ReactJS example</a></li>
+	<li><a data-desc="Showing Yahoo stockprices on HighCharts in GoldenLayout <a href='../tutorials/highcharts.html'>(tutorial)</a>" data-category="INTEGRATION" href="#c0c2f3811adfef1f8fc3d78c47686409">Highcharts and YQL</a></li>
+	<li><a data-desc="Integrating SlickGrid with GoldenLayout <a href='../tutorials/slickgrid.html'>(tutorial)</a>" data-category="INTEGRATION" href="#8a90e7c51e2b8ba6c964e840793d22de">SlickGrid</a></li>
+	<li><a data-desc="Multi-Module Angular app in GoldenLayout <a href='../tutorials/angular-complex.html'>(tutorial)</a>" data-category="INTEGRATION" href="#9cc03061dd363f9b3d014ad4c6b7937d">Angular</a></li>
+	<li><a data-desc="Using Webix with GoldenLayout" data-category="INTEGRATION" href="#d954972fbb6d7dc4b9efd0cc73b3091b">Webix</a></li>
+</ul>
+<div class="exampleStage">
+	<div class="exampleDescription">
+		<span class="head">ESSENTIALS</span>&nbsp;::&nbsp;
+		<span class="name">saving state</span>&nbsp;::&nbsp;
+		<span class="desc">Serialise component and layout state and store it in LocalStorage</span>
+	</div>
+	<div class="codePenContainer">
+		<div id="loadingBlind">
+			<div class="loadingText">
+				Loading example&nbsp;<span></span>...
+			</div>
+		</div>
+		<iframe id="cp_embed_fa463879c4a7e8a47a0bc41de32c4d9f" src="//codepen.io/anon/embed/fa463879c4a7e8a47a0bc41de32c4d9f?height=713&amp;theme-id=7376&amp;slug-hash=fa463879c4a7e8a47a0bc41de32c4d9f&amp;default-tab=result" scrolling="no" frameborder="0" height="713" allowtransparency="true" class="cp_embed_iframe" style="overflow: hidden;"></iframe>
+	</div>
+</div>
+
+<script type="text/javascript" src="//code.jquery.com/jquery-1.11.1.min.js"></script>
+
+<script type="text/javascript">
+$(function(){
+
+	var activeExample, resize, loadExample, element = {
+		descName: $('.exampleDescription .name' ),
+		descCat: $('.exampleDescription .head' ),
+		desc: $('.exampleDescription .desc' ),
+		content: $( '.content' ),
+		yResize: $( '.examplesNavigation, .codePenContainer' ),
+		codePenContainer: $( '.codePenContainer' ),
+		iframe: $( '.cp_embed_iframe' )
+	};
+
+	resize = function() {
+		var height = $(window).height() - ( $('.exampleDescription').height() + $('#nav').height());
+		var width = $(window).width() - 200;
+		
+		element.content.width( $(window).width() ).height( height ).css( 'overflow', 'hidden');
+		element.yResize.height( height );
+		element.codePenContainer.width( width );
+
+		element.iframe.css({
+			height: height,
+			width: width
+		}).attr({
+			height: height,
+			width: width
+		});
+
+		loadExample();
+	};
+
+	if( window.location.hash.length > 0 ) {
+		activeExample = window.location.hash.substr( 1 );
+	} else {
+		activeExample = '6fb265dbf110900619f00ed3f2c258ba';
+	}
+
+	loadExample = function() {
+		var height = $(window).height() - 40;
+		var url = '//codepen.io/anon/embed/' + activeExample + '?height=' + height + '&amp;theme-id=7376&amp;' +
+				'slug-hash=' + activeExample + '&amp;default-tab=result';
+		var activeLink = $( '.examplesNavigation a[href="#' + activeExample + '"]' );
+
+		element.descName.text( activeLink.text() );
+		element.descCat.text( activeLink.data( 'cat' ) );
+		element.desc.html( activeLink.data( 'desc' ) );
+
+		$( '#loadingBlind span' ).text( activeLink.text() );
+		$( '#loadingBlind' ).fadeIn( 300, function(){
+			element.iframe.attr( 'src', url );
+		});
+
+		
+		$( '.examplesNavigation .active' ).removeClass( 'active' );
+		activeLink.parent().addClass( 'active' );
+	};
+
+	resize(); 
+	$(window).resize( resize );
+
+	$( 'iframe' ).on( 'load', function(){
+		$( '#loadingBlind' ).fadeOut( 300 );
+	});
+
+	$( '.examplesNavigation a' ).click(function( e ){
+		activeExample = $(this).attr( 'href' ).substr( 1 );
+		loadExample();
+	});
+});
+</script>
+</script>
+		</div>
+		
+		<div id="footerPush"></div>
+	</div>
+	<div id="footer">
+		<div class="footer-content">
+			<div class="copyright">&copy;<span class="year"></span> deepstreamHub GmbH</div>
+			<script type="text/javascript">
+			$('.year').html( (new Date()).getFullYear() );
+			</script>
+			<ul class="footerItems">
+				<li>
+					<a href="https://github.com/deepstreamIO/golden-layout">Github</a>
+					<a href="https://www.npmjs.com/package/golden-layout">NPM</a>
+					<div>bower/npm: <code>'golden-layout'</code></div>
+				</li>
+				<li>
+					<div>deepstreamHub GmbH</div>
+					<div>Lindenstrasse 20-25</div>
+					<div>10969 Berlin</div>
+				</li>
+				<li>
+					<a href="mailto:info@deepstreamhub.com">info@deepstreamhub.com</a>
+					<a href="https://deepstreamhub.com/">deepstreamHub.com</a><br />
+					<a href="https://twitter.com/wolframhempel">by @wolframhempel</a>
+
+				</li>
+			</ul>
+		</div>
+	</div>
+
+	<script type="text/javascript" src="../assets/js/Modal.js"></script>
+	
+	<script>
+	  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+	  ga('create', 'UA-63583386-5', 'auto');
+	  ga('send', 'pageview');
+
+	</script>
+	
+</body>
+</html>

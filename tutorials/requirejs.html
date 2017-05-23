@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>GoldenLayout- a multi-window javascript layout manager for webapps</title>
+	
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<meta name="keywords" content="HTML5, JavaScript, Layout Manager, webapp" />
+	<meta name="description" content="GoldenLayout- a multi-window javascript layout manager for webapps" />
+	<meta name="author" content="Wolfram Hempel" />
+	<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+	<link rel="icon" href="/favicon.ico" type="image/x-icon">
+	<link href='https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700' rel='stylesheet' type='text/css'>
+	<link rel="stylesheet" type="text/css" href="../assets/css/screen.css" />
+	
+	<link rel="stylesheet" type="text/css" href="../assets/css/api.css" />
+	<link rel="stylesheet" type="text/css" href="../assets/css/syntaxhighlighter.css" />
+	
+	<script type="text/javascript">
+	document.createElement( 'header' );
+	document.createElement( 'nav' );
+	</script>
+	<script type="text/javascript" src="../assets/js/jquery.js"></script>
+</head>
+<body class="category_tutorials">
+	<div id="modal" class="loading">
+		<div class="background"></div>
+		<div class="content-wrapper">
+			<div class="head">
+				<div class="close"></div>
+				<span class="title"></span>
+			</div>
+			<div class="content"></div>
+		</div>
+	</div>
+	
+	<div id="outerWrapper">
+		
+
+		
+		<div id="nav" class="standalone">
+			<div class="start-bg"></div>
+			<ul>
+				<li ><a href="..">Start</a></li>
+				<li ><a href="../download">Download</a></li>
+				<li ><a href="../examples">Demos</a></li>
+				<li class="active"><a href="../tutorials">Tutorials</a></li>
+				<li ><a href="../docs">Docs</a></li>
+				<li ><a href="../faq">Faq</a></li>
+			</ul>
+			<iframe src="https://ghbtns.com/github-btn.html?user=deepstreamIO&repo=golden-layout&type=star&count=true&size=large" frameborder="0" scrolling="0" width="160px" height="30px"></iframe>
+
+		</div>
+		
+		<div id="wrapper" class="main">
+			<ul id="subnav">
+	<li class="head first">GoldenLayout</li>
+	<li >
+		<a href="getting-started.html">Getting Started</a>
+	</li>
+	<li >
+		<a href="getting-started-react.html">Getting Started ReactJS</a>
+	</li>
+	<li >
+		<a href="saving-state.html">Saving State</a>
+	</li>
+	<li >
+		<a href="dynamically-adding-components.html">Adding Items</a>
+	</li>
+	<li >
+		<a href="adding-controls-to-header.html">Header Controls</a>
+	</li>
+	<li >
+		<a href="working-with-popouts.html">Popouts</a>
+	</li>
+	<li >
+		<a href="extending-tabs.html">Extending Tabs</a>
+	</li>
+
+	<li class="head">Usage with...</li>
+	<li class="active">
+		<a href="requirejs.html">RequireJS</a>
+	</li>
+	<li >
+		<a href="angular-simple.html">Angular (simple)</a>
+	</li>
+	<li >
+		<a href="angular-complex.html">Angular (complex)</a>
+	</li>
+	<li >
+		<a href="highcharts.html">HighCharts</a>
+	</li>
+	<li >
+		<a href="slickgrid.html">SlickGrid</a>
+	</li>
+</ul>
+			<div id="content">
+				<h1>Using GoldenLayout with RequireJS</h1><p>Like most modern libraries, GoldenLayout uses UMD (Universal Module Definition) to ensure compatibility with AMD / RequireJS and CommonJS alike. This means that when it comes to using it with RequireJS, there really isn&#39;t much to it.</p><h3>jQuery</h3><p>GoldenLayout depends on jQuery. When requiring GoldenLayout it in turn will require <code>&#39;jquery&#39;</code> (all lowercase) which is the name that jQuery registeres itself under as a named module. So all that&#39;s left is telling RequireJS where this model can be found, e.g. like this:</p><pre><code>requirejs<span class="token punctuation" >.</span><span class="token function" >config<span class="token punctuation" >(</span></span><span class="token punctuation" >{</span>
+    paths<span class="token punctuation" >:</span> <span class="token punctuation" >{</span>
+        <span class="token string" >'jquery'</span><span class="token punctuation" >:</span> <span class="token string" >'lib/jquery'</span>
+    <span class="token punctuation" >}</span>
+<span class="token punctuation" >}</span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+</code></pre><p>And that&#39;s it. Now you can require GoldenLayout and your components and start it, e.g. like that:</p><pre><code>requirejs<span class="token punctuation" >.</span><span class="token function" >config<span class="token punctuation" >(</span></span><span class="token punctuation" >{</span>
+    baseUrl<span class="token punctuation" >:</span> <span class="token string" >'../js'</span><span class="token punctuation" >,</span>
+    paths<span class="token punctuation" >:</span> <span class="token punctuation" >{</span>
+        <span class="token string" >'jquery'</span><span class="token punctuation" >:</span> <span class="token string" >'lib/jquery'</span>
+    <span class="token punctuation" >}</span>
+<span class="token punctuation" >}</span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+
+<span class="token function" >require<span class="token punctuation" >(</span></span> <span class="token punctuation" >[</span> <span class="token string" >'lib/goldenlayout'</span><span class="token punctuation" >,</span> <span class="token string" >'src/TestComponent'</span> <span class="token punctuation" >]</span><span class="token punctuation" >,</span> 
+    <span class="token keyword" >function</span><span class="token punctuation" >(</span> GoldenLayout<span class="token punctuation" >,</span> TestComponent <span class="token punctuation" >)</span><span class="token punctuation" >{</span>
+
+    <span class="token keyword" >var</span> myLayout <span class="token operator" >=</span> <span class="token keyword" >new</span> <span class="token class-name" >GoldenLayout</span><span class="token punctuation" >(</span><span class="token punctuation" >{</span>
+        content<span class="token punctuation" >:</span><span class="token punctuation" >[</span><span class="token punctuation" >{</span>
+            type<span class="token punctuation" >:</span> <span class="token string" >'row'</span><span class="token punctuation" >,</span>
+            content<span class="token punctuation" >:</span> <span class="token punctuation" >[</span><span class="token punctuation" >{</span>
+                type<span class="token punctuation" >:</span> <span class="token string" >'component'</span><span class="token punctuation" >,</span>
+                componentName<span class="token punctuation" >:</span> <span class="token string" >'testComponent'</span><span class="token punctuation" >,</span>
+                componentState<span class="token punctuation" >:</span> <span class="token punctuation" >{</span> title<span class="token punctuation" >:</span> <span class="token string" >'First Item'</span> <span class="token punctuation" >}</span>
+            <span class="token punctuation" >}</span><span class="token punctuation" >,</span><span class="token punctuation" >{</span>
+                type<span class="token punctuation" >:</span> <span class="token string" >'component'</span><span class="token punctuation" >,</span>
+                componentName<span class="token punctuation" >:</span> <span class="token string" >'testComponent'</span><span class="token punctuation" >,</span>
+                componentState<span class="token punctuation" >:</span> <span class="token punctuation" >{</span> title<span class="token punctuation" >:</span> <span class="token string" >'Second Item'</span> <span class="token punctuation" >}</span>
+            <span class="token punctuation" >}</span><span class="token punctuation" >]</span>
+        <span class="token punctuation" >}</span><span class="token punctuation" >]</span>
+    <span class="token punctuation" >}</span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+
+    myLayout<span class="token punctuation" >.</span><span class="token function" >registerComponent<span class="token punctuation" >(</span></span> <span class="token string" >'testComponent'</span><span class="token punctuation" >,</span> TestComponent <span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+    myLayout<span class="token punctuation" >.</span><span class="token function" >init<span class="token punctuation" >(</span></span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+<span class="token punctuation" >}</span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+</code></pre>
+				
+				<h3>Comments and Questions</h3>
+				<div id="disqusContainer">
+					<div id="disqus_thread"></div>
+				    <script type="text/javascript">
+				        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+				        var disqus_shortname = 'goldenlayoutcom'; // required: replace example with your forum shortname
+
+				        /* * * DON'T EDIT BELOW THIS LINE * * */
+				        (function() {
+				            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+				            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+				            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+				        })();
+				    </script>
+				    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+				    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+			    
+					
+					
+				</div>
+			</div>
+		</div>
+		<script type="text/javascript" src="../assets/js/docs.js"></script>
+		
+		<div id="footerPush"></div>
+	</div>
+	<div id="footer">
+		<div class="footer-content">
+			<div class="copyright">&copy;<span class="year"></span> deepstreamHub GmbH</div>
+			<script type="text/javascript">
+			$('.year').html( (new Date()).getFullYear() );
+			</script>
+			<ul class="footerItems">
+				<li>
+					<a href="https://github.com/deepstreamIO/golden-layout">Github</a>
+					<a href="https://www.npmjs.com/package/golden-layout">NPM</a>
+					<div>bower/npm: <code>'golden-layout'</code></div>
+				</li>
+				<li>
+					<div>deepstreamHub GmbH</div>
+					<div>Lindenstrasse 20-25</div>
+					<div>10969 Berlin</div>
+				</li>
+				<li>
+					<a href="mailto:info@deepstreamhub.com">info@deepstreamhub.com</a>
+					<a href="https://deepstreamhub.com/">deepstreamHub.com</a><br />
+					<a href="https://twitter.com/wolframhempel">by @wolframhempel</a>
+
+				</li>
+			</ul>
+		</div>
+	</div>
+
+	<script type="text/javascript" src="../assets/js/Modal.js"></script>
+	
+	<script>
+	  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+	  ga('create', 'UA-63583386-5', 'auto');
+	  ga('send', 'pageview');
+
+	</script>
+	
+</body>
+</html>

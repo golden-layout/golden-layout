@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>GoldenLayout- a multi-window javascript layout manager for webapps</title>
+	
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<meta name="keywords" content="HTML5, JavaScript, Layout Manager, webapp" />
+	<meta name="description" content="GoldenLayout- a multi-window javascript layout manager for webapps" />
+	<meta name="author" content="Wolfram Hempel" />
+	<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+	<link rel="icon" href="/favicon.ico" type="image/x-icon">
+	<link href='https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700' rel='stylesheet' type='text/css'>
+	<link rel="stylesheet" type="text/css" href="../assets/css/screen.css" />
+	
+	<link rel="stylesheet" type="text/css" href="../assets/css/api.css" />
+	<link rel="stylesheet" type="text/css" href="../assets/css/syntaxhighlighter.css" />
+	
+	<script type="text/javascript">
+	document.createElement( 'header' );
+	document.createElement( 'nav' );
+	</script>
+	<script type="text/javascript" src="../assets/js/jquery.js"></script>
+</head>
+<body class="category_docs">
+	<div id="modal" class="loading">
+		<div class="background"></div>
+		<div class="content-wrapper">
+			<div class="head">
+				<div class="close"></div>
+				<span class="title"></span>
+			</div>
+			<div class="content"></div>
+		</div>
+	</div>
+	
+	<div id="outerWrapper">
+		
+
+		
+		<div id="nav" class="standalone">
+			<div class="start-bg"></div>
+			<ul>
+				<li ><a href="..">Start</a></li>
+				<li ><a href="../download">Download</a></li>
+				<li ><a href="../examples">Demos</a></li>
+				<li ><a href="../tutorials">Tutorials</a></li>
+				<li class="active"><a href="../docs">Docs</a></li>
+				<li ><a href="../faq">Faq</a></li>
+			</ul>
+			<iframe src="https://ghbtns.com/github-btn.html?user=deepstreamIO&repo=golden-layout&type=star&count=true&size=large" frameborder="0" scrolling="0" width="160px" height="30px"></iframe>
+
+		</div>
+		
+		<div id="wrapper" class="main">
+			<ul id="subnav">
+	<li class="head first">Configuration</li>
+	<li >
+		<a href="Config.html">Layout Config</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+	</li>
+	<li >
+		<a href="ItemConfig.html">Item Config</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+	</li>
+
+	<li class="head">API</li>
+	<li >
+		<a href="GoldenLayout.html">GoldenLayout</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+		
+	</li>
+	<li >
+		<a href="Item.html">ContentItem</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+		
+	</li>
+	<li >
+		<a href="Container.html">Container</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+		
+	</li>
+	<li >
+		<a href="BrowserWindow.html">BrowserWindow</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+		
+	</li>
+	<li class="active">
+		<a href="Header.html">Header</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+		
+			<ul class="overview">
+				
+				<li><a href="#Properties">Properties</a></li>
+				
+				<li><a href="#setActiveContentItem( contentItem )">setActiveContentItem( contentItem )</a></li>
+				
+				<li><a href="#createTab( contentItem, index )">createTab( contentItem, index )</a></li>
+				
+				<li><a href="#removeTab( contentItem )">removeTab( contentItem )</a></li>
+				
+			</ul>
+		
+	</li>
+	<li >
+		<a href="Tab.html">Tab</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+		
+	</li>
+	<li >
+		<a href="EventEmitter.html">EventEmitter</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+		
+	</li>
+</ul>
+			<div id="content">
+				<div class="section"><h2><a name="Properties">Properties</a></h2><h3>layoutManager</h3><p>A reference to the LayoutManager instance</p><h3>parent</h3><p>A reference to the Stack this Header belongs to</p><h3>tabs</h3><p>An array of the Tabs within this header</p><h3>activeContentItem</h3><p>The currently selected activeContentItem</p><h3>element</h3><p>The outer (jQuery) DOM element of this Header</p><h3>tabsContainer</h3><p>The (jQuery) DOM element containing the tabs</p><h3>controlsContainer</h3><p>The (jQuery) DOM element containing the close, maximise and popout button</p></div><div class="section"><h2><a name="setActiveContentItem( contentItem )">setActiveContentItem( contentItem )</a></h2><table class="args"><thead><tr><th>argument</th><th>type</th><th>optional</th><th>default</th><th>description</th></tr></thead><tbody><tr><td class="argument">contentItem</td><td class="type">ContentItem</td><td class="optional">false</td><td class="default">-</td><td class="description">The content item that will be selected</td></tr></tbody></table><p>Hides the currently selected contentItem, shows the specified one and highlights
+its tab.</p></div><div class="section"><h2><a name="createTab( contentItem, index )">createTab( contentItem, index )</a></h2><table class="args"><thead><tr><th>argument</th><th>type</th><th>optional</th><th>default</th><th>description</th></tr></thead><tbody><tr><td class="argument">contentItem</td><td class="type">ContentItem</td><td class="optional">false</td><td class="default">-</td><td class="description">The content item the tab will be associated with</td></tr><tr><td class="argument">index</td><td class="type">Number</td><td class="optional">false</td><td class="default">-</td><td class="description">A zero based index, specifying the position of the new tab</td></tr></tbody></table><p>Creates a new tab and associates it with a content item</p></div><div class="section"><h2><a name="removeTab( contentItem )">removeTab( contentItem )</a></h2><table class="args"><thead><tr><th>argument</th><th>type</th><th>optional</th><th>default</th><th>description</th></tr></thead><tbody><tr><td class="argument">contentItem</td><td class="type">ContentItem</td><td class="optional">false</td><td class="default">-</td><td class="description">The content item the tab is associated with</td></tr></tbody></table><p>Finds a tab by its contentItem and removes it</p><p></div></p>
+				
+				<h3>Comments and Questions</h3>
+				<div id="disqusContainer">
+					<div id="disqus_thread"></div>
+				    <script type="text/javascript">
+				        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+				        var disqus_shortname = 'goldenlayoutcom'; // required: replace example with your forum shortname
+
+				        /* * * DON'T EDIT BELOW THIS LINE * * */
+				        (function() {
+				            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+				            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+				            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+				        })();
+				    </script>
+				    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+				    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+			    
+					
+					
+				</div>
+			</div>
+		</div>
+		<script type="text/javascript" src="../assets/js/docs.js"></script>
+		
+		<div id="footerPush"></div>
+	</div>
+	<div id="footer">
+		<div class="footer-content">
+			<div class="copyright">&copy;<span class="year"></span> deepstreamHub GmbH</div>
+			<script type="text/javascript">
+			$('.year').html( (new Date()).getFullYear() );
+			</script>
+			<ul class="footerItems">
+				<li>
+					<a href="https://github.com/deepstreamIO/golden-layout">Github</a>
+					<a href="https://www.npmjs.com/package/golden-layout">NPM</a>
+					<div>bower/npm: <code>'golden-layout'</code></div>
+				</li>
+				<li>
+					<div>deepstreamHub GmbH</div>
+					<div>Lindenstrasse 20-25</div>
+					<div>10969 Berlin</div>
+				</li>
+				<li>
+					<a href="mailto:info@deepstreamhub.com">info@deepstreamhub.com</a>
+					<a href="https://deepstreamhub.com/">deepstreamHub.com</a><br />
+					<a href="https://twitter.com/wolframhempel">by @wolframhempel</a>
+
+				</li>
+			</ul>
+		</div>
+	</div>
+
+	<script type="text/javascript" src="../assets/js/Modal.js"></script>
+	
+	<script>
+	  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+	  ga('create', 'UA-63583386-5', 'auto');
+	  ga('send', 'pageview');
+
+	</script>
+	
+</body>
+</html>
