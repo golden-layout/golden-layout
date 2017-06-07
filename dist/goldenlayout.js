@@ -2913,6 +2913,10 @@ lm.utils.copy( lm.controls.Tab.prototype, {
 	 * @returns {void}
 	 */
 	_onDragStart: function( x, y ) {
+		if( this.contentItem.config.preventDrag === true ) {
+			return;
+		}
+		
 		if( this.contentItem.parent.isMaximised === true ) {
 			this.contentItem.parent.toggleMaximise();
 		}
