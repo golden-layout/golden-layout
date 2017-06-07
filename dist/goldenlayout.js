@@ -1515,11 +1515,6 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	}
 })();
 
-lm.config.itemDefaultConfig = {
-	isClosable: true,
-	reorderEnabled: true,
-	title: ''
-};
 lm.config.defaultConfig = {
 	openPopouts: [],
 	settings: {
@@ -1533,7 +1528,10 @@ lm.config.defaultConfig = {
 		showPopoutIcon: true,
 		showMaximiseIcon: true,
 		showCloseIcon: true,
-		responsiveMode: 'onload' // Can be onload, always, or none.
+		responsiveMode: 'onload', // Can be onload, always, or none.
+		tabOverlapAllowance: 0, // maximum pixel overlap per tab
+		reorderOnTabMenuClick: true,
+		tabControlOffset: 10
 	},
 	dimensions: {
 		borderWidth: 5,
@@ -1554,6 +1552,11 @@ lm.config.defaultConfig = {
 	}
 };
 
+lm.config.itemDefaultConfig = {
+	isClosable: true,
+	reorderEnabled: true,
+	title: ''
+};
 lm.container.ItemContainer = function( config, parent, layoutManager ) {
 	lm.utils.EventEmitter.call( this );
 
@@ -1744,6 +1747,16 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 		}
 	}
 } );
+
+lm.errors.ConfigurationError = function( message, node ) {
+	Error.call( this );
+
+	this.name = 'Configuration Error';
+	this.message = message;
+	this.node = node;
+};
+
+lm.errors.ConfigurationError.prototype = new Error();
 
 /**
  * Pops a content item out into a new browser window.
@@ -2332,7 +2345,7 @@ lm.controls.Header = function( layoutManager, parent ) {
 	$( document ).mouseup( lm.utils.fnBind( this._hideAdditionalTabsDropdown, this ) );
 
 	this._lastVisibleTabIndex = -1;
-	this._tabControlOffset = 10;
+	this._tabControlOffset = this.layoutManager.config.settings.tabControlOffset;
 	this._createControls();
 };
 
@@ -2423,17 +2436,19 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			}
 		}
 
-		/**
-		 * If the tab selected was in the dropdown, move everything down one to make way for this one to be the first.
-		 * This will make sure the most used tabs stay visible.
-		 */
-		if( this._lastVisibleTabIndex !== -1 && this.parent.config.activeItemIndex > this._lastVisibleTabIndex ) {
-			activeTab = this.tabs[ this.parent.config.activeItemIndex ];
-			for( j = this.parent.config.activeItemIndex; j > 0; j-- ) {
-				this.tabs[ j ] = this.tabs[ j - 1 ];
+		if (this.layoutManager.config.settings.reorderOnTabMenuClick) {
+			/**
+			 * If the tab selected was in the dropdown, move everything down one to make way for this one to be the first.
+			 * This will make sure the most used tabs stay visible.
+			 */
+			if (this._lastVisibleTabIndex !== -1 && this.parent.config.activeItemIndex > this._lastVisibleTabIndex) {
+				activeTab = this.tabs[this.parent.config.activeItemIndex];
+				for ( j = this.parent.config.activeItemIndex; j > 0; j-- ) {
+					this.tabs[j] = this.tabs[j - 1];
+				}
+				this.tabs[0]                       = activeTab;
+				this.parent.config.activeItemIndex = 0;
 			}
-			this.tabs[ 0 ] = activeTab;
-			this.parent.config.activeItemIndex = 0;
 		}
 
 		this._updateTabSizes();
@@ -2617,25 +2632,32 @@ lm.utils.copy( lm.controls.Header.prototype, {
 	 *
 	 * @returns {void}
 	 */
-	_updateTabSizes: function() {
+	_updateTabSizes: function(showTabMenu) {
 		if( this.tabs.length === 0 ) {
 			return;
 		}
 
+		//Show the menu based on function argument
+		this.tabDropdownButton.element.toggle(showTabMenu === true);
+
 		var size = function( val ) {
 			return val ? 'width' : 'height';
-		}
+		};
 		this.element.css( size( !this.parent._sided ), '' );
 		this.element[ size( this.parent._sided ) ]( this.layoutManager.config.dimensions.headerHeight );
 		var availableWidth = this.element.outerWidth() - this.controlsContainer.outerWidth() - this._tabControlOffset,
-			totalTabWidth = 0,
+			cumulativeTabWidth = 0,
+			visibleTabWidth = 0,
 			tabElement,
 			i,
-			showTabDropdown,
-			swapTab,
+			j,
+			marginLeft,
+			overlap = 0,
 			tabWidth,
-			hasVisibleTab = false;
-
+			tabOverlapAllowance = this.layoutManager.config.settings.tabOverlapAllowance,
+			tabOverlapAllowanceExceeded = false,
+			activeIndex = (this.activeContentItem ? this.tabs.indexOf(this.activeContentItem.tab) : 0),
+			activeTab = this.tabs[activeIndex];
 		if( this.parent._sided )
 			availableWidth = this.element.outerHeight() - this.controlsContainer.outerHeight() - this._tabControlOffset;
 		this._lastVisibleTabIndex = -1;
@@ -2643,34 +2665,72 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		for( i = 0; i < this.tabs.length; i++ ) {
 			tabElement = this.tabs[ i ].element;
 
-			/*
-			 * Retain tab width when hidden so it can be restored.
-			 */
-			tabWidth = tabElement.data( 'lastTabWidth' );
-			if( !tabWidth ) {
-				tabWidth = tabElement.outerWidth() + parseInt( tabElement.css( 'margin-right' ), 10 );
+			//Put the tab in the tabContainer so its true width can be checked
+			this.tabsContainer.append( tabElement );
+			tabWidth = tabElement.outerWidth() + parseInt( tabElement.css( 'margin-right' ), 10 );
+
+			cumulativeTabWidth += tabWidth;
+
+			//Include the active tab's width if it isn't already
+			//This is to ensure there is room to show the active tab
+			if (activeIndex <= i) {
+				visibleTabWidth = cumulativeTabWidth;
+			} else {
+				visibleTabWidth = cumulativeTabWidth + activeTab.element.outerWidth() + parseInt(activeTab.element.css('margin-right'), 10);
 			}
 
-			totalTabWidth += tabWidth;
+			// If the tabs won't fit, check the overlap allowance.
+			if( visibleTabWidth > availableWidth ) {
 
-			// If the tab won't fit, put it in the dropdown for tabs, making sure there is always at least one tab visible.
-			if( totalTabWidth > availableWidth && hasVisibleTab ) {
-				tabElement.data( 'lastTabWidth', tabWidth );
-				this.tabDropdownContainer.append( tabElement );
+				//Once allowance is exceeded, all remaining tabs go to menu.
+				if (!tabOverlapAllowanceExceeded) {
+
+					//No overlap for first tab or active tab
+					//Overlap spreads among non-active, non-first tabs
+					if (activeIndex > 0 && activeIndex <= i) {
+						overlap = ( visibleTabWidth - availableWidth ) / (i - 1);
+					} else {
+						overlap = ( visibleTabWidth - availableWidth ) / i;
+					}
+
+					//Check overlap against allowance.
+					if (overlap < tabOverlapAllowance) {
+						for ( j = 0; j <= i; j++ ) {
+							marginLeft = (j !== activeIndex && j !== 0) ? '-' + overlap + 'px' : '';
+							this.tabs[j].element.css({'z-index': i - j, 'margin-left': marginLeft});
+						}
+						this._lastVisibleTabIndex = i;
+						this.tabsContainer.append(tabElement);
+					} else {
+						tabOverlapAllowanceExceeded = true;
+					}
+
+				} else if (i === activeIndex) {
+					//Active tab should show even if allowance exceeded. (We left room.)
+					tabElement.css({'z-index': 'auto', 'margin-left': ''});
+					this.tabsContainer.append(tabElement);
+				}
+
+				if (tabOverlapAllowanceExceeded && i !== activeIndex) {
+					if (showTabMenu) {
+						//Tab menu already shown, so we just add to it.
+						tabElement.css({'z-index': 'auto', 'margin-left': ''});
+						this.tabDropdownContainer.append(tabElement);
+					} else {
+						//We now know the tab menu must be shown, so we have to recalculate everything.
+						this._updateTabSizes(true);
+						return;
+					}
+				}
+
 			}
 			else {
-				hasVisibleTab = true;
 				this._lastVisibleTabIndex = i;
-				tabElement.removeData( 'lastTabWidth' );
+				tabElement.css({'z-index': 'auto', 'margin-left': ''});
 				this.tabsContainer.append( tabElement );
 			}
 		}
 
-		/*
-		 * Show the tab dropdown icon if not all tabs fit.
-		 */
-		showTabDropdown = totalTabWidth > availableWidth;
-		this.tabDropdownButton.element[ showTabDropdown ? 'show' : 'hide' ]();
 	}
 } );
 
@@ -2965,16 +3025,6 @@ lm.utils.copy( lm.controls.TransitionIndicator.prototype, {
 		};
 	}
 } );
-lm.errors.ConfigurationError = function( message, node ) {
-	Error.call( this );
-
-	this.name = 'Configuration Error';
-	this.message = message;
-	this.node = node;
-};
-
-lm.errors.ConfigurationError.prototype = new Error();
-
 /**
  * This is the baseclass that all content items inherit from.
  * Most methods provide a subset of what the sub-classes do.
