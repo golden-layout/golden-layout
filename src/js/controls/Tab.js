@@ -31,10 +31,10 @@ lm.controls.Tab = function( header, contentItem ) {
 	this._onTabClickFn = lm.utils.fnBind( this._onTabClick, this );
 	this._onCloseClickFn = lm.utils.fnBind( this._onCloseClick, this );
 
-	this.element.mousedown( this._onTabClickFn );
+	this.element.on( 'mousedown touchstart', this._onTabClickFn );
 
 	if( this.contentItem.config.isClosable ) {
-		this.closeElement.click( this._onCloseClickFn );
+		this.closeElement.on( 'click touchstart', this._onCloseClickFn );
 	} else {
 		this.closeElement.remove();
 	}
@@ -100,8 +100,8 @@ lm.utils.copy( lm.controls.Tab.prototype,{
 	 * @returns {void}
 	 */
 	_$destroy: function() {
-		this.element.off( 'click', this._onTabClickFn );
-		this.closeElement.off( 'click', this._onCloseClickFn );
+		this.element.off( 'mousedown touchstart', this._onTabClickFn );
+		this.closeElement.off( 'click touchstart', this._onCloseClickFn );
 		if( this._dragListener ) {
 			this._dragListener.off( 'dragStart', this._onDragStart );
 			this._dragListener = null;
@@ -141,8 +141,8 @@ lm.utils.copy( lm.controls.Tab.prototype,{
 	 * @returns {void}
 	 */
 	_onTabClick: function( event ) {
-		// left mouse button
-		if( event.button === 0 ) {
+		// left mouse button or tap
+		if( event.button === 0 || event.type === 'touchstart') {
 			var activeContentItem = this.header.parent.getActiveContentItem();
 			if (this.contentItem !== activeContentItem) {
 				this.header.parent.setActiveContentItem( this.contentItem );

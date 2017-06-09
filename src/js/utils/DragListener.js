@@ -109,16 +109,10 @@ lm.utils.copy( lm.utils.DragListener.prototype, {
 	},
 
 	_getCoordinates: function( event ) {
-		var coordinates = {};
-
-		if( event.type.substr( 0, 5 ) === 'touch' ) {
-			coordinates.x = event.originalEvent.targetTouches[ 0 ].pageX;
-			coordinates.y = event.originalEvent.targetTouches[ 0 ].pageY;
-		} else {
-			coordinates.x = event.pageX;
-			coordinates.y = event.pageY;
-		}
-
-		return coordinates;
+		event = event.originalEvent.touches ? event.originalEvent.touches[0] : event;
+ 		return {
+ 			x: event.pageX,
+ 			y: event.pageY
+ 		};
 	}
 });

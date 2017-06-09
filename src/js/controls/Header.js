@@ -12,7 +12,7 @@ lm.controls.Header = function( layoutManager, parent ) {
 
 	if( this.layoutManager.config.settings.selectionEnabled === true ) {
 		this.element.addClass( 'lm_selectable' );
-		this.element.click( lm.utils.fnBind( this._onHeaderClick, this ) );
+		this.element.on( 'click touchstart', lm.utils.fnBind( this._onHeaderClick, this ) );
 	}
 	
 	this.element.height( layoutManager.config.dimensions.headerHeight );

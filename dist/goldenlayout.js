@@ -437,17 +437,11 @@ lm.utils.copy( lm.utils.DragListener.prototype, {
 	},
 
 	_getCoordinates: function( event ) {
-		var coordinates = {};
-
-		if( event.type.substr( 0, 5 ) === 'touch' ) {
-			coordinates.x = event.originalEvent.targetTouches[ 0 ].pageX;
-			coordinates.y = event.originalEvent.targetTouches[ 0 ].pageY;
-		} else {
-			coordinates.x = event.pageX;
-			coordinates.y = event.pageY;
-		}
-
-		return coordinates;
+		event = event.originalEvent.touches ? event.originalEvent.touches[0] : event;
+ 		return {
+ 			x: event.pageX,
+ 			y: event.pageY
+ 		};
 	}
 });
 /**
@@ -1974,6 +1968,9 @@ lm.utils.copy( lm.controls.DragProxy.prototype, {
 	 * @returns {void}
 	 */
 	_onDrag: function( offsetX, offsetY, event ) {
+
+		event = event.originalEvent.touches ? event.originalEvent.touches[0] : event;
+		
 		var x = event.pageX,
 			y = event.pageY,
 			isWithinContainer = x > this._minX && x < this._maxX && y > this._minY && y < this._maxY;
@@ -2190,7 +2187,7 @@ lm.controls.Header = function( layoutManager, parent ) {
 
 	if( this.layoutManager.config.settings.selectionEnabled === true ) {
 		this.element.addClass( 'lm_selectable' );
-		this.element.click( lm.utils.fnBind( this._onHeaderClick, this ) );
+		this.element.on( 'click touchstart', lm.utils.fnBind( this._onHeaderClick, this ) );
 	}
 	
 	this.element.height( layoutManager.config.dimensions.headerHeight );
@@ -2469,7 +2466,7 @@ lm.controls.HeaderButton = function( header, label, cssClass, action ) {
 	this.element = $( '<li class="' + cssClass + '" title="' + label + '"></li>' );
 	this._header.on( 'destroy', this._$destroy, this );
 	this._action = action;
-	this.element.click( this._action );
+	this.element.on( 'click touchstart', this._action );
 	this._header.controlsContainer.append( this.element );
 };
 
@@ -2538,10 +2535,10 @@ lm.controls.Tab = function( header, contentItem ) {
 	this._onTabClickFn = lm.utils.fnBind( this._onTabClick, this );
 	this._onCloseClickFn = lm.utils.fnBind( this._onCloseClick, this );
 
-	this.element.mousedown( this._onTabClickFn );
+	this.element.on( 'mousedown touchstart', this._onTabClickFn );
 
 	if( this.contentItem.config.isClosable ) {
-		this.closeElement.click( this._onCloseClickFn );
+		this.closeElement.on( 'click touchstart', this._onCloseClickFn );
 	} else {
 		this.closeElement.remove();
 	}
@@ -2607,8 +2604,8 @@ lm.utils.copy( lm.controls.Tab.prototype,{
 	 * @returns {void}
 	 */
 	_$destroy: function() {
-		this.element.off( 'click', this._onTabClickFn );
-		this.closeElement.off( 'click', this._onCloseClickFn );
+		this.element.off( 'mousedown touchstart', this._onTabClickFn );
+		this.closeElement.off( 'click touchstart', this._onCloseClickFn );
 		if( this._dragListener ) {
 			this._dragListener.off( 'dragStart', this._onDragStart );
 			this._dragListener = null;
@@ -2648,8 +2645,8 @@ lm.utils.copy( lm.controls.Tab.prototype,{
 	 * @returns {void}
 	 */
 	_onTabClick: function( event ) {
-		// left mouse button
-		if( event.button === 0 ) {
+		// left mouse button or tap
+		if( event.button === 0 || event.type === 'touchstart') {
 			var activeContentItem = this.header.parent.getActiveContentItem();
 			if (this.contentItem !== activeContentItem) {
 				this.header.parent.setActiveContentItem( this.contentItem );
@@ -2990,7 +2987,8 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 	 *
 	 * @returns {void}
 	 */
-	toggleMaximise: function() {
+	toggleMaximise: function(e) {
+		e.preventDefault();
 		if( this.isMaximised === true ) {
 			this.layoutManager._$minimiseItem( this );
 		} else {
