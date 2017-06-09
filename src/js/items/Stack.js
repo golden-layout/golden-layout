@@ -109,11 +109,9 @@ lm.utils.copy( lm.items.Stack.prototype, {
 	},
 
 	removeChild: function( contentItem, keepChild ) {
-		console.log('here');
 		var index = lm.utils.indexOf( contentItem, this.contentItems );
 		lm.items.AbstractContentItem.prototype.removeChild.call( this, contentItem, keepChild );
 		this.header.removeTab( contentItem );
-		console.log('here2');
 		if (this.header.activeContentItem === contentItem) {
 			if (this.contentItems.length > 0) {
 				this.setActiveContentItem(this.contentItems[Math.max(index - 1, 0)]);
