@@ -35,6 +35,7 @@ lm.controls.Tab = function( header, contentItem ) {
 
 	if( this.contentItem.config.isClosable ) {
 		this.closeElement.on( 'click touchstart', this._onCloseClickFn );
+		this.closeElement.on('mousedown', this._onCloseMousedown);
 	} else {
 		this.closeElement.remove();
 	}
@@ -166,5 +167,19 @@ lm.utils.copy( lm.controls.Tab.prototype, {
 	_onCloseClick: function( event ) {
 		event.stopPropagation();
 		this.header.parent.removeChild( this.contentItem );
+	},
+
+
+	/**
+	 * Callback to capture tab close button mousedown
+	 * to prevent tab from activating.
+	 *
+	 * @param (jQuery DOM event) event
+	 *
+	 * @private
+	 * @returns {void}
+	 */
+	_onCloseMousedown: function(event) {
+		event.stopPropagation();
 	}
 } );
