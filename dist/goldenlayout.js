@@ -3405,7 +3405,9 @@ lm.utils.copy( lm.items.Component.prototype, {
 	},
 
 	setSize: function() {
-		this.container._$setSize( this.element.width(), this.element.height() );
+		if( this.element.is( ':visible' ) ) {
+			this.container._$setSize( this.element.width(), this.element.height() );
+		}
 	},
 
 	_$init: function() {
