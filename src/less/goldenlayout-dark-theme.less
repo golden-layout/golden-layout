@@ -81,7 +81,7 @@
     .lm_close_tab {
       width: 11px;
       height: 11px;
-      background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAAHCAYAAADEUlfTAAAATElEQVR4nG3OwQ0DMQwDwZGRBtR/j1YJzMc5+IDoR+yCVO29g+pu981MFgqZmRdAfU7+CYWcbF11LwALjpBL0N0qybNx/RPU+gOeiS/+XCRwDlTgkQAAAABJRU5ErkJggg==);
+      background-image: data-uri('../img/lm_close_white.png');
       background-position: center center;
       background-repeat: no-repeat;
       top: 4px;
@@ -165,25 +165,21 @@
 
   // Icon to PopOut Pane, so move it to a different Browser Window
   .lm_popout {
-    //background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJCAYAAADgkQYQAAAAPklEQVR4nI2Q0QoAIAwCNfr/X7aXCpGN8snBdgejJOzckpkxs9jR6K6T5JpU0nWl5pSXTk7qwh8SnNT+CAAWCgkKFpuSWsUAAAAASUVORK5CYII=);
     background-image: data-uri('../img/lm_popout_white.png');
   }
 
   // Icon to Maximize Pane, so it will fill the entire GoldenLayout Container
   .lm_maximise {
-    //background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJCAYAAADgkQYQAAAAKElEQVR4nGP8////fwYCgImQAgYGBgYWKM2IR81/okwajIpgvsMbVgAwgQYRVakEKQAAAABJRU5ErkJggg==);
     background-image: data-uri('../img/lm_maximise_white.png');
   }
 
   // Icon to Close Pane and so remove it from GoldenLayout Container
   .lm_close {
-    //background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJCAYAAADgkQYQAAAAQUlEQVR4nHXOQQ4AMAgCQeT/f6aXpsGK3jSTuCVJAAr7iBdoAwCKd0nwfaAdHbYERw5b44+E8JoBjEYGMBq5gAYP3usUDu2IvoUAAAAASUVORK5CYII=);
     background-image: data-uri('../img/lm_close_white.png');
   }
   
   // Icon to toggle Pane Docking at mouse hover 
   .lm_dock {
-    //background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4QQLEyI6TJPB/QAAAXdJREFUOMul08uKE2EQhuGnMj0m4gk1C3Wj4lZRUXDhSsSb0Cvwbty7de0diAvxcBEqiIgndDBRnJlMutzUQJvEJGBB0w1/1ft/VfV1mInM7OMohthAdp4JvkTEaLauMR+HcA83MCpAiyP1/TAzn0dEuwo0xTH8xBNsYROXca3OYx1FLcbYxkt8qMKDOIutiJjOFvUWgHbxqVQ01UIPx0vljwU186CI2KnZDDDMzKhWz5Wy3bVAmXkSJ/YVVU6LnUo5lZkHloIycxNXcAev8SYiphHxHc8KfguHVyka4m5t5hG+ZWZTCl7gKW7j6j+3lpm9ammIr7iOSx1TRsek5zNzEBHbc6CIaDNzUi2dwc0y4emaz+dy9qjefy9pZkZNFTbYw0Xcxys8LsAEv8pP7UJDRsQe3hd0o0w4Ll+9i4jfmRkRkesYch86rYuiYwGLIEtBnfNpQdpVicviIy5gHBGT/wH1S1E/MwfLEpsVoAke4G3nF1kYfwAzNYI/6q7lywAAAABJRU5ErkJggg==);
     background-image: data-uri('../img/lm_dock_white.png');
     transition:transform 300ms;
   }
@@ -191,8 +187,7 @@
 
 .lm_stack.lm_docked {
   .lm_controls .lm_dock {
-    //background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4QQLExoPDb+5JQAAAKZJREFUOMvV0tENgjAUhWFGYBQ20FG6iYzgBo4gG8gIbAAbyAafD5akwWIATYz3sWn+e/qfFsUvBsevQDzn8gmkRI8a3W4YGjQJdD0MFQ44YUQ5S/geFgF99NFhyEmOz5QtIG4a0aYJMneuSwvmiUaEhebu0Vm51s8LLKaotzY1OQjJWbvpUyJESD0li26g2goJs2feMOyCZJxVuyFp7WvTnJcg/zkPjGQks0ox9/8AAAAASUVORK5CYII=);
-    //background-image: data-uri('../img/lm_docked_white.png');
+    //background-image: data-uri('../img/lm_docked_white.png');     // If desired, is possible to restore original different image instead of rotating original one
     transform:rotate(45deg);
   }
   
@@ -213,7 +208,6 @@
   // Pane controls are different in Maximized Mode, especially the old Icon "Maximise" that now has a different meaning, so "Minimize" (even if CSS Class did not change)
   .lm_controls {
     .lm_maximise {
-      //background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAJ0lEQVR4nGP8//8/AzGAiShVI1YhCwMDA8OsWbPwBmZaWhoj0SYCAN1lBxMAX4n0AAAAAElFTkSuQmCC);
       background-image: data-uri('../img/lm_minimize_white.png');
     }
   }
@@ -236,7 +230,6 @@
 
   // Icon to Restore original position in Golden Layout Container
   .lm_icon {
-    //background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAAJCAYAAADpeqZqAAAAWklEQVR4nJWOyw3AIAxDHcQC7L8jbwT3AlJBfNp3SiI7dtRaLSlKKeoA1oEsKSQZCEluexw8Tm3ohk+E7bnOUHUGcNh+HwbBygw4AZ7FN/Lt84p0l+yTflV8AKQyLdcCRJi/AAAAAElFTkSuQmCC);
     background-image: data-uri('../img/lm_popin_white.png');
     background-position: center center;
     background-repeat: no-repeat;
