@@ -11,13 +11,13 @@
 @color8: #999999; // Appears 1 time
 @color9: #bbbbbb; // Appears 1 time
 @color10: #888888; // Appears 1 time
+@color11: #f4f4f4; // Appears 1 time
 
 // ".lm_dragging" is applied to BODY tag during Drag and is also directly applied to the root of the object being dragged
 
 // Entire GoldenLayout Container, if a background is set, it is visible as color of "pane header" and "splitters" (if these latest has opacity very low)
 .lm_goldenlayout {
-  //background:@color0;
-  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4XiDAAAAGFBMVEX29vb19fXw8PDy8vL09PTz8/Pv7+/x8fGKuegbAAAAyUlEQVR42pXRQQ7CMBRDwST9pfe/MahEmgURbt7WmpVb6+vG0dd9REnn66xRy/qXiCgmEIIJhGACIZhACCYQgvlDCDFIEAwSBIMEwSBBMEgQDBIEgwTBIEEwCJEMQiSDENFMQmQzCZEbNyGemd6KeGZ6u4hnXe2qbdLHFjhf1XqNLXHev4wdMd9nspiEiWISJgqECQJhgkCYIBAmCIQJAmGCQJggECYJhAkCEUMEwhCBMEQgDJEIQ2RSg0iEIRJhiB/S+rrjqvXQ3paIJUgPBXxiAAAAAElFTkSuQmCC);
+  background:@color11;
 }
 
 // Single Pane content (area in which final dragged content is contained)
@@ -29,17 +29,14 @@
 // Single Pane content during Drag (style of moving window following mouse)
 .lm_dragProxy {
   .lm_content {
-    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-    box-sizing: border-box;
+    box-shadow: 2px 2px 4px fade(@color1,20%);
   }
 }
 
 // Placeholder Container of target position
 .lm_dropTargetIndicator {
-  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.4);
+  box-shadow: inset 0 0 30px fade(@color1,40%);
   outline: 1px dashed @color2;
-  margin: 1px;
-  transition: all 200ms ease;
 
   // Inner Placeholder
   .lm_inner {
@@ -64,11 +61,6 @@
 // Pane Header (container of Tabs for each pane)
 .lm_header {
   height: 20px;
-  //user-select:none;       // Present in DARK Theme
-
-  &.lm_selectable {
-    cursor: pointer;
-  }
 
   // Single Tab container. A single Tab is set for each pane, a group of Tabs are contained in ".lm_header"
   .lm_tab {
@@ -89,11 +81,11 @@
     .lm_close_tab {
       width: 11px;
       height: 11px;
-      background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAAHCAYAAADEUlfTAAAAIklEQVR4nGNgYGD4z4Ad/Mdg4ODDBXCZRFgCp5EEHQMXBwAQAgz0SVCcggAAAABJRU5ErkJggg==);
+      background-image: data-uri('../img/lm_close_black.png');
       background-position: center center;
       background-repeat: no-repeat;
-      right: 6px;
       top: 4px;
+      right: 6px;
       opacity: 0.4;
 
       &:hover {
@@ -104,7 +96,7 @@
     // If Tab is active, so if it's in foreground
     &.lm_active {
       border-bottom: none;
-      box-shadow: 2px -2px 2px -2px rgba(0, 0, 0, 0.2);
+      box-shadow: 2px -2px 2px -2px fade(@color1,20%);
       padding-bottom: 5px;
 
       .lm_close_tab {
@@ -114,13 +106,23 @@
   }
 }
 
-.lm_dragProxy.lm_bottom,
-.lm_stack.lm_bottom {
-  .lm_header .lm_tab {
-    &.lm_active {
-      box-shadow: 2px 2px 2px -2px rgba(0, 0, 0, 0.2);
-    }
+.lm_dragProxy,
+.lm_stack {
+  &.lm_right {
+    .lm_header .lm_tab {
+      &.lm_active {
+        box-shadow: 2px -2px 2px -2px fade(@color1,20%);
+      }
+    }  
   }
+  
+  &.lm_bottom {
+    .lm_header .lm_tab {
+      &.lm_active {
+        box-shadow: 2px 2px 2px -2px fade(@color1,20%);
+      }
+    }
+  } 
 }
 
 // If Pane Header (container of Tabs for each pane) is selected (used only if addition of new Contents is made "by selection" and not "by drag")
@@ -161,17 +163,36 @@
 
   // Icon to PopOut Pane, so move it to a different Browser Window
   .lm_popout {
-    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJCAYAAADgkQYQAAAANUlEQVR4nI2QMQoAMAwCz5L/f9mOzZIaN0E9UDyZhaaQz6atgBHgambEJ5wBKoS0WaIvfT+6K2MIECN19MAAAAAASUVORK5CYII=);
+    background-image: data-uri('../img/lm_popout_black.png');
   }
 
   // Icon to Maximize Pane, so it will fill the entire GoldenLayout Container
   .lm_maximise {
-    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJCAYAAADgkQYQAAAAIklEQVR4nGNkYGD4z0AAMBFSAAOETPpPlEmDUREjAxHhBABPvAQLFv3qngAAAABJRU5ErkJggg==);
+    background-image: data-uri('../img/lm_maximise_black.png');
   }
 
   // Icon to Close Pane and so remove it from GoldenLayout Container
   .lm_close {
-    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJCAYAAADgkQYQAAAAKUlEQVR4nGNgYGD4z4Af/Mdg4FKASwCnDf8JKSBoAtEmEXQTQd8RDCcA6+4Q8OvIgasAAAAASUVORK5CYII=);
+    background-image: data-uri('../img/lm_close_black.png');
+  }
+  
+  // Icon to toggle Pane Docking at mouse hover 
+  .lm_dock {
+    background-image: data-uri('../img/lm_dock_black.png');
+    transition:transform 300ms;
+  }
+}
+
+.lm_stack.lm_docked {
+  .lm_controls .lm_dock {
+    //background-image: data-uri('../img/lm_docked_black.png');     // If desired, is possible to restore original different image instead of rotating original one
+    transform:rotate(45deg);
+  }
+  
+  > .lm_items {
+    border-color: @color9;
+    border-image: linear-gradient(to right, @color9 1%, @color4 100%);
+    box-shadow: 2px 2px 2px -2px fade(@color1,20%);
   }
 }
 
@@ -185,7 +206,7 @@
   // Pane controls are different in Maximized Mode, especially the old Icon "Maximise" that now has a different meaning, so "Minimize" (even if CSS Class did not change)
   .lm_controls {
     .lm_maximise {
-      background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJCAYAAADgkQYQAAAAJklEQVR4nGP8//8/AyHARFDFUFbEwsDAwMDIyIgzHP7//89IlEkApSkHEScJTKoAAAAASUVORK5CYII=);
+      background-image: data-uri('../img/lm_minimize_black.png');
     }
   }
 }
@@ -207,7 +228,7 @@
 
   // Icon to Restore original position in Golden Layout Container
   .lm_icon {
-    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAAJCAYAAADpeqZqAAAAWklEQVR4nJWOyw3AIAxDHcQC7L8jbwT3AlJBfNp3SiI7dtRaLSlKKeoA1oEsKSQZCEluexw8Tm3ohk+E7bnOUHUGcNh+HwbBygw4AZ7FN/Lt84p0l+yTflV8AKQyLdcCRJi/AAAAAElFTkSuQmCC);
+    background-image: data-uri('../img/lm_popin_black.png');
     background-position: center center;
     background-repeat: no-repeat;
     opacity: 0.7;
