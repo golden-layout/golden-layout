@@ -11,10 +11,14 @@ lm.config.defaultConfig = {
 		showPopoutIcon: true,
 		showMaximiseIcon: true,
 		showCloseIcon: true,
-		responsiveMode: 'onload' // Can be onload, always, or none.
+		responsiveMode: 'onload', // Can be onload, always, or none.
+		tabOverlapAllowance: 0, // maximum pixel overlap per tab
+		reorderOnTabMenuClick: true,
+		tabControlOffset: 10
 	},
 	dimensions: {
 		borderWidth: 5,
+		borderGrabWidth: 15,
 		minItemHeight: 10,
 		minItemWidth: 10,
 		headerHeight: 20,

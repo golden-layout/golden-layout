@@ -1,6 +1,7 @@
 /**
  * Minifies and unminifies configs by replacing frequent keys
- * and values with one letter substitutes
+ * and values with one letter substitutes. Config options must
+ * retain array position/index, add new options at the end.
  *
  * @constructor
  */
@@ -35,14 +36,17 @@ lm.utils.ConfigMinifier = function() {
 		'openPopouts',
 		'parentId',
 		'activeItemIndex',
-		'reorderEnabled'
-
+		'reorderEnabled',
+		'borderGrabWidth',
 
 
 
 
 		//Maximum 36 entries, do not cross this line!
 	];
+	if( this._keys.length > 36 ) {
+		throw new Error( 'Too many keys in config minifier map' );
+	}
 
 	this._values = [
 		true,

@@ -1046,9 +1046,8 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 			if( sides [ side ] )
 				area[ side ] = area[ sides [ side ] ] - areaSize;
 			else
-				area[ side ] = areaSize;
-			with( area )
-				surface = ( x2 - x1 ) * ( y2 - y1 );
+				area[ side ] = areaSize;			
+			area.surface = ( area.x2 - area.x1 ) * ( area.y2 - area.y1 );
 			this._itemAreas.push( area );
 		}
 	},
@@ -1087,8 +1086,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 				var header = {};
 				lm.utils.copy( header, area );
 				lm.utils.copy( header, area.contentItem._contentAreaDimensions.header.highlightArea );
-				with( header )
-					surface = ( x2 - x1 ) * ( y2 - y1 );
+				header.surface = ( header.x2 - header.x1 ) * ( header.y2 - header.y1 );
 				this._itemAreas.push( header );
 			}
 		}
@@ -1434,7 +1432,6 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		for( var i = 0; i < stackColumnCount; i++ ) {
 			// Stack from right.
 			var column = rootContentItem.contentItems[ rootContentItem.contentItems.length - 1 ];
-			rootContentItem.removeChild( column );
 			this._addChildContentItemsToContainer( firstStackContainer, column );
 		}
 
@@ -1460,6 +1457,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		if( node.type === 'stack' ) {
 			node.contentItems.forEach( function( item ) {
 				container.addChild( item );
+				node.removeChild( item, true );
 			} );
 		}
 		else {
@@ -1517,11 +1515,6 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	}
 })();
 
-lm.config.itemDefaultConfig = {
-	isClosable: true,
-	reorderEnabled: true,
-	title: ''
-};
 lm.config.defaultConfig = {
 	openPopouts: [],
 	settings: {
@@ -1535,10 +1528,14 @@ lm.config.defaultConfig = {
 		showPopoutIcon: true,
 		showMaximiseIcon: true,
 		showCloseIcon: true,
-		responsiveMode: 'onload' // Can be onload, always, or none.
+		responsiveMode: 'onload', // Can be onload, always, or none.
+		tabOverlapAllowance: 0, // maximum pixel overlap per tab
+		reorderOnTabMenuClick: true,
+		tabControlOffset: 10
 	},
 	dimensions: {
 		borderWidth: 5,
+		borderGrabWidth: 15,
 		minItemHeight: 10,
 		minItemWidth: 10,
 		headerHeight: 20,
@@ -1555,6 +1552,11 @@ lm.config.defaultConfig = {
 	}
 };
 
+lm.config.itemDefaultConfig = {
+	isClosable: true,
+	reorderEnabled: true,
+	title: ''
+};
 lm.container.ItemContainer = function( config, parent, layoutManager ) {
 	lm.utils.EventEmitter.call( this );
 
@@ -1745,6 +1747,16 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 		}
 	}
 } );
+
+lm.errors.ConfigurationError = function( message, node ) {
+	Error.call( this );
+
+	this.name = 'Configuration Error';
+	this.message = message;
+	this.node = node;
+};
+
+lm.errors.ConfigurationError.prototype = new Error();
 
 /**
  * Pops a content item out into a new browser window.
@@ -2333,16 +2345,15 @@ lm.controls.Header = function( layoutManager, parent ) {
 	$( document ).mouseup( lm.utils.fnBind( this._hideAdditionalTabsDropdown, this ) );
 
 	this._lastVisibleTabIndex = -1;
-	this._tabControlOffset = 10;
+	this._tabControlOffset = this.layoutManager.config.settings.tabControlOffset;
 	this._createControls();
 };
 
 lm.controls.Header._template = [
 	'<div class="lm_header">',
 	'<ul class="lm_tabs"></ul>',
-	'<ul class="lm_controls">',
+	'<ul class="lm_controls"></ul>',
 	'<ul class="lm_tabdropdown_list"></ul>',
-	'</ul>',
 	'</div>'
 ].join( '' );
 
@@ -2425,17 +2436,19 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			}
 		}
 
-		/**
-		 * If the tab selected was in the dropdown, move everything down one to make way for this one to be the first.
-		 * This will make sure the most used tabs stay visible.
-		 */
-		if( this._lastVisibleTabIndex !== -1 && this.parent.config.activeItemIndex > this._lastVisibleTabIndex ) {
-			activeTab = this.tabs[ this.parent.config.activeItemIndex ];
-			for( j = this.parent.config.activeItemIndex; j > 0; j-- ) {
-				this.tabs[ j ] = this.tabs[ j - 1 ];
+		if (this.layoutManager.config.settings.reorderOnTabMenuClick) {
+			/**
+			 * If the tab selected was in the dropdown, move everything down one to make way for this one to be the first.
+			 * This will make sure the most used tabs stay visible.
+			 */
+			if (this._lastVisibleTabIndex !== -1 && this.parent.config.activeItemIndex > this._lastVisibleTabIndex) {
+				activeTab = this.tabs[this.parent.config.activeItemIndex];
+				for ( j = this.parent.config.activeItemIndex; j > 0; j-- ) {
+					this.tabs[j] = this.tabs[j - 1];
+				}
+				this.tabs[0]                       = activeTab;
+				this.parent.config.activeItemIndex = 0;
 			}
-			this.tabs[ 0 ] = activeTab;
-			this.parent.config.activeItemIndex = 0;
 		}
 
 		this._updateTabSizes();
@@ -2619,24 +2632,32 @@ lm.utils.copy( lm.controls.Header.prototype, {
 	 *
 	 * @returns {void}
 	 */
-	_updateTabSizes: function() {
+	_updateTabSizes: function(showTabMenu) {
 		if( this.tabs.length === 0 ) {
 			return;
 		}
 
+		//Show the menu based on function argument
+		this.tabDropdownButton.element.toggle(showTabMenu === true);
+
 		var size = function( val ) {
 			return val ? 'width' : 'height';
-		}
+		};
 		this.element.css( size( !this.parent._sided ), '' );
 		this.element[ size( this.parent._sided ) ]( this.layoutManager.config.dimensions.headerHeight );
 		var availableWidth = this.element.outerWidth() - this.controlsContainer.outerWidth() - this._tabControlOffset,
-			totalTabWidth = 0,
+			cumulativeTabWidth = 0,
+			visibleTabWidth = 0,
 			tabElement,
 			i,
-			showTabDropdown,
-			swapTab,
-			tabWidth;
-
+			j,
+			marginLeft,
+			overlap = 0,
+			tabWidth,
+			tabOverlapAllowance = this.layoutManager.config.settings.tabOverlapAllowance,
+			tabOverlapAllowanceExceeded = false,
+			activeIndex = (this.activeContentItem ? this.tabs.indexOf(this.activeContentItem.tab) : 0),
+			activeTab = this.tabs[activeIndex];
 		if( this.parent._sided )
 			availableWidth = this.element.outerHeight() - this.controlsContainer.outerHeight() - this._tabControlOffset;
 		this._lastVisibleTabIndex = -1;
@@ -2644,33 +2665,72 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		for( i = 0; i < this.tabs.length; i++ ) {
 			tabElement = this.tabs[ i ].element;
 
-			/*
-			 * Retain tab width when hidden so it can be restored.
-			 */
-			tabWidth = tabElement.data( 'lastTabWidth' );
-			if( !tabWidth ) {
-				tabWidth = tabElement.outerWidth() + parseInt( tabElement.css( 'margin-right' ), 10 );
+			//Put the tab in the tabContainer so its true width can be checked
+			this.tabsContainer.append( tabElement );
+			tabWidth = tabElement.outerWidth() + parseInt( tabElement.css( 'margin-right' ), 10 );
+
+			cumulativeTabWidth += tabWidth;
+
+			//Include the active tab's width if it isn't already
+			//This is to ensure there is room to show the active tab
+			if (activeIndex <= i) {
+				visibleTabWidth = cumulativeTabWidth;
+			} else {
+				visibleTabWidth = cumulativeTabWidth + activeTab.element.outerWidth() + parseInt(activeTab.element.css('margin-right'), 10);
 			}
 
-			totalTabWidth += tabWidth;
+			// If the tabs won't fit, check the overlap allowance.
+			if( visibleTabWidth > availableWidth ) {
 
-			// If the tab won't fit, put it in the dropdown for tabs.
-			if( totalTabWidth > availableWidth ) {
-				tabElement.data( 'lastTabWidth', tabWidth );
-				this.tabDropdownContainer.append( tabElement );
+				//Once allowance is exceeded, all remaining tabs go to menu.
+				if (!tabOverlapAllowanceExceeded) {
+
+					//No overlap for first tab or active tab
+					//Overlap spreads among non-active, non-first tabs
+					if (activeIndex > 0 && activeIndex <= i) {
+						overlap = ( visibleTabWidth - availableWidth ) / (i - 1);
+					} else {
+						overlap = ( visibleTabWidth - availableWidth ) / i;
+					}
+
+					//Check overlap against allowance.
+					if (overlap < tabOverlapAllowance) {
+						for ( j = 0; j <= i; j++ ) {
+							marginLeft = (j !== activeIndex && j !== 0) ? '-' + overlap + 'px' : '';
+							this.tabs[j].element.css({'z-index': i - j, 'margin-left': marginLeft});
+						}
+						this._lastVisibleTabIndex = i;
+						this.tabsContainer.append(tabElement);
+					} else {
+						tabOverlapAllowanceExceeded = true;
+					}
+
+				} else if (i === activeIndex) {
+					//Active tab should show even if allowance exceeded. (We left room.)
+					tabElement.css({'z-index': 'auto', 'margin-left': ''});
+					this.tabsContainer.append(tabElement);
+				}
+
+				if (tabOverlapAllowanceExceeded && i !== activeIndex) {
+					if (showTabMenu) {
+						//Tab menu already shown, so we just add to it.
+						tabElement.css({'z-index': 'auto', 'margin-left': ''});
+						this.tabDropdownContainer.append(tabElement);
+					} else {
+						//We now know the tab menu must be shown, so we have to recalculate everything.
+						this._updateTabSizes(true);
+						return;
+					}
+				}
+
 			}
 			else {
 				this._lastVisibleTabIndex = i;
-				tabElement.removeData( 'lastTabWidth' );
+				tabElement.css({'z-index': 'auto', 'margin-left': ''});
 				this.tabsContainer.append( tabElement );
 			}
 		}
 
-		/*
-		 * Show the tab dropdown icon if not all tabs fit.
-		 */
-		showTabDropdown = totalTabWidth > availableWidth;
-		this.tabDropdownButton.element[ showTabDropdown ? 'show' : 'hide' ]();
 	}
 } );
 
@@ -2690,9 +2750,10 @@ lm.utils.copy( lm.controls.HeaderButton.prototype, {
 		this.element.remove();
 	}
 } );
-lm.controls.Splitter = function( isVertical, size ) {
+lm.controls.Splitter = function( isVertical, size, grabSize ) {
 	this._isVertical = isVertical;
 	this._size = size;
+	this._grabSize = grabSize < size ? size : grabSize;
 
 	this.element = this._createElement();
 	this._dragListener = new lm.utils.DragListener( this.element );
@@ -2708,9 +2769,24 @@ lm.utils.copy( lm.controls.Splitter.prototype, {
 	},
 
 	_createElement: function() {
-		var element = $( '<div class="lm_splitter"><div class="lm_drag_handle"></div></div>' );
-		element.addClass( 'lm_' + ( this._isVertical ? 'vertical' : 'horizontal' ) );
-		element[ this._isVertical ? 'height' : 'width' ]( this._size );
+		var dragHandle = $( '<div class="lm_drag_handle"></div>' );
+		var element    = $( '<div class="lm_splitter"></div>' );
+		element.append(dragHandle);
+
+		var handleExcessSize = this._grabSize - this._size;
+		var handleExcessPos  = handleExcessSize / 2;
+
+		if( this._isVertical ) {
+			dragHandle.css( 'top', -handleExcessPos );
+			dragHandle.css( 'height', this._size + handleExcessSize );
+			element.addClass( 'lm_vertical' );
+			element[ 'height' ]( this._size );
+		} else {
+			dragHandle.css( 'left', -handleExcessPos );
+			dragHandle.css( 'width', this._size + handleExcessSize );
+			element.addClass( 'lm_horizontal' );
+			element[ 'width' ]( this._size );
+		}
 
 		return element;
 	}
@@ -2949,16 +3025,6 @@ lm.utils.copy( lm.controls.TransitionIndicator.prototype, {
 		};
 	}
 } );
-lm.errors.ConfigurationError = function( message, node ) {
-	Error.call( this );
-
-	this.name = 'Configuration Error';
-	this.message = message;
-	this.node = node;
-};
-
-lm.errors.ConfigurationError.prototype = new Error();
-
 /**
  * This is the baseclass that all content items inherit from.
  * Most methods provide a subset of what the sub-classes do.
@@ -3755,6 +3821,7 @@ lm.items.RowOrColumn = function( isColumn, layoutManager, config, parent ) {
 	this.element = $( '<div class="lm_item lm_' + ( isColumn ? 'column' : 'row' ) + '"></div>' );
 	this.childElementContainer = this.element;
 	this._splitterSize = layoutManager.config.dimensions.borderWidth;
+	this._splitterGrabSize = layoutManager.config.dimensions.borderGrabWidth;
 	this._isColumn = isColumn;
 	this._dimension = isColumn ? 'height' : 'width';
 	this._splitter = [];
@@ -3936,7 +4003,30 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	 */
 	_setAbsoluteSizes: function() {
 		var i,
-			totalSplitterSize = ( this.contentItems.length - 1 ) * this._splitterSize,
+			sizeData = this._calculateAbsoluteSizes();
+
+		for( i = 0; i < this.contentItems.length; i++ ) {
+			if( sizeData.additionalPixel - i > 0 ) {
+				sizeData.itemSizes[ i ]++;
+			}
+
+			if( this._isColumn ) {
+				this.contentItems[ i ].element.width( sizeData.totalWidth );
+				this.contentItems[ i ].element.height( sizeData.itemSizes[ i ] );
+			} else {
+				this.contentItems[ i ].element.width( sizeData.itemSizes[ i ] );
+				this.contentItems[ i ].element.height( sizeData.totalHeight );
+			}
+		}
+	},
+
+	/**
+	 * Calculates the absolute sizes of all of the children of this Item.
+	 * @returns {object} - Set with absolute sizes and additional pixels.
+	 */
+	_calculateAbsoluteSizes: function() {
+		var i,
+			totalSplitterSize = (this.contentItems.length - 1) * this._splitterSize,
 			totalWidth = this.element.width(),
 			totalHeight = this.element.height(),
 			totalAssigned = 0,
@@ -3954,28 +4044,21 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 			if( this._isColumn ) {
 				itemSize = Math.floor( totalHeight * ( this.contentItems[ i ].config.height / 100 ) );
 			} else {
-				itemSize = Math.floor( totalWidth * ( this.contentItems[ i ].config.width / 100 ) );
+				itemSize = Math.floor( totalWidth * (this.contentItems[ i ].config.width / 100) );
 			}
 
 			totalAssigned += itemSize;
 			itemSizes.push( itemSize );
 		}
 
-		additionalPixel = Math.floor( ( this._isColumn ? totalHeight : totalWidth ) - totalAssigned );
+		additionalPixel = Math.floor( (this._isColumn ? totalHeight : totalWidth) - totalAssigned );
 
-		for( i = 0; i < this.contentItems.length; i++ ) {
-			if( additionalPixel - i > 0 ) {
-				itemSizes[ i ]++;
-			}
-
-			if( this._isColumn ) {
-				this.contentItems[ i ].element.width( totalWidth );
-				this.contentItems[ i ].element.height( itemSizes[ i ] );
-			} else {
-				this.contentItems[ i ].element.width( itemSizes[ i ] );
-				this.contentItems[ i ].element.height( totalHeight );
-			}
-		}
+		return {
+			itemSizes: itemSizes,
+			additionalPixel: additionalPixel,
+			totalWidth: totalWidth,
+			totalHeight: totalHeight
+		};
 	},
 
 	/**
@@ -4018,6 +4101,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 		 * Everything adds up to hundred, all good :-)
 		 */
 		if( Math.round( total ) === 100 ) {
+			this._respectMinItemWidth();
 			return;
 		}
 
@@ -4028,6 +4112,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 			for( i = 0; i < itemsWithoutSetDimension.length; i++ ) {
 				itemsWithoutSetDimension[ i ].config[ dimension ] = ( 100 - total ) / itemsWithoutSetDimension.length;
 			}
+			this._respectMinItemWidth();
 			return;
 		}
 
@@ -4050,6 +4135,88 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 		for( i = 0; i < this.contentItems.length; i++ ) {
 			this.contentItems[ i ].config[ dimension ] = ( this.contentItems[ i ].config[ dimension ] / total ) * 100;
 		}
+
+		this._respectMinItemWidth();
+	},
+
+	/**
+	 * Adjusts the column widths to respect the dimensions minItemWidth if set.
+	 * @returns {}
+	 */
+	_respectMinItemWidth: function() {
+		var minItemWidth = this.layoutManager.config.dimensions ? (this.layoutManager.config.dimensions.minItemWidth || 0) : 0,
+			sizeData = null,
+			entriesOverMin = [],
+			totalOverMin = 0,
+			totalUnderMin = 0,
+			remainingWidth = 0,
+			itemSize = 0,
+			contentItem = null,
+			reducePercent,
+			reducedWidth,
+			allEntries = [],
+			entry;
+
+		if( this._isColumn || !minItemWidth || this.contentItems.length <= 1 ) {
+			return;
+		}
+
+		sizeData = this._calculateAbsoluteSizes();
+
+		/**
+		 * Figure out how much we are under the min item size total and how much room we have to use.
+		 */
+		for( var i = 0; i < this.contentItems.length; i++ ) {
+
+			contentItem = this.contentItems[ i ];
+			itemSize = sizeData.itemSizes[ i ];
+
+			if( itemSize < minItemWidth ) {
+				totalUnderMin += minItemWidth - itemSize;
+				entry = { width: minItemWidth };
+
+			}
+			else {
+				totalOverMin += itemSize - minItemWidth;
+				entry = { width: itemSize };
+				entriesOverMin.push( entry );
+			}
+
+			allEntries.push( entry );
+		}
+
+		/**
+		 * If there is nothing under min, or there is not enough over to make up the difference, do nothing.
+		 */
+		if( totalUnderMin === 0 || totalUnderMin > totalOverMin ) {
+			return;
+		}
+
+		/**
+		 * Evenly reduce all columns that are over the min item width to make up the difference.
+		 */
+		reducePercent = totalUnderMin / totalOverMin;
+		remainingWidth = totalUnderMin;
+		for( i = 0; i < entriesOverMin.length; i++ ) {
+			entry = entriesOverMin[ i ];
+			reducedWidth = Math.round( ( entry.width - minItemWidth ) * reducePercent );
+			remainingWidth -= reducedWidth;
+			entry.width -= reducedWidth;
+		}
+
+		/**
+		 * Take anything remaining from the last item.
+		 */
+		if( remainingWidth !== 0 ) {
+			allEntries[ allEntries.length - 1 ].width -= remainingWidth;
+		}
+
+		/**
+		 * Set every items size relative to 100 relative to its size to total
+		 */
+		for( i = 0; i < this.contentItems.length; i++ ) {
+			this.contentItems[ i ].config.width = (allEntries[ i ].width / sizeData.totalWidth) * 100;
+		}
 	},
 
 	/**
@@ -4064,7 +4231,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	 */
 	_createSplitter: function( index ) {
 		var splitter;
-		splitter = new lm.controls.Splitter( this._isColumn, this._splitterSize );
+		splitter = new lm.controls.Splitter( this._isColumn, this._splitterSize, this._splitterGrabSize );
 		splitter.on( 'drag', lm.utils.fnBind( this._onSplitterDrag, this, [ splitter ] ), this );
 		splitter.on( 'dragStop', lm.utils.fnBind( this._onSplitterDragStop, this, [ splitter ] ), this );
 		splitter.on( 'dragStart', lm.utils.fnBind( this._onSplitterDragStart, this, [ splitter ] ), this );
@@ -4177,6 +4344,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 		lm.utils.animFrame( lm.utils.fnBind( this.callDownwards, this, [ 'setSize' ] ) );
 	}
 } );
+
 lm.items.Stack = function( layoutManager, config, parent ) {
 	lm.items.AbstractContentItem.call( this, layoutManager, config, parent );
 
@@ -4700,7 +4868,8 @@ lm.utils.BubblingEvent.prototype.stopPropagation = function() {
 };
 /**
  * Minifies and unminifies configs by replacing frequent keys
- * and values with one letter substitutes
+ * and values with one letter substitutes. Config options must
+ * retain array position/index, add new options at the end.
  *
  * @constructor
  */
@@ -4735,14 +4904,17 @@ lm.utils.ConfigMinifier = function() {
 		'openPopouts',
 		'parentId',
 		'activeItemIndex',
-		'reorderEnabled'
-
+		'reorderEnabled',
+		'borderGrabWidth',
 
 
 
 
 		//Maximum 36 entries, do not cross this line!
 	];
+	if( this._keys.length > 36 ) {
+		throw new Error( 'Too many keys in config minifier map' );
+	}
 
 	this._values = [
 		true,
@@ -5060,7 +5232,8 @@ lm.utils.copy( lm.utils.ReactComponentHandler.prototype, {
 	 */
 	_render: function() {
 		this._reactComponent = ReactDOM.render( this._getReactComponent(), this._container.getElement()[ 0 ] );
-		this._originalComponentWillUpdate = this._reactComponent.componentWillUpdate || function() {};
+		this._originalComponentWillUpdate = this._reactComponent.componentWillUpdate || function() {
+			};
 		this._reactComponent.componentWillUpdate = this._onUpdate.bind( this );
 		if( this._container.getState() ) {
 			this._reactComponent.setState( this._container.getState() );

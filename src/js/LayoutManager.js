@@ -615,9 +615,8 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 			if( sides [ side ] )
 				area[ side ] = area[ sides [ side ] ] - areaSize;
 			else
-				area[ side ] = areaSize;
-			with( area )
-				surface = ( x2 - x1 ) * ( y2 - y1 );
+				area[ side ] = areaSize;			
+			area.surface = ( area.x2 - area.x1 ) * ( area.y2 - area.y1 );
 			this._itemAreas.push( area );
 		}
 	},
@@ -656,8 +655,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 				var header = {};
 				lm.utils.copy( header, area );
 				lm.utils.copy( header, area.contentItem._contentAreaDimensions.header.highlightArea );
-				with( header )
-					surface = ( x2 - x1 ) * ( y2 - y1 );
+				header.surface = ( header.x2 - header.x1 ) * ( header.y2 - header.y1 );
 				this._itemAreas.push( header );
 			}
 		}
@@ -1003,7 +1001,6 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		for( var i = 0; i < stackColumnCount; i++ ) {
 			// Stack from right.
 			var column = rootContentItem.contentItems[ rootContentItem.contentItems.length - 1 ];
-			rootContentItem.removeChild( column );
 			this._addChildContentItemsToContainer( firstStackContainer, column );
 		}
 
@@ -1029,6 +1026,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		if( node.type === 'stack' ) {
 			node.contentItems.forEach( function( item ) {
 				container.addChild( item );
+				node.removeChild( item, true );
 			} );
 		}
 		else {

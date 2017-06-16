@@ -1,6 +1,6 @@
 {
   "name": "golden-layout",
-  "version": "1.5.7",
+  "version": "1.5.8",
   "author": "deepstreamHub GmbH",
   "license": "MIT",
   "devDependencies": {
@@ -40,7 +40,7 @@
     "jquery": "*"
   },
   "scripts": {
-    "test": "grunt test",
+    "test": "grunt test && npm run tslint",
     "tslint": "tslint \"**/*.ts\" -e \"node_modules/**\" -e \"typings/**\"",
     "prepublish": "typings install",
     "publish": "npm -s run tslint"
