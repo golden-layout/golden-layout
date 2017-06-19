@@ -26,6 +26,7 @@ lm.controls.Tab = function( header, contentItem ) {
 	) {
 		this._dragListener = new lm.utils.DragListener( this.element );
 		this._dragListener.on( 'dragStart', this._onDragStart, this );
+		this.contentItem.on( 'destroy', this._dragListener.destroy, this._dragListener );
 	}
 
 	this._onTabClickFn = lm.utils.fnBind( this._onTabClick, this );
@@ -104,8 +105,8 @@ lm.utils.copy( lm.controls.Tab.prototype, {
 		this.element.off( 'mousedown touchstart', this._onTabClickFn );
 		this.closeElement.off( 'click touchstart', this._onCloseClickFn );
 		if( this._dragListener ) {
+			this.contentItem.off( 'destroy', this._dragListener.destroy, this._dragListener );
 			this._dragListener.off( 'dragStart', this._onDragStart );
-			this._dragListener.destroy();
 			this._dragListener = null;
 		}
 		this.element.remove();
