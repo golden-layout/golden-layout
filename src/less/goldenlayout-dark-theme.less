@@ -113,13 +113,13 @@
       &.lm_active {
         box-shadow: 2px -2px 2px @color0;
       }
-    }  
+    }
   }
-  
+
   &.lm_bottom {
     .lm_header .lm_tab {
       box-shadow: 2px 2px 2px fade(@color0,30%);
-      
+
       &.lm_active {
         box-shadow: 0 2px 2px @color0;
       }
@@ -177,20 +177,20 @@
   .lm_close {
     background-image: data-uri('../img/lm_close_white.png');
   }
-  
+
   // Icon to toggle Pane Docking at mouse hover 
   .lm_dock {
-    background-image: data-uri('../img/lm_dock_white.png');
+    background-image: data-uri('../img/lm_docked_white.png');
+    transform:rotate(-45deg);
     transition:transform 300ms;
   }
 }
 
 .lm_stack.lm_docked {
   .lm_controls .lm_dock {
-    //background-image: data-uri('../img/lm_docked_white.png');     // If desired, is possible to restore original different image instead of rotating original one
-    transform:rotate(45deg);
+    transform:rotate(0deg);
   }
-  
+
   > .lm_items {
     border-color: @color9;
     border-image: linear-gradient(to right, @color5 1%, @color6 100%);
