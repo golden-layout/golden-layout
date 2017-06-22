@@ -625,9 +625,9 @@ declare module 'golden-layout' {
             getState(): any;
 
             /**
-              * Returns the container's inner element as a jQuery element 
-              */
-            getElement():JQuery
+             * Returns the container's inner element as a jQuery element 
+             */
+            getElement():JQuery;
 
             /**
              * hides the container or returns false if hiding it is not possible
