@@ -355,6 +355,10 @@ lm.utils.DragListener.timeout = null;
 lm.utils.copy( lm.utils.DragListener.prototype, {
 	destroy: function() {
 		this._eElement.unbind( 'mousedown touchstart', this._fDown );
+        this._oDocument.unbind( 'mouseup touchend', this._fUp );
+        this._eElement = null;
+        this._oDocument = null;
+        this._eBody = null;
 	},
 
 	onMouseDown: function( oEvent ) {
@@ -1515,6 +1519,11 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	}
 })();
 
+lm.config.itemDefaultConfig = {
+	isClosable: true,
+	reorderEnabled: true,
+	title: ''
+};
 lm.config.defaultConfig = {
 	openPopouts: [],
 	settings: {
@@ -1552,11 +1561,6 @@ lm.config.defaultConfig = {
 	}
 };
 
-lm.config.itemDefaultConfig = {
-	isClosable: true,
-	reorderEnabled: true,
-	title: ''
-};
 lm.container.ItemContainer = function( config, parent, layoutManager ) {
 	lm.utils.EventEmitter.call( this );
 
@@ -1747,16 +1751,6 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 		}
 	}
 } );
-
-lm.errors.ConfigurationError = function( message, node ) {
-	Error.call( this );
-
-	this.name = 'Configuration Error';
-	this.message = message;
-	this.node = node;
-};
-
-lm.errors.ConfigurationError.prototype = new Error();
 
 /**
  * Pops a content item out into a new browser window.
@@ -2820,6 +2814,7 @@ lm.controls.Tab = function( header, contentItem ) {
 	) {
 		this._dragListener = new lm.utils.DragListener( this.element );
 		this._dragListener.on( 'dragStart', this._onDragStart, this );
+		this.contentItem.on( 'destroy', this._dragListener.destroy, this._dragListener );
 	}
 
 	this._onTabClickFn = lm.utils.fnBind( this._onTabClick, this );
@@ -2829,6 +2824,7 @@ lm.controls.Tab = function( header, contentItem ) {
 
 	if( this.contentItem.config.isClosable ) {
 		this.closeElement.on( 'click touchstart', this._onCloseClickFn );
+		this.closeElement.on('mousedown', this._onCloseMousedown);
 	} else {
 		this.closeElement.remove();
 	}
@@ -2897,6 +2893,7 @@ lm.utils.copy( lm.controls.Tab.prototype, {
 		this.element.off( 'mousedown touchstart', this._onTabClickFn );
 		this.closeElement.off( 'click touchstart', this._onCloseClickFn );
 		if( this._dragListener ) {
+			this.contentItem.off( 'destroy', this._dragListener.destroy, this._dragListener );
 			this._dragListener.off( 'dragStart', this._onDragStart );
 			this._dragListener = null;
 		}
@@ -2960,6 +2957,20 @@ lm.utils.copy( lm.controls.Tab.prototype, {
 	_onCloseClick: function( event ) {
 		event.stopPropagation();
 		this.header.parent.removeChild( this.contentItem );
+	},
+
+
+	/**
+	 * Callback to capture tab close button mousedown
+	 * to prevent tab from activating.
+	 *
+	 * @param (jQuery DOM event) event
+	 *
+	 * @private
+	 * @returns {void}
+	 */
+	_onCloseMousedown: function(event) {
+		event.stopPropagation();
 	}
 } );
 
@@ -3025,6 +3036,16 @@ lm.utils.copy( lm.controls.TransitionIndicator.prototype, {
 		};
 	}
 } );
+lm.errors.ConfigurationError = function( message, node ) {
+	Error.call( this );
+
+	this.name = 'Configuration Error';
+	this.message = message;
+	this.node = node;
+};
+
+lm.errors.ConfigurationError.prototype = new Error();
+
 /**
  * This is the baseclass that all content items inherit from.
  * Most methods provide a subset of what the sub-classes do.
@@ -4459,11 +4480,12 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		var index = lm.utils.indexOf( contentItem, this.contentItems );
 		lm.items.AbstractContentItem.prototype.removeChild.call( this, contentItem, keepChild );
 		this.header.removeTab( contentItem );
-
-		if( this.contentItems.length > 0 ) {
-			this.setActiveContentItem( this.contentItems[ Math.max( index - 1, 0 ) ] );
-		} else {
-			this._activeContentItem = null;
+		if (this.header.activeContentItem === contentItem) {
+			if (this.contentItems.length > 0) {
+				this.setActiveContentItem(this.contentItems[Math.max(index - 1, 0)]);
+			} else {
+				this._activeContentItem = null;
+			}
 		}
 
 		this._$validateClosability();
