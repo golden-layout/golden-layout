@@ -2,7 +2,8 @@
 // Project: https://golden-layout.com/
 
 declare module 'golden-layout' {
-    export class GoldenLayout {
+
+    class GoldenLayout {
         /**
          * The topmost item in the layout item tree. In browser terms: Think of the GoldenLayout instance as window
          * object and of goldenLayout.root as the document.
@@ -122,8 +123,13 @@ declare module 'golden-layout' {
          * @param indexInParent The index at which the child window's contents will be appended to. Default: null
          */
         createPopout(configOrContentItem: GoldenLayout.ItemConfigType | GoldenLayout.ContentItem,
-                     dimensions: {width: number, height: number, left: number, top: number}, parentId?: string,
-                     indexInParent?: number): void;
+            dimensions: {
+                width: number,
+                height: number,
+                left: number,
+                top: number
+            }, parentId?: string,
+            indexInParent?: number): void;
 
         /**
          * Turns a DOM element into a dragSource, meaning that the user can drag the element directly onto the layout
@@ -150,7 +156,7 @@ declare module 'golden-layout' {
          * Static method on the GoldenLayout constructor! This method will reverse the minifications of GoldenLayout.minifyConfig.
          * @param minifiedConfig A minified GoldenLayout configuration object
          */
-        static unminifyConfig(minifiedConfig : any): any;
+        static unminifyConfig(minifiedConfig: any): any;
     }
 
     namespace GoldenLayout {
@@ -256,7 +262,7 @@ declare module 'golden-layout' {
              * The width of the element that appears when an item is dragged (in pixel).
              * Default: 300
              */
-            dragProxyWidth?:	number;
+            dragProxyWidth?: number;
 
             /**
              * The height of the element that appears when an item is dragged (in pixel).
@@ -452,14 +458,14 @@ declare module 'golden-layout' {
              * @param contentItem The contentItem that should be removed
              * @param keepChild If true the item won't be destroyed. (Use cautiosly, if the item isn't destroyed it's up to you to destroy it later). Default: false.
              */
-            removeChild(contentItem: Config, keepChild?: boolean ): void;
+            removeChild(contentItem: Config, keepChild?: boolean): void;
 
             /**
              * The contentItem that should be removed
              * @param oldChild	ContentItem The contentItem that should be removed
              * @param newChild A content item (or tree of content items) or an ItemConfiguration to create the item from
              */
-            replaceChild(oldChild: ContentItem, newChild: ContentItem | ItemConfigType ): void;
+            replaceChild(oldChild: ContentItem, newChild: ContentItem | ItemConfigType): void;
 
             /**
              * Updates the items size. To actually assign a new size from within a component, use container.setSize( width, height )
@@ -627,7 +633,7 @@ declare module 'golden-layout' {
             /**
              * Returns the container's inner element as a jQuery element 
              */
-            getElement():JQuery;
+            getElement(): JQuery;
 
             /**
              * hides the container or returns false if hiding it is not possible
@@ -660,137 +666,147 @@ declare module 'golden-layout' {
 
         export interface BrowserWindow {
 
-          /**
-           * True if the window has been opened and its GoldenLayout instance initialised.
-           */
-          isInitialised: boolean;
+            /**
+             * True if the window has been opened and its GoldenLayout instance initialised.
+             */
+            isInitialised: boolean;
 
-          /**
-           * Creates a window configuration object from the Popout.
-           */
-          toConfig(): {dimensions: {width: number, height: number, left: number, top: number}, content: Config, parentId: string, indexInParent: number};
+            /**
+             * Creates a window configuration object from the Popout.
+             */
+            toConfig(): {
+                dimensions: {
+                    width: number,
+                    height: number,
+                    left: number,
+                    top: number
+                },
+                content: Config,
+                parentId: string,
+                indexInParent: number
+            };
 
-          /**
-           * Returns the GoldenLayout instance from the child window
-           */
-          getGlInstance(): GoldenLayout;
+            /**
+             * Returns the GoldenLayout instance from the child window
+             */
+            getGlInstance(): GoldenLayout;
 
-          /**
-           * Returns the native Window object
-           */
-          getWindow(): Window;
+            /**
+             * Returns the native Window object
+             */
+            getWindow(): Window;
 
-          /**
-           * Closes the popout
-           */
-          close(): void;
+            /**
+             * Closes the popout
+             */
+            close(): void;
 
-          /**
-           * Returns the popout to its original position as specified in parentId and indexInParent
-           */
-           popIn(): void;
+            /**
+             * Returns the popout to its original position as specified in parentId and indexInParent
+             */
+            popIn(): void;
         }
 
         export interface Header {
-          /**
-           * A reference to the LayoutManager instance
-           */
-          layoutManager: GoldenLayout;
+            /**
+             * A reference to the LayoutManager instance
+             */
+            layoutManager: GoldenLayout;
 
-          /**
-           * A reference to the Stack this Header belongs to
-           */
-          parent: ContentItem;
+            /**
+             * A reference to the Stack this Header belongs to
+             */
+            parent: ContentItem;
 
 
-          /**
-           * An array of the Tabs within this header
-           */
-          tabs: Tab[];
+            /**
+             * An array of the Tabs within this header
+             */
+            tabs: Tab[];
 
-          /**
-           * The currently selected activeContentItem
-           */
-          activeContentItem: ContentItem;
+            /**
+             * The currently selected activeContentItem
+             */
+            activeContentItem: ContentItem;
 
-          /**
-           * The outer (jQuery) DOM element of this Header
-           */
-          element: JQuery;
+            /**
+             * The outer (jQuery) DOM element of this Header
+             */
+            element: JQuery;
 
-          /**
-           * The (jQuery) DOM element containing the tabs
-           */
-          tabsContainer: JQuery;
+            /**
+             * The (jQuery) DOM element containing the tabs
+             */
+            tabsContainer: JQuery;
 
-          /**
-           * The (jQuery) DOM element containing the close, maximise and popout button
-           */
-          controlsContainer: JQuery;
+            /**
+             * The (jQuery) DOM element containing the close, maximise and popout button
+             */
+            controlsContainer: JQuery;
 
-          /**
-           * Hides the currently selected contentItem, shows the specified one and highlights its tab.
-           * @param contentItem The content item that will be selected
-           */
-          setActiveContentItem(contentItem: ContentItem): void;
+            /**
+             * Hides the currently selected contentItem, shows the specified one and highlights its tab.
+             * @param contentItem The content item that will be selected
+             */
+            setActiveContentItem(contentItem: ContentItem): void;
 
-          /**
-           * Creates a new tab and associates it with a content item
-           * @param contentItem The content item the tab will be associated with
-           * @param index A zero based index, specifying the position of the new tab
-           */
-          createTab(contentItem: ContentItem, index?: number): void;
+            /**
+             * Creates a new tab and associates it with a content item
+             * @param contentItem The content item the tab will be associated with
+             * @param index A zero based index, specifying the position of the new tab
+             */
+            createTab(contentItem: ContentItem, index?: number): void;
 
-          /**
-           * Finds a tab by its contentItem and removes it
-           * @param contentItem The content item the tab is associated with
-           */
-          removeTab(contentItem: ContentItem): void;
+            /**
+             * Finds a tab by its contentItem and removes it
+             * @param contentItem The content item the tab is associated with
+             */
+            removeTab(contentItem: ContentItem): void;
         }
 
         export interface Tab {
 
-          /**
-           * True if this tab is the selected tab
-           */
-          isActive: boolean;
+            /**
+             * True if this tab is the selected tab
+             */
+            isActive: boolean;
 
-          /**
-           * A reference to the header this tab is a child of
-           */
-          header: Header;
+            /**
+             * A reference to the header this tab is a child of
+             */
+            header: Header;
 
-          /**
-           * A reference to the content item this tab relates to
-           */
-          contentItem: ContentItem;
+            /**
+             * A reference to the content item this tab relates to
+             */
+            contentItem: ContentItem;
 
-          /**
-           * The tabs outer (jQuery) DOM element
-           */
-          element: JQuery;
+            /**
+             * The tabs outer (jQuery) DOM element
+             */
+            element: JQuery;
 
-          /**
-           * The (jQuery) DOM element containing the title
-           */
-          titleElement: JQuery;
+            /**
+             * The (jQuery) DOM element containing the title
+             */
+            titleElement: JQuery;
 
-          /**
-           * The (jQuery) DOM element that closes the tab
-           */
-          closeElement: JQuery;
+            /**
+             * The (jQuery) DOM element that closes the tab
+             */
+            closeElement: JQuery;
 
-          /**
-           * Sets the tab's title. Does not affect the contentItem's title!
-           * @param title The new title
-           */
-          setTitle(title: string): void;
+            /**
+             * Sets the tab's title. Does not affect the contentItem's title!
+             * @param title The new title
+             */
+            setTitle(title: string): void;
 
-          /**
-           * Sets this tab's active state. To programmatically switch tabs, use header.setActiveContentItem( item ) instead.
-           * @param isActive Whether the tab is active
-           */
-          setActive(isActive: boolean): void;
+            /**
+             * Sets this tab's active state. To programmatically switch tabs, use header.setActiveContentItem( item ) instead.
+             * @param isActive Whether the tab is active
+             */
+            setActive(isActive: boolean): void;
         }
 
         export interface EventEmitter {
@@ -829,4 +845,7 @@ declare module 'golden-layout' {
             off(eventName: string, callback?: Function, context?: any): void;
         }
     }
+
+    export = GoldenLayout;
+
 }
