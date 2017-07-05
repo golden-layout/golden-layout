@@ -90,6 +90,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		this.header.setActiveContentItem( contentItem );
 		contentItem._$show();
 		this.emit( 'activeContentItemChanged', contentItem );
+		this.layoutManager.emit( 'activeContentItemChanged', contentItem );
 		this.emitBubblingEvent( 'stateChanged' );
 	},
 
