@@ -48,18 +48,23 @@ lm.utils.EventEmitter = function() {
 
 		args = Array.prototype.slice.call( arguments, 1 );
 
-		if( this._mSubscriptions[ sEvent ] ) {
-			for( i = 0; i < this._mSubscriptions[ sEvent ].length; i++ ) {
-				ctx = this._mSubscriptions[ sEvent ][ i ].ctx || {};
-				this._mSubscriptions[ sEvent ][ i ].fn.apply( ctx, args );
+		var subs = this._mSubscriptions[ sEvent ];
+
+		if( subs ) {
+        	subs = subs.slice();
+			for( i = 0; i < subs.length; i++ ) {
+				ctx = subs[ i ].ctx || {};
+                subs[ i ].fn.apply( ctx, args );
 			}
 		}
 
 		args.unshift( sEvent );
 
-		for( i = 0; i < this._mSubscriptions[ lm.utils.EventEmitter.ALL_EVENT ].length; i++ ) {
-			ctx = this._mSubscriptions[ lm.utils.EventEmitter.ALL_EVENT ][ i ].ctx || {};
-			this._mSubscriptions[ lm.utils.EventEmitter.ALL_EVENT ][ i ].fn.apply( ctx, args );
+		var allEventSubs = this._mSubscriptions[ lm.utils.EventEmitter.ALL_EVENT ].slice()
+
+		for( i = 0; i <allEventSubs.length; i++ ) {
+			ctx = allEventSubs[ i ].ctx || {};
+            allEventSubs[ i ].fn.apply( ctx, args );
 		}
 	};
 
