@@ -109,7 +109,6 @@ declare module 'golden-layout' {
 		 */
 		createContentItem(itemConfiguration?: GoldenLayout.ItemConfigType, parent?: GoldenLayout.ContentItem): void;
 
-
 		/**
 		 * Creates a new popout window with configOrContentItem as contents at the position specified in dimensions
 		 * @param configOrContentItem   The content item or config that will be created in the new window. If a item is
@@ -495,7 +494,7 @@ declare module 'golden-layout' {
 
 			/**
 			 * The contentItem that should be removed
-			 * @param oldChild	ContentItem The contentItem that should be removed
+			 * @param oldChild    ContentItem The contentItem that should be removed
 			 * @param newChild A content item (or tree of content items) or an ItemConfiguration to create the item from
 			 */
 			replaceChild(oldChild: ContentItem, newChild: ContentItem | ItemConfigType): void;
@@ -750,7 +749,6 @@ declare module 'golden-layout' {
 			 * A reference to the Stack this Header belongs to
 			 */
 			parent: ContentItem;
-
 
 			/**
 			 * An array of the Tabs within this header

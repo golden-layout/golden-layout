@@ -13,8 +13,7 @@
     "eofline": true,
     "forin": false,
     "indent": [
-      true,
-      "spaces"
+      true
     ],
     "interface-name": [true, "never-prefix"],
     "jsdoc-format": true,
