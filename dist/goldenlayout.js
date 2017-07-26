@@ -409,6 +409,7 @@ lm.utils.copy( lm.utils.DragListener.prototype, {
 			this._eElement.removeClass( 'lm_dragging' );
 			this._oDocument.find( 'iframe' ).css( 'pointer-events', '' );
 			this._oDocument.unbind( 'mousemove touchmove', this._fMove );
+			this._oDocument.unbind( 'mouseup touchend', this._fUp );
 
 			if( this._bDragging === true ) {
 				this._bDragging = false;
