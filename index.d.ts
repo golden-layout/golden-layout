@@ -2,8 +2,7 @@
 // Project: https://golden-layout.com/
 
 declare module 'golden-layout' {
-
-    class GoldenLayout {
+    class GoldenLayout implements GoldenLayout.EventEmitter {
         /**
          * The topmost item in the layout item tree. In browser terms: Think of the GoldenLayout instance as window
          * object and of goldenLayout.root as the document.
@@ -62,7 +61,7 @@ declare module 'golden-layout' {
          * @param config A GoldenLayout configuration object
          * @param container The DOM element the layout will be initialised in. Default: document.body
          */
-        constructor(configuration: GoldenLayout.Config, container?: HTMLElement | JQuery);
+        constructor(configuration: GoldenLayout.Config, container?: Element | HTMLElement | JQuery);
 
         /*
          * @param name 	The name of the component, as referred to by componentName in the component configuration.
@@ -110,7 +109,6 @@ declare module 'golden-layout' {
          */
         createContentItem(itemConfiguration?: GoldenLayout.ItemConfigType, parent?: GoldenLayout.ContentItem): void;
 
-
         /**
          * Creates a new popout window with configOrContentItem as contents at the position specified in dimensions
          * @param configOrContentItem   The content item or config that will be created in the new window. If a item is
@@ -123,13 +121,13 @@ declare module 'golden-layout' {
          * @param indexInParent The index at which the child window's contents will be appended to. Default: null
          */
         createPopout(configOrContentItem: GoldenLayout.ItemConfigType | GoldenLayout.ContentItem,
-            dimensions: {
-                width: number,
-                height: number,
-                left: number,
-                top: number
-            }, parentId?: string,
-            indexInParent?: number): void;
+                     dimensions: {
+                         width: number,
+                         height: number,
+                         left: number,
+                         top: number
+                     }, parentId?: string,
+                     indexInParent?: number): void;
 
         /**
          * Turns a DOM element into a dragSource, meaning that the user can drag the element directly onto the layout
@@ -157,6 +155,40 @@ declare module 'golden-layout' {
          * @param minifiedConfig A minified GoldenLayout configuration object
          */
         static unminifyConfig(minifiedConfig: any): any;
+
+        /**
+         * Subscribe to an event
+         * @param eventName The name of the event to describe to
+         * @param callback The function that should be invoked when the event occurs
+         * @param context The value of the this pointer in the callback function
+         */
+        on(eventName: string, callback: Function, context?: any): void;
+
+        /**
+         * Notify listeners of an event and pass arguments along
+         * @param eventName The name of the event to emit
+         */
+        emit(eventName: string, arg1?: any, arg2?: any, ...argN: any[]): void;
+
+        /**
+         * Alias for emit
+         */
+        trigger(eventName: string, arg1?: any, arg2?: any, ...argN: any[]): void;
+
+        /**
+         * Unsubscribes either all listeners if just an eventName is provided, just a specific callback if invoked with
+         * eventName and callback or just a specific callback with a specific context if invoked with all three
+         * arguments.
+         * @param eventName The name of the event to unsubscribe from
+         * @param callback The function that should be invoked when the event occurs
+         * @param context The value of the this pointer in the callback function
+         */
+        unbind(eventName: string, callback?: Function, context?: any): void;
+
+        /**
+         * Alias for unbind
+         */
+        off(eventName: string, callback?: Function, context?: any): void;
     }
 
     namespace GoldenLayout {
@@ -222,13 +254,13 @@ declare module 'golden-layout' {
              * Specifies if the maximise icon should be displayed in the header-bar.
              * Default: true
              */
-            showMaximiseIcon: boolean;
+            showMaximiseIcon?: boolean;
 
             /**
              * Specifies if the close icon should be displayed in the header-bar.
              * Default: true
              */
-            showCloseIcon: boolean;
+            showCloseIcon?: boolean;
         }
 
         export interface Dimensions {
@@ -366,7 +398,7 @@ declare module 'golden-layout' {
             settings?: Settings;
             dimensions?: Dimensions;
             labels?: Labels;
-            content: ItemConfigType[];
+            content?: ItemConfigType[];
         }
 
         export interface ContentItem extends EventEmitter {
@@ -462,7 +494,7 @@ declare module 'golden-layout' {
 
             /**
              * The contentItem that should be removed
-             * @param oldChild	ContentItem The contentItem that should be removed
+             * @param oldChild    ContentItem The contentItem that should be removed
              * @param newChild A content item (or tree of content items) or an ItemConfiguration to create the item from
              */
             replaceChild(oldChild: ContentItem, newChild: ContentItem | ItemConfigType): void;
@@ -631,7 +663,7 @@ declare module 'golden-layout' {
             getState(): any;
 
             /**
-             * Returns the container's inner element as a jQuery element 
+             * Returns the container's inner element as a jQuery element
              */
             getElement(): JQuery;
 
@@ -717,7 +749,6 @@ declare module 'golden-layout' {
              * A reference to the Stack this Header belongs to
              */
             parent: ContentItem;
-
 
             /**
              * An array of the Tabs within this header
@@ -847,5 +878,4 @@ declare module 'golden-layout' {
     }
 
     export = GoldenLayout;
-
 }
