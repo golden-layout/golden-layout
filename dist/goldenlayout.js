@@ -409,6 +409,7 @@ lm.utils.copy( lm.utils.DragListener.prototype, {
 			this._eElement.removeClass( 'lm_dragging' );
 			this._oDocument.find( 'iframe' ).css( 'pointer-events', '' );
 			this._oDocument.unbind( 'mousemove touchmove', this._fMove );
+			this._oDocument.unbind( 'mouseup touchend', this._fUp );
 
 			if( this._bDragging === true ) {
 				this._bDragging = false;
@@ -2336,7 +2337,8 @@ lm.controls.Header = function( layoutManager, parent ) {
 	this.activeContentItem = null;
 	this.closeButton = null;
 	this.tabDropdownButton = null;
-	$( document ).mouseup( lm.utils.fnBind( this._hideAdditionalTabsDropdown, this ) );
+	this.hideAdditionalTabsDropdown = lm.utils.fnBind(this._hideAdditionalTabsDropdown, this);
+	$( document ).mouseup(this.hideAdditionalTabsDropdown);
 
 	this._lastVisibleTabIndex = -1;
 	this._tabControlOffset = this.layoutManager.config.settings.tabControlOffset;
@@ -2497,7 +2499,7 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		for( var i = 0; i < this.tabs.length; i++ ) {
 			this.tabs[ i ]._$destroy();
 		}
-
+		$( document ).off('mouseup', this.hideAdditionalTabsDropdown);
 		this.element.remove();
 	},
 
