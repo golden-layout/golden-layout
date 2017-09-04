@@ -30,11 +30,16 @@ lm.utils.copy( lm.utils.ReactComponentHandler.prototype, {
 	 */
 	_render: function() {
 		this._reactComponent = ReactDOM.render( this._getReactComponent(), this._container.getElement()[ 0 ] );
-		this._originalComponentWillUpdate = this._reactComponent.componentWillUpdate || function() {
-			};
-		this._reactComponent.componentWillUpdate = this._onUpdate.bind( this );
-		if( this._container.getState() ) {
-			this._reactComponent.setState( this._container.getState() );
+		if ( this._reactComponent ) {
+			/* Stateful React component */
+			this._originalComponentWillUpdate = this._reactComponent.componentWillUpdate || function() {
+				};
+			this._reactComponent.componentWillUpdate = this._onUpdate.bind( this );
+			if( this._container.getState() ) {
+				this._reactComponent.setState( this._container.getState() );
+			}
+		} else {
+			/* Stateless React component, nothing to do */
 		}
 	},
 
@@ -59,7 +64,9 @@ lm.utils.copy( lm.utils.ReactComponentHandler.prototype, {
 	 */
 	_onUpdate: function( nextProps, nextState ) {
 		this._container.setState( nextState );
-		this._originalComponentWillUpdate.call( this._reactComponent, nextProps, nextState );
+		if ( this._originalComponentWillUpdate ) {
+			this._originalComponentWillUpdate.call( this._reactComponent, nextProps, nextState );
+		}
 	},
 
 	/**
