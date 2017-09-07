@@ -2988,6 +2988,10 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 	 * @returns {void}
 	 */
 	toggleMaximise: function(e) {
+		if(!e){
+			/* TODO FIXME: https://gist.github.com/mvberg/13ea870bb4528940c5f489ee955894ec */
+			return console.warn('FIXME: trying to toggleMaximise on undefined object');
+		}
 		e.preventDefault();
 		if( this.isMaximised === true ) {
 			this.layoutManager._$minimiseItem( this );
