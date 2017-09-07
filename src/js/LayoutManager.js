@@ -491,7 +491,9 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	 * @param   {jQuery DOM element} element
 	 * @param   {Object|Function} itemConfig for the new item to be created, or a function which will provide it
 	 *
-	 * @returns {void}
+	 * @returns {DragSource}  an opaque object that identifies the DOM element
+	 *          and the attached itemConfig. This can be used in
+	 *          removeDragSource() later to get rid of the drag listeners.
 	 */
 	createDragSource: function( element, itemConfig ) {
 		this.config.settings.constrainDragToContainer = false;
@@ -499,6 +501,19 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		this._dragSources.push( dragSource );
 
 		return dragSource;
+	},
+
+	/**
+	 * Removes a DragListener added by createDragSource() so the corresponding
+	 * DOM element is not a drag source any more.
+	 *
+	 * @param   {jQuery DOM element} element
+	 *
+	 * @returns {void}
+	 */
+	removeDragSource: function( dragSource ) {
+		dragSource.destroy();
+		lm.utils.removeFromArray( dragSource, this._dragSources );
 	},
 
 	/**

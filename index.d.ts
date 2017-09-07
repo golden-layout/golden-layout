@@ -134,8 +134,17 @@ declare module 'golden-layout' {
          * where it turns into a contentItem.
          * @param element The DOM element that will be turned into a dragSource
          * @param itemConfiguration An item configuration (can be an entire tree of items)
+         * @return the dragSource that was created. This can be used to remove the
+         *         dragSource from the layout later.
          */
-        createDragSource(element: HTMLElement | JQuery, itemConfiguration: GoldenLayout.ItemConfigType): void;
+        createDragSource(element: HTMLElement | JQuery, itemConfiguration: GoldenLayout.ItemConfigType): GoldenLayout.DragSource;
+
+        /**
+         * Removes a dragSource from the layout.
+         *
+         * @param dragSource The dragSource to remove
+         */
+        removeDragSource(dragSource: GoldenLayout.DragSource): void;
 
         /**
          * If settings.selectionEnabled is set to true, this allows to select items programmatically.
@@ -694,6 +703,9 @@ declare module 'golden-layout' {
              * Closes the container or returns false if that is not possible
              */
             close(): boolean;
+        }
+
+        export interface DragSource {
         }
 
         export interface BrowserWindow {

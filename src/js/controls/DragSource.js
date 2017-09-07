@@ -20,14 +20,21 @@ lm.controls.DragSource = function( element, itemConfig, layoutManager ) {
 lm.utils.copy( lm.controls.DragSource.prototype, {
 
 	/**
+	 * Disposes of the drag listeners so the drag source is not usable any more.
+	 *
+	 * @returns {void}
+	 */
+	destroy: function() {
+		this._removeDragListener();
+	},
+
+	/**
 	 * Called initially and after every drag
 	 *
 	 * @returns {void}
 	 */
 	_createDragListener: function() {
-		if( this._dragListener !== null ) {
-			this._dragListener.destroy();
-		}
+		this._removeDragListener();
 
 		this._dragListener = new lm.utils.DragListener( this._element );
 		this._dragListener.on( 'dragStart', this._onDragStart, this );
@@ -51,5 +58,17 @@ lm.utils.copy( lm.controls.DragSource.prototype, {
 			dragProxy = new lm.controls.DragProxy( x, y, this._dragListener, this._layoutManager, contentItem, null );
 
 		this._layoutManager.transitionIndicator.transitionElements( this._element, dragProxy.element );
+	},
+
+	/**
+	 * Called after every drag and when the drag source is being disposed of.
+	 *
+	 * @returns {void}
+	 */
+	_removeDragListener: function() {
+		if( this._dragListener !== null ) {
+			this._dragListener.destroy();
+		}
 	}
+
 } );
