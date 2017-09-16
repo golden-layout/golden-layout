@@ -183,11 +183,8 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 		if( width !== this.width || height !== this.height ) {
 			this.width = width;
 			this.height = height;
-			var cl = this._contentElement[0];
-			var hdelta = cl.offsetWidth - cl.clientWidth;
-			var vdelta = cl.offsetHeight - cl.clientHeight;
-			this._contentElement.width( this.width-hdelta )
-			     .height( this.height-vdelta );
+			this._contentElement.outerWidth( width )
+			     .outerHeight( height );
 			this.emit( 'resize' );
 		}
 	}
