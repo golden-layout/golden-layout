@@ -52,7 +52,7 @@
 // Separator line (handle to change pane size)
 .lm_splitter {
   position: relative;
-  z-index: 20;
+  z-index: 2;
 
   &:hover, // When hovered by mouse...
   &.lm_dragging {
@@ -84,6 +84,11 @@
   overflow: visible;
   position: relative;
   z-index: 1;
+  user-select: none;
+
+  &.lm_selectable {
+    cursor: pointer;
+  }
 
   [class^=lm_] {
     box-sizing: content-box !important;
@@ -157,33 +162,103 @@
   }
 }
 
-// Headers positions
-.lm_stack.lm_left,
-.lm_stack.lm_right {
-  .lm_header {
-    height: 100%;
+// Change stack style to absolute positioning for docking transition ability
+.lm_stack {
+  position: relative;
+
+  > .lm_items {
+      overflow: hidden;
+  }
+
+  &.lm_left {
+    > .lm_items {
+      position: absolute;
+      left: 20px;
+      top: 0;
+    }
+  }
+  &.lm_right {
+    > .lm_items {
+      position: absolute;
+      right: 20px;
+      top: 0;
+    }
+
+    > .lm_header {
+      position: absolute;
+      right: 0;
+      top: 0;
+    }
+  }
+  &.lm_bottom {
+    > .lm_items {
+      position: absolute;
+      bottom: 20px;
+    }
+
+    > .lm_header {
+      position: absolute;
+      bottom: 0;
+    }
   }
 }
 
-.lm_dragProxy.lm_left,
-.lm_dragProxy.lm_right,
-.lm_stack.lm_left,
-.lm_stack.lm_right {
-  .lm_header {
-    width: 20px;
-    float: left;
-    vertical-align: top;
-    .lm_tabs {
-      transform-origin: left top;
-      top: 0;
-      width:1000px; /*hack*/
-    }
-    .lm_controls {
-      bottom:0;
+.lm_stack.lm_docked {
+  overflow: visible;
+  z-index: 3;
+
+  > .lm_header {
+    z-index: 5;
+  }
+
+  > .lm_items {
+    *z-index: 3;
+    transition: height .4s ease-in;
+    border: solid 2px;
+    border-image-slice: 1 !important;
+    margin: -2px 0;
+  }
+
+  &.lm_left,
+  &.lm_right {
+    > .lm_items {
+      transition: width .4s ease-in, height .001s linear;
     }
   }
-  .lm_items {
-    float:left;
+}
+
+// Headers positions
+.lm_left,
+.lm_right {
+  &.lm_stack {
+    .lm_header {
+      height: 100%;
+    }
+  }
+
+  &.lm_dragProxy {
+    .lm_header,
+    .lm_items {
+      float: left;
+    }
+  }
+
+  &.lm_dragProxy,
+  &.lm_stack {
+    .lm_header {
+      width: 20px;
+      vertical-align: top;
+
+      .lm_tabs {
+        transform-origin: left top;
+        top: 0;
+        width: 1000px; /*hack*/
+      }
+
+      .lm_controls {
+        bottom: 0;
+      }
+    }
   }
 }
 
@@ -198,6 +273,7 @@
         margin-top: 1px;
       }
     }
+
     .lm_tabdropdown_list {
       top:initial;
       right:initial;
@@ -218,9 +294,11 @@
       left: 100%;
       margin-left: 0;
     }
+
     .lm_controls {
       left: 3px;
     }
+
     .lm_tabdropdown_list {
       top:initial;
       right:20px;
@@ -231,13 +309,16 @@
 .lm_dragProxy.lm_bottom,
 .lm_stack.lm_bottom {
   .lm_header {
+    width: 100%;
     .lm_tab {
       margin-top:0;
       border-top: none;
     }
+
     .lm_controls {
       top: 3px;
     }
+
     .lm_tabdropdown_list {
       top:initial;
       bottom:20px;
@@ -315,6 +396,7 @@
   display: none;
   position: absolute;
   z-index: 20;
+  transition: all 200ms ease;
 
   // Inner Placeholder
   .lm_inner {

@@ -48,6 +48,10 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 			if( index > 0 ) {
 				this.contentItems[ index - 1 ].element.after( splitterElement );
 				splitterElement.after( contentItem.element );
+				if ( this._isDocked( index - 1 ) ) {
+					this._splitter[ index - 1 ].element.hide();
+					this._splitter[ index ].element.show();
+				}
 			} else {
 				this.contentItems[ 0 ].element.before( splitterElement );
 				splitterElement.before( contentItem.element );
@@ -76,6 +80,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 
 		this.callDownwards( 'setSize' );
 		this.emitBubblingEvent( 'stateChanged' );
+		this._validateDocking();
 	},
 
 	/**
@@ -106,12 +111,18 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 			this._splitter.splice( splitterIndex, 1 );
 		}
 
+		if( splitterIndex < this._splitter.length ) {
+			if ( this._isDocked( splitterIndex ) )
+				this._splitter[ splitterIndex ].element.hide();
+		}
 		/**
 		 * Allocate the space that the removed item occupied to the remaining items
 		 */
+		var docked = this._isDocked();
 		for( i = 0; i < this.contentItems.length; i++ ) {
 			if( this.contentItems[ i ] !== contentItem ) {
-				this.contentItems[ i ].config[ this._dimension ] += removedItemSize / ( this.contentItems.length - 1 );
+				if ( !this._isDocked( i ) )
+					this.contentItems[ i ].config[ this._dimension ] += removedItemSize / ( this.contentItems.length - 1 - docked );
 			}
 		}
 
@@ -121,9 +132,11 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 			childItem = this.contentItems[ 0 ];
 			this.contentItems = [];
 			this.parent.replaceChild( this, childItem, true );
+			this._validateDocking( this.parent );
 		} else {
 			this.callDownwards( 'setSize' );
 			this.emitBubblingEvent( 'stateChanged' );
+			this._validateDocking();
 		}
 	},
 
@@ -156,7 +169,77 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 		this.emitBubblingEvent( 'stateChanged' );
 		this.emit( 'resize' );
 	},
+	/**
+	 * Dock or undock a child if it posiible
+	 *
+	 * @param   {lm.items.AbstractContentItem} contentItem
+	 * @param   {Boolean} mode or toggle if undefined
+	 * @param   {Boolean} collapsed after docking
+	 *
+	 * @returns {void}
+	 */
+	dock: function( contentItem, mode, collapsed ) {
+		if( this.contentItems.length === 1 )
+			throw new Error( 'Can\'t dock child when it single' );
 
+		var removedItemSize = contentItem.config[ this._dimension ] ,
+			headerSize = this.layoutManager.config.dimensions.headerHeight,
+			index = lm.utils.indexOf( contentItem, this.contentItems ),
+			splitterIndex = Math.max( index - 1, 0 );
+
+		if( index === -1 ) {
+			throw new Error( 'Can\'t dock child. ContentItem is not child of this Row or Column' );
+		}
+		var isDocked = contentItem._docker && contentItem._docker.docked;
+		if ( typeof mode != 'undefined' )
+			if ( mode == isDocked )
+				return;
+		if( isDocked ) { // undock it
+			this._splitter[ splitterIndex ].element.show();
+			for(var i = 0; i < this.contentItems.length; i++ ) {
+				var newItemSize = contentItem._docker.size;
+				if( this.contentItems[ i ] === contentItem ) {
+					contentItem.config[ this._dimension ] = newItemSize;
+				} else {
+					itemSize = this.contentItems[ i ].config[ this._dimension ] *= ( 100 - newItemSize ) / 100;
+					this.contentItems[ i ].config[ this._dimension ] = itemSize;
+				}
+			}
+			contentItem._docker = { docked: false };
+		} else { // dock
+			if( this.contentItems.length - this._isDocked() < 2 )
+				throw new Error( 'Can\'t dock child when it is last in ' + this.config.type );
+			var autoside = { column: { first: 'top', last: 'bottom' }, row: { first: 'left', last: 'right' } };
+			var required = autoside[ this.config.type ][ index ? 'last' : 'first' ];
+			if( contentItem.header.position() != required )
+				contentItem.header.position( required );
+
+			if( this._splitter[ splitterIndex ] ) {
+				this._splitter[ splitterIndex ].element.hide();
+			}
+			var docked = this._isDocked();
+			for(var i = 0; i < this.contentItems.length; i++ ) {
+				if( this.contentItems[ i ] !== contentItem ) {
+					if ( !this._isDocked( i ) )
+						this.contentItems[ i ].config[ this._dimension ] += removedItemSize / ( this.contentItems.length - 1 - docked );
+				}else
+					this.contentItems[ i ].config[ this._dimension ] = 0;
+			}
+			contentItem._docker = {
+				dimension: this._dimension,
+				size: removedItemSize,
+				realSize: contentItem.element[ this._dimension ]() - headerSize,
+				docked: true,
+			};
+			if( collapsed )
+				contentItem.childElementContainer[ this._dimension ] ( 0 );
+		}
+		contentItem.element.toggleClass( 'lm_docked', contentItem._docker.docked );
+		this.callDownwards( 'setSize' );
+		this.emitBubblingEvent( 'stateChanged' );
+		this._validateDocking();
+	},
+	
 	/**
 	 * Invoked recursively by the layout manager. AbstractContentItem.init appends
 	 * the contentItem's DOM elements to the container, RowOrColumn init adds splitters
@@ -175,6 +258,10 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 
 		for( i = 0; i < this.contentItems.length - 1; i++ ) {
 			this.contentItems[ i ].element.after( this._createSplitter( i ).element );
+		}
+		for( i = 0; i < this.contentItems.length; i++ ) {
+			if( this.contentItems[ i ]._header && this.contentItems[ i ]._header.docked )
+				this.dock( this.contentItems[ i ], true, true );
 		}
 	},
 
@@ -213,6 +300,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	_calculateAbsoluteSizes: function() {
 		var i,
 			totalSplitterSize = (this.contentItems.length - 1) * this._splitterSize,
+  		headerSize = this.layoutManager.config.dimensions.headerHeight,
 			totalWidth = this.element.width(),
 			totalHeight = this.element.height(),
 			totalAssigned = 0,
@@ -225,13 +313,23 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 		} else {
 			totalWidth -= totalSplitterSize;
 		}
-
+		for( i = 0; i < this.contentItems.length; i++ ) {
+			if( this._isDocked( i ) )
+				if( this._isColumn ) {
+					totalHeight -= headerSize - this._splitterSize;
+				} else {
+					totalWidth -= headerSize - this._splitterSize;
+				}
+		}
+	
 		for( i = 0; i < this.contentItems.length; i++ ) {
 			if( this._isColumn ) {
 				itemSize = Math.floor( totalHeight * ( this.contentItems[ i ].config.height / 100 ) );
 			} else {
 				itemSize = Math.floor( totalWidth * (this.contentItems[ i ].config.width / 100) );
 			}
+			if( this._isDocked( i ) )
+				itemSize = headerSize;
 
 			totalAssigned += itemSize;
 			itemSizes.push( itemSize );
@@ -442,6 +540,36 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 			before: this.contentItems[ index ],
 			after: this.contentItems[ index + 1 ]
 		};
+	},
+
+	/**
+	 * Gets docking information
+	 * @private
+	 */
+	_isDocked: function ( index ) {
+		if ( typeof index == 'undefined' ) {
+			var count = 0;
+			for (var i = 0; i < this.contentItems.length; ++i)
+				if ( this._isDocked( i ) )
+					count++;
+			return count;
+		}
+		if ( index < this.contentItems.length )
+			return this.contentItems[ index ]._docker && this.contentItems[ index ]._docker.docked;
+	},
+
+	/**
+	 * Validate if row or column has ability to dock
+	 * @private
+	 */
+	_validateDocking: function ( that ) {
+		that = that || this;
+		var can = that.contentItems.length - that._isDocked() > 1;
+		for (var i = 0; i < that.contentItems.length; ++i )
+			if ( that.contentItems[ i ] instanceof lm.items.Stack ) {
+				that.contentItems[ i ].header._setDockable( that._isDocked( i ) || can );
+				that.contentItems[ i ].header._$setClosable( can );
+			}
 	},
 
 	/**

@@ -96,7 +96,7 @@ $( function() {
 										{
 											type: 'component',
 											title: 'Golden',
-											header: { show: 'right' },
+											header: { show: 'left', dock:'docking', docked: true  },
 											isClosable: false,
 											componentName: 'html',
 											width: 30,
@@ -104,7 +104,7 @@ $( function() {
 										},
 										{
 											title: 'Layout',
-											header: { show: 'left', popout: false },
+											header: { show: 'right', popout: false, dock:'docking' },
 											type: 'component',
 											componentName: 'html',
 											componentState: { bg: 'golden_layout_text.png' }

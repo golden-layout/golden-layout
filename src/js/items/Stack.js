@@ -28,6 +28,10 @@ lm.items.Stack = function( layoutManager, config, parent ) {
 	this.childElementContainer = $( '<div class="lm_items"></div>' );
 	this.header = new lm.controls.Header( layoutManager, this );
 
+	this.element.on( 'mouseleave mouseenter', lm.utils.fnBind( function ( event ) {
+		if ( this._docker && this._docker.docked )
+			this.childElementContainer[ this._docker.dimension ] ( event.type == 'mouseenter' ? this._docker.realSize : 0 );
+	},this ) );
 	this.element.append( this.header.element );
 	this.element.append( this.childElementContainer );
 	this._setupHeaderPosition();
@@ -38,17 +42,27 @@ lm.utils.extend( lm.items.Stack, lm.items.AbstractContentItem );
 
 lm.utils.copy( lm.items.Stack.prototype, {
 
+	dock: function(mode) {
+		if( this._header.dock )
+			if( this.parent instanceof lm.items.RowOrColumn )
+				this.parent.dock( this, mode );
+	},
 	setSize: function() {
-		var i,
-			headerSize = this._header.show ? this.layoutManager.config.dimensions.headerHeight : 0,
-			contentWidth = this.element.width() - (this._sided ? headerSize : 0),
-			contentHeight = this.element.height() - (!this._sided ? headerSize : 0);
+		if ( !this.element.is( ':visible' ) ) return;
+		var isDocked = this._docker && this._docker.docked,
+			content = { width: this.element.width(), height: this.element.height() };
 
-		this.childElementContainer.width( contentWidth );
-		this.childElementContainer.height( contentHeight );
+		if( this._header.show )
+			content[ this._sided ? 'width' : 'height' ] -= this.layoutManager.config.dimensions.headerHeight;
+		if( isDocked )
+			content[ this._docker.dimension ] = this._docker.realSize;
+		if( !isDocked || this._docker.dimension == 'height' )
+			this.childElementContainer.width( content.width );
+		if( !isDocked || this._docker.dimension == 'width' )
+			this.childElementContainer.height( content.height );
 
-		for( i = 0; i < this.contentItems.length; i++ ) {
-			this.contentItems[ i ].element.width( contentWidth ).height( contentHeight );
+		for(var i = 0; i < this.contentItems.length; i++ ) {
+			this.contentItems[ i ].element.width( content.width ).height( content.height );
 		}
 		this.emit( 'resize' );
 		this.emitBubblingEvent( 'stateChanged' );
@@ -106,6 +120,8 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		this.setActiveContentItem( contentItem );
 		this.callDownwards( 'setSize' );
 		this._$validateClosability();
+		if( this.parent instanceof lm.items.RowOrColumn )
+			this.parent._validateDocking();
 		this.emitBubblingEvent( 'stateChanged' );
 	},
 
@@ -122,6 +138,8 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		}
 
 		this._$validateClosability();
+		if( this.parent instanceof lm.items.RowOrColumn )
+			this.parent._validateDocking();
 		this.emitBubblingEvent( 'stateChanged' );
 	},
 
@@ -154,6 +172,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 	_$destroy: function() {
 		lm.items.AbstractContentItem.prototype._$destroy.call( this );
 		this.header._$destroy();
+		this.element.off( 'mouseenter mouseleave' );
 	},
 
 
@@ -251,6 +270,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 			contentItem.config[ dimension ] = 50;
 			rowOrColumn.callDownwards( 'setSize' );
 		}
+		this.parent._validateDocking();
 	},
 
 	/**
@@ -490,6 +510,11 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		this.layoutManager.tabDropPlaceholder.remove();
 	},
 
+	toggleMaximise: function( e ) {
+		if( !this.isMaximised )
+			this.dock( false );
+		lm.items.AbstractContentItem.prototype.toggleMaximise.call( this, e );
+	},
 	_setupHeaderPosition: function() {
 		var side = [ 'right', 'left', 'bottom' ].indexOf( this._header.show ) >= 0 && this._header.show;
 		this.header.element.toggle( !!this._header.show );

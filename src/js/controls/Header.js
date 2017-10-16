@@ -24,6 +24,7 @@ lm.controls.Header = function( layoutManager, parent ) {
 	this.tabs = [];
 	this.activeContentItem = null;
 	this.closeButton = null;
+	this.dockButton = null;
 	this.tabDropdownButton = null;
 	this.hideAdditionalTabsDropdown = lm.utils.fnBind(this._hideAdditionalTabsDropdown, this);
 	$( document ).mouseup(this.hideAdditionalTabsDropdown);
@@ -148,6 +149,8 @@ lm.utils.copy( lm.controls.Header.prototype, {
 	 */
 	position: function( position ) {
 		var previous = this.parent._header.show;
+		if( this.parent._docker && this.parent._docker.docked )
+			throw new Error( 'Can\'t change header position in docked stack' );
 		if( previous && !this.parent._side )
 			previous = 'top';
 		if( position !== undefined && this.parent._header.show != position ) {
@@ -166,11 +169,28 @@ lm.utils.copy( lm.controls.Header.prototype, {
 	 * @returns {Boolean} Whether the action was successful
 	 */
 	_$setClosable: function( isClosable ) {
+		this._canDestroy = isClosable || this.tabs.length > 1;
 		if( this.closeButton && this._isClosable() ) {
 			this.closeButton.element[ isClosable ? "show" : "hide" ]();
 			return true;
 		}
 
+		return false;
+	},
+
+	/**
+	 * Programmatically set ability to dock.
+	 *
+	 * @package private
+	 * @param {Boolean} isDockable Whether to enable/disable ability to dock.
+	 *
+	 * @returns {Boolean} Whether the action was successful
+	 */
+	_setDockable: function( isDockable ) {
+		if ( this.dockButton && this.parent._header && this.parent._header.dock ) {
+			this.dockButton.element.toggle( !!isDockable );
+			return true;
+		}
 		return false;
 	},
 
@@ -223,6 +243,12 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		tabDropdownLabel = this.layoutManager.config.labels.tabDropdown;
 		this.tabDropdownButton = new lm.controls.HeaderButton( this, tabDropdownLabel, 'lm_tabdropdown', showTabDropdown );
 		this.tabDropdownButton.element.hide();
+
+		if( this.parent._header && this.parent._header.dock ) {
+			var button = lm.utils.fnBind( this.parent.dock, this.parent );
+			var label = this._getHeaderSetting( 'dock' );
+			this.dockButton = new lm.controls.HeaderButton( this, label, 'lm_dock', button );
+		}
 
 		/**
 		 * Popout control to launch component in new window.
