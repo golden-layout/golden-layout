@@ -1,0 +1,31 @@
+[class^="icomoon-"], [class*=" icomoon-"] {
+  display: inline-block;
+  background-repeat: no-repeat;
+  background-image: url(sprite.svg);
+}
+.icomoon-lm_close {
+  width: 32px;
+  height: 32px;
+  background-position: 0 0;
+}
+.icomoon-lm_dock {
+  width: 32px;
+  height: 32px;
+  background-position: -48px 0;
+}
+.icomoon-lm_maximise {
+  width: 32px;
+  height: 32px;
+  background-position: -96px 0;
+}
+.icomoon-lm_minimize {
+  width: 32px;
+  height: 32px;
+  background-position: -144px 0;
+}
+.icomoon-lm_popout {
+  width: 32px;
+  height: 32px;
+  background-position: -192px 0;
+}
+

@@ -175,20 +175,20 @@
   .lm_close {
     background-image: data-uri('../img/lm_close_black.png');
   }
-
-  // Icon to toggle Pane Docking at mouse hover
+  
+  // Icon to toggle Pane Docking at mouse hover 
   .lm_dock {
-    background-image: data-uri('../img/lm_docked_black.png');
-    transform:rotate(-45deg);
+    background-image: data-uri('../img/lm_dock_black.png');
     transition:transform 300ms;
   }
 }
 
 .lm_stack.lm_docked {
   .lm_controls .lm_dock {
-    transform:rotate(0deg);
+    //background-image: data-uri('../img/lm_docked_black.png');     // If desired, is possible to restore original different image instead of rotating original one
+    transform:rotate(45deg);
   }
-
+  
   > .lm_items {
     border-color: @color9;
     border-image: linear-gradient(to right, @color9 1%, @color4 100%);

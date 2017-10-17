@@ -1,58 +1,59 @@
-// Color variables (appears count calculates by raw css)
-@color0: #000000; // Appears 7 times
-@color1: #222222; // Appears 3 times
-@color2: #eeeeee; // Appears 2 times
-@color3: #dddddd; // Appears 2 times
+@import "colorizer.less";
 
-@color4: #cccccc; // Appears 1 time
-@color5: #444444; // Appears 1 time
-@color6: #999999; // Appears 1 time
-@color7: #111111; // Appears 1 time
-@color8: #452500; // Appears 1 time
-@color9: #555555; // Appears 1 time
-@color10: #ffffff; // Appears 2 time
+
+@main-container_background:      @black;
+@pane-content_background:        @color1;
+@splitter_background:            @black;
+@splitter_background-active:     @gray-dark;
+@header-tab_color:               @color6;
+@header-tab_background:          @gray-darker;
+@header-tab_color-active:        @color3;
+@header-tab_background-active:   @color1;
+@header-selected:                @color8;
+@header-maximised_background:    @black;
+
 
 // ".lm_dragging" is applied to BODY tag during Drag and is also directly applied to the root of the object being dragged
 
 // Entire GoldenLayout Container, if a background is set, it is visible as color of "pane header" and "splitters" (if these latest has opacity very low)
 .lm_goldenlayout {
-  background: @color0;
+  background:@main-container_background;
 }
 
-// Single Pane content (area in which final dragged content is contained)
+// Pane content (area in which final dragged content is contained)
 .lm_content {
-  background: @color1;
-  border: 1px solid transparent;
+  background:@pane-content_background;
+  border:solid 1px transparent;
 }
 
-// Single Pane content during Drag (style of moving window following mouse)
+// Pane content during Drag (style of moving window following mouse)
 .lm_dragProxy {
   .lm_content {
-    box-shadow: 2px 2px 4px fade(@color0,90%);
+    box-shadow: 2px 2px 4px @transparent-black-90;
   }
 }
 
 // Placeholder Container of target position
 .lm_dropTargetIndicator {
-  box-shadow: inset 0 0 30px @color0;
-  outline: 1px dashed @color4;
+  outline:dashed 1px @color4;
+  box-shadow:inset 0 0 30px @black;
 
   // Inner Placeholder
   .lm_inner {
-    background: @color0;
+    background: @black;
     opacity: 0.2;
   }
 }
 
 // Separator line (handle to change pane size)
 .lm_splitter {
-  background: @color0;
+  background: @splitter_background;
   opacity: 0.001;
   transition: opacity 200ms ease;
 
   &:hover, // When hovered by mouse...
   &.lm_dragging {
-    background: @color5;
+    background:@splitter_background-active;
     opacity: 1;
   }
 }
@@ -65,9 +66,9 @@
   .lm_tab {
     font-family: Arial, sans-serif;
     font-size: 12px;
-    color: @color6;
-    background: @color7;
-    box-shadow: 2px -2px 2px fade(@color0,30%);
+    color:@header-tab_color;
+    background:@header-tab_background;
+    box-shadow: 2px -2px 2px @transparent-black-30;
     margin-right: 2px;
     padding-bottom: 2px;
     padding-top: 2px;
@@ -81,9 +82,6 @@
     .lm_close_tab {
       width: 11px;
       height: 11px;
-      background-image: data-uri('../img/lm_close_white.png');
-      background-position: center center;
-      background-repeat: no-repeat;
       top: 4px;
       right: 6px;
       opacity: 0.4;
@@ -91,13 +89,20 @@
       &:hover {
         opacity: 1;
       }
+      
+      &:before {
+        // Eventual Override ...
+        content:"\e904";
+        font-size:9px;
+        vertical-align:top;
+      }
     }
 
     // If Tab is active, so if it's in foreground
     &.lm_active {
       border-bottom: none;
-      box-shadow: 0 -2px 2px @color0;
       padding-bottom: 3px;
+      box-shadow: 0 -2px 2px @black;
 
       .lm_close_tab {
         opacity: 1;
@@ -111,17 +116,17 @@
   &.lm_right {
     .lm_header .lm_tab {
       &.lm_active {
-        box-shadow: 2px -2px 2px @color0;
+        box-shadow: 2px -2px 2px @black;
       }
-    }
+    }  
   }
-
+  
   &.lm_bottom {
     .lm_header .lm_tab {
-      box-shadow: 2px 2px 2px fade(@color0,30%);
-
+      box-shadow: 2px 2px 2px @transparent-black-30;
+      
       &.lm_active {
-        box-shadow: 0 2px 2px @color0;
+        box-shadow: 0 2px 2px @black;
       }
     }
   }
@@ -130,7 +135,7 @@
 // If Pane Header (container of Tabs for each pane) is selected (used only if addition of new Contents is made "by selection" and not "by drag")
 .lm_selected {
   .lm_header {
-    background-color: @color8;
+    background-color:@header-selected;
   }
 }
 
@@ -138,15 +143,11 @@
   &:hover, // If Tab is hovered
   &.lm_active // If Tab is active, so if it's in foreground
   {
-    background: @color1;
-    color: @color3;
+    color:@header-tab_color-active;
+    background:@header-tab_background-active;
   }
 }
 
-// Dropdown arrow for additional tabs when too many to be displayed
-.lm_header .lm_controls .lm_tabdropdown:before {
-  color: @color10;
-}
 
 // Pane controls (popout, maximize, minimize, close)
 .lm_controls {
@@ -162,39 +163,56 @@
       opacity: 1;
     }
   }
+  
+  // Dropdown arrow for additional tabs when too many to be displayed
+  .lm_tabdropdown:before {
+    color: @white;
+  }
 
   // Icon to PopOut Pane, so move it to a different Browser Window
   .lm_popout {
-    background-image: data-uri('../img/lm_popout_white.png');
+    &:before {
+      content:"\e903";
+      font-size:11px;
+    }
   }
 
   // Icon to Maximize Pane, so it will fill the entire GoldenLayout Container
   .lm_maximise {
-    background-image: data-uri('../img/lm_maximise_white.png');
+    &:before {
+      content:"\e901";
+      font-size:11px;
+    }
   }
 
   // Icon to Close Pane and so remove it from GoldenLayout Container
   .lm_close {
-    background-image: data-uri('../img/lm_close_white.png');
+    &:before {
+      content:"\e904";
+      font-size:11px;
+    }
   }
-
+  
   // Icon to toggle Pane Docking at mouse hover 
   .lm_dock {
-    background-image: data-uri('../img/lm_docked_white.png');
-    transform:rotate(-45deg);
     transition:transform 300ms;
+    
+    &:before {
+      content:"\e900";
+      font-size:15px;
+    }
   }
 }
 
 .lm_stack.lm_docked {
   .lm_controls .lm_dock {
-    transform:rotate(0deg);
+    transform:rotate(45deg);
   }
-
+  
   > .lm_items {
-    border-color: @color9;
-    border-image: linear-gradient(to right, @color5 1%, @color6 100%);
-    box-shadow: 0 2px 2px @color0;
+    border-color: @color9;        // Fallback (if border-image is not supported)
+    border-image: linear-gradient(to right, @gray-dark 1%, @color6 100%);
+    box-shadow: 0 2px 2px @black;
   }
 }
 
@@ -202,20 +220,23 @@
 .lm_maximised {
   // Pane Header (container of Tabs for each pane) can have different style when is Maximized
   .lm_header {
-    background-color: @color0;
+    background-color:@header-maximised_background;
   }
 
   // Pane controls are different in Maximized Mode, especially the old Icon "Maximise" that now has a different meaning, so "Minimize" (even if CSS Class did not change)
   .lm_controls {
     .lm_maximise {
-      background-image: data-uri('../img/lm_minimize_white.png');
+      &:before {
+        content:"\e902";
+        font-size:11px;
+      }
     }
   }
 }
 
 .lm_transition_indicator {
-  background-color: @color0;
-  border: 1px dashed @color9;
+  background-color: @black;
+  border: dashed 1px @color9;
 }
 
 // If a specific Pane is Popped Out, so move it to a different Browser Window, Icon to restore original position is:
@@ -224,7 +245,7 @@
 
   // Background of Icon
   .lm_bg {
-    background: @color10;
+    background: @white;
     opacity: 0.3;
   }
 
@@ -233,8 +254,8 @@
     background-image: data-uri('../img/lm_popin_white.png');
     background-position: center center;
     background-repeat: no-repeat;
-    border-left: 1px solid @color2;
-    border-top: 1px solid @color2;
+    border-left: 1px solid @gray-lighter;
+    border-top: 1px solid @gray-lighter;
     opacity: 0.7;
   }
 
