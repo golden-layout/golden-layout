@@ -1525,48 +1525,6 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	}
 })();
 
-lm.config.itemDefaultConfig = {
-	isClosable: true,
-	reorderEnabled: true,
-	title: ''
-};
-lm.config.defaultConfig = {
-	openPopouts: [],
-	settings: {
-		hasHeaders: true,
-		constrainDragToContainer: true,
-		reorderEnabled: true,
-		selectionEnabled: false,
-		popoutWholeStack: false,
-		blockedPopoutsThrowError: true,
-		closePopoutsOnUnload: true,
-		showPopoutIcon: true,
-		showMaximiseIcon: true,
-		showCloseIcon: true,
-		responsiveMode: 'onload', // Can be onload, always, or none.
-		tabOverlapAllowance: 0, // maximum pixel overlap per tab
-		reorderOnTabMenuClick: true,
-		tabControlOffset: 10
-	},
-	dimensions: {
-		borderWidth: 5,
-		borderGrabWidth: 15,
-		minItemHeight: 10,
-		minItemWidth: 10,
-		headerHeight: 20,
-		dragProxyWidth: 300,
-		dragProxyHeight: 200
-	},
-	labels: {
-		close: 'close',
-		maximise: 'maximise',
-		minimise: 'minimise',
-		popout: 'open in new window',
-		popin: 'pop in',
-		tabDropdown: 'additional tabs'
-	}
-};
-
 lm.container.ItemContainer = function( config, parent, layoutManager ) {
 	lm.utils.EventEmitter.call( this );
 
@@ -1761,1301 +1719,6 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 		}
 	}
 } );
-
-/**
- * Pops a content item out into a new browser window.
- * This is achieved by
- *
- *    - Creating a new configuration with the content item as root element
- *    - Serializing and minifying the configuration
- *    - Opening the current window's URL with the configuration as a GET parameter
- *    - GoldenLayout when opened in the new window will look for the GET parameter
- *      and use it instead of the provided configuration
- *
- * @param {Object} config GoldenLayout item config
- * @param {Object} dimensions A map with width, height, top and left
- * @param {String} parentId The id of the element the item will be appended to on popIn
- * @param {Number} indexInParent The position of this element within its parent
- * @param {lm.LayoutManager} layoutManager
- */
-lm.controls.BrowserPopout = function( config, dimensions, parentId, indexInParent, layoutManager ) {
-	lm.utils.EventEmitter.call( this );
-	this.isInitialised = false;
-
-	this._config = config;
-	this._dimensions = dimensions;
-	this._parentId = parentId;
-	this._indexInParent = indexInParent;
-	this._layoutManager = layoutManager;
-	this._popoutWindow = null;
-	this._id = null;
-	this._createWindow();
-};
-
-lm.utils.copy( lm.controls.BrowserPopout.prototype, {
-
-	toConfig: function() {
-		if( this.isInitialised === false ) {
-			throw new Error( 'Can\'t create config, layout not yet initialised' );
-			return;
-		}
-		return {
-			dimensions: {
-				width: this.getGlInstance().width,
-				height: this.getGlInstance().height,
-				left: this._popoutWindow.screenX || this._popoutWindow.screenLeft,
-				top: this._popoutWindow.screenY || this._popoutWindow.screenTop
-			},
-			content: this.getGlInstance().toConfig().content,
-			parentId: this._parentId,
-			indexInParent: this._indexInParent
-		};
-	},
-
-	getGlInstance: function() {
-		return this._popoutWindow.__glInstance;
-	},
-
-	getWindow: function() {
-		return this._popoutWindow;
-	},
-
-	close: function() {
-		if( this.getGlInstance() ) {
-			this.getGlInstance()._$closeWindow();
-		} else {
-			try {
-				this.getWindow().close();
-			} catch( e ) {
-			}
-		}
-	},
-
-	/**
-	 * Returns the popped out item to its original position. If the original
-	 * parent isn't available anymore it falls back to the layout's topmost element
-	 */
-	popIn: function() {
-		var childConfig,
-			parentItem,
-			index = this._indexInParent;
-
-		if( this._parentId ) {
-
-			/*
-			 * The $.extend call seems a bit pointless, but it's crucial to
-			 * copy the config returned by this.getGlInstance().toConfig()
-			 * onto a new object. Internet Explorer keeps the references
-			 * to objects on the child window, resulting in the following error
-			 * once the child window is closed:
-			 *
-			 * The callee (server [not server application]) is not available and disappeared
-			 */
-			childConfig = $.extend( true, {}, this.getGlInstance().toConfig() ).content[ 0 ];
-			parentItem = this._layoutManager.root.getItemsById( this._parentId )[ 0 ];
-
-			/*
-			 * Fallback if parentItem is not available. Either add it to the topmost
-			 * item or make it the topmost item if the layout is empty
-			 */
-			if( !parentItem ) {
-				if( this._layoutManager.root.contentItems.length > 0 ) {
-					parentItem = this._layoutManager.root.contentItems[ 0 ];
-				} else {
-					parentItem = this._layoutManager.root;
-				}
-				index = 0;
-			}
-		}
-
-		parentItem.addChild( childConfig, this._indexInParent );
-		this.close();
-	},
-
-	/**
-	 * Creates the URL and window parameter
-	 * and opens a new window
-	 *
-	 * @private
-	 *
-	 * @returns {void}
-	 */
-	_createWindow: function() {
-		var checkReadyInterval,
-			url = this._createUrl(),
-
-			/**
-			 * Bogus title to prevent re-usage of existing window with the
-			 * same title. The actual title will be set by the new window's
-			 * GoldenLayout instance if it detects that it is in subWindowMode
-			 */
-			title = Math.floor( Math.random() * 1000000 ).toString( 36 ),
-
-			/**
-			 * The options as used in the window.open string
-			 */
-			options = this._serializeWindowOptions( {
-				width: this._dimensions.width,
-				height: this._dimensions.height,
-				innerWidth: this._dimensions.width,
-				innerHeight: this._dimensions.height,
-				menubar: 'no',
-				toolbar: 'no',
-				location: 'no',
-				personalbar: 'no',
-				resizable: 'yes',
-				scrollbars: 'no',
-				status: 'no'
-			} );
-
-		this._popoutWindow = window.open( url, title, options );
-
-		if( !this._popoutWindow ) {
-			if( this._layoutManager.config.settings.blockedPopoutsThrowError === true ) {
-				var error = new Error( 'Popout blocked' );
-				error.type = 'popoutBlocked';
-				throw error;
-			} else {
-				return;
-			}
-		}
-
-		$( this._popoutWindow )
-			.on( 'load', lm.utils.fnBind( this._positionWindow, this ) )
-			.on( 'unload beforeunload', lm.utils.fnBind( this._onClose, this ) );
-
-		/**
-		 * Polling the childwindow to find out if GoldenLayout has been initialised
-		 * doesn't seem optimal, but the alternatives - adding a callback to the parent
-		 * window or raising an event on the window object - both would introduce knowledge
-		 * about the parent to the child window which we'd rather avoid
-		 */
-		checkReadyInterval = setInterval( lm.utils.fnBind( function() {
-			if( this._popoutWindow.__glInstance && this._popoutWindow.__glInstance.isInitialised ) {
-				this._onInitialised();
-				clearInterval( checkReadyInterval );
-			}
-		}, this ), 10 );
-	},
-
-	/**
-	 * Serialises a map of key:values to a window options string
-	 *
-	 * @param   {Object} windowOptions
-	 *
-	 * @returns {String} serialised window options
-	 */
-	_serializeWindowOptions: function( windowOptions ) {
-		var windowOptionsString = [], key;
-
-		for( key in windowOptions ) {
-			windowOptionsString.push( key + '=' + windowOptions[ key ] );
-		}
-
-		return windowOptionsString.join( ',' );
-	},
-
-	/**
-	 * Creates the URL for the new window, including the
-	 * config GET parameter
-	 *
-	 * @returns {String} URL
-	 */
-	_createUrl: function() {
-		var config = { content: this._config },
-			storageKey = 'gl-window-config-' + lm.utils.getUniqueId(),
-			urlParts;
-
-		config = ( new lm.utils.ConfigMinifier() ).minifyConfig( config );
-
-		try {
-			localStorage.setItem( storageKey, JSON.stringify( config ) );
-		} catch( e ) {
-			throw new Error( 'Error while writing to localStorage ' + e.toString() );
-		}
-
-		urlParts = document.location.href.split( '?' );
-
-		// URL doesn't contain GET-parameters
-		if( urlParts.length === 1 ) {
-			return urlParts[ 0 ] + '?gl-window=' + storageKey;
-
-			// URL contains GET-parameters
-		} else {
-			return document.location.href + '&gl-window=' + storageKey;
-		}
-	},
-
-	/**
-	 * Move the newly created window roughly to
-	 * where the component used to be.
-	 *
-	 * @private
-	 *
-	 * @returns {void}
-	 */
-	_positionWindow: function() {
-		this._popoutWindow.moveTo( this._dimensions.left, this._dimensions.top );
-		this._popoutWindow.focus();
-	},
-
-	/**
-	 * Callback when the new window is opened and the GoldenLayout instance
-	 * within it is initialised
-	 *
-	 * @returns {void}
-	 */
-	_onInitialised: function() {
-		this.isInitialised = true;
-		this.getGlInstance().on( 'popIn', this.popIn, this );
-		this.emit( 'initialised' );
-	},
-
-	/**
-	 * Invoked 50ms after the window unload event
-	 *
-	 * @private
-	 *
-	 * @returns {void}
-	 */
-	_onClose: function() {
-		setTimeout( lm.utils.fnBind( this.emit, this, [ 'closed' ] ), 50 );
-	}
-} );
-/**
- * This class creates a temporary container
- * for the component whilst it is being dragged
- * and handles drag events
- *
- * @constructor
- * @private
- *
- * @param {Number} x              The initial x position
- * @param {Number} y              The initial y position
- * @param {lm.utils.DragListener} dragListener
- * @param {lm.LayoutManager} layoutManager
- * @param {lm.item.AbstractContentItem} contentItem
- * @param {lm.item.AbstractContentItem} originalParent
- */
-lm.controls.DragProxy = function( x, y, dragListener, layoutManager, contentItem, originalParent ) {
-
-	lm.utils.EventEmitter.call( this );
-
-	this._dragListener = dragListener;
-	this._layoutManager = layoutManager;
-	this._contentItem = contentItem;
-	this._originalParent = originalParent;
-
-	this._area = null;
-	this._lastValidArea = null;
-
-	this._dragListener.on( 'drag', this._onDrag, this );
-	this._dragListener.on( 'dragStop', this._onDrop, this );
-
-	this.element = $( lm.controls.DragProxy._template );
-	if( originalParent && originalParent._side ) {
-		this._sided = originalParent._sided;
-		this.element.addClass( 'lm_' + originalParent._side );
-		if( [ 'right', 'bottom' ].indexOf( originalParent._side ) >= 0 )
-			this.element.find( '.lm_content' ).after( this.element.find( '.lm_header' ) );
-	}
-	this.element.css( { left: x, top: y } );
-	this.element.find( '.lm_tab' ).attr( 'title', lm.utils.stripTags( this._contentItem.config.title ) );
-	this.element.find( '.lm_title' ).html( this._contentItem.config.title );
-	this.childElementContainer = this.element.find( '.lm_content' );
-	this.childElementContainer.append( contentItem.element );
-
-	this._updateTree();
-	this._layoutManager._$calculateItemAreas();
-	this._setDimensions();
-
-	$( document.body ).append( this.element );
-
-	var offset = this._layoutManager.container.offset();
-
-	this._minX = offset.left;
-	this._minY = offset.top;
-	this._maxX = this._layoutManager.container.width() + this._minX;
-	this._maxY = this._layoutManager.container.height() + this._minY;
-	this._width = this.element.width();
-	this._height = this.element.height();
-
-	this._setDropPosition( x, y );
-};
-
-lm.controls.DragProxy._template = '<div class="lm_dragProxy">' +
-	'<div class="lm_header">' +
-	'<ul class="lm_tabs">' +
-	'<li class="lm_tab lm_active"><i class="lm_left"></i>' +
-	'<span class="lm_title"></span>' +
-	'<i class="lm_right"></i></li>' +
-	'</ul>' +
-	'</div>' +
-	'<div class="lm_content"></div>' +
-	'</div>';
-
-lm.utils.copy( lm.controls.DragProxy.prototype, {
-
-	/**
-	 * Callback on every mouseMove event during a drag. Determines if the drag is
-	 * still within the valid drag area and calls the layoutManager to highlight the
-	 * current drop area
-	 *
-	 * @param   {Number} offsetX The difference from the original x position in px
-	 * @param   {Number} offsetY The difference from the original y position in px
-	 * @param   {jQuery DOM event} event
-	 *
-	 * @private
-	 *
-	 * @returns {void}
-	 */
-	_onDrag: function( offsetX, offsetY, event ) {
-
-		event = event.originalEvent && event.originalEvent.touches ? event.originalEvent.touches[ 0 ] : event;
-
-		var x = event.pageX,
-			y = event.pageY,
-			isWithinContainer = x > this._minX && x < this._maxX && y > this._minY && y < this._maxY;
-
-		if( !isWithinContainer && this._layoutManager.config.settings.constrainDragToContainer === true ) {
-			return;
-		}
-
-		this._setDropPosition( x, y );
-	},
-
-	/**
-	 * Sets the target position, highlighting the appropriate area
-	 *
-	 * @param   {Number} x The x position in px
-	 * @param   {Number} y The y position in px
-	 *
-	 * @private
-	 *
-	 * @returns {void}
-	 */
-	_setDropPosition: function( x, y ) {
-		this.element.css( { left: x, top: y } );
-		this._area = this._layoutManager._$getArea( x, y );
-
-		if( this._area !== null ) {
-			this._lastValidArea = this._area;
-			this._area.contentItem._$highlightDropZone( x, y, this._area );
-		}
-	},
-
-	/**
-	 * Callback when the drag has finished. Determines the drop area
-	 * and adds the child to it
-	 *
-	 * @private
-	 *
-	 * @returns {void}
-	 */
-	_onDrop: function() {
-		this._layoutManager.dropTargetIndicator.hide();
-
-		/*
-		 * Valid drop area found
-		 */
-		if( this._area !== null ) {
-			this._area.contentItem._$onDrop( this._contentItem, this._area );
-
-			/**
-			 * No valid drop area available at present, but one has been found before.
-			 * Use it
-			 */
-		} else if( this._lastValidArea !== null ) {
-			this._lastValidArea.contentItem._$onDrop( this._contentItem, this._lastValidArea );
-
-			/**
-			 * No valid drop area found during the duration of the drag. Return
-			 * content item to its original position if a original parent is provided.
-			 * (Which is not the case if the drag had been initiated by createDragSource)
-			 */
-		} else if( this._originalParent ) {
-			this._originalParent.addChild( this._contentItem );
-
-			/**
-			 * The drag didn't ultimately end up with adding the content item to
-			 * any container. In order to ensure clean up happens, destroy the
-			 * content item.
-			 */
-		} else {
-			this._contentItem._$destroy();
-		}
-
-		this.element.remove();
-
-		this._layoutManager.emit( 'itemDropped', this._contentItem );
-	},
-
-	/**
-	 * Removes the item from its original position within the tree
-	 *
-	 * @private
-	 *
-	 * @returns {void}
-	 */
-	_updateTree: function() {
-
-		/**
-		 * parent is null if the drag had been initiated by a external drag source
-		 */
-		if( this._contentItem.parent ) {
-			this._contentItem.parent.removeChild( this._contentItem, true );
-		}
-
-		this._contentItem._$setParent( this );
-	},
-
-	/**
-	 * Updates the Drag Proxie's dimensions
-	 *
-	 * @private
-	 *
-	 * @returns {void}
-	 */
-	_setDimensions: function() {
-		var dimensions = this._layoutManager.config.dimensions,
-			width = dimensions.dragProxyWidth,
-			height = dimensions.dragProxyHeight;
-
-		this.element.width( width );
-		this.element.height( height );
-		width -= ( this._sided ? dimensions.headerHeight : 0 );
-		height -= ( !this._sided ? dimensions.headerHeight : 0 );
-		this.childElementContainer.width( width );
-		this.childElementContainer.height( height );
-		this._contentItem.element.width( width );
-		this._contentItem.element.height( height );
-		this._contentItem.callDownwards( '_$show' );
-		this._contentItem.callDownwards( 'setSize' );
-	}
-} );
-
-/**
- * Allows for any DOM item to create a component on drag
- * start tobe dragged into the Layout
- *
- * @param {jQuery element} element
- * @param {Object} itemConfig the configuration for the contentItem that will be created
- * @param {LayoutManager} layoutManager
- *
- * @constructor
- */
-lm.controls.DragSource = function( element, itemConfig, layoutManager ) {
-	this._element = element;
-	this._itemConfig = itemConfig;
-	this._layoutManager = layoutManager;
-	this._dragListener = null;
-
-	this._createDragListener();
-};
-
-lm.utils.copy( lm.controls.DragSource.prototype, {
-
-	/**
-	 * Called initially and after every drag
-	 *
-	 * @returns {void}
-	 */
-	_createDragListener: function() {
-		if( this._dragListener !== null ) {
-			this._dragListener.destroy();
-		}
-
-		this._dragListener = new lm.utils.DragListener( this._element );
-		this._dragListener.on( 'dragStart', this._onDragStart, this );
-		this._dragListener.on( 'dragStop', this._createDragListener, this );
-	},
-
-	/**
-	 * Callback for the DragListener's dragStart event
-	 *
-	 * @param   {int} x the x position of the mouse on dragStart
-	 * @param   {int} y the x position of the mouse on dragStart
-	 *
-	 * @returns {void}
-	 */
-	_onDragStart: function( x, y ) {
-		var itemConfig = this._itemConfig;
-		if( lm.utils.isFunction( itemConfig ) ) {
-			itemConfig = itemConfig();
-		}
-		var contentItem = this._layoutManager._$normalizeContentItem( $.extend( true, {}, itemConfig ) ),
-			dragProxy = new lm.controls.DragProxy( x, y, this._dragListener, this._layoutManager, contentItem, null );
-
-		this._layoutManager.transitionIndicator.transitionElements( this._element, dragProxy.element );
-	}
-} );
-
-lm.controls.DropTargetIndicator = function() {
-	this.element = $( lm.controls.DropTargetIndicator._template );
-	$( document.body ).append( this.element );
-};
-
-lm.controls.DropTargetIndicator._template = '<div class="lm_dropTargetIndicator"><div class="lm_inner"></div></div>';
-
-lm.utils.copy( lm.controls.DropTargetIndicator.prototype, {
-	destroy: function() {
-		this.element.remove();
-	},
-
-	highlight: function( x1, y1, x2, y2 ) {
-		this.highlightArea( { x1: x1, y1: y1, x2: x2, y2: y2 } );
-	},
-
-	highlightArea: function( area ) {
-		this.element.css( {
-			left: area.x1,
-			top: area.y1,
-			width: area.x2 - area.x1,
-			height: area.y2 - area.y1
-		} ).show();
-	},
-
-	hide: function() {
-		this.element.hide();
-	}
-} );
-/**
- * This class represents a header above a Stack ContentItem.
- *
- * @param {lm.LayoutManager} layoutManager
- * @param {lm.item.AbstractContentItem} parent
- */
-lm.controls.Header = function( layoutManager, parent ) {
-	lm.utils.EventEmitter.call( this );
-
-	this.layoutManager = layoutManager;
-	this.element = $( lm.controls.Header._template );
-
-	if( this.layoutManager.config.settings.selectionEnabled === true ) {
-		this.element.addClass( 'lm_selectable' );
-		this.element.on( 'click touchstart', lm.utils.fnBind( this._onHeaderClick, this ) );
-	}
-
-	this.tabsContainer = this.element.find( '.lm_tabs' );
-	this.tabDropdownContainer = this.element.find( '.lm_tabdropdown_list' );
-	this.tabDropdownContainer.hide();
-	this.controlsContainer = this.element.find( '.lm_controls' );
-	this.parent = parent;
-	this.parent.on( 'resize', this._updateTabSizes, this );
-	this.tabs = [];
-	this.activeContentItem = null;
-	this.closeButton = null;
-	this.tabDropdownButton = null;
-	this.hideAdditionalTabsDropdown = lm.utils.fnBind(this._hideAdditionalTabsDropdown, this);
-	$( document ).mouseup(this.hideAdditionalTabsDropdown);
-
-	this._lastVisibleTabIndex = -1;
-	this._tabControlOffset = this.layoutManager.config.settings.tabControlOffset;
-	this._createControls();
-};
-
-lm.controls.Header._template = [
-	'<div class="lm_header">',
-	'<ul class="lm_tabs"></ul>',
-	'<ul class="lm_controls"></ul>',
-	'<ul class="lm_tabdropdown_list"></ul>',
-	'</div>'
-].join( '' );
-
-lm.utils.copy( lm.controls.Header.prototype, {
-
-	/**
-	 * Creates a new tab and associates it with a contentItem
-	 *
-	 * @param    {lm.item.AbstractContentItem} contentItem
-	 * @param    {Integer} index The position of the tab
-	 *
-	 * @returns {void}
-	 */
-	createTab: function( contentItem, index ) {
-		var tab, i;
-
-		//If there's already a tab relating to the
-		//content item, don't do anything
-		for( i = 0; i < this.tabs.length; i++ ) {
-			if( this.tabs[ i ].contentItem === contentItem ) {
-				return;
-			}
-		}
-
-		tab = new lm.controls.Tab( this, contentItem );
-
-		if( this.tabs.length === 0 ) {
-			this.tabs.push( tab );
-			this.tabsContainer.append( tab.element );
-			return;
-		}
-
-		if( index === undefined ) {
-			index = this.tabs.length;
-		}
-
-		if( index > 0 ) {
-			this.tabs[ index - 1 ].element.after( tab.element );
-		} else {
-			this.tabs[ 0 ].element.before( tab.element );
-		}
-
-		this.tabs.splice( index, 0, tab );
-		this._updateTabSizes();
-	},
-
-	/**
-	 * Finds a tab based on the contentItem its associated with and removes it.
-	 *
-	 * @param    {lm.item.AbstractContentItem} contentItem
-	 *
-	 * @returns {void}
-	 */
-	removeTab: function( contentItem ) {
-		for( var i = 0; i < this.tabs.length; i++ ) {
-			if( this.tabs[ i ].contentItem === contentItem ) {
-				this.tabs[ i ]._$destroy();
-				this.tabs.splice( i, 1 );
-				return;
-			}
-		}
-
-		throw new Error( 'contentItem is not controlled by this header' );
-	},
-
-	/**
-	 * The programmatical equivalent of clicking a Tab.
-	 *
-	 * @param {lm.item.AbstractContentItem} contentItem
-	 */
-	setActiveContentItem: function( contentItem ) {
-		var i, j, isActive, activeTab;
-
-		for( i = 0; i < this.tabs.length; i++ ) {
-			isActive = this.tabs[ i ].contentItem === contentItem;
-			this.tabs[ i ].setActive( isActive );
-			if( isActive === true ) {
-				this.activeContentItem = contentItem;
-				this.parent.config.activeItemIndex = i;
-			}
-		}
-
-		if (this.layoutManager.config.settings.reorderOnTabMenuClick) {
-			/**
-			 * If the tab selected was in the dropdown, move everything down one to make way for this one to be the first.
-			 * This will make sure the most used tabs stay visible.
-			 */
-			if (this._lastVisibleTabIndex !== -1 && this.parent.config.activeItemIndex > this._lastVisibleTabIndex) {
-				activeTab = this.tabs[this.parent.config.activeItemIndex];
-				for ( j = this.parent.config.activeItemIndex; j > 0; j-- ) {
-					this.tabs[j] = this.tabs[j - 1];
-				}
-				this.tabs[0]                       = activeTab;
-				this.parent.config.activeItemIndex = 0;
-			}
-		}
-
-		this._updateTabSizes();
-		this.parent.emitBubblingEvent( 'stateChanged' );
-	},
-
-	/**
-	 * Programmatically operate with header position.
-	 *
-	 * @param {string} position one of ('top','left','right','bottom') to set or empty to get it.
-	 *
-	 * @returns {string} previous header position
-	 */
-	position: function( position ) {
-		var previous = this.parent._header.show;
-		if( previous && !this.parent._side )
-			previous = 'top';
-		if( position !== undefined && this.parent._header.show != position ) {
-			this.parent._header.show = position;
-			this.parent._setupHeaderPosition();
-		}
-		return previous;
-	},
-
-	/**
-	 * Programmatically set closability.
-	 *
-	 * @package private
-	 * @param {Boolean} isClosable Whether to enable/disable closability.
-	 *
-	 * @returns {Boolean} Whether the action was successful
-	 */
-	_$setClosable: function( isClosable ) {
-		if( this.closeButton && this._isClosable() ) {
-			this.closeButton.element[ isClosable ? "show" : "hide" ]();
-			return true;
-		}
-
-		return false;
-	},
-
-	/**
-	 * Destroys the entire header
-	 *
-	 * @package private
-	 *
-	 * @returns {void}
-	 */
-	_$destroy: function() {
-		this.emit( 'destroy', this );
-
-		for( var i = 0; i < this.tabs.length; i++ ) {
-			this.tabs[ i ]._$destroy();
-		}
-		$( document ).off('mouseup', this.hideAdditionalTabsDropdown);
-		this.element.remove();
-	},
-
-	/**
-	 * get settings from header
-	 *
-	 * @returns {string} when exists
-	 */
-	_getHeaderSetting: function( name ) {
-		if( name in this.parent._header )
-			return this.parent._header[ name ];
-	},
-	/**
-	 * Creates the popout, maximise and close buttons in the header's top right corner
-	 *
-	 * @returns {void}
-	 */
-	_createControls: function() {
-		var closeStack,
-			popout,
-			label,
-			maximiseLabel,
-			minimiseLabel,
-			maximise,
-			maximiseButton,
-			tabDropdownLabel,
-			showTabDropdown;
-
-		/**
-		 * Dropdown to show additional tabs.
-		 */
-		showTabDropdown = lm.utils.fnBind( this._showAdditionalTabsDropdown, this );
-		tabDropdownLabel = this.layoutManager.config.labels.tabDropdown;
-		this.tabDropdownButton = new lm.controls.HeaderButton( this, tabDropdownLabel, 'lm_tabdropdown', showTabDropdown );
-		this.tabDropdownButton.element.hide();
-
-		/**
-		 * Popout control to launch component in new window.
-		 */
-		if( this._getHeaderSetting( 'popout' ) ) {
-			popout = lm.utils.fnBind( this._onPopoutClick, this );
-			label = this._getHeaderSetting( 'popout' );
-			new lm.controls.HeaderButton( this, label, 'lm_popout', popout );
-		}
-
-		/**
-		 * Maximise control - set the component to the full size of the layout
-		 */
-		if( this._getHeaderSetting( 'maximise' ) ) {
-			maximise = lm.utils.fnBind( this.parent.toggleMaximise, this.parent );
-			maximiseLabel = this._getHeaderSetting( 'maximise' );
-			minimiseLabel = this._getHeaderSetting( 'minimise' );
-			maximiseButton = new lm.controls.HeaderButton( this, maximiseLabel, 'lm_maximise', maximise );
-
-			this.parent.on( 'maximised', function() {
-				maximiseButton.element.attr( 'title', minimiseLabel );
-			} );
-
-			this.parent.on( 'minimised', function() {
-				maximiseButton.element.attr( 'title', maximiseLabel );
-			} );
-		}
-
-		/**
-		 * Close button
-		 */
-		if( this._isClosable() ) {
-			closeStack = lm.utils.fnBind( this.parent.remove, this.parent );
-			label = this._getHeaderSetting( 'close' );
-			this.closeButton = new lm.controls.HeaderButton( this, label, 'lm_close', closeStack );
-		}
-	},
-
-	/**
-	 * Shows drop down for additional tabs when there are too many to display.
-	 *
-	 * @returns {void}
-	 */
-	_showAdditionalTabsDropdown: function() {
-		this.tabDropdownContainer.show();
-	},
-
-	/**
-	 * Hides drop down for additional tabs when there are too many to display.
-	 *
-	 * @returns {void}
-	 */
-	_hideAdditionalTabsDropdown: function( e ) {
-		this.tabDropdownContainer.hide();
-	},
-
-	/**
-	 * Checks whether the header is closable based on the parent config and
-	 * the global config.
-	 *
-	 * @returns {Boolean} Whether the header is closable.
-	 */
-	_isClosable: function() {
-		return this.parent.config.isClosable && this.layoutManager.config.settings.showCloseIcon;
-	},
-
-	_onPopoutClick: function() {
-		if( this.layoutManager.config.settings.popoutWholeStack === true ) {
-			this.parent.popout();
-		} else {
-			this.activeContentItem.popout();
-		}
-	},
-
-
-	/**
-	 * Invoked when the header's background is clicked (not it's tabs or controls)
-	 *
-	 * @param    {jQuery DOM event} event
-	 *
-	 * @returns {void}
-	 */
-	_onHeaderClick: function( event ) {
-		if( event.target === this.element[ 0 ] ) {
-			this.parent.select();
-		}
-	},
-
-	/**
-	 * Pushes the tabs to the tab dropdown if the available space is not sufficient
-	 *
-	 * @returns {void}
-	 */
-	_updateTabSizes: function(showTabMenu) {
-		if( this.tabs.length === 0 ) {
-			return;
-		}
-
-		//Show the menu based on function argument
-		this.tabDropdownButton.element.toggle(showTabMenu === true);
-
-		var size = function( val ) {
-			return val ? 'width' : 'height';
-		};
-		this.element.css( size( !this.parent._sided ), '' );
-		this.element[ size( this.parent._sided ) ]( this.layoutManager.config.dimensions.headerHeight );
-		var availableWidth = this.element.outerWidth() - this.controlsContainer.outerWidth() - this._tabControlOffset,
-			cumulativeTabWidth = 0,
-			visibleTabWidth = 0,
-			tabElement,
-			i,
-			j,
-			marginLeft,
-			overlap = 0,
-			tabWidth,
-			tabOverlapAllowance = this.layoutManager.config.settings.tabOverlapAllowance,
-			tabOverlapAllowanceExceeded = false,
-			activeIndex = (this.activeContentItem ? this.tabs.indexOf(this.activeContentItem.tab) : 0),
-			activeTab = this.tabs[activeIndex];
-		if( this.parent._sided )
-			availableWidth = this.element.outerHeight() - this.controlsContainer.outerHeight() - this._tabControlOffset;
-		this._lastVisibleTabIndex = -1;
-
-		for( i = 0; i < this.tabs.length; i++ ) {
-			tabElement = this.tabs[ i ].element;
-
-			//Put the tab in the tabContainer so its true width can be checked
-			this.tabsContainer.append( tabElement );
-			tabWidth = tabElement.outerWidth() + parseInt( tabElement.css( 'margin-right' ), 10 );
-
-			cumulativeTabWidth += tabWidth;
-
-			//Include the active tab's width if it isn't already
-			//This is to ensure there is room to show the active tab
-			if (activeIndex <= i) {
-				visibleTabWidth = cumulativeTabWidth;
-			} else {
-				visibleTabWidth = cumulativeTabWidth + activeTab.element.outerWidth() + parseInt(activeTab.element.css('margin-right'), 10);
-			}
-
-			// If the tabs won't fit, check the overlap allowance.
-			if( visibleTabWidth > availableWidth ) {
-
-				//Once allowance is exceeded, all remaining tabs go to menu.
-				if (!tabOverlapAllowanceExceeded) {
-
-					//No overlap for first tab or active tab
-					//Overlap spreads among non-active, non-first tabs
-					if (activeIndex > 0 && activeIndex <= i) {
-						overlap = ( visibleTabWidth - availableWidth ) / (i - 1);
-					} else {
-						overlap = ( visibleTabWidth - availableWidth ) / i;
-					}
-
-					//Check overlap against allowance.
-					if (overlap < tabOverlapAllowance) {
-						for ( j = 0; j <= i; j++ ) {
-							marginLeft = (j !== activeIndex && j !== 0) ? '-' + overlap + 'px' : '';
-							this.tabs[j].element.css({'z-index': i - j, 'margin-left': marginLeft});
-						}
-						this._lastVisibleTabIndex = i;
-						this.tabsContainer.append(tabElement);
-					} else {
-						tabOverlapAllowanceExceeded = true;
-					}
-
-				} else if (i === activeIndex) {
-					//Active tab should show even if allowance exceeded. (We left room.)
-					tabElement.css({'z-index': 'auto', 'margin-left': ''});
-					this.tabsContainer.append(tabElement);
-				}
-
-				if (tabOverlapAllowanceExceeded && i !== activeIndex) {
-					if (showTabMenu) {
-						//Tab menu already shown, so we just add to it.
-						tabElement.css({'z-index': 'auto', 'margin-left': ''});
-						this.tabDropdownContainer.append(tabElement);
-					} else {
-						//We now know the tab menu must be shown, so we have to recalculate everything.
-						this._updateTabSizes(true);
-						return;
-					}
-				}
-
-			}
-			else {
-				this._lastVisibleTabIndex = i;
-				tabElement.css({'z-index': 'auto', 'margin-left': ''});
-				this.tabsContainer.append( tabElement );
-			}
-		}
-
-	}
-} );
-
-
-lm.controls.HeaderButton = function( header, label, cssClass, action ) {
-	this._header = header;
-	this.element = $( '<li class="' + cssClass + '" title="' + label + '"></li>' );
-	this._header.on( 'destroy', this._$destroy, this );
-	this._action = action;
-	this.element.on( 'click touchstart', this._action );
-	this._header.controlsContainer.append( this.element );
-};
-
-lm.utils.copy( lm.controls.HeaderButton.prototype, {
-	_$destroy: function() {
-		this.element.off();
-		this.element.remove();
-	}
-} );
-lm.controls.Splitter = function( isVertical, size, grabSize ) {
-	this._isVertical = isVertical;
-	this._size = size;
-	this._grabSize = grabSize < size ? size : grabSize;
-
-	this.element = this._createElement();
-	this._dragListener = new lm.utils.DragListener( this.element );
-};
-
-lm.utils.copy( lm.controls.Splitter.prototype, {
-	on: function( event, callback, context ) {
-		this._dragListener.on( event, callback, context );
-	},
-
-	_$destroy: function() {
-		this.element.remove();
-	},
-
-	_createElement: function() {
-		var dragHandle = $( '<div class="lm_drag_handle"></div>' );
-		var element    = $( '<div class="lm_splitter"></div>' );
-		element.append(dragHandle);
-
-		var handleExcessSize = this._grabSize - this._size;
-		var handleExcessPos  = handleExcessSize / 2;
-
-		if( this._isVertical ) {
-			dragHandle.css( 'top', -handleExcessPos );
-			dragHandle.css( 'height', this._size + handleExcessSize );
-			element.addClass( 'lm_vertical' );
-			element[ 'height' ]( this._size );
-		} else {
-			dragHandle.css( 'left', -handleExcessPos );
-			dragHandle.css( 'width', this._size + handleExcessSize );
-			element.addClass( 'lm_horizontal' );
-			element[ 'width' ]( this._size );
-		}
-
-		return element;
-	}
-} );
-
-/**
- * Represents an individual tab within a Stack's header
- *
- * @param {lm.controls.Header} header
- * @param {lm.items.AbstractContentItem} contentItem
- *
- * @constructor
- */
-lm.controls.Tab = function( header, contentItem ) {
-	this.header = header;
-	this.contentItem = contentItem;
-	this.element = $( lm.controls.Tab._template );
-	this.titleElement = this.element.find( '.lm_title' );
-	this.closeElement = this.element.find( '.lm_close_tab' );
-	this.closeElement[ contentItem.config.isClosable ? 'show' : 'hide' ]();
-	this.isActive = false;
-
-	this.setTitle( contentItem.config.title );
-	this.contentItem.on( 'titleChanged', this.setTitle, this );
-
-	this._layoutManager = this.contentItem.layoutManager;
-
-	if(
-		this._layoutManager.config.settings.reorderEnabled === true &&
-		contentItem.config.reorderEnabled === true
-	) {
-		this._dragListener = new lm.utils.DragListener( this.element );
-		this._dragListener.on( 'dragStart', this._onDragStart, this );
-		this.contentItem.on( 'destroy', this._dragListener.destroy, this._dragListener );
-	}
-
-	this._onTabClickFn = lm.utils.fnBind( this._onTabClick, this );
-	this._onCloseClickFn = lm.utils.fnBind( this._onCloseClick, this );
-
-	this.element.on( 'mousedown touchstart', this._onTabClickFn );
-
-	if( this.contentItem.config.isClosable ) {
-		this.closeElement.on( 'click touchstart', this._onCloseClickFn );
-		this.closeElement.on('mousedown', this._onCloseMousedown);
-	} else {
-		this.closeElement.remove();
-	}
-
-	this.contentItem.tab = this;
-	this.contentItem.emit( 'tab', this );
-	this.contentItem.layoutManager.emit( 'tabCreated', this );
-
-	if( this.contentItem.isComponent ) {
-		this.contentItem.container.tab = this;
-		this.contentItem.container.emit( 'tab', this );
-	}
-};
-
-/**
- * The tab's html template
- *
- * @type {String}
- */
-lm.controls.Tab._template = '<li class="lm_tab"><i class="lm_left"></i>' +
-	'<span class="lm_title"></span><div class="lm_close_tab"></div>' +
-	'<i class="lm_right"></i></li>';
-
-lm.utils.copy( lm.controls.Tab.prototype, {
-
-	/**
-	 * Sets the tab's title to the provided string and sets
-	 * its title attribute to a pure text representation (without
-	 * html tags) of the same string.
-	 *
-	 * @public
-	 * @param {String} title can contain html
-	 */
-	setTitle: function( title ) {
-		this.element.attr( 'title', lm.utils.stripTags( title ) );
-		this.titleElement.html( title );
-	},
-
-	/**
-	 * Sets this tab's active state. To programmatically
-	 * switch tabs, use header.setActiveContentItem( item ) instead.
-	 *
-	 * @public
-	 * @param {Boolean} isActive
-	 */
-	setActive: function( isActive ) {
-		if( isActive === this.isActive ) {
-			return;
-		}
-		this.isActive = isActive;
-
-		if( isActive ) {
-			this.element.addClass( 'lm_active' );
-		} else {
-			this.element.removeClass( 'lm_active' );
-		}
-	},
-
-	/**
-	 * Destroys the tab
-	 *
-	 * @private
-	 * @returns {void}
-	 */
-	_$destroy: function() {
-		this.element.off( 'mousedown touchstart', this._onTabClickFn );
-		this.closeElement.off( 'click touchstart', this._onCloseClickFn );
-		if( this._dragListener ) {
-			this.contentItem.off( 'destroy', this._dragListener.destroy, this._dragListener );
-			this._dragListener.off( 'dragStart', this._onDragStart );
-			this._dragListener = null;
-		}
-		this.element.remove();
-	},
-
-	/**
-	 * Callback for the DragListener
-	 *
-	 * @param   {Number} x The tabs absolute x position
-	 * @param   {Number} y The tabs absolute y position
-	 *
-	 * @private
-	 * @returns {void}
-	 */
-	_onDragStart: function( x, y ) {
-		if( this.contentItem.parent.isMaximised === true ) {
-			this.contentItem.parent.toggleMaximise();
-		}
-		new lm.controls.DragProxy(
-			x,
-			y,
-			this._dragListener,
-			this._layoutManager,
-			this.contentItem,
-			this.header.parent
-		);
-	},
-
-	/**
-	 * Callback when the tab is clicked
-	 *
-	 * @param {jQuery DOM event} event
-	 *
-	 * @private
-	 * @returns {void}
-	 */
-	_onTabClick: function( event ) {
-		// left mouse button or tap
-		if( event.button === 0 || event.type === 'touchstart' ) {
-			var activeContentItem = this.header.parent.getActiveContentItem();
-			if( this.contentItem !== activeContentItem ) {
-				this.header.parent.setActiveContentItem( this.contentItem );
-			}
-
-			// middle mouse button
-		} else if( event.button === 1 && this.contentItem.config.isClosable ) {
-			this._onCloseClick( event );
-		}
-	},
-
-	/**
-	 * Callback when the tab's close button is
-	 * clicked
-	 *
-	 * @param   {jQuery DOM event} event
-	 *
-	 * @private
-	 * @returns {void}
-	 */
-	_onCloseClick: function( event ) {
-		event.stopPropagation();
-		this.header.parent.removeChild( this.contentItem );
-	},
-
-
-	/**
-	 * Callback to capture tab close button mousedown
-	 * to prevent tab from activating.
-	 *
-	 * @param (jQuery DOM event) event
-	 *
-	 * @private
-	 * @returns {void}
-	 */
-	_onCloseMousedown: function(event) {
-		event.stopPropagation();
-	}
-} );
-
-lm.controls.TransitionIndicator = function() {
-	this._element = $( '<div class="lm_transition_indicator"></div>' );
-	$( document.body ).append( this._element );
-
-	this._toElement = null;
-	this._fromDimensions = null;
-	this._totalAnimationDuration = 200;
-	this._animationStartTime = null;
-};
-
-lm.utils.copy( lm.controls.TransitionIndicator.prototype, {
-	destroy: function() {
-		this._element.remove();
-	},
-
-	transitionElements: function( fromElement, toElement ) {
-		/**
-		 * TODO - This is not quite as cool as expected. Review.
-		 */
-		return;
-		this._toElement = toElement;
-		this._animationStartTime = lm.utils.now();
-		this._fromDimensions = this._measure( fromElement );
-		this._fromDimensions.opacity = 0.8;
-		this._element.show().css( this._fromDimensions );
-		lm.utils.animFrame( lm.utils.fnBind( this._nextAnimationFrame, this ) );
-	},
-
-	_nextAnimationFrame: function() {
-		var toDimensions = this._measure( this._toElement ),
-			animationProgress = ( lm.utils.now() - this._animationStartTime ) / this._totalAnimationDuration,
-			currentFrameStyles = {},
-			cssProperty;
-
-		if( animationProgress >= 1 ) {
-			this._element.hide();
-			return;
-		}
-
-		toDimensions.opacity = 0;
-
-		for( cssProperty in this._fromDimensions ) {
-			currentFrameStyles[ cssProperty ] = this._fromDimensions[ cssProperty ] +
-				( toDimensions[ cssProperty ] - this._fromDimensions[ cssProperty ] ) *
-				animationProgress;
-		}
-
-		this._element.css( currentFrameStyles );
-		lm.utils.animFrame( lm.utils.fnBind( this._nextAnimationFrame, this ) );
-	},
-
-	_measure: function( element ) {
-		var offset = element.offset();
-
-		return {
-			left: offset.left,
-			top: offset.top,
-			width: element.outerWidth(),
-			height: element.outerHeight()
-		};
-	}
-} );
-lm.errors.ConfigurationError = function( message, node ) {
-	Error.call( this );
-
-	this.name = 'Configuration Error';
-	this.message = message;
-	this.node = node;
-};
-
-lm.errors.ConfigurationError.prototype = new Error();
 
 /**
  * This is the baseclass that all content items inherit from.
@@ -5249,7 +3912,7 @@ lm.utils.ReactComponentHandler = function( container, state ) {
 	this._container = container;
 	this._initialState = state;
 	this._reactClass = this._getReactClass();
-	this._container.on( 'open', this._render, this );
+	this._container.on( 'open', this._deferredRender, this );
 	this._container.on( 'destroy', this._destroy, this );
 };
 
@@ -5275,6 +3938,16 @@ lm.utils.copy( lm.utils.ReactComponentHandler.prototype, {
 	},
 
 	/**
+	 * Performs a _render after the current call stack has cleared.
+	 *
+	 * This is required for rendering in React v16, since ReactDOM.render will
+	 * not execute in the middle of an update lifecycle.
+	 */
+	_deferredRender: function() {
+		setTimeout(this._render.bind(this), 0);
+	},
+
+	/**
 	 * Removes the component from the DOM and thus invokes React's unmount lifecycle
 	 *
 	 * @private
@@ -5282,7 +3955,7 @@ lm.utils.copy( lm.utils.ReactComponentHandler.prototype, {
 	 */
 	_destroy: function() {
 		ReactDOM.unmountComponentAtNode( this._container.getElement()[ 0 ] );
-		this._container.off( 'open', this._render, this );
+		this._container.off( 'open', this._deferredRender, this );
 		this._container.off( 'destroy', this._destroy, this );
 	},
 
@@ -5335,5 +4008,1342 @@ lm.utils.copy( lm.utils.ReactComponentHandler.prototype, {
 		};
 		var props = $.extend( defaultProps, this._container._config.props );
 		return React.createElement( this._reactClass, props );
+	}
+} );
+lm.config.itemDefaultConfig = {
+	isClosable: true,
+	reorderEnabled: true,
+	title: ''
+};
+lm.config.defaultConfig = {
+	openPopouts: [],
+	settings: {
+		hasHeaders: true,
+		constrainDragToContainer: true,
+		reorderEnabled: true,
+		selectionEnabled: false,
+		popoutWholeStack: false,
+		blockedPopoutsThrowError: true,
+		closePopoutsOnUnload: true,
+		showPopoutIcon: true,
+		showMaximiseIcon: true,
+		showCloseIcon: true,
+		responsiveMode: 'onload', // Can be onload, always, or none.
+		tabOverlapAllowance: 0, // maximum pixel overlap per tab
+		reorderOnTabMenuClick: true,
+		tabControlOffset: 10
+	},
+	dimensions: {
+		borderWidth: 5,
+		borderGrabWidth: 15,
+		minItemHeight: 10,
+		minItemWidth: 10,
+		headerHeight: 20,
+		dragProxyWidth: 300,
+		dragProxyHeight: 200
+	},
+	labels: {
+		close: 'close',
+		maximise: 'maximise',
+		minimise: 'minimise',
+		popout: 'open in new window',
+		popin: 'pop in',
+		tabDropdown: 'additional tabs'
+	}
+};
+
+lm.errors.ConfigurationError = function( message, node ) {
+	Error.call( this );
+
+	this.name = 'Configuration Error';
+	this.message = message;
+	this.node = node;
+};
+
+lm.errors.ConfigurationError.prototype = new Error();
+
+/**
+ * Pops a content item out into a new browser window.
+ * This is achieved by
+ *
+ *    - Creating a new configuration with the content item as root element
+ *    - Serializing and minifying the configuration
+ *    - Opening the current window's URL with the configuration as a GET parameter
+ *    - GoldenLayout when opened in the new window will look for the GET parameter
+ *      and use it instead of the provided configuration
+ *
+ * @param {Object} config GoldenLayout item config
+ * @param {Object} dimensions A map with width, height, top and left
+ * @param {String} parentId The id of the element the item will be appended to on popIn
+ * @param {Number} indexInParent The position of this element within its parent
+ * @param {lm.LayoutManager} layoutManager
+ */
+lm.controls.BrowserPopout = function( config, dimensions, parentId, indexInParent, layoutManager ) {
+	lm.utils.EventEmitter.call( this );
+	this.isInitialised = false;
+
+	this._config = config;
+	this._dimensions = dimensions;
+	this._parentId = parentId;
+	this._indexInParent = indexInParent;
+	this._layoutManager = layoutManager;
+	this._popoutWindow = null;
+	this._id = null;
+	this._createWindow();
+};
+
+lm.utils.copy( lm.controls.BrowserPopout.prototype, {
+
+	toConfig: function() {
+		if( this.isInitialised === false ) {
+			throw new Error( 'Can\'t create config, layout not yet initialised' );
+			return;
+		}
+		return {
+			dimensions: {
+				width: this.getGlInstance().width,
+				height: this.getGlInstance().height,
+				left: this._popoutWindow.screenX || this._popoutWindow.screenLeft,
+				top: this._popoutWindow.screenY || this._popoutWindow.screenTop
+			},
+			content: this.getGlInstance().toConfig().content,
+			parentId: this._parentId,
+			indexInParent: this._indexInParent
+		};
+	},
+
+	getGlInstance: function() {
+		return this._popoutWindow.__glInstance;
+	},
+
+	getWindow: function() {
+		return this._popoutWindow;
+	},
+
+	close: function() {
+		if( this.getGlInstance() ) {
+			this.getGlInstance()._$closeWindow();
+		} else {
+			try {
+				this.getWindow().close();
+			} catch( e ) {
+			}
+		}
+	},
+
+	/**
+	 * Returns the popped out item to its original position. If the original
+	 * parent isn't available anymore it falls back to the layout's topmost element
+	 */
+	popIn: function() {
+		var childConfig,
+			parentItem,
+			index = this._indexInParent;
+
+		if( this._parentId ) {
+
+			/*
+			 * The $.extend call seems a bit pointless, but it's crucial to
+			 * copy the config returned by this.getGlInstance().toConfig()
+			 * onto a new object. Internet Explorer keeps the references
+			 * to objects on the child window, resulting in the following error
+			 * once the child window is closed:
+			 *
+			 * The callee (server [not server application]) is not available and disappeared
+			 */
+			childConfig = $.extend( true, {}, this.getGlInstance().toConfig() ).content[ 0 ];
+			parentItem = this._layoutManager.root.getItemsById( this._parentId )[ 0 ];
+
+			/*
+			 * Fallback if parentItem is not available. Either add it to the topmost
+			 * item or make it the topmost item if the layout is empty
+			 */
+			if( !parentItem ) {
+				if( this._layoutManager.root.contentItems.length > 0 ) {
+					parentItem = this._layoutManager.root.contentItems[ 0 ];
+				} else {
+					parentItem = this._layoutManager.root;
+				}
+				index = 0;
+			}
+		}
+
+		parentItem.addChild( childConfig, this._indexInParent );
+		this.close();
+	},
+
+	/**
+	 * Creates the URL and window parameter
+	 * and opens a new window
+	 *
+	 * @private
+	 *
+	 * @returns {void}
+	 */
+	_createWindow: function() {
+		var checkReadyInterval,
+			url = this._createUrl(),
+
+			/**
+			 * Bogus title to prevent re-usage of existing window with the
+			 * same title. The actual title will be set by the new window's
+			 * GoldenLayout instance if it detects that it is in subWindowMode
+			 */
+			title = Math.floor( Math.random() * 1000000 ).toString( 36 ),
+
+			/**
+			 * The options as used in the window.open string
+			 */
+			options = this._serializeWindowOptions( {
+				width: this._dimensions.width,
+				height: this._dimensions.height,
+				innerWidth: this._dimensions.width,
+				innerHeight: this._dimensions.height,
+				menubar: 'no',
+				toolbar: 'no',
+				location: 'no',
+				personalbar: 'no',
+				resizable: 'yes',
+				scrollbars: 'no',
+				status: 'no'
+			} );
+
+		this._popoutWindow = window.open( url, title, options );
+
+		if( !this._popoutWindow ) {
+			if( this._layoutManager.config.settings.blockedPopoutsThrowError === true ) {
+				var error = new Error( 'Popout blocked' );
+				error.type = 'popoutBlocked';
+				throw error;
+			} else {
+				return;
+			}
+		}
+
+		$( this._popoutWindow )
+			.on( 'load', lm.utils.fnBind( this._positionWindow, this ) )
+			.on( 'unload beforeunload', lm.utils.fnBind( this._onClose, this ) );
+
+		/**
+		 * Polling the childwindow to find out if GoldenLayout has been initialised
+		 * doesn't seem optimal, but the alternatives - adding a callback to the parent
+		 * window or raising an event on the window object - both would introduce knowledge
+		 * about the parent to the child window which we'd rather avoid
+		 */
+		checkReadyInterval = setInterval( lm.utils.fnBind( function() {
+			if( this._popoutWindow.__glInstance && this._popoutWindow.__glInstance.isInitialised ) {
+				this._onInitialised();
+				clearInterval( checkReadyInterval );
+			}
+		}, this ), 10 );
+	},
+
+	/**
+	 * Serialises a map of key:values to a window options string
+	 *
+	 * @param   {Object} windowOptions
+	 *
+	 * @returns {String} serialised window options
+	 */
+	_serializeWindowOptions: function( windowOptions ) {
+		var windowOptionsString = [], key;
+
+		for( key in windowOptions ) {
+			windowOptionsString.push( key + '=' + windowOptions[ key ] );
+		}
+
+		return windowOptionsString.join( ',' );
+	},
+
+	/**
+	 * Creates the URL for the new window, including the
+	 * config GET parameter
+	 *
+	 * @returns {String} URL
+	 */
+	_createUrl: function() {
+		var config = { content: this._config },
+			storageKey = 'gl-window-config-' + lm.utils.getUniqueId(),
+			urlParts;
+
+		config = ( new lm.utils.ConfigMinifier() ).minifyConfig( config );
+
+		try {
+			localStorage.setItem( storageKey, JSON.stringify( config ) );
+		} catch( e ) {
+			throw new Error( 'Error while writing to localStorage ' + e.toString() );
+		}
+
+		urlParts = document.location.href.split( '?' );
+
+		// URL doesn't contain GET-parameters
+		if( urlParts.length === 1 ) {
+			return urlParts[ 0 ] + '?gl-window=' + storageKey;
+
+			// URL contains GET-parameters
+		} else {
+			return document.location.href + '&gl-window=' + storageKey;
+		}
+	},
+
+	/**
+	 * Move the newly created window roughly to
+	 * where the component used to be.
+	 *
+	 * @private
+	 *
+	 * @returns {void}
+	 */
+	_positionWindow: function() {
+		this._popoutWindow.moveTo( this._dimensions.left, this._dimensions.top );
+		this._popoutWindow.focus();
+	},
+
+	/**
+	 * Callback when the new window is opened and the GoldenLayout instance
+	 * within it is initialised
+	 *
+	 * @returns {void}
+	 */
+	_onInitialised: function() {
+		this.isInitialised = true;
+		this.getGlInstance().on( 'popIn', this.popIn, this );
+		this.emit( 'initialised' );
+	},
+
+	/**
+	 * Invoked 50ms after the window unload event
+	 *
+	 * @private
+	 *
+	 * @returns {void}
+	 */
+	_onClose: function() {
+		setTimeout( lm.utils.fnBind( this.emit, this, [ 'closed' ] ), 50 );
+	}
+} );
+/**
+ * This class creates a temporary container
+ * for the component whilst it is being dragged
+ * and handles drag events
+ *
+ * @constructor
+ * @private
+ *
+ * @param {Number} x              The initial x position
+ * @param {Number} y              The initial y position
+ * @param {lm.utils.DragListener} dragListener
+ * @param {lm.LayoutManager} layoutManager
+ * @param {lm.item.AbstractContentItem} contentItem
+ * @param {lm.item.AbstractContentItem} originalParent
+ */
+lm.controls.DragProxy = function( x, y, dragListener, layoutManager, contentItem, originalParent ) {
+
+	lm.utils.EventEmitter.call( this );
+
+	this._dragListener = dragListener;
+	this._layoutManager = layoutManager;
+	this._contentItem = contentItem;
+	this._originalParent = originalParent;
+
+	this._area = null;
+	this._lastValidArea = null;
+
+	this._dragListener.on( 'drag', this._onDrag, this );
+	this._dragListener.on( 'dragStop', this._onDrop, this );
+
+	this.element = $( lm.controls.DragProxy._template );
+	if( originalParent && originalParent._side ) {
+		this._sided = originalParent._sided;
+		this.element.addClass( 'lm_' + originalParent._side );
+		if( [ 'right', 'bottom' ].indexOf( originalParent._side ) >= 0 )
+			this.element.find( '.lm_content' ).after( this.element.find( '.lm_header' ) );
+	}
+	this.element.css( { left: x, top: y } );
+	this.element.find( '.lm_tab' ).attr( 'title', lm.utils.stripTags( this._contentItem.config.title ) );
+	this.element.find( '.lm_title' ).html( this._contentItem.config.title );
+	this.childElementContainer = this.element.find( '.lm_content' );
+	this.childElementContainer.append( contentItem.element );
+
+	this._updateTree();
+	this._layoutManager._$calculateItemAreas();
+	this._setDimensions();
+
+	$( document.body ).append( this.element );
+
+	var offset = this._layoutManager.container.offset();
+
+	this._minX = offset.left;
+	this._minY = offset.top;
+	this._maxX = this._layoutManager.container.width() + this._minX;
+	this._maxY = this._layoutManager.container.height() + this._minY;
+	this._width = this.element.width();
+	this._height = this.element.height();
+
+	this._setDropPosition( x, y );
+};
+
+lm.controls.DragProxy._template = '<div class="lm_dragProxy">' +
+	'<div class="lm_header">' +
+	'<ul class="lm_tabs">' +
+	'<li class="lm_tab lm_active"><i class="lm_left"></i>' +
+	'<span class="lm_title"></span>' +
+	'<i class="lm_right"></i></li>' +
+	'</ul>' +
+	'</div>' +
+	'<div class="lm_content"></div>' +
+	'</div>';
+
+lm.utils.copy( lm.controls.DragProxy.prototype, {
+
+	/**
+	 * Callback on every mouseMove event during a drag. Determines if the drag is
+	 * still within the valid drag area and calls the layoutManager to highlight the
+	 * current drop area
+	 *
+	 * @param   {Number} offsetX The difference from the original x position in px
+	 * @param   {Number} offsetY The difference from the original y position in px
+	 * @param   {jQuery DOM event} event
+	 *
+	 * @private
+	 *
+	 * @returns {void}
+	 */
+	_onDrag: function( offsetX, offsetY, event ) {
+
+		event = event.originalEvent && event.originalEvent.touches ? event.originalEvent.touches[ 0 ] : event;
+
+		var x = event.pageX,
+			y = event.pageY,
+			isWithinContainer = x > this._minX && x < this._maxX && y > this._minY && y < this._maxY;
+
+		if( !isWithinContainer && this._layoutManager.config.settings.constrainDragToContainer === true ) {
+			return;
+		}
+
+		this._setDropPosition( x, y );
+	},
+
+	/**
+	 * Sets the target position, highlighting the appropriate area
+	 *
+	 * @param   {Number} x The x position in px
+	 * @param   {Number} y The y position in px
+	 *
+	 * @private
+	 *
+	 * @returns {void}
+	 */
+	_setDropPosition: function( x, y ) {
+		this.element.css( { left: x, top: y } );
+		this._area = this._layoutManager._$getArea( x, y );
+
+		if( this._area !== null ) {
+			this._lastValidArea = this._area;
+			this._area.contentItem._$highlightDropZone( x, y, this._area );
+		}
+	},
+
+	/**
+	 * Callback when the drag has finished. Determines the drop area
+	 * and adds the child to it
+	 *
+	 * @private
+	 *
+	 * @returns {void}
+	 */
+	_onDrop: function() {
+		this._layoutManager.dropTargetIndicator.hide();
+
+		/*
+		 * Valid drop area found
+		 */
+		if( this._area !== null ) {
+			this._area.contentItem._$onDrop( this._contentItem, this._area );
+
+			/**
+			 * No valid drop area available at present, but one has been found before.
+			 * Use it
+			 */
+		} else if( this._lastValidArea !== null ) {
+			this._lastValidArea.contentItem._$onDrop( this._contentItem, this._lastValidArea );
+
+			/**
+			 * No valid drop area found during the duration of the drag. Return
+			 * content item to its original position if a original parent is provided.
+			 * (Which is not the case if the drag had been initiated by createDragSource)
+			 */
+		} else if( this._originalParent ) {
+			this._originalParent.addChild( this._contentItem );
+
+			/**
+			 * The drag didn't ultimately end up with adding the content item to
+			 * any container. In order to ensure clean up happens, destroy the
+			 * content item.
+			 */
+		} else {
+			this._contentItem._$destroy();
+		}
+
+		this.element.remove();
+
+		this._layoutManager.emit( 'itemDropped', this._contentItem );
+	},
+
+	/**
+	 * Removes the item from its original position within the tree
+	 *
+	 * @private
+	 *
+	 * @returns {void}
+	 */
+	_updateTree: function() {
+
+		/**
+		 * parent is null if the drag had been initiated by a external drag source
+		 */
+		if( this._contentItem.parent ) {
+			this._contentItem.parent.removeChild( this._contentItem, true );
+		}
+
+		this._contentItem._$setParent( this );
+	},
+
+	/**
+	 * Updates the Drag Proxie's dimensions
+	 *
+	 * @private
+	 *
+	 * @returns {void}
+	 */
+	_setDimensions: function() {
+		var dimensions = this._layoutManager.config.dimensions,
+			width = dimensions.dragProxyWidth,
+			height = dimensions.dragProxyHeight;
+
+		this.element.width( width );
+		this.element.height( height );
+		width -= ( this._sided ? dimensions.headerHeight : 0 );
+		height -= ( !this._sided ? dimensions.headerHeight : 0 );
+		this.childElementContainer.width( width );
+		this.childElementContainer.height( height );
+		this._contentItem.element.width( width );
+		this._contentItem.element.height( height );
+		this._contentItem.callDownwards( '_$show' );
+		this._contentItem.callDownwards( 'setSize' );
+	}
+} );
+
+/**
+ * Allows for any DOM item to create a component on drag
+ * start tobe dragged into the Layout
+ *
+ * @param {jQuery element} element
+ * @param {Object} itemConfig the configuration for the contentItem that will be created
+ * @param {LayoutManager} layoutManager
+ *
+ * @constructor
+ */
+lm.controls.DragSource = function( element, itemConfig, layoutManager ) {
+	this._element = element;
+	this._itemConfig = itemConfig;
+	this._layoutManager = layoutManager;
+	this._dragListener = null;
+
+	this._createDragListener();
+};
+
+lm.utils.copy( lm.controls.DragSource.prototype, {
+
+	/**
+	 * Called initially and after every drag
+	 *
+	 * @returns {void}
+	 */
+	_createDragListener: function() {
+		if( this._dragListener !== null ) {
+			this._dragListener.destroy();
+		}
+
+		this._dragListener = new lm.utils.DragListener( this._element );
+		this._dragListener.on( 'dragStart', this._onDragStart, this );
+		this._dragListener.on( 'dragStop', this._createDragListener, this );
+	},
+
+	/**
+	 * Callback for the DragListener's dragStart event
+	 *
+	 * @param   {int} x the x position of the mouse on dragStart
+	 * @param   {int} y the x position of the mouse on dragStart
+	 *
+	 * @returns {void}
+	 */
+	_onDragStart: function( x, y ) {
+		var itemConfig = this._itemConfig;
+		if( lm.utils.isFunction( itemConfig ) ) {
+			itemConfig = itemConfig();
+		}
+		var contentItem = this._layoutManager._$normalizeContentItem( $.extend( true, {}, itemConfig ) ),
+			dragProxy = new lm.controls.DragProxy( x, y, this._dragListener, this._layoutManager, contentItem, null );
+
+		this._layoutManager.transitionIndicator.transitionElements( this._element, dragProxy.element );
+	}
+} );
+
+lm.controls.DropTargetIndicator = function() {
+	this.element = $( lm.controls.DropTargetIndicator._template );
+	$( document.body ).append( this.element );
+};
+
+lm.controls.DropTargetIndicator._template = '<div class="lm_dropTargetIndicator"><div class="lm_inner"></div></div>';
+
+lm.utils.copy( lm.controls.DropTargetIndicator.prototype, {
+	destroy: function() {
+		this.element.remove();
+	},
+
+	highlight: function( x1, y1, x2, y2 ) {
+		this.highlightArea( { x1: x1, y1: y1, x2: x2, y2: y2 } );
+	},
+
+	highlightArea: function( area ) {
+		this.element.css( {
+			left: area.x1,
+			top: area.y1,
+			width: area.x2 - area.x1,
+			height: area.y2 - area.y1
+		} ).show();
+	},
+
+	hide: function() {
+		this.element.hide();
+	}
+} );
+/**
+ * This class represents a header above a Stack ContentItem.
+ *
+ * @param {lm.LayoutManager} layoutManager
+ * @param {lm.item.AbstractContentItem} parent
+ */
+lm.controls.Header = function( layoutManager, parent ) {
+	lm.utils.EventEmitter.call( this );
+
+	this.layoutManager = layoutManager;
+	this.element = $( lm.controls.Header._template );
+
+	if( this.layoutManager.config.settings.selectionEnabled === true ) {
+		this.element.addClass( 'lm_selectable' );
+		this.element.on( 'click touchstart', lm.utils.fnBind( this._onHeaderClick, this ) );
+	}
+
+	this.tabsContainer = this.element.find( '.lm_tabs' );
+	this.tabDropdownContainer = this.element.find( '.lm_tabdropdown_list' );
+	this.tabDropdownContainer.hide();
+	this.controlsContainer = this.element.find( '.lm_controls' );
+	this.parent = parent;
+	this.parent.on( 'resize', this._updateTabSizes, this );
+	this.tabs = [];
+	this.activeContentItem = null;
+	this.closeButton = null;
+	this.tabDropdownButton = null;
+	this.hideAdditionalTabsDropdown = lm.utils.fnBind(this._hideAdditionalTabsDropdown, this);
+	$( document ).mouseup(this.hideAdditionalTabsDropdown);
+
+	this._lastVisibleTabIndex = -1;
+	this._tabControlOffset = this.layoutManager.config.settings.tabControlOffset;
+	this._createControls();
+};
+
+lm.controls.Header._template = [
+	'<div class="lm_header">',
+	'<ul class="lm_tabs"></ul>',
+	'<ul class="lm_controls"></ul>',
+	'<ul class="lm_tabdropdown_list"></ul>',
+	'</div>'
+].join( '' );
+
+lm.utils.copy( lm.controls.Header.prototype, {
+
+	/**
+	 * Creates a new tab and associates it with a contentItem
+	 *
+	 * @param    {lm.item.AbstractContentItem} contentItem
+	 * @param    {Integer} index The position of the tab
+	 *
+	 * @returns {void}
+	 */
+	createTab: function( contentItem, index ) {
+		var tab, i;
+
+		//If there's already a tab relating to the
+		//content item, don't do anything
+		for( i = 0; i < this.tabs.length; i++ ) {
+			if( this.tabs[ i ].contentItem === contentItem ) {
+				return;
+			}
+		}
+
+		tab = new lm.controls.Tab( this, contentItem );
+
+		if( this.tabs.length === 0 ) {
+			this.tabs.push( tab );
+			this.tabsContainer.append( tab.element );
+			return;
+		}
+
+		if( index === undefined ) {
+			index = this.tabs.length;
+		}
+
+		if( index > 0 ) {
+			this.tabs[ index - 1 ].element.after( tab.element );
+		} else {
+			this.tabs[ 0 ].element.before( tab.element );
+		}
+
+		this.tabs.splice( index, 0, tab );
+		this._updateTabSizes();
+	},
+
+	/**
+	 * Finds a tab based on the contentItem its associated with and removes it.
+	 *
+	 * @param    {lm.item.AbstractContentItem} contentItem
+	 *
+	 * @returns {void}
+	 */
+	removeTab: function( contentItem ) {
+		for( var i = 0; i < this.tabs.length; i++ ) {
+			if( this.tabs[ i ].contentItem === contentItem ) {
+				this.tabs[ i ]._$destroy();
+				this.tabs.splice( i, 1 );
+				return;
+			}
+		}
+
+		throw new Error( 'contentItem is not controlled by this header' );
+	},
+
+	/**
+	 * The programmatical equivalent of clicking a Tab.
+	 *
+	 * @param {lm.item.AbstractContentItem} contentItem
+	 */
+	setActiveContentItem: function( contentItem ) {
+		var i, j, isActive, activeTab;
+
+		for( i = 0; i < this.tabs.length; i++ ) {
+			isActive = this.tabs[ i ].contentItem === contentItem;
+			this.tabs[ i ].setActive( isActive );
+			if( isActive === true ) {
+				this.activeContentItem = contentItem;
+				this.parent.config.activeItemIndex = i;
+			}
+		}
+
+		if (this.layoutManager.config.settings.reorderOnTabMenuClick) {
+			/**
+			 * If the tab selected was in the dropdown, move everything down one to make way for this one to be the first.
+			 * This will make sure the most used tabs stay visible.
+			 */
+			if (this._lastVisibleTabIndex !== -1 && this.parent.config.activeItemIndex > this._lastVisibleTabIndex) {
+				activeTab = this.tabs[this.parent.config.activeItemIndex];
+				for ( j = this.parent.config.activeItemIndex; j > 0; j-- ) {
+					this.tabs[j] = this.tabs[j - 1];
+				}
+				this.tabs[0]                       = activeTab;
+				this.parent.config.activeItemIndex = 0;
+			}
+		}
+
+		this._updateTabSizes();
+		this.parent.emitBubblingEvent( 'stateChanged' );
+	},
+
+	/**
+	 * Programmatically operate with header position.
+	 *
+	 * @param {string} position one of ('top','left','right','bottom') to set or empty to get it.
+	 *
+	 * @returns {string} previous header position
+	 */
+	position: function( position ) {
+		var previous = this.parent._header.show;
+		if( previous && !this.parent._side )
+			previous = 'top';
+		if( position !== undefined && this.parent._header.show != position ) {
+			this.parent._header.show = position;
+			this.parent._setupHeaderPosition();
+		}
+		return previous;
+	},
+
+	/**
+	 * Programmatically set closability.
+	 *
+	 * @package private
+	 * @param {Boolean} isClosable Whether to enable/disable closability.
+	 *
+	 * @returns {Boolean} Whether the action was successful
+	 */
+	_$setClosable: function( isClosable ) {
+		if( this.closeButton && this._isClosable() ) {
+			this.closeButton.element[ isClosable ? "show" : "hide" ]();
+			return true;
+		}
+
+		return false;
+	},
+
+	/**
+	 * Destroys the entire header
+	 *
+	 * @package private
+	 *
+	 * @returns {void}
+	 */
+	_$destroy: function() {
+		this.emit( 'destroy', this );
+
+		for( var i = 0; i < this.tabs.length; i++ ) {
+			this.tabs[ i ]._$destroy();
+		}
+		$( document ).off('mouseup', this.hideAdditionalTabsDropdown);
+		this.element.remove();
+	},
+
+	/**
+	 * get settings from header
+	 *
+	 * @returns {string} when exists
+	 */
+	_getHeaderSetting: function( name ) {
+		if( name in this.parent._header )
+			return this.parent._header[ name ];
+	},
+	/**
+	 * Creates the popout, maximise and close buttons in the header's top right corner
+	 *
+	 * @returns {void}
+	 */
+	_createControls: function() {
+		var closeStack,
+			popout,
+			label,
+			maximiseLabel,
+			minimiseLabel,
+			maximise,
+			maximiseButton,
+			tabDropdownLabel,
+			showTabDropdown;
+
+		/**
+		 * Dropdown to show additional tabs.
+		 */
+		showTabDropdown = lm.utils.fnBind( this._showAdditionalTabsDropdown, this );
+		tabDropdownLabel = this.layoutManager.config.labels.tabDropdown;
+		this.tabDropdownButton = new lm.controls.HeaderButton( this, tabDropdownLabel, 'lm_tabdropdown', showTabDropdown );
+		this.tabDropdownButton.element.hide();
+
+		/**
+		 * Popout control to launch component in new window.
+		 */
+		if( this._getHeaderSetting( 'popout' ) ) {
+			popout = lm.utils.fnBind( this._onPopoutClick, this );
+			label = this._getHeaderSetting( 'popout' );
+			new lm.controls.HeaderButton( this, label, 'lm_popout', popout );
+		}
+
+		/**
+		 * Maximise control - set the component to the full size of the layout
+		 */
+		if( this._getHeaderSetting( 'maximise' ) ) {
+			maximise = lm.utils.fnBind( this.parent.toggleMaximise, this.parent );
+			maximiseLabel = this._getHeaderSetting( 'maximise' );
+			minimiseLabel = this._getHeaderSetting( 'minimise' );
+			maximiseButton = new lm.controls.HeaderButton( this, maximiseLabel, 'lm_maximise', maximise );
+
+			this.parent.on( 'maximised', function() {
+				maximiseButton.element.attr( 'title', minimiseLabel );
+			} );
+
+			this.parent.on( 'minimised', function() {
+				maximiseButton.element.attr( 'title', maximiseLabel );
+			} );
+		}
+
+		/**
+		 * Close button
+		 */
+		if( this._isClosable() ) {
+			closeStack = lm.utils.fnBind( this.parent.remove, this.parent );
+			label = this._getHeaderSetting( 'close' );
+			this.closeButton = new lm.controls.HeaderButton( this, label, 'lm_close', closeStack );
+		}
+	},
+
+	/**
+	 * Shows drop down for additional tabs when there are too many to display.
+	 *
+	 * @returns {void}
+	 */
+	_showAdditionalTabsDropdown: function() {
+		this.tabDropdownContainer.show();
+	},
+
+	/**
+	 * Hides drop down for additional tabs when there are too many to display.
+	 *
+	 * @returns {void}
+	 */
+	_hideAdditionalTabsDropdown: function( e ) {
+		this.tabDropdownContainer.hide();
+	},
+
+	/**
+	 * Checks whether the header is closable based on the parent config and
+	 * the global config.
+	 *
+	 * @returns {Boolean} Whether the header is closable.
+	 */
+	_isClosable: function() {
+		return this.parent.config.isClosable && this.layoutManager.config.settings.showCloseIcon;
+	},
+
+	_onPopoutClick: function() {
+		if( this.layoutManager.config.settings.popoutWholeStack === true ) {
+			this.parent.popout();
+		} else {
+			this.activeContentItem.popout();
+		}
+	},
+
+
+	/**
+	 * Invoked when the header's background is clicked (not it's tabs or controls)
+	 *
+	 * @param    {jQuery DOM event} event
+	 *
+	 * @returns {void}
+	 */
+	_onHeaderClick: function( event ) {
+		if( event.target === this.element[ 0 ] ) {
+			this.parent.select();
+		}
+	},
+
+	/**
+	 * Pushes the tabs to the tab dropdown if the available space is not sufficient
+	 *
+	 * @returns {void}
+	 */
+	_updateTabSizes: function(showTabMenu) {
+		if( this.tabs.length === 0 ) {
+			return;
+		}
+
+		//Show the menu based on function argument
+		this.tabDropdownButton.element.toggle(showTabMenu === true);
+
+		var size = function( val ) {
+			return val ? 'width' : 'height';
+		};
+		this.element.css( size( !this.parent._sided ), '' );
+		this.element[ size( this.parent._sided ) ]( this.layoutManager.config.dimensions.headerHeight );
+		var availableWidth = this.element.outerWidth() - this.controlsContainer.outerWidth() - this._tabControlOffset,
+			cumulativeTabWidth = 0,
+			visibleTabWidth = 0,
+			tabElement,
+			i,
+			j,
+			marginLeft,
+			overlap = 0,
+			tabWidth,
+			tabOverlapAllowance = this.layoutManager.config.settings.tabOverlapAllowance,
+			tabOverlapAllowanceExceeded = false,
+			activeIndex = (this.activeContentItem ? this.tabs.indexOf(this.activeContentItem.tab) : 0),
+			activeTab = this.tabs[activeIndex];
+		if( this.parent._sided )
+			availableWidth = this.element.outerHeight() - this.controlsContainer.outerHeight() - this._tabControlOffset;
+		this._lastVisibleTabIndex = -1;
+
+		for( i = 0; i < this.tabs.length; i++ ) {
+			tabElement = this.tabs[ i ].element;
+
+			//Put the tab in the tabContainer so its true width can be checked
+			this.tabsContainer.append( tabElement );
+			tabWidth = tabElement.outerWidth() + parseInt( tabElement.css( 'margin-right' ), 10 );
+
+			cumulativeTabWidth += tabWidth;
+
+			//Include the active tab's width if it isn't already
+			//This is to ensure there is room to show the active tab
+			if (activeIndex <= i) {
+				visibleTabWidth = cumulativeTabWidth;
+			} else {
+				visibleTabWidth = cumulativeTabWidth + activeTab.element.outerWidth() + parseInt(activeTab.element.css('margin-right'), 10);
+			}
+
+			// If the tabs won't fit, check the overlap allowance.
+			if( visibleTabWidth > availableWidth ) {
+
+				//Once allowance is exceeded, all remaining tabs go to menu.
+				if (!tabOverlapAllowanceExceeded) {
+
+					//No overlap for first tab or active tab
+					//Overlap spreads among non-active, non-first tabs
+					if (activeIndex > 0 && activeIndex <= i) {
+						overlap = ( visibleTabWidth - availableWidth ) / (i - 1);
+					} else {
+						overlap = ( visibleTabWidth - availableWidth ) / i;
+					}
+
+					//Check overlap against allowance.
+					if (overlap < tabOverlapAllowance) {
+						for ( j = 0; j <= i; j++ ) {
+							marginLeft = (j !== activeIndex && j !== 0) ? '-' + overlap + 'px' : '';
+							this.tabs[j].element.css({'z-index': i - j, 'margin-left': marginLeft});
+						}
+						this._lastVisibleTabIndex = i;
+						this.tabsContainer.append(tabElement);
+					} else {
+						tabOverlapAllowanceExceeded = true;
+					}
+
+				} else if (i === activeIndex) {
+					//Active tab should show even if allowance exceeded. (We left room.)
+					tabElement.css({'z-index': 'auto', 'margin-left': ''});
+					this.tabsContainer.append(tabElement);
+				}
+
+				if (tabOverlapAllowanceExceeded && i !== activeIndex) {
+					if (showTabMenu) {
+						//Tab menu already shown, so we just add to it.
+						tabElement.css({'z-index': 'auto', 'margin-left': ''});
+						this.tabDropdownContainer.append(tabElement);
+					} else {
+						//We now know the tab menu must be shown, so we have to recalculate everything.
+						this._updateTabSizes(true);
+						return;
+					}
+				}
+
+			}
+			else {
+				this._lastVisibleTabIndex = i;
+				tabElement.css({'z-index': 'auto', 'margin-left': ''});
+				this.tabsContainer.append( tabElement );
+			}
+		}
+
+	}
+} );
+
+
+lm.controls.HeaderButton = function( header, label, cssClass, action ) {
+	this._header = header;
+	this.element = $( '<li class="' + cssClass + '" title="' + label + '"></li>' );
+	this._header.on( 'destroy', this._$destroy, this );
+	this._action = action;
+	this.element.on( 'click touchstart', this._action );
+	this._header.controlsContainer.append( this.element );
+};
+
+lm.utils.copy( lm.controls.HeaderButton.prototype, {
+	_$destroy: function() {
+		this.element.off();
+		this.element.remove();
+	}
+} );
+lm.controls.Splitter = function( isVertical, size, grabSize ) {
+	this._isVertical = isVertical;
+	this._size = size;
+	this._grabSize = grabSize < size ? size : grabSize;
+
+	this.element = this._createElement();
+	this._dragListener = new lm.utils.DragListener( this.element );
+};
+
+lm.utils.copy( lm.controls.Splitter.prototype, {
+	on: function( event, callback, context ) {
+		this._dragListener.on( event, callback, context );
+	},
+
+	_$destroy: function() {
+		this.element.remove();
+	},
+
+	_createElement: function() {
+		var dragHandle = $( '<div class="lm_drag_handle"></div>' );
+		var element    = $( '<div class="lm_splitter"></div>' );
+		element.append(dragHandle);
+
+		var handleExcessSize = this._grabSize - this._size;
+		var handleExcessPos  = handleExcessSize / 2;
+
+		if( this._isVertical ) {
+			dragHandle.css( 'top', -handleExcessPos );
+			dragHandle.css( 'height', this._size + handleExcessSize );
+			element.addClass( 'lm_vertical' );
+			element[ 'height' ]( this._size );
+		} else {
+			dragHandle.css( 'left', -handleExcessPos );
+			dragHandle.css( 'width', this._size + handleExcessSize );
+			element.addClass( 'lm_horizontal' );
+			element[ 'width' ]( this._size );
+		}
+
+		return element;
+	}
+} );
+
+/**
+ * Represents an individual tab within a Stack's header
+ *
+ * @param {lm.controls.Header} header
+ * @param {lm.items.AbstractContentItem} contentItem
+ *
+ * @constructor
+ */
+lm.controls.Tab = function( header, contentItem ) {
+	this.header = header;
+	this.contentItem = contentItem;
+	this.element = $( lm.controls.Tab._template );
+	this.titleElement = this.element.find( '.lm_title' );
+	this.closeElement = this.element.find( '.lm_close_tab' );
+	this.closeElement[ contentItem.config.isClosable ? 'show' : 'hide' ]();
+	this.isActive = false;
+
+	this.setTitle( contentItem.config.title );
+	this.contentItem.on( 'titleChanged', this.setTitle, this );
+
+	this._layoutManager = this.contentItem.layoutManager;
+
+	if(
+		this._layoutManager.config.settings.reorderEnabled === true &&
+		contentItem.config.reorderEnabled === true
+	) {
+		this._dragListener = new lm.utils.DragListener( this.element );
+		this._dragListener.on( 'dragStart', this._onDragStart, this );
+		this.contentItem.on( 'destroy', this._dragListener.destroy, this._dragListener );
+	}
+
+	this._onTabClickFn = lm.utils.fnBind( this._onTabClick, this );
+	this._onCloseClickFn = lm.utils.fnBind( this._onCloseClick, this );
+
+	this.element.on( 'mousedown touchstart', this._onTabClickFn );
+
+	if( this.contentItem.config.isClosable ) {
+		this.closeElement.on( 'click touchstart', this._onCloseClickFn );
+		this.closeElement.on('mousedown', this._onCloseMousedown);
+	} else {
+		this.closeElement.remove();
+	}
+
+	this.contentItem.tab = this;
+	this.contentItem.emit( 'tab', this );
+	this.contentItem.layoutManager.emit( 'tabCreated', this );
+
+	if( this.contentItem.isComponent ) {
+		this.contentItem.container.tab = this;
+		this.contentItem.container.emit( 'tab', this );
+	}
+};
+
+/**
+ * The tab's html template
+ *
+ * @type {String}
+ */
+lm.controls.Tab._template = '<li class="lm_tab"><i class="lm_left"></i>' +
+	'<span class="lm_title"></span><div class="lm_close_tab"></div>' +
+	'<i class="lm_right"></i></li>';
+
+lm.utils.copy( lm.controls.Tab.prototype, {
+
+	/**
+	 * Sets the tab's title to the provided string and sets
+	 * its title attribute to a pure text representation (without
+	 * html tags) of the same string.
+	 *
+	 * @public
+	 * @param {String} title can contain html
+	 */
+	setTitle: function( title ) {
+		this.element.attr( 'title', lm.utils.stripTags( title ) );
+		this.titleElement.html( title );
+	},
+
+	/**
+	 * Sets this tab's active state. To programmatically
+	 * switch tabs, use header.setActiveContentItem( item ) instead.
+	 *
+	 * @public
+	 * @param {Boolean} isActive
+	 */
+	setActive: function( isActive ) {
+		if( isActive === this.isActive ) {
+			return;
+		}
+		this.isActive = isActive;
+
+		if( isActive ) {
+			this.element.addClass( 'lm_active' );
+		} else {
+			this.element.removeClass( 'lm_active' );
+		}
+	},
+
+	/**
+	 * Destroys the tab
+	 *
+	 * @private
+	 * @returns {void}
+	 */
+	_$destroy: function() {
+		this.element.off( 'mousedown touchstart', this._onTabClickFn );
+		this.closeElement.off( 'click touchstart', this._onCloseClickFn );
+		if( this._dragListener ) {
+			this.contentItem.off( 'destroy', this._dragListener.destroy, this._dragListener );
+			this._dragListener.off( 'dragStart', this._onDragStart );
+			this._dragListener = null;
+		}
+		this.element.remove();
+	},
+
+	/**
+	 * Callback for the DragListener
+	 *
+	 * @param   {Number} x The tabs absolute x position
+	 * @param   {Number} y The tabs absolute y position
+	 *
+	 * @private
+	 * @returns {void}
+	 */
+	_onDragStart: function( x, y ) {
+		if( this.contentItem.parent.isMaximised === true ) {
+			this.contentItem.parent.toggleMaximise();
+		}
+		new lm.controls.DragProxy(
+			x,
+			y,
+			this._dragListener,
+			this._layoutManager,
+			this.contentItem,
+			this.header.parent
+		);
+	},
+
+	/**
+	 * Callback when the tab is clicked
+	 *
+	 * @param {jQuery DOM event} event
+	 *
+	 * @private
+	 * @returns {void}
+	 */
+	_onTabClick: function( event ) {
+		// left mouse button or tap
+		if( event.button === 0 || event.type === 'touchstart' ) {
+			var activeContentItem = this.header.parent.getActiveContentItem();
+			if( this.contentItem !== activeContentItem ) {
+				this.header.parent.setActiveContentItem( this.contentItem );
+			}
+
+			// middle mouse button
+		} else if( event.button === 1 && this.contentItem.config.isClosable ) {
+			this._onCloseClick( event );
+		}
+	},
+
+	/**
+	 * Callback when the tab's close button is
+	 * clicked
+	 *
+	 * @param   {jQuery DOM event} event
+	 *
+	 * @private
+	 * @returns {void}
+	 */
+	_onCloseClick: function( event ) {
+		event.stopPropagation();
+		this.header.parent.removeChild( this.contentItem );
+	},
+
+
+	/**
+	 * Callback to capture tab close button mousedown
+	 * to prevent tab from activating.
+	 *
+	 * @param (jQuery DOM event) event
+	 *
+	 * @private
+	 * @returns {void}
+	 */
+	_onCloseMousedown: function(event) {
+		event.stopPropagation();
+	}
+} );
+
+lm.controls.TransitionIndicator = function() {
+	this._element = $( '<div class="lm_transition_indicator"></div>' );
+	$( document.body ).append( this._element );
+
+	this._toElement = null;
+	this._fromDimensions = null;
+	this._totalAnimationDuration = 200;
+	this._animationStartTime = null;
+};
+
+lm.utils.copy( lm.controls.TransitionIndicator.prototype, {
+	destroy: function() {
+		this._element.remove();
+	},
+
+	transitionElements: function( fromElement, toElement ) {
+		/**
+		 * TODO - This is not quite as cool as expected. Review.
+		 */
+		return;
+		this._toElement = toElement;
+		this._animationStartTime = lm.utils.now();
+		this._fromDimensions = this._measure( fromElement );
+		this._fromDimensions.opacity = 0.8;
+		this._element.show().css( this._fromDimensions );
+		lm.utils.animFrame( lm.utils.fnBind( this._nextAnimationFrame, this ) );
+	},
+
+	_nextAnimationFrame: function() {
+		var toDimensions = this._measure( this._toElement ),
+			animationProgress = ( lm.utils.now() - this._animationStartTime ) / this._totalAnimationDuration,
+			currentFrameStyles = {},
+			cssProperty;
+
+		if( animationProgress >= 1 ) {
+			this._element.hide();
+			return;
+		}
+
+		toDimensions.opacity = 0;
+
+		for( cssProperty in this._fromDimensions ) {
+			currentFrameStyles[ cssProperty ] = this._fromDimensions[ cssProperty ] +
+				( toDimensions[ cssProperty ] - this._fromDimensions[ cssProperty ] ) *
+				animationProgress;
+		}
+
+		this._element.css( currentFrameStyles );
+		lm.utils.animFrame( lm.utils.fnBind( this._nextAnimationFrame, this ) );
+	},
+
+	_measure: function( element ) {
+		var offset = element.offset();
+
+		return {
+			left: offset.left,
+			top: offset.top,
+			width: element.outerWidth(),
+			height: element.outerHeight()
+		};
 	}
 } );})(window.$);

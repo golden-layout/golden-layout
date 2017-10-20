@@ -13,7 +13,7 @@ lm.utils.ReactComponentHandler = function( container, state ) {
 	this._container = container;
 	this._initialState = state;
 	this._reactClass = this._getReactClass();
-	this._container.on( 'open', this._render, this );
+	this._container.on( 'open', this._deferredRender, this );
 	this._container.on( 'destroy', this._destroy, this );
 };
 
@@ -39,6 +39,16 @@ lm.utils.copy( lm.utils.ReactComponentHandler.prototype, {
 	},
 
 	/**
+	 * Performs a _render after the current call stack has cleared.
+	 *
+	 * This is required for rendering in React v16, since ReactDOM.render will
+	 * not execute in the middle of an update lifecycle.
+	 */
+	_deferredRender: function() {
+		setTimeout(this._render.bind(this), 0);
+	},
+
+	/**
 	 * Removes the component from the DOM and thus invokes React's unmount lifecycle
 	 *
 	 * @private
@@ -46,7 +56,7 @@ lm.utils.copy( lm.utils.ReactComponentHandler.prototype, {
 	 */
 	_destroy: function() {
 		ReactDOM.unmountComponentAtNode( this._container.getElement()[ 0 ] );
-		this._container.off( 'open', this._render, this );
+		this._container.off( 'open', this._deferredRender, this );
 		this._container.off( 'destroy', this._destroy, this );
 	},
 
