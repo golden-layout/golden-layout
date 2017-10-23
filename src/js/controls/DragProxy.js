@@ -158,7 +158,7 @@ lm.utils.copy( lm.controls.DragProxy.prototype, {
 			 * content item.
 			 */
 		} else {
-			this._contentItem._$destroy();
+			this._contentItem.destroy();
 		}
 
 		this.element.remove();

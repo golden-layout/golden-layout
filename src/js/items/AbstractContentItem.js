@@ -104,10 +104,10 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 		}
 
 		/**
-		 * Call ._$destroy on the content item. This also calls ._$destroy on all its children
+		 * Call .destroy on the content item. This also calls ._$destroy on all its children
 		 */
 		if( keepChild !== true ) {
-			this.contentItems[ index ]._$destroy();
+			this.contentItems[ index ].destroy();
 		}
 
 		/**
@@ -188,7 +188,7 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 		 */
 		if( _$destroyOldChild === true ) {
 			oldChild.parent = null;
-			oldChild._$destroy();
+			oldChild.destroy();
 		}
 
 		/*
@@ -352,6 +352,21 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 		}
 	},
 
+	/**
+	 * Destroy this item and all child items recursively.
+	 *
+	 * @public
+	 *
+	 * @returns {void}
+	 */
+	destroy : function() {
+		this.emitBubblingEvent( 'beforeItemDestroyed' );
+		// Call _$destroy() on child items, but not on self.
+		this.callDownwards( '_$destroy', [], true, true );
+		this.element.remove();
+		this.emitBubblingEvent( 'itemDestroyed' );
+	},
+
 	/****************************************
 	 * SELECTOR
 	 ****************************************/
@@ -446,13 +461,12 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 	},
 
 	/**
-	 * Destroys this item ands its children
+	 * Destroys this item ands emits related events. Does not propagate to child items, use .destroy() for that.
 	 *
 	 * @returns {void}
 	 */
 	_$destroy: function() {
 		this.emitBubblingEvent( 'beforeItemDestroyed' );
-		this.callDownwards( '_$destroy', [], true, true );
 		this.element.remove();
 		this.emitBubblingEvent( 'itemDestroyed' );
 	},

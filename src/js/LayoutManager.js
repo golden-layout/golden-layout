@@ -314,7 +314,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		this._onUnload();
 		$( window ).off( 'resize', this._resizeFunction );
 		$( window ).off( 'unload beforeunload', this._unloadFunction );
-		this.root.callDownwards( '_$destroy', [], true );
+		this.root.destroy();
 		this.root.contentItems = [];
 		this.tabDropPlaceholder.remove();
 		this.dropTargetIndicator.destroy();
