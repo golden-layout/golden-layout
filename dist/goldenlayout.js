@@ -1752,11 +1752,8 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 		if( width !== this.width || height !== this.height ) {
 			this.width = width;
 			this.height = height;
-			var cl = this._contentElement[0];
-			var hdelta = cl.offsetWidth - cl.clientWidth;
-			var vdelta = cl.offsetHeight - cl.clientHeight;
-			this._contentElement.width( this.width-hdelta )
-			     .height( this.height-vdelta );
+			this._contentElement.outerWidth( width )
+			     .outerHeight( height );
 			this.emit( 'resize' );
 		}
 	}
@@ -2345,6 +2342,7 @@ lm.controls.Header = function( layoutManager, parent ) {
 	this.tabs = [];
 	this.activeContentItem = null;
 	this.closeButton = null;
+	this.dockButton = null;
 	this.tabDropdownButton = null;
 	this.hideAdditionalTabsDropdown = lm.utils.fnBind(this._hideAdditionalTabsDropdown, this);
 	$( document ).mouseup(this.hideAdditionalTabsDropdown);
@@ -2469,6 +2467,8 @@ lm.utils.copy( lm.controls.Header.prototype, {
 	 */
 	position: function( position ) {
 		var previous = this.parent._header.show;
+		if( this.parent._docker && this.parent._docker.docked )
+			throw new Error( 'Can\'t change header position in docked stack' );
 		if( previous && !this.parent._side )
 			previous = 'top';
 		if( position !== undefined && this.parent._header.show != position ) {
@@ -2487,11 +2487,28 @@ lm.utils.copy( lm.controls.Header.prototype, {
 	 * @returns {Boolean} Whether the action was successful
 	 */
 	_$setClosable: function( isClosable ) {
+		this._canDestroy = isClosable || this.tabs.length > 1;
 		if( this.closeButton && this._isClosable() ) {
 			this.closeButton.element[ isClosable ? "show" : "hide" ]();
 			return true;
 		}
 
+		return false;
+	},
+
+	/**
+	 * Programmatically set ability to dock.
+	 *
+	 * @package private
+	 * @param {Boolean} isDockable Whether to enable/disable ability to dock.
+	 *
+	 * @returns {Boolean} Whether the action was successful
+	 */
+	_setDockable: function( isDockable ) {
+		if ( this.dockButton && this.parent._header && this.parent._header.dock ) {
+			this.dockButton.element.toggle( !!isDockable );
+			return true;
+		}
 		return false;
 	},
 
@@ -2544,6 +2561,12 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		tabDropdownLabel = this.layoutManager.config.labels.tabDropdown;
 		this.tabDropdownButton = new lm.controls.HeaderButton( this, tabDropdownLabel, 'lm_tabdropdown', showTabDropdown );
 		this.tabDropdownButton.element.hide();
+
+		if( this.parent._header && this.parent._header.dock ) {
+			var button = lm.utils.fnBind( this.parent.dock, this.parent );
+			var label = this._getHeaderSetting( 'dock' );
+			this.dockButton = new lm.controls.HeaderButton( this, label, 'lm_dock', button );
+		}
 
 		/**
 		 * Popout control to launch component in new window.
@@ -2610,14 +2633,18 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		return this.parent.config.isClosable && this.layoutManager.config.settings.showCloseIcon;
 	},
 
-	_onPopoutClick: function() {
-		if( this.layoutManager.config.settings.popoutWholeStack === true ) {
-			this.parent.popout();
-		} else {
-			this.activeContentItem.popout();
-		}
+	_onPopoutClick: function(event) {
+		var popoutWholeStack = this.layoutManager.config.settings.popoutWholeStack;
+		if (popoutWholeStack instanceof Function)
+			popoutWholeStack = popoutWholeStack(event);
+		var item = popoutWholeStack ? this.parent
+			: this.activeContentItem;
+		var handler = this.layoutManager.config.settings.onPopoutClick;
+		if (handler)
+			handler(item, event);
+		else
+			item.popout();
 	},
-
 
 	/**
 	 * Invoked when the header's background is clicked (not it's tabs or controls)
@@ -2921,6 +2948,8 @@ lm.utils.copy( lm.controls.Tab.prototype, {
 	 * @returns {void}
 	 */
 	_onDragStart: function( x, y ) {
+		if( !this.header._canDestroy )
+			return null;
 		if( this.contentItem.parent.isMaximised === true ) {
 			this.contentItem.parent.toggleMaximise();
 		}
@@ -2967,6 +2996,8 @@ lm.utils.copy( lm.controls.Tab.prototype, {
 	 */
 	_onCloseClick: function( event ) {
 		event.stopPropagation();
+		if( !this.header._canDestroy )
+			return;
 		this.header.parent.removeChild( this.contentItem );
 	},
 
@@ -3894,6 +3925,10 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 			if( index > 0 ) {
 				this.contentItems[ index - 1 ].element.after( splitterElement );
 				splitterElement.after( contentItem.element );
+				if ( this._isDocked( index - 1 ) ) {
+					this._splitter[ index - 1 ].element.hide();
+					this._splitter[ index ].element.show();
+				}
 			} else {
 				this.contentItems[ 0 ].element.before( splitterElement );
 				splitterElement.before( contentItem.element );
@@ -3922,6 +3957,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 
 		this.callDownwards( 'setSize' );
 		this.emitBubblingEvent( 'stateChanged' );
+		this._validateDocking();
 	},
 
 	/**
@@ -3952,12 +3988,18 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 			this._splitter.splice( splitterIndex, 1 );
 		}
 
+		if( splitterIndex < this._splitter.length ) {
+			if ( this._isDocked( splitterIndex ) )
+				this._splitter[ splitterIndex ].element.hide();
+		}
 		/**
 		 * Allocate the space that the removed item occupied to the remaining items
 		 */
+		var docked = this._isDocked();
 		for( i = 0; i < this.contentItems.length; i++ ) {
 			if( this.contentItems[ i ] !== contentItem ) {
-				this.contentItems[ i ].config[ this._dimension ] += removedItemSize / ( this.contentItems.length - 1 );
+				if ( !this._isDocked( i ) )
+					this.contentItems[ i ].config[ this._dimension ] += removedItemSize / ( this.contentItems.length - 1 - docked );
 			}
 		}
 
@@ -3967,9 +4009,11 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 			childItem = this.contentItems[ 0 ];
 			this.contentItems = [];
 			this.parent.replaceChild( this, childItem, true );
+			this._validateDocking( this.parent );
 		} else {
 			this.callDownwards( 'setSize' );
 			this.emitBubblingEvent( 'stateChanged' );
+			this._validateDocking();
 		}
 	},
 
@@ -4002,7 +4046,77 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 		this.emitBubblingEvent( 'stateChanged' );
 		this.emit( 'resize' );
 	},
+	/**
+	 * Dock or undock a child if it posiible
+	 *
+	 * @param   {lm.items.AbstractContentItem} contentItem
+	 * @param   {Boolean} mode or toggle if undefined
+	 * @param   {Boolean} collapsed after docking
+	 *
+	 * @returns {void}
+	 */
+	dock: function( contentItem, mode, collapsed ) {
+		if( this.contentItems.length === 1 )
+			throw new Error( 'Can\'t dock child when it single' );
 
+		var removedItemSize = contentItem.config[ this._dimension ] ,
+			headerSize = this.layoutManager.config.dimensions.headerHeight,
+			index = lm.utils.indexOf( contentItem, this.contentItems ),
+			splitterIndex = Math.max( index - 1, 0 );
+
+		if( index === -1 ) {
+			throw new Error( 'Can\'t dock child. ContentItem is not child of this Row or Column' );
+		}
+		var isDocked = contentItem._docker && contentItem._docker.docked;
+		if ( typeof mode != 'undefined' )
+			if ( mode == isDocked )
+				return;
+		if( isDocked ) { // undock it
+			this._splitter[ splitterIndex ].element.show();
+			for(var i = 0; i < this.contentItems.length; i++ ) {
+				var newItemSize = contentItem._docker.size;
+				if( this.contentItems[ i ] === contentItem ) {
+					contentItem.config[ this._dimension ] = newItemSize;
+				} else {
+					itemSize = this.contentItems[ i ].config[ this._dimension ] *= ( 100 - newItemSize ) / 100;
+					this.contentItems[ i ].config[ this._dimension ] = itemSize;
+				}
+			}
+			contentItem._docker = { docked: false };
+		} else { // dock
+			if( this.contentItems.length - this._isDocked() < 2 )
+				throw new Error( 'Can\'t dock child when it is last in ' + this.config.type );
+			var autoside = { column: { first: 'top', last: 'bottom' }, row: { first: 'left', last: 'right' } };
+			var required = autoside[ this.config.type ][ index ? 'last' : 'first' ];
+			if( contentItem.header.position() != required )
+				contentItem.header.position( required );
+
+			if( this._splitter[ splitterIndex ] ) {
+				this._splitter[ splitterIndex ].element.hide();
+			}
+			var docked = this._isDocked();
+			for(var i = 0; i < this.contentItems.length; i++ ) {
+				if( this.contentItems[ i ] !== contentItem ) {
+					if ( !this._isDocked( i ) )
+						this.contentItems[ i ].config[ this._dimension ] += removedItemSize / ( this.contentItems.length - 1 - docked );
+				}else
+					this.contentItems[ i ].config[ this._dimension ] = 0;
+			}
+			contentItem._docker = {
+				dimension: this._dimension,
+				size: removedItemSize,
+				realSize: contentItem.element[ this._dimension ]() - headerSize,
+				docked: true,
+			};
+			if( collapsed )
+				contentItem.childElementContainer[ this._dimension ] ( 0 );
+		}
+		contentItem.element.toggleClass( 'lm_docked', contentItem._docker.docked );
+		this.callDownwards( 'setSize' );
+		this.emitBubblingEvent( 'stateChanged' );
+		this._validateDocking();
+	},
+	
 	/**
 	 * Invoked recursively by the layout manager. AbstractContentItem.init appends
 	 * the contentItem's DOM elements to the container, RowOrColumn init adds splitters
@@ -4021,6 +4135,10 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 
 		for( i = 0; i < this.contentItems.length - 1; i++ ) {
 			this.contentItems[ i ].element.after( this._createSplitter( i ).element );
+		}
+		for( i = 0; i < this.contentItems.length; i++ ) {
+			if( this.contentItems[ i ]._header && this.contentItems[ i ]._header.docked )
+				this.dock( this.contentItems[ i ], true, true );
 		}
 	},
 
@@ -4059,6 +4177,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	_calculateAbsoluteSizes: function() {
 		var i,
 			totalSplitterSize = (this.contentItems.length - 1) * this._splitterSize,
+  		headerSize = this.layoutManager.config.dimensions.headerHeight,
 			totalWidth = this.element.width(),
 			totalHeight = this.element.height(),
 			totalAssigned = 0,
@@ -4071,13 +4190,23 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 		} else {
 			totalWidth -= totalSplitterSize;
 		}
-
+		for( i = 0; i < this.contentItems.length; i++ ) {
+			if( this._isDocked( i ) )
+				if( this._isColumn ) {
+					totalHeight -= headerSize - this._splitterSize;
+				} else {
+					totalWidth -= headerSize - this._splitterSize;
+				}
+		}
+	
 		for( i = 0; i < this.contentItems.length; i++ ) {
 			if( this._isColumn ) {
 				itemSize = Math.floor( totalHeight * ( this.contentItems[ i ].config.height / 100 ) );
 			} else {
 				itemSize = Math.floor( totalWidth * (this.contentItems[ i ].config.width / 100) );
 			}
+			if( this._isDocked( i ) )
+				itemSize = headerSize;
 
 			totalAssigned += itemSize;
 			itemSizes.push( itemSize );
@@ -4291,6 +4420,36 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	},
 
 	/**
+	 * Gets docking information
+	 * @private
+	 */
+	_isDocked: function ( index ) {
+		if ( typeof index == 'undefined' ) {
+			var count = 0;
+			for (var i = 0; i < this.contentItems.length; ++i)
+				if ( this._isDocked( i ) )
+					count++;
+			return count;
+		}
+		if ( index < this.contentItems.length )
+			return this.contentItems[ index ]._docker && this.contentItems[ index ]._docker.docked;
+	},
+
+	/**
+	 * Validate if row or column has ability to dock
+	 * @private
+	 */
+	_validateDocking: function ( that ) {
+		that = that || this;
+		var can = that.contentItems.length - that._isDocked() > 1;
+		for (var i = 0; i < that.contentItems.length; ++i )
+			if ( that.contentItems[ i ] instanceof lm.items.Stack ) {
+				that.contentItems[ i ].header._setDockable( that._isDocked( i ) || can );
+				that.contentItems[ i ].header._$setClosable( can );
+			}
+	},
+
+	/**
 	 * Gets the minimum dimensions for the given item configuration array
 	 * @param item
 	 * @private
@@ -4407,6 +4566,10 @@ lm.items.Stack = function( layoutManager, config, parent ) {
 	this.childElementContainer = $( '<div class="lm_items"></div>' );
 	this.header = new lm.controls.Header( layoutManager, this );
 
+	this.element.on( 'mouseleave mouseenter', lm.utils.fnBind( function ( event ) {
+		if ( this._docker && this._docker.docked )
+			this.childElementContainer[ this._docker.dimension ] ( event.type == 'mouseenter' ? this._docker.realSize : 0 );
+	},this ) );
 	this.element.append( this.header.element );
 	this.element.append( this.childElementContainer );
 	this._setupHeaderPosition();
@@ -4417,17 +4580,27 @@ lm.utils.extend( lm.items.Stack, lm.items.AbstractContentItem );
 
 lm.utils.copy( lm.items.Stack.prototype, {
 
+	dock: function(mode) {
+		if( this._header.dock )
+			if( this.parent instanceof lm.items.RowOrColumn )
+				this.parent.dock( this, mode );
+	},
 	setSize: function() {
-		var i,
-			headerSize = this._header.show ? this.layoutManager.config.dimensions.headerHeight : 0,
-			contentWidth = this.element.width() - (this._sided ? headerSize : 0),
-			contentHeight = this.element.height() - (!this._sided ? headerSize : 0);
+		if ( !this.element.is( ':visible' ) ) return;
+		var isDocked = this._docker && this._docker.docked,
+			content = { width: this.element.width(), height: this.element.height() };
 
-		this.childElementContainer.width( contentWidth );
-		this.childElementContainer.height( contentHeight );
+		if( this._header.show )
+			content[ this._sided ? 'width' : 'height' ] -= this.layoutManager.config.dimensions.headerHeight;
+		if( isDocked )
+			content[ this._docker.dimension ] = this._docker.realSize;
+		if( !isDocked || this._docker.dimension == 'height' )
+			this.childElementContainer.width( content.width );
+		if( !isDocked || this._docker.dimension == 'width' )
+			this.childElementContainer.height( content.height );
 
-		for( i = 0; i < this.contentItems.length; i++ ) {
-			this.contentItems[ i ].element.width( contentWidth ).height( contentHeight );
+		for(var i = 0; i < this.contentItems.length; i++ ) {
+			this.contentItems[ i ].element.width( content.width ).height( content.height );
 		}
 		this.emit( 'resize' );
 		this.emitBubblingEvent( 'stateChanged' );
@@ -4485,6 +4658,8 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		this.setActiveContentItem( contentItem );
 		this.callDownwards( 'setSize' );
 		this._$validateClosability();
+		if( this.parent instanceof lm.items.RowOrColumn )
+			this.parent._validateDocking();
 		this.emitBubblingEvent( 'stateChanged' );
 	},
 
@@ -4501,6 +4676,8 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		}
 
 		this._$validateClosability();
+		if( this.parent instanceof lm.items.RowOrColumn )
+			this.parent._validateDocking();
 		this.emitBubblingEvent( 'stateChanged' );
 	},
 
@@ -4533,6 +4710,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 	_$destroy: function() {
 		lm.items.AbstractContentItem.prototype._$destroy.call( this );
 		this.header._$destroy();
+		this.element.off( 'mouseenter mouseleave' );
 	},
 
 
@@ -4630,6 +4808,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 			contentItem.config[ dimension ] = 50;
 			rowOrColumn.callDownwards( 'setSize' );
 		}
+		this.parent._validateDocking();
 	},
 
 	/**
@@ -4869,6 +5048,11 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		this.layoutManager.tabDropPlaceholder.remove();
 	},
 
+	toggleMaximise: function( e ) {
+		if( !this.isMaximised )
+			this.dock( false );
+		lm.items.AbstractContentItem.prototype.toggleMaximise.call( this, e );
+	},
 	_setupHeaderPosition: function() {
 		var side = [ 'right', 'left', 'bottom' ].indexOf( this._header.show ) >= 0 && this._header.show;
 		this.header.element.toggle( !!this._header.show );
