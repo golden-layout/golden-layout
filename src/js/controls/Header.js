@@ -315,14 +315,18 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		return this.parent.config.isClosable && this.layoutManager.config.settings.showCloseIcon;
 	},
 
-	_onPopoutClick: function() {
-		if( this.layoutManager.config.settings.popoutWholeStack === true ) {
-			this.parent.popout();
-		} else {
-			this.activeContentItem.popout();
-		}
+	_onPopoutClick: function(event) {
+		var popoutWholeStack = this.layoutManager.config.settings.popoutWholeStack;
+		if (popoutWholeStack instanceof Function)
+			popoutWholeStack = popoutWholeStack(event);
+		var item = popoutWholeStack ? this.parent
+			: this.activeContentItem;
+		var handler = this.layoutManager.config.settings.onPopoutClick;
+		if (handler)
+			handler(item, event);
+		else
+			item.popout();
 	},
-
 
 	/**
 	 * Invoked when the header's background is clicked (not it's tabs or controls)
