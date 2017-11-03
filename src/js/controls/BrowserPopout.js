@@ -96,7 +96,19 @@ lm.utils.copy( lm.controls.BrowserPopout.prototype, {
 			 */
 			if( !parentItem ) {
 				if( this._layoutManager.root.contentItems.length > 0 ) {
-					parentItem = this._layoutManager.root.contentItems[ 0 ];
+					var topItem = this._layoutManager.root.contentItems[ 0 ];
+
+					/*
+					 * If the topmost item is a stack, and we can't add another item
+					 *  because stacking in it is disabled, put both items in a new row
+					 */
+					if ( topItem.type === "stack" && topItem._header && !topItem._header.isDropArea && topItem.contentItems.length > 0 ) {
+						parentItem = this._layoutManager.createContentItem({type: "row"});
+						this._layoutManager.root.replaceChild(topItem, parentItem);
+						parentItem.addChild(topItem);
+					} else {
+						parentItem = topItem;
+					}
 				} else {
 					parentItem = this._layoutManager.root;
 				}
@@ -104,7 +116,7 @@ lm.utils.copy( lm.controls.BrowserPopout.prototype, {
 			}
 		}
 
-		parentItem.addChild( childConfig, this._indexInParent );
+		parentItem.addChild( childConfig, index );
 		this.close();
 	},
 

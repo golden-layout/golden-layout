@@ -40,6 +40,8 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 
 		if( index === undefined ) {
 			index = this.contentItems.length;
+		} else if (index > this.contentItems.length) {
+			index = this.contentItems.length;
 		}
 
 		if( this.contentItems.length > 0 ) {

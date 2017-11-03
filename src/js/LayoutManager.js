@@ -1016,7 +1016,8 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	 * @returns {bool} - True if responsive layout should be used; otherwise false.
 	 */
 	_useResponsiveLayout: function() {
-		return this.config.settings && ( this.config.settings.responsiveMode == 'always' || ( this.config.settings.responsiveMode == 'onload' && this._firstLoad ) );
+		return this.config.settings && this.config.settings.stackingEnabled !== false
+				&& ( this.config.settings.responsiveMode == 'always' || ( this.config.settings.responsiveMode == 'onload' && this._firstLoad ) );
 	},
 
 	/**
