@@ -6,6 +6,7 @@ lm.items.Stack = function( layoutManager, config, parent ) {
 	var cfg = layoutManager.config;
 	this._header = { // defaults' reconstruction from old configuration style
 		show: cfg.settings.hasHeaders === true && config.hasHeaders !== false,
+		isDropArea: cfg.settings.stackingEnabled === true && config.stackingEnabled !== false,
 		popout: cfg.settings.showPopoutIcon && cfg.labels.popout,
 		maximise: cfg.settings.showMaximiseIcon && cfg.labels.maximise,
 		close: cfg.settings.showCloseIcon && cfg.labels.close,
@@ -309,13 +310,15 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		}
 
 		var getArea = lm.items.AbstractContentItem.prototype._$getArea,
-			headerArea = getArea.call( this, this.header.element ),
 			contentArea = getArea.call( this, this.childElementContainer ),
 			contentWidth = contentArea.x2 - contentArea.x1,
-			contentHeight = contentArea.y2 - contentArea.y1;
+			contentHeight = contentArea.y2 - contentArea.y1,
+			headerArea = null;
 
-		this._contentAreaDimensions = {
-			header: {
+		this._contentAreaDimensions = {};
+		if (this._header.isDropArea) {
+			headerArea = getArea.call( this, this.header.element );
+			this._contentAreaDimensions.header = {
 				hoverArea: {
 					x1: headerArea.x1,
 					y1: headerArea.y1,
@@ -328,8 +331,8 @@ lm.utils.copy( lm.items.Stack.prototype, {
 					x2: headerArea.x2,
 					y2: headerArea.y2
 				}
-			}
-		};
+			};
+		}
 
 		/**
 		 * If this Stack is a parent to rows, columns or other stacks only its
