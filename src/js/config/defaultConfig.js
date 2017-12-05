@@ -14,7 +14,8 @@ lm.config.defaultConfig = {
 		responsiveMode: 'onload', // Can be onload, always, or none.
 		tabOverlapAllowance: 0, // maximum pixel overlap per tab
 		reorderOnTabMenuClick: true,
-		tabControlOffset: 10
+		tabControlOffset: 10,
+		disableSplitterResize: false
 	},
 	dimensions: {
 		borderWidth: 5,

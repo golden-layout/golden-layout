@@ -515,10 +515,13 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	 */
 	_createSplitter: function( index ) {
 		var splitter;
-		splitter = new lm.controls.Splitter( this._isColumn, this._splitterSize, this._splitterGrabSize );
-		splitter.on( 'drag', lm.utils.fnBind( this._onSplitterDrag, this, [ splitter ] ), this );
-		splitter.on( 'dragStop', lm.utils.fnBind( this._onSplitterDragStop, this, [ splitter ] ), this );
-		splitter.on( 'dragStart', lm.utils.fnBind( this._onSplitterDragStart, this, [ splitter ] ), this );
+		var isSplitterDisabled = this.layoutManager.config.settings.disableSplitterResize;
+		splitter = new lm.controls.Splitter( this._isColumn, this._splitterSize, this._splitterGrabSize, isSplitterDisabled );
+		if(!isSplitterDisabled){
+			splitter.on( 'drag', lm.utils.fnBind( this._onSplitterDrag, this, [ splitter ] ), this );
+			splitter.on( 'dragStop', lm.utils.fnBind( this._onSplitterDragStop, this, [ splitter ] ), this );
+			splitter.on( 'dragStart', lm.utils.fnBind( this._onSplitterDragStart, this, [ splitter ] ), this );
+		}
 		this._splitter.splice( index, 0, splitter );
 		return splitter;
 	},

@@ -1,8 +1,8 @@
-lm.controls.Splitter = function( isVertical, size, grabSize ) {
+lm.controls.Splitter = function( isVertical, size, grabSize, isSplitterDisabled ) {
 	this._isVertical = isVertical;
 	this._size = size;
 	this._grabSize = grabSize < size ? size : grabSize;
-
+	this._isSplitterDisabled = isSplitterDisabled;
 	this.element = this._createElement();
 	this._dragListener = new lm.utils.DragListener( this.element );
 };
@@ -35,7 +35,7 @@ lm.utils.copy( lm.controls.Splitter.prototype, {
 			element.addClass( 'lm_horizontal' );
 			element[ 'width' ]( this._size );
 		}
-
+		this._isSplitterDisabled?dragHandle.css("cursor", "default"):0;
 		return element;
 	}
 } );
