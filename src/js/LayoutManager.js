@@ -321,13 +321,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		this.transitionIndicator.destroy();
 		this.eventHub.destroy();
 
-		this._dragSources.forEach( function( dragSource ) {
-			dragSource._dragListener.destroy();
-			dragSource._element = null;
-			dragSource._itemConfig = null;
-			dragSource._dragListener = null;
-		} );
-		this._dragSources = [];
+		this.clearDragSources();
 	},
 
 	/**
@@ -500,7 +494,21 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 
 		return dragSource;
 	},
-
+	/**
+	 * Clear dragSources on this layout instance
+	 *
+	 * @public
+	 * @returns {void}
+	 */
+	clearDragSources: function() {
+		this._dragSources.forEach( function( dragSource ) {
+			dragSource._dragListener.destroy();
+			dragSource._element = null;
+			dragSource._itemConfig = null;
+			dragSource._dragListener = null;
+		} );
+		this._dragSources = [];
+	},
 	/**
 	 * Programmatically selects an item. This deselects
 	 * the currently selected item, selects the specified item
