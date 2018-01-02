@@ -779,7 +779,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 
 	/**
 	 * Extends the default config with the user specific settings and applies
-	 * derivations. Please note that there's a seperate method (AbstractContentItem._extendItemNode)
+	 * derivations. Please note that there's a separate method (AbstractContentItem._extendItemNode)
 	 * that deals with the extension of item configs
 	 *
 	 * @param   {Object} config
