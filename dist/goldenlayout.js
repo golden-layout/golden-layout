@@ -1996,7 +1996,7 @@ lm.utils.copy( lm.controls.BrowserPopout.prototype, {
 	 */
 	_positionWindow: function() {
 		this._popoutWindow.moveTo( this._dimensions.left, this._dimensions.top );
-		this._popoutWindow.trigger( 'focus' );
+		this._popoutWindow.focus();
 	},
 
 	/**
