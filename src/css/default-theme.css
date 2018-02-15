@@ -56,7 +56,7 @@
 
 .lm_header .lm_tab.active i.lm_left{
 	background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAABCAYAAAD5PA/NAAAAGUlEQVR4nGNkYGBgZWBg4GFgYBBgYGAQAwABNQA5SO3S/AAAAABJRU5ErkJggg==);
-	background-repeat: y;
+	background-repeat: repeat-y;
 	z-index: 1;
 	width: 4px;
 	left: -5px;
