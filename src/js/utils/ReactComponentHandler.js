@@ -29,9 +29,23 @@ lm.utils.copy( lm.utils.ReactComponentHandler.prototype, {
 	 * @returns {void}
 	 */
 	_render: function() {
-		this._reactComponent = ReactDOM.render( this._getReactComponent(), this._container.getElement()[ 0 ] );
-		this._originalComponentWillUpdate = this._reactComponent.componentWillUpdate || function() {
-			};
+		ReactDOM.render( this._getReactComponent(), this._container.getElement()[ 0 ] );
+	},
+
+	/**
+	 * Fired by react when the component is created.
+	 * <p>
+	 * Note: This callback is used instead of the return from `ReactDOM.render` because
+	 *	   of https://github.com/facebook/react/issues/10309.
+	 * </p>
+	 *
+	 * @private
+	 * @arg {React.Ref} component The component instance created by the `ReactDOM.render` call in the `_render` method.
+	 * @returns {void}
+	 */
+	_gotReactComponent: function(component) {
+		this._reactComponent = component;
+		this._originalComponentWillUpdate = this._reactComponent.componentWillUpdate || function() {};
 		this._reactComponent.componentWillUpdate = this._onUpdate.bind( this );
 		if( this._container.getState() ) {
 			this._reactComponent.setState( this._container.getState() );
@@ -96,6 +110,7 @@ lm.utils.copy( lm.utils.ReactComponentHandler.prototype, {
 		var defaultProps = {
 			glEventHub: this._container.layoutManager.eventHub,
 			glContainer: this._container,
+			ref: this._gotReactComponent.bind( this )
 		};
 		var props = $.extend( defaultProps, this._container._config.props );
 		return React.createElement( this._reactClass, props );
