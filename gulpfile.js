@@ -31,7 +31,6 @@ gulp.task( 'build', function() {
 		'./src/js/**'
 	])
 	.pipe(concat('goldenlayout.js'))
-	.pipe(insert.wrap('(function($){', '})(window.$);' ))
 	.pipe(gulp.dest('./dist'))
 	.pipe(uglify())
 	.pipe(concat('goldenlayout.min.js'))
