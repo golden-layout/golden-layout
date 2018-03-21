@@ -96,5 +96,9 @@
         "jquery"
       ]
     }
+  },
+  "optionalDependencies": {
+    "react": "14 || 15 || 16",
+    "react-dom": "14 || 15 || 16"
   }
 }
