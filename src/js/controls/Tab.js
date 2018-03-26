@@ -122,6 +122,11 @@ lm.utils.copy( lm.controls.Tab.prototype,{
 		if( this.contentItem.parent.isMaximised === true ) {
 			this.contentItem.parent.toggleMaximise();
 		}
+		// bad bad hack, we need to resore the "root" maximized content before we can drage
+		// start with 3 tabs. max one. try to drag another.
+		if (this.contentItem.layoutManager._maximisedItem) {
+			this.contentItem.layoutManager.root.getItemsById('__glMaximised')[0].toggleMaximise({ preventDefault: function () { } });
+		}
 		new lm.controls.DragProxy(
 			x,
 			y,
