@@ -42,6 +42,12 @@ lm.utils.copy( lm.utils.DragListener.prototype, {
 
 	onMouseDown: function(oEvent)
 	{
+
+		/* allows for input in title (eg inplace title edit) */
+		if($(oEvent.target).is('input')){
+			return;
+		}
+
 		oEvent.preventDefault();
 
 		if (oEvent.button == 0) {
