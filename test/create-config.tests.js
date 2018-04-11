@@ -1,6 +1,8 @@
+const GoldenLayout = require('../dist/goldenlayout');
+
 describe('It creates and extends config segments correctly', () => {
-  it("doesn't change the default config when calling extend", () => {
-    const createConfig = window.GoldenLayout.prototype._createConfig;
+  test("doesn't change the default config when calling extend", () => {
+    const createConfig = GoldenLayout.prototype._createConfig;
 
     expect(createConfig({}).dimensions.borderWidth).toBe(5);
 

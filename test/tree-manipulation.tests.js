@@ -1,8 +1,10 @@
+const testTools = require('./test.tools.js');
+
 describe('The layout can be manipulated at runtime', () => {
   let myLayout;
 
-  it('Creates an initial layout', () => {
-    myLayout = testTools.createLayout({
+  test('Creates an initial layout', async () => {
+    myLayout = await testTools.createLayout({
       content: [
         {
           type: 'component',
@@ -12,11 +14,11 @@ describe('The layout can be manipulated at runtime', () => {
     });
   });
 
-  it('has the right initial structure', () => {
+  test('has the right initial structure', () => {
     testTools.verifyPath('stack.0.component', myLayout, expect);
   });
 
-  it('adds a child to the stack', () => {
+  test('adds a child to the stack', () => {
     myLayout.root.contentItems[0].addChild({
       type: 'component',
       componentName: 'testComponent',
@@ -26,7 +28,7 @@ describe('The layout can be manipulated at runtime', () => {
     testTools.verifyPath('stack.1.component', myLayout, expect);
   });
 
-  it('replaces a component with a row of components', () => {
+  test('replaces a component with a row of components', () => {
     const oldChild = myLayout.root.contentItems[0].contentItems[1];
     const newChild = {
       type: 'row',
@@ -48,7 +50,7 @@ describe('The layout can be manipulated at runtime', () => {
     testTools.verifyPath('stack.1.row.1.stack.0.component', myLayout, expect);
   });
 
-  it('Has setup parents correctly', () => {
+  test('Has setup parents correctly', () => {
     const component = testTools.verifyPath('stack.1.row.1.stack.0.component', myLayout, expect);
     expect(component.isComponent).toBe(true);
     expect(component.parent.isStack).toBe(true);
@@ -57,7 +59,7 @@ describe('The layout can be manipulated at runtime', () => {
     expect(component.parent.parent.parent.parent.isRoot).toBe(true);
   });
 
-  it('Destroys a component and its parent', () => {
+  test('Destroys a component and its parent', () => {
     const stack = testTools.verifyPath('stack.1.row.1.stack', myLayout, expect);
     expect(stack.contentItems).toHaveLength(1);
     stack.contentItems[0].remove();

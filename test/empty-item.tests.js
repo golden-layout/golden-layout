@@ -1,8 +1,10 @@
+const testTools = require('./test.tools.js');
+
 describe('The layout can handle empty stacks', () => {
   let myLayout;
 
-  it('Creates an initial layout', () => {
-    myLayout = testTools.createLayout({
+  test('Creates an initial layout', async () => {
+    myLayout = await testTools.createLayout({
       content: [
         {
           type: 'row',
@@ -28,7 +30,7 @@ describe('The layout can handle empty stacks', () => {
     });
   });
 
-  it('can manipulate the layout tree with an empty item present', () => {
+  test('can manipulate the layout tree with an empty item present', () => {
     const row = myLayout.root.contentItems[0];
     expect(row.isRow).toBe(true);
 
@@ -38,7 +40,7 @@ describe('The layout can handle empty stacks', () => {
     });
   });
 
-  it('can add children to the empty stack', () => {
+  test('can add children to the empty stack', () => {
     const stack = myLayout.root.contentItems[0].contentItems[2];
     expect(stack.isStack).toBe(true);
     expect(stack.contentItems).toHaveLength(0);
@@ -51,7 +53,7 @@ describe('The layout can handle empty stacks', () => {
     expect(stack.contentItems).toHaveLength(1);
   });
 
-  it('destroys the layout', () => {
+  test('destroys the layout', () => {
     myLayout.destroy();
   });
 });

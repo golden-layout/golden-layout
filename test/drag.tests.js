@@ -1,8 +1,11 @@
+const testTools = require('./test.tools.js');
+const $ = require('jquery');
+
 describe('supports drag creation', () => {
   let layout, dragSrc;
 
-  it('creates a layout', () => {
-    layout = testTools.createLayout({
+  test('creates a layout', async () => {
+    layout = await testTools.createLayout({
       content: [
         {
           type: 'stack',
@@ -20,7 +23,7 @@ describe('supports drag creation', () => {
     expect(layout.isInitialised).toBe(true);
   });
 
-  it('creates a drag source', () => {
+  test('creates a drag source', () => {
     dragSrc = layout.root.contentItems[0].element.find('#dragsource');
     expect(dragSrc).toHaveLength(1);
 
@@ -31,7 +34,7 @@ describe('supports drag creation', () => {
     });
   });
 
-  it('creates a new components if dragged', () => {
+  test('creates a new components if dragged', () => {
     expect($('.dragged')).toHaveLength(0);
 
     let mouse = $.Event('mousedown');
@@ -52,7 +55,7 @@ describe('supports drag creation', () => {
     expect(node.element.find('.dragged')).toHaveLength(1);
   });
 
-  it('destroys the layout', () => {
+  test('destroys the layout', () => {
     layout.destroy();
   });
 });

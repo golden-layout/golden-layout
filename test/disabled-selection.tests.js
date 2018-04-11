@@ -1,8 +1,11 @@
-describe('content items are abled to to emit events that bubble up the tree', () => {
-  let layout, selectionChangedSpy, stackA, stackB;
+const testTools = require('./test.tools.js');
 
-  it('creates a layout', () => {
-    layout = testTools.createLayout({
+describe('content items are abled to to emit events that bubble up the tree', () => {
+  let layout, stackA, stackB;
+  const onselectionChanged = jest.fn();
+
+  test('creates a layout', async () => {
+    layout = await testTools.createLayout({
       content: [
         {
           type: 'stack',
@@ -34,7 +37,7 @@ describe('content items are abled to to emit events that bubble up the tree', ()
     testTools.verifyPath('stack.1.row', layout, expect);
   });
 
-  it('attaches event listeners and retrieves stacks', () => {
+  test('attaches event listeners and retrieves stacks', () => {
     const components = layout.root.getItemsById('test');
 
     expect(components).toHaveLength(2);
@@ -45,23 +48,24 @@ describe('content items are abled to to emit events that bubble up the tree', ()
     expect(stackA.type).toBe('stack');
     expect(stackB.type).toBe('stack');
 
-    selectionChangedSpy = window.jasmine.createSpyObj('selectionChanged', ['onselectionChanged']);
-
-    layout.on('selectionChanged', selectionChangedSpy.onselectionChanged);
+    layout.on('selectionChanged', onselectionChanged);
   });
 
-  it('clicks a header, but nothing happens since enableSelection == false', () => {
+  test('clicks a header, but nothing happens since enableSelection == false', () => {
     const headerElement = stackA.element.find('.lm_header');
+
     expect(headerElement).toHaveLength(1);
-    expect(selectionChangedSpy.onselectionChanged.calls).toHaveLength(0);
+    expect(onselectionChanged.mock.calls).toHaveLength(0);
     expect(layout.selectedItem).toBe(null);
     expect(headerElement.hasClass('lm_selectable')).toBe(false);
+
     headerElement.trigger('click');
-    expect(selectionChangedSpy.onselectionChanged.calls).toHaveLength(0);
+
+    expect(onselectionChanged.mock.calls).toHaveLength(0);
     expect(layout.selectedItem).toBe(null);
   });
 
-  it('destroys the layout', () => {
+  test('destroys the layout', () => {
     layout.destroy();
   });
 });

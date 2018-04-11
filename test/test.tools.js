@@ -1,15 +1,26 @@
-testTools = {};
+const GoldenLayout = require('../dist/goldenlayout');
+
+const testTools = {};
+
+const waitsFor = fn =>
+  new Promise(resolve => {
+    const interval = setInterval(() => {
+      const result = fn();
+      if (result) {
+        resolve();
+        clearInterval(interval);
+      }
+    }, 50);
+  });
 
 testTools.createLayout = function(config) {
-  const myLayout = new window.GoldenLayout(config);
+  const myLayout = new GoldenLayout(config);
 
   myLayout.registerComponent('testComponent', testTools.TestComponent);
 
   myLayout.init();
 
-  waitsFor(() => myLayout.isInitialised);
-
-  return myLayout;
+  return waitsFor(() => myLayout.isInitialised).then(() => myLayout);
 };
 
 testTools.TestComponent = function(container, state) {
@@ -58,3 +69,5 @@ testTools.verifyPath = function(path, layout, expect) {
 
   return node;
 };
+
+module.exports = testTools;

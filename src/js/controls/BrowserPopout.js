@@ -205,7 +205,7 @@ lm.utils.copy(lm.controls.BrowserPopout.prototype, {
     try {
       localStorage.setItem(storageKey, JSON.stringify(config));
     } catch (e) {
-      throw new Error(`Error while writing to localStorage ${e.toString()}`);
+      console.error(`Error while writing to localStorage ${e.toString()}`);
     }
 
     urlParts = document.location.href.split('?');

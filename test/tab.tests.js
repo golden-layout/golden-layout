@@ -1,8 +1,10 @@
+const testTools = require('./test.tools.js');
+
 describe('tabs apply their configuration', () => {
   let layout;
 
-  it('creates a layout', () => {
-    layout = testTools.createLayout({
+  test('creates a layout', async () => {
+    layout = await testTools.createLayout({
       content: [
         {
           type: 'stack',
@@ -24,7 +26,7 @@ describe('tabs apply their configuration', () => {
     expect(layout.isInitialised).toBe(true);
   });
 
-  it('attached a drag listener to the first tab', () => {
+  test('attached a drag listener to the first tab', () => {
     let item1 = layout.root.contentItems[0].contentItems[0],
       item2 = layout.root.contentItems[0].contentItems[1],
       header = layout.root.contentItems[0].header;
@@ -40,7 +42,7 @@ describe('tabs apply their configuration', () => {
     expect(header.tabs[1]._dragListener).not.toBeDefined();
   });
 
-  it('destroys the layout', () => {
+  test('destroys the layout', () => {
     layout.destroy();
   });
 });

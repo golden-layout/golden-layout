@@ -1,9 +1,12 @@
-describe('emits events when components are created', () => {
-  let layout,
-    eventListener = window.jasmine.createSpyObj('eventListener', ['show', 'shown']);
+const GoldenLayout = require('../dist/goldenlayout');
 
-  it('creates a layout', () => {
-    layout = new window.GoldenLayout({
+describe('emits events when components are created', () => {
+  let layout;
+  const show = jest.fn();
+  const shown = jest.fn();
+
+  test('creates a layout', () => {
+    layout = new GoldenLayout({
       content: [
         {
           type: 'stack',
@@ -24,26 +27,26 @@ describe('emits events when components are created', () => {
 
     function Recorder(container) {
       container.getElement().html('that worked');
-      container.on('show', eventListener.show);
-      container.on('shown', eventListener.shown);
+      container.on('show', show);
+      container.on('shown', shown);
     }
 
     layout.registerComponent('testComponent', Recorder);
   });
 
-  it('registers listeners', () => {
-    expect(eventListener.show).not.toHaveBeenCalled();
-    expect(eventListener.shown).not.toHaveBeenCalled();
+  test('registers listeners', () => {
+    expect(show).not.toHaveBeenCalled();
+    expect(shown).not.toHaveBeenCalled();
 
     layout.init();
   });
 
-  it('has called listeners', () => {
-    expect(eventListener.show.calls).toHaveLength(1);
-    expect(eventListener.shown.calls).toHaveLength(1);
+  test('has called listeners', () => {
+    expect(show.mock.calls).toHaveLength(1);
+    expect(shown.mock.calls).toHaveLength(1);
   });
 
-  it('destroys the layout', () => {
+  test('destroys the layout', () => {
     layout.destroy();
   });
 });

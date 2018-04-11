@@ -14,7 +14,8 @@
     "prepublish": "typings install",
     "publish": "npm -s run tslint",
     "test": "grunt test && npm run tslint",
-    "tslint": "tslint \"**/*.ts\" -e \"node_modules/**\" -e \"typings/**\""
+    "tslint": "tslint \"**/*.ts\" -e \"node_modules/**\" -e \"typings/**\"",
+    "test-new": "NODE_ENV=test jest"
   },
   "dependencies": {
     "gulp-uglify-es": "^1.0.1",
@@ -97,5 +98,18 @@
         "typings.json"
       ]
     }
-  ]
+  ],
+  "jest": {
+    "cacheDirectory": "<rootDir>/test/.cache",
+    "testRegex": "(\\.(test|spec|tests))\\.(ts|tsx|js|jsx)$",
+    "moduleDirectories": [
+      "node_modules"
+    ],
+    "testPathIgnorePatterns": [],
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "jsx"
+    ]
+  }
 }

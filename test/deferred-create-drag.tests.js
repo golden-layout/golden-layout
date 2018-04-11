@@ -1,8 +1,12 @@
+const testTools = require('./test.tools.js');
+const { document } = require('global');
+const $ = require('jquery');
+
 describe('supports drag creation with deferred content', () => {
   let layout, dragSrc;
 
-  it('creates a layout', () => {
-    layout = testTools.createLayout({
+  test('creates a layout', async () => {
+    layout = await testTools.createLayout({
       content: [
         {
           type: 'stack',
@@ -20,7 +24,7 @@ describe('supports drag creation with deferred content', () => {
     expect(layout.isInitialised).toBe(true);
   });
 
-  it('creates a drag source', () => {
+  test('creates a drag source', () => {
     dragSrc = layout.root.contentItems[0].element.find('#dragsource');
     expect(dragSrc).toHaveLength(1);
 
@@ -31,8 +35,8 @@ describe('supports drag creation with deferred content', () => {
     }));
   });
 
-  it('creates a new components if dragged', () => {
-    expect($('.dragged')).toHaveLength(0);
+  test('creates a new components if dragged', async () => {
+    expect(document.querySelectorAll('.dragged')).toHaveLength(0);
 
     let mouse = $.Event('mousedown');
     mouse.pageX = dragSrc.position().left;
@@ -46,12 +50,12 @@ describe('supports drag creation with deferred content', () => {
     dragSrc.trigger(mouse);
 
     dragSrc.trigger('mouseup');
-    expect($('.dragged')).toHaveLength(1);
-    const node = testTools.verifyPath('row.0', layout, expect);
+    expect(document.querySelectorAll('.dragged')).toHaveLength(1);
+    const node = await testTools.verifyPath('row.0', layout, expect);
     expect(node.element.find('.dragged')).toHaveLength(1);
   });
 
-  it('destroys the layout', () => {
+  test('destroys the layout', () => {
     layout.destroy();
   });
 });

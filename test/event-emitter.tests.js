@@ -1,30 +1,40 @@
+const lm = require('../dist/goldenlayout').__lm;
+
+const spyOn = (obj, prop) => Object.assign(obj, { [prop]: jest.fn() });
+
 describe('the EventEmitter works', () => {
   const EmitterImplementor = function() {
     lm.utils.EventEmitter.call(this);
   };
 
-  it('is possible to inherit from EventEmitter', () => {
+  test('is possible to inherit from EventEmitter', () => {
     const myObject = new EmitterImplementor();
     expect(typeof myObject.on).toBe('function');
     expect(typeof myObject.unbind).toBe('function');
     expect(typeof myObject.trigger).toBe('function');
   });
 
-  it('notifies callbacks', () => {
+  test('notifies callbacks', () => {
     const myObject = new EmitterImplementor();
     const myListener = { callback() {} };
+
     spyOn(myListener, 'callback');
     expect(myListener.callback).not.toHaveBeenCalled();
+
     myObject.on('someEvent', myListener.callback);
+
     expect(myListener.callback).not.toHaveBeenCalled();
+
     myObject.emit('someEvent', 'Good', 'Morning');
+
     expect(myListener.callback).toHaveBeenCalledWith('Good', 'Morning');
-    expect(myListener.callback.calls).toHaveLength(1);
+    expect(myListener.callback.mock.calls).toHaveLength(1);
   });
 
-  it("triggers an 'all' event", () => {
+  test("triggers an 'all' event", () => {
     const myObject = new EmitterImplementor();
     const myListener = { callback() {}, allCallback() {} };
+
     spyOn(myListener, 'callback');
     spyOn(myListener, 'allCallback');
 
@@ -33,19 +43,22 @@ describe('the EventEmitter works', () => {
 
     expect(myListener.callback).not.toHaveBeenCalled();
     expect(myListener.allCallback).not.toHaveBeenCalled();
+
     myObject.emit('someEvent', 'Good', 'Morning');
+
     expect(myListener.callback).toHaveBeenCalledWith('Good', 'Morning');
-    expect(myListener.callback.calls).toHaveLength(1);
+    expect(myListener.callback.mock.calls).toHaveLength(1);
     expect(myListener.allCallback).toHaveBeenCalledWith('someEvent', 'Good', 'Morning');
-    expect(myListener.allCallback.calls).toHaveLength(1);
+    expect(myListener.allCallback.mock.calls).toHaveLength(1);
 
     myObject.emit('someOtherEvent', 123);
-    expect(myListener.callback.calls).toHaveLength(1);
+
+    expect(myListener.callback.mock.calls).toHaveLength(1);
     expect(myListener.allCallback).toHaveBeenCalledWith('someOtherEvent', 123);
-    expect(myListener.allCallback.calls).toHaveLength(2);
+    expect(myListener.allCallback.mock.calls).toHaveLength(2);
   });
 
-  it('triggers sets the right context', () => {
+  test('triggers sets the right context', () => {
     const myObject = new EmitterImplementor();
     let context = null;
     const myListener = {
@@ -60,33 +73,33 @@ describe('the EventEmitter works', () => {
     expect(context.some).toBe('thing');
   });
 
-  it('unbinds events', () => {
+  test('unbinds events', () => {
     const myObject = new EmitterImplementor();
     const myListener = { callback() {} };
     spyOn(myListener, 'callback');
     myObject.on('someEvent', myListener.callback);
-    expect(myListener.callback.calls).toHaveLength(0);
+    expect(myListener.callback.mock.calls).toHaveLength(0);
     myObject.emit('someEvent');
-    expect(myListener.callback.calls).toHaveLength(1);
+    expect(myListener.callback.mock.calls).toHaveLength(1);
     myObject.unbind('someEvent', myListener.callback);
     myObject.emit('someEvent');
-    expect(myListener.callback.calls).toHaveLength(1);
+    expect(myListener.callback.mock.calls).toHaveLength(1);
   });
 
-  it('unbinds all events if no context is provided', () => {
+  test('unbinds all events if no context is provided', () => {
     const myObject = new EmitterImplementor();
     const myListener = { callback() {} };
     spyOn(myListener, 'callback');
     myObject.on('someEvent', myListener.callback);
-    expect(myListener.callback.calls).toHaveLength(0);
+    expect(myListener.callback.mock.calls).toHaveLength(0);
     myObject.emit('someEvent');
-    expect(myListener.callback.calls).toHaveLength(1);
+    expect(myListener.callback.mock.calls).toHaveLength(1);
     myObject.unbind('someEvent');
     myObject.emit('someEvent');
-    expect(myListener.callback.calls).toHaveLength(1);
+    expect(myListener.callback.mock.calls).toHaveLength(1);
   });
 
-  it('unbinds events for a specific context only', () => {
+  test('unbinds events for a specific context only', () => {
     const myObject = new EmitterImplementor();
     const myListener = { callback() {} };
     const contextA = { name: 'a' };
@@ -94,18 +107,18 @@ describe('the EventEmitter works', () => {
     spyOn(myListener, 'callback');
     myObject.on('someEvent', myListener.callback, contextA);
     myObject.on('someEvent', myListener.callback, contextB);
-    expect(myListener.callback.calls).toHaveLength(0);
+    expect(myListener.callback.mock.calls).toHaveLength(0);
     myObject.emit('someEvent');
-    expect(myListener.callback.calls).toHaveLength(2);
+    expect(myListener.callback.mock.calls).toHaveLength(2);
     myObject.unbind('someEvent', myListener.callback, contextA);
     myObject.emit('someEvent');
-    expect(myListener.callback.calls).toHaveLength(3);
+    expect(myListener.callback.mock.calls).toHaveLength(3);
     myObject.unbind('someEvent', myListener.callback, contextB);
     myObject.emit('someEvent');
-    expect(myListener.callback.calls).toHaveLength(3);
+    expect(myListener.callback.mock.calls).toHaveLength(3);
   });
 
-  it('throws an exception when trying to unsubscribe for a non existing method', () => {
+  test('throws an exception when trying to unsubscribe for a non existing method', () => {
     const myObject = new EmitterImplementor();
     const myListener = { callback() {} };
 
@@ -124,7 +137,7 @@ describe('the EventEmitter works', () => {
     }).not.toThrow();
   });
 
-  it('throws an exception when attempting to bind a non-function', () => {
+  test('throws an exception when attempting to bind a non-function', () => {
     const myObject = new EmitterImplementor();
 
     expect(() => {

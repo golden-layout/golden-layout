@@ -1,24 +1,25 @@
-/* global GoldenLayout */
+const GoldenLayout = require('../dist/goldenlayout');
+
 describe('Can minify and unminify configuration objects', () => {
-  it('has minification methods', () => {
+  test('has minification methods', () => {
     expect(typeof GoldenLayout.minifyConfig).toBe('function');
     expect(typeof GoldenLayout.unminifyConfig).toBe('function');
   });
 
-  it("doesn't manipulate the original config", () => {
+  test("doesn't manipulate the original config", () => {
     const minifiedTestConfig = GoldenLayout.minifyConfig(testConfig);
     expect(typeof minifiedTestConfig).toBe('object');
     expect(minifiedTestConfig === testConfig).toBe(false);
   });
 
-  it('minifies and unminifies the config directly', () => {
+  test('minifies and unminifies the config directly', () => {
     let min = GoldenLayout.minifyConfig(testConfig),
       max = GoldenLayout.unminifyConfig(min);
 
     expect(JSON.stringify(max)).toBe(JSON.stringify(testConfig));
   });
 
-  it("doesn't change single character keys and values", () => {
+  test("doesn't change single character keys and values", () => {
     let conf = { a: 'some', thing: 'b' },
       min = GoldenLayout.minifyConfig(conf),
       max = GoldenLayout.unminifyConfig(min);
@@ -34,7 +35,7 @@ describe('Can minify and unminify configuration objects', () => {
     return res;
   }
 
-  it('works with existing minified configurations', () => {
+  test('works with existing minified configurations', () => {
     // Create with this:
     // var min = GoldenLayout.minifyConfig( allExistingKeysConfig() );
     // console.log( JSON.stringify( min ) );

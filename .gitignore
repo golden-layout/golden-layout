@@ -4,3 +4,4 @@ typings
 npm-debug.log
 lib/
 *.log
+test/.cache

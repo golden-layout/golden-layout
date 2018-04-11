@@ -1,8 +1,10 @@
+const testTools = require('./test.tools.js');
+
 describe('Dynamic ids work properly', () => {
   let layout, item;
 
-  it('creates a layout', () => {
-    layout = testTools.createLayout({
+  test('creates a layout', async () => {
+    layout = await testTools.createLayout({
       content: [
         {
           type: 'component',
@@ -12,18 +14,18 @@ describe('Dynamic ids work properly', () => {
     });
   });
 
-  it('finds the item', () => {
+  test('finds the item', () => {
     item = layout.root.contentItems[0].contentItems[0];
     expect(item.isComponent).toBe(true);
   });
 
-  it('has no id initially', () => {
+  test('has no id initially', () => {
     expect(item.config.id).toBe(undefined);
     expect(item.hasId('id_1')).toBe(false);
     expect(item.hasId('id_2')).toBe(false);
   });
 
-  it('adds the first id as a string', () => {
+  test('adds the first id as a string', () => {
     item.addId('id_1');
     expect(item.hasId('id_1')).toBe(true);
     expect(item.hasId('id_2')).toBe(false);
@@ -31,7 +33,7 @@ describe('Dynamic ids work properly', () => {
     expect(layout.root.getItemsById('id_1')[0]).toBe(item);
   });
 
-  it('adds the second id to an array', () => {
+  test('adds the second id to an array', () => {
     item.addId('id_2');
     expect(item.config.id instanceof Array).toBe(true);
     expect(item.config.id).toHaveLength(2);
@@ -43,7 +45,7 @@ describe('Dynamic ids work properly', () => {
     expect(layout.root.getItemsById('id_2')[0]).toBe(item);
   });
 
-  it('doesn\t add duplicated ids', () => {
+  test('doesn\t add duplicated ids', () => {
     item.addId('id_2');
     expect(item.config.id instanceof Array).toBe(true);
     expect(item.config.id).toHaveLength(2);
@@ -53,14 +55,14 @@ describe('Dynamic ids work properly', () => {
     expect(layout.root.getItemsById('id_2')[0]).toBe(item);
   });
 
-  it('removes ids', () => {
+  test('removes ids', () => {
     item.removeId('id_2');
     expect(item.hasId('id_1')).toBe(true);
     expect(item.hasId('id_2')).toBe(false);
     expect(item.config.id).toHaveLength(1);
   });
 
-  it('throws error when trying to remove a non-existant id', () => {
+  test('throws error when trying to remove a non-existant id', () => {
     let error;
 
     try {
@@ -72,7 +74,7 @@ describe('Dynamic ids work properly', () => {
     expect(error).toBeDefined();
   });
 
-  it('destroys the layout', () => {
+  test('destroys the layout', () => {
     layout.destroy();
   });
 });
