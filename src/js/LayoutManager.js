@@ -615,7 +615,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 			if( sides [ side ] )
 				area[ side ] = area[ sides [ side ] ] - areaSize;
 			else
-				area[ side ] = areaSize;			
+				area[ side ] = areaSize;
 			area.surface = ( area.x2 - area.x1 ) * ( area.y2 - area.y1 );
 			this._itemAreas.push( area );
 		}
@@ -1067,18 +1067,40 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	}
 } );
 
+// Create our dependency variables inside the current scope
+if( typeof $ === 'undefined' ) {
+	var $;
+}
+
+if( typeof React === 'undefined' ) {
+	var React;
+}
+
+if( typeof ReactDOM === 'undefined' ) {
+	var ReactDOM;
+}
+
 /**
  * Expose the Layoutmanager as the single entrypoint using UMD
  */
 (function() {
 	/* global define */
-	if( typeof define === 'function' && define.amd ) {
+	if( typeof exports === 'object' ) {
+		if ( typeof require === 'function' ) {
+			$ = require( 'jquery' );
+			try {
+				// Webpack optional require.
+				// Will warn rather than error if react and react-dom aren't found.
+				React = require( 'react' );
+				ReactDOM = require( 'react-dom' );
+			} catch ( e ) {}
+		}
+		module.exports = lm.LayoutManager;
+	} else if( typeof define === 'function' && define.amd ) {
 		define( [ 'jquery' ], function( jquery ) {
 			$ = jquery;
 			return lm.LayoutManager;
 		} ); // jshint ignore:line
-	} else if( typeof exports === 'object' ) {
-		module.exports = lm.LayoutManager;
 	} else {
 		window.GoldenLayout = lm.LayoutManager;
 	}
