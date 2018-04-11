@@ -1,68 +1,64 @@
-describe( 'Sets and retrieves a component\'s state', function() {
+describe("Sets and retrieves a component's state", () => {
+  let myLayout, myComponent;
 
-	var myLayout, myComponent;
+  it('Can create a most basic layout', () => {
+    runs(() => {
+      myLayout = new window.GoldenLayout({
+        content: [
+          {
+            type: 'component',
+            componentName: 'testComponent',
+            componentState: { testValue: 'initial' },
+          },
+        ],
+      });
 
-	it( 'Can create a most basic layout', function() {
-		runs(function(){
-			myLayout = new window.GoldenLayout({
-				content: [{
-					type: 'component',
-					componentName: 'testComponent',
-					componentState: { testValue: 'initial' }
-				}]
-			});
+      myLayout.registerComponent('testComponent', function(container, state) {
+        this.container = container;
+        this.state = state;
+        myComponent = this;
+      });
 
+      myLayout.init();
+    });
 
-			myLayout.registerComponent( 'testComponent', function( container, state ){
-				this.container = container;
-				this.state = state;
-				myComponent = this;
-			});
+    waitsFor(() => myLayout.isInitialised);
 
-			myLayout.init();
-		});
-		
-		waitsFor(function(){
-			return myLayout.isInitialised;
-		});
+    runs(() => {
+      expect(myComponent.state.testValue).toBe('initial');
+    });
+  });
 
-		runs(function(){
-			expect( myComponent.state.testValue ).toBe( 'initial' );
-		});
-	});
+  it('returns the initial state', () => {
+    const config = myLayout.toConfig();
+    expect(config.content[0].content[0].componentState.testValue).toBe('initial');
+  });
 
-	it( 'returns the initial state', function(){
-		var config = myLayout.toConfig();
-		expect( config.content[ 0 ].content[ 0 ].componentState.testValue ).toBe( 'initial' );
-	});
+  it('emits stateChanged when a component updates its state', () => {
+    let stateChanges = 0;
 
-	it( 'emits stateChanged when a component updates its state', function(){
-		var stateChanges = 0;
+    myLayout.on('stateChanged', () => {
+      stateChanges++;
+    });
 
-		myLayout.on( 'stateChanged', function(){
-			stateChanges++;
-		});
+    runs(() => {
+      myComponent.container.setState({ testValue: 'updated' });
+    });
 
-		runs(function(){
-			myComponent.container.setState({ testValue: 'updated' });
-		});
+    waitsFor(() => stateChanges !== 0);
 
-		waitsFor(function(){
-			return stateChanges !== 0;
-		});
+    runs(() => {
+      expect(stateChanges).toBe(1);
+    });
+  });
 
-		runs(function(){
-			expect( stateChanges ).toBe( 1 );
-		});
-	});
+  it('returns the updated state', () => {
+    const config = myLayout.toConfig();
+    expect(config.content[0].content[0].componentState.testValue).toBe('updated');
+  });
 
-	it( 'returns the updated state', function(){
-		var config = myLayout.toConfig();
-		expect( config.content[ 0 ].content[ 0 ].componentState.testValue ).toBe( 'updated' );
-	});
-
-	it( 'Destroys the layout', function(){
-		myLayout.destroy();
-		expect( myLayout.root.contentItems.length ).toBe( 0 );
-	});
+  it('Destroys the layout', () => {
+    myLayout.destroy();
+    expect(myLayout.root.contentItems).toHaveLength(0);
+  });
 });

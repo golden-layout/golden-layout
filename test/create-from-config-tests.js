@@ -1,159 +1,168 @@
-describe( 'Creates the right structure based on the provided config', function() {
+describe('Creates the right structure based on the provided config', () => {
+  const createLayout = function(config) {
+    const myLayout = new window.GoldenLayout(config);
 
-	var createLayout = function( config ) {
-		var myLayout = new window.GoldenLayout( config );
+    myLayout.registerComponent('testComponent', container => {
+      container.getElement().html('that worked');
+    });
 
-		myLayout.registerComponent( 'testComponent', function( container ){
-			container.getElement().html( 'that worked' );
-		});
+    myLayout.init();
 
-		myLayout.init();
+    return myLayout;
+  };
 
-		return myLayout;
-	};
+  it('creates the right primitive types: component only', () => {
+    let layout;
 
+    runs(() => {
+      layout = createLayout({
+        content: [
+          {
+            type: 'component',
+            componentName: 'testComponent',
+          },
+        ],
+      });
+    });
 
-	it( 'creates the right primitive types: component only', function() {
-		var layout;
+    waitsFor(() => layout.isInitialised);
 
-		runs(function(){
-			layout = createLayout({
-				content: [{
-					type: 'component',
-					componentName: 'testComponent'
-				}]
-			});
-		});
+    runs(() => {
+      expect(layout.isInitialised).toBe(true);
+      expect(layout.root.isRoot).toBe(true);
+      expect(layout.root.contentItems).toHaveLength(1);
+      expect(layout.root.contentItems[0].isStack).toBe(true);
+      expect(layout.root.contentItems[0].contentItems[0].isComponent).toBe(true);
+    });
 
-		waitsFor(function(){
-			return layout.isInitialised;
-		});
-		
-		runs(function(){
-			expect( layout.isInitialised ).toBe( true );
-			expect( layout.root.isRoot ).toBe( true );
-			expect( layout.root.contentItems.length ).toBe( 1 );
-			expect( layout.root.contentItems[ 0 ].isStack ).toBe( true );
-			expect( layout.root.contentItems[ 0 ].contentItems[ 0 ].isComponent ).toBe( true );
-		});
+    runs(() => {
+      layout.destroy();
+    });
+  });
 
-		runs(function(){
-			layout.destroy();
-		});
-	});
+  it('creates the right primitive types: stack and component', () => {
+    let layout;
 
-	it( 'creates the right primitive types: stack and component', function() {
-		var layout;
+    runs(() => {
+      layout = createLayout({
+        content: [
+          {
+            type: 'stack',
+            content: [
+              {
+                type: 'component',
+                componentName: 'testComponent',
+              },
+            ],
+          },
+        ],
+      });
+    });
 
-		runs(function(){
-			layout = createLayout({
-				content: [{
-					type: 'stack',
-					content: [{
-						type: 'component',
-						componentName: 'testComponent'
-					}]
-				}]
-			});
-		});
+    waitsFor(() => layout.isInitialised);
 
-		waitsFor(function(){
-			return layout.isInitialised;
-		});
-		
-		runs(function(){
-			expect( layout.isInitialised ).toBe( true );
-			expect( layout.root.isRoot ).toBe( true );
-			expect( layout.root.contentItems.length ).toBe( 1 );
-			expect( layout.root.contentItems[ 0 ].isStack ).toBe( true );
-			expect( layout.root.contentItems[ 0 ].contentItems[ 0 ].isComponent ).toBe( true );
-		});
+    runs(() => {
+      expect(layout.isInitialised).toBe(true);
+      expect(layout.root.isRoot).toBe(true);
+      expect(layout.root.contentItems).toHaveLength(1);
+      expect(layout.root.contentItems[0].isStack).toBe(true);
+      expect(layout.root.contentItems[0].contentItems[0].isComponent).toBe(true);
+    });
 
-		runs(function(){
-			layout.destroy();
-		});
-	});
+    runs(() => {
+      layout.destroy();
+    });
+  });
 
-	it( 'creates the right primitive types: row and two component', function() {
-		var layout;
+  it('creates the right primitive types: row and two component', () => {
+    let layout;
 
-		runs(function(){
-			layout = createLayout({
-				content: [{
-					type: 'row',
-					content: [{
-						type: 'component',
-						componentName: 'testComponent'
-					},
-					{
-						type: 'component',
-						componentName: 'testComponent'
-					}]
-				}]
-			});
-		});
+    runs(() => {
+      layout = createLayout({
+        content: [
+          {
+            type: 'row',
+            content: [
+              {
+                type: 'component',
+                componentName: 'testComponent',
+              },
+              {
+                type: 'component',
+                componentName: 'testComponent',
+              },
+            ],
+          },
+        ],
+      });
+    });
 
-		waitsFor(function(){
-			return layout.isInitialised;
-		});
-		
-		runs(function(){
-			expect( layout.isInitialised ).toBe( true );
-			expect( layout.root.contentItems.length ).toBe( 1 );
-			expect( layout.root.contentItems[ 0 ].isRow ).toBe( true );
-			expect( layout.root.contentItems[ 0 ].contentItems[ 0 ].isStack ).toBe( true );
-			expect( layout.root.contentItems[ 0 ].contentItems[ 1 ].isStack ).toBe( true );
-			expect( layout.root.contentItems[ 0 ].contentItems.length ).toBe( 2 );
-			expect( layout.root.contentItems[ 0 ].contentItems[ 0 ].contentItems[ 0 ].isComponent ).toBe( true );
-			expect( layout.root.contentItems[ 0 ].contentItems[ 1 ].contentItems[ 0 ].isComponent ).toBe( true );
-		});
+    waitsFor(() => layout.isInitialised);
 
-		runs(function(){
-			layout.destroy();
-		});
-	});
+    runs(() => {
+      expect(layout.isInitialised).toBe(true);
+      expect(layout.root.contentItems).toHaveLength(1);
+      expect(layout.root.contentItems[0].isRow).toBe(true);
+      expect(layout.root.contentItems[0].contentItems[0].isStack).toBe(true);
+      expect(layout.root.contentItems[0].contentItems[1].isStack).toBe(true);
+      expect(layout.root.contentItems[0].contentItems).toHaveLength(2);
+      expect(layout.root.contentItems[0].contentItems[0].contentItems[0].isComponent).toBe(true);
+      expect(layout.root.contentItems[0].contentItems[1].contentItems[0].isComponent).toBe(true);
+    });
 
+    runs(() => {
+      layout.destroy();
+    });
+  });
 
-	it( 'creates the right primitive types: stack -> column -> component', function() {
-		var layout;
+  it('creates the right primitive types: stack -> column -> component', () => {
+    let layout;
 
-		runs(function(){
-			layout = createLayout({
-				content: [{
-					type: 'stack',
-					content: [{
-						type: 'column',
-						content:[{
-							type: 'component',
-							componentName: 'testComponent'
-						}]
-					}]
-				}]
-			});
-		});
+    runs(() => {
+      layout = createLayout({
+        content: [
+          {
+            type: 'stack',
+            content: [
+              {
+                type: 'column',
+                content: [
+                  {
+                    type: 'component',
+                    componentName: 'testComponent',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+    });
 
-		waitsFor(function(){
-			return layout.isInitialised;
-		});
-		
-		runs(function(){
-			expect( layout.isInitialised ).toBe( true );
+    waitsFor(() => layout.isInitialised);
 
-			expect( layout.root.contentItems.length ).toBe( 1 );
-			expect( layout.root.contentItems[ 0 ].isStack ).toBe( true );
+    runs(() => {
+      expect(layout.isInitialised).toBe(true);
 
-			expect( layout.root.contentItems[ 0 ].contentItems.length ).toBe( 1 );
-			expect( layout.root.contentItems[ 0 ].contentItems[ 0 ].isColumn ).toBe( true );
+      expect(layout.root.contentItems).toHaveLength(1);
+      expect(layout.root.contentItems[0].isStack).toBe(true);
 
-			expect( layout.root.contentItems[ 0 ].contentItems[ 0 ].contentItems.length ).toBe( 1 );
-			expect( layout.root.contentItems[ 0 ].contentItems[ 0 ].contentItems[ 0 ].isStack ).toBe( true );
+      expect(layout.root.contentItems[0].contentItems).toHaveLength(1);
+      expect(layout.root.contentItems[0].contentItems[0].isColumn).toBe(true);
 
-			expect( layout.root.contentItems[ 0 ].contentItems[ 0 ].contentItems[ 0 ].contentItems.length ).toBe( 1 );
-			expect( layout.root.contentItems[ 0 ].contentItems[ 0 ].contentItems[ 0 ].contentItems[ 0 ].isComponent ).toBe( true );
-		});
+      expect(layout.root.contentItems[0].contentItems[0].contentItems).toHaveLength(1);
+      expect(layout.root.contentItems[0].contentItems[0].contentItems[0].isStack).toBe(true);
 
-		runs(function(){
-			layout.destroy();
-		});
-	});
+      expect(layout.root.contentItems[0].contentItems[0].contentItems[0].contentItems).toHaveLength(
+        1
+      );
+      expect(
+        layout.root.contentItems[0].contentItems[0].contentItems[0].contentItems[0].isComponent
+      ).toBe(true);
+    });
+
+    runs(() => {
+      layout.destroy();
+    });
+  });
 });

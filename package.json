@@ -1,22 +1,58 @@
 {
-  "name": "golden-layout",
+  "name": "@ndelangen/golden-layout",
   "version": "1.5.9",
-  "author": "deepstreamHub GmbH",
+  "description": "",
   "license": "MIT",
+  "author": "deepstreamHub GmbH",
+  "main": "./dist/goldenlayout.js",
+  "typings": "./index.d.ts",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "lint": "eslint . --fix",
+    "prepublish": "typings install",
+    "publish": "npm -s run tslint",
+    "test": "grunt test && npm run tslint",
+    "tslint": "tslint \"**/*.ts\" -e \"node_modules/**\" -e \"typings/**\""
+  },
+  "dependencies": {
+    "gulp-uglify-es": "^1.0.1",
+    "jquery": "*"
+  },
   "devDependencies": {
-    "grunt": "~0.4.2",
+    "babel-core": "^6.26.0",
+    "babel-eslint": "^8.2.2",
+    "babel-plugin-glamorous-displayname": "^2.2.0",
+    "babel-plugin-transform-export-extensions": "^6.22.0",
+    "babel-plugin-transform-runtime": "^6.23.0",
+    "babel-preset-env": "^1.6.1",
+    "babel-preset-react": "^6.24.1",
+    "babel-preset-stage-2": "^6.24.1",
+    "babel-register": "^6.26.0",
+    "eslint": "^4.19.1",
+    "eslint-config-airbnb": "^16.1.0",
+    "eslint-config-prettier": "^2.9.0",
+    "eslint-plugin-import": "^2.9.0",
+    "eslint-plugin-jest": "^21.15.0",
+    "eslint-plugin-json": "^1.2.0",
+    "eslint-plugin-jsx-a11y": "^6.0.3",
+    "eslint-plugin-prettier": "^2.6.0",
+    "eslint-plugin-react": "^7.7.0",
+    "grunt": "~1.0.2",
     "grunt-contrib-less": "^1.4.1",
-    "grunt-contrib-watch": "0.5.3",
+    "grunt-contrib-watch": "1.0.0",
     "grunt-gulp": "^1.0.1",
     "grunt-karma": "^2.0.0",
-    "grunt-release": "0.13.*",
+    "grunt-release": "0.14.0",
     "gulp": "^3.9.1",
     "gulp-concat": "^2.6.0",
     "gulp-continuous-concat": "^0.1.1",
     "gulp-insert": "^0.5.0",
-    "gulp-uglify": "^1.5.3",
-    "gulp-watch": "^4.3.5",
+    "gulp-uglify": "^3.0.0",
+    "gulp-watch": "^5.0.0",
     "handlebars": "2.0.0-alpha.2",
+    "jest": "^22.4.3",
     "karma": "0.13.*",
     "karma-chrome-launcher": "~0.1.4",
     "karma-coverage": "0.2.4",
@@ -24,43 +60,21 @@
     "karma-ie-launcher": "~0.1.5",
     "karma-jasmine": "~0.1.5",
     "karma-phantomjs-launcher": "^1.0.2",
+    "prettier": "^1.11.1",
     "tslint": "^3.7.3",
     "tslint-config-typings": "^0.2.2",
     "typescript": "^1.8.9",
     "typings": "^0.7.12",
-    "walker": "1.0.6"
+    "walker": "1.0.7"
   },
-  "description": "A multi-screen javascript Layout manager \r https://golden-layout.com",
-  "main": "./dist/goldenlayout.js",
-  "typings": "./index.d.ts",
-  "directories": {
-    "test": "test"
+  "optionalDependencies": {
+    "react": "14 || 15 || 16",
+    "react-dom": "14 || 15 || 16"
   },
-  "dependencies": {
-    "jquery": "*"
+  "engines": {
+    "node": ">=8.0.0",
+    "yarn": ">=1.0.0"
   },
-  "scripts": {
-    "test": "grunt test && npm run tslint",
-    "tslint": "tslint \"**/*.ts\" -e \"node_modules/**\" -e \"typings/**\"",
-    "prepublish": "typings install",
-    "publish": "npm -s run tslint"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/deepstreamIO/golden-layout.git"
-  },
-  "keywords": [
-    "layout manager",
-    "javascript",
-    "docker",
-    "layout",
-    "popouts"
-  ],
-  "bugs": {
-    "url": "https://github.com/deepstreamIO/golden-layout/issues"
-  },
-  "homepage": "https://github.com/deepstreamIO/golden-layout",
-  "npmName": "golden-layout",
   "npmFileMap": [
     {
       "basePath": "/dist/",
@@ -83,22 +97,5 @@
         "typings.json"
       ]
     }
-  ],
-  "jspm": {
-    "main": "dist/goldenlayout",
-    "format": "global",
-    "registry": "jspm",
-    "dependencies": {
-      "jquery": "^2.1.0"
-    },
-    "shim": {
-      "dist/goldenlayout": [
-        "jquery"
-      ]
-    }
-  },
-  "optionalDependencies": {
-    "react": "14 || 15 || 16",
-    "react-dom": "14 || 15 || 16"
-  }
+  ]
 }

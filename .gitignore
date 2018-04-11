@@ -3,3 +3,4 @@ typings
 .idea
 npm-debug.log
 lib/
+*.log
