@@ -1201,7 +1201,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	 */
 	_bindEvents: function() {
 		if( this._isFullPage ) {
-			$( window ).resize( this._resizeFunction );
+			$( window ).on( 'resize', this._resizeFunction );
 		}
 		$( window ).on( 'unload beforeunload', this._unloadFunction );
 	},
@@ -1275,7 +1275,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 			'<div class="lm_bg"></div>' +
 			'</div>' );
 
-		popInButton.click( lm.utils.fnBind( function() {
+		popInButton.on( 'click', lm.utils.fnBind( function() {
 			this.emit( 'popIn' );
 		}, this ) );
 
@@ -2347,7 +2347,7 @@ lm.controls.Header = function( layoutManager, parent ) {
 	this.closeButton = null;
 	this.tabDropdownButton = null;
 	this.hideAdditionalTabsDropdown = lm.utils.fnBind(this._hideAdditionalTabsDropdown, this);
-	$( document ).mouseup(this.hideAdditionalTabsDropdown);
+	$( document ).on( 'mouseup', this.hideAdditionalTabsDropdown );
 
 	this._lastVisibleTabIndex = -1;
 	this._tabControlOffset = this.layoutManager.config.settings.tabControlOffset;

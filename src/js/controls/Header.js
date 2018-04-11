@@ -27,7 +27,7 @@ lm.controls.Header = function( layoutManager, parent ) {
 	this.dockButton = null;
 	this.tabDropdownButton = null;
 	this.hideAdditionalTabsDropdown = lm.utils.fnBind(this._hideAdditionalTabsDropdown, this);
-	$( document ).mouseup(this.hideAdditionalTabsDropdown);
+	$( document ).on( 'mouseup', this.hideAdditionalTabsDropdown );
 
 	this._lastVisibleTabIndex = -1;
 	this._tabControlOffset = this.layoutManager.config.settings.tabControlOffset;
