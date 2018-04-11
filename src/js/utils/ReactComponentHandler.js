@@ -45,10 +45,14 @@ lm.utils.copy( lm.utils.ReactComponentHandler.prototype, {
 	 */
 	_gotReactComponent: function(component) {
 		this._reactComponent = component;
-		this._originalComponentWillUpdate = this._reactComponent.componentWillUpdate || function() {};
-		this._reactComponent.componentWillUpdate = this._onUpdate.bind( this );
-		if( this._container.getState() ) {
-			this._reactComponent.setState( this._container.getState() );
+		
+		// stateless components will have nothing to copy
+		if ( this._reactComponent ) {
+			this._originalComponentWillUpdate = this._reactComponent.componentWillUpdate || function() {};
+			this._reactComponent.componentWillUpdate = this._onUpdate.bind( this );
+			if( this._container.getState() ) {
+				this._reactComponent.setState( this._container.getState() );
+			}
 		}
 	},
 
