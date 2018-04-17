@@ -6,7 +6,9 @@
 
 ## Installation
 
-Add `golden-layout` to your bower.json, or [download](https://golden-layout.com/download/) the source.
+This one uses Webpack. Just run:
+
+`npm i` && `npm run start`
 
 ## Features
 
