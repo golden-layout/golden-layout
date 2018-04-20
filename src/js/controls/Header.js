@@ -32,6 +32,9 @@ lm.controls.Header = function( layoutManager, parent ) {
 	this._lastVisibleTabIndex = -1;
 	this._tabControlOffset = this.layoutManager.config.settings.tabControlOffset;
 	this._createControls();
+
+	// only used if config.header.showTabs === false and there's only a single tab
+	this.dragListener = null;
 };
 
 lm.controls.Header._template = [
@@ -68,21 +71,33 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		if( this.tabs.length === 0 ) {
 			this.tabs.push( tab );
 			this.tabsContainer.append( tab.element );
-			return;
-		}
-
-		if( index === undefined ) {
-			index = this.tabs.length;
-		}
-
-		if( index > 0 ) {
-			this.tabs[ index - 1 ].element.after( tab.element );
 		} else {
-			this.tabs[ 0 ].element.before( tab.element );
+			if( index === undefined ) {
+				index = this.tabs.length;
+			}
+
+			if( index > 0 ) {
+				this.tabs[ index - 1 ].element.after( tab.element );
+			} else {
+				this.tabs[ 0 ].element.before( tab.element );
+			}
+
+			this.tabs.splice( index, 0, tab );
+			this._updateTabSizes();
 		}
 
-		this.tabs.splice( index, 0, tab );
-		this._updateTabSizes();
+		// check if the tabs should be hidden or shown
+		if (this._getHeaderSetting('showTabs') === false) {
+			if (this.tabs.length == 1) {
+				// hide the tabs and enable dragging by the header
+				this.tabsContainer.hide();
+				this._addDragListener();
+			} else {
+				// show the tabs and disable dragging by the header
+				this.tabsContainer.show();
+				this._removeDragListener();
+			}
+		}
 	},
 
 	/**
@@ -97,6 +112,14 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			if( this.tabs[ i ].contentItem === contentItem ) {
 				this.tabs[ i ]._$destroy();
 				this.tabs.splice( i, 1 );
+
+				// check if the tabs should be hidden
+				if (this._getHeaderSetting('showTabs') === false && this.tabs.length == 1) {
+					// hide the tabs and enable dragging by the header
+					this.tabsContainer.hide();
+					this._addDragListener();
+				}
+
 				return;
 			}
 		}
@@ -208,6 +231,7 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			this.tabs[ i ]._$destroy();
 		}
 		$( document ).off('mouseup', this.hideAdditionalTabsDropdown);
+		this._removeDragListener();
 		this.element.remove();
 	},
 
@@ -441,6 +465,63 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			}
 		}
 
+	},
+
+	/**
+	 * Adds a drag listener to the header under certain conditions (
+	 * the header.showTabs setting is false and there is only a
+	 * single tab).
+	 * 
+	 * @returns {void}
+	 */
+	_addDragListener: function() {
+		if (this._getHeaderSetting('showTabs') !== false || this.tabs.length != 1) {
+			throw new Error('A drag listener can only be added to a header if the ' +
+				'header.showTabs settings is "false" and there is only 1 tab.');
+		}
+
+		if (this.layoutManager.config.settings.reorderEnabled === true &&
+				this.tabs[0].contentItem.config.reorderEnabled === true) {
+
+			this.dragListener = new lm.utils.DragListener(this.element);
+			this.dragListener.on('dragStart', this._onDragStart, this);
+			this.tabs[0].contentItem.on('destroy', this.dragListener.destroy, this.dragListener);
+		}
+	},
+
+	/**
+	 * Removes a drag listener to the header under certain conditions,
+	 * if one exists on this header.
+	 * 
+	 * @returns {void}
+	 */
+	_removeDragListener: function() {
+		if (this.dragListener) {
+			this.tabs[0].contentItem.off('destroy', this.dragListener.destroy, this.dragListener);
+			this.dragListener.off('dragStart', this._onDragStart);
+			this.dragListener = null;
+		}
+	},
+
+	/**
+	 * Callback for the DragListener. Mostly the same as
+	 * Tab._onDragStart(), except that it's been tweaked
+	 * to work with a header containing only a single tab.
+	 *
+	 * @param   {Number} x The tabs absolute x position
+	 * @param   {Number} y The tabs absolute y position
+	 *
+	 * @private
+	 * @returns {void}
+	 */
+	_onDragStart: function( x, y ) {
+		if (!this._canDestroy) return null;
+
+		if (this.tabs[0].contentItem.parent.isMaximised === true) {
+			this.tabs[0].contentItem.parent.toggleMaximise();
+		}
+
+		new lm.controls.DragProxy(x, y, this.dragListener, this.layoutManager,
+			this.tabs[0].contentItem, this.parent);
 	}
 } );
-
