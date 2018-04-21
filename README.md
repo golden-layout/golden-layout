@@ -6,18 +6,57 @@
 
 ## Installation
 
-This one uses Webpack. Just run:
+This fork uses Webpack and features a double tree:
+- src/js/      -> Prototype-based official source untouched (REQUIRES loading JQuery externally)
+- src/js_es6/  -> source converted to ES6 modules, with bugfixes, full touch support (BUNDLES JQuery or Zepto)
 
-`npm i` && `npm run start`
+When you build either types, the library will be in `dist/js/goldenlayout.js`.
+
+For ES6 GoldenLayout is the default export, while all other components have named exports (details in `js_es6/index.js`)
+
+To make the environment ready, clone, cd to project dir, and run: 
+
+`npm i`
+
+Then to start/build each tree run the following:
+
+###### Prototype-based
+
+start: `npm run start`
+
+build: `npm run build`
+
+
+
+###### ES6-based / JQuery
+
+start: `npm run start_es6j`
+
+build: `npm run build_es6j`
+
+
+###### ES6-based / Zepto
+
+start: `npm run start_es6z`
+
+build: `npm run build_es6z`
+
+
 
 ## Features
 
+* Full touch support
 * Native popup windows
 * Completely themeable
 * Comprehensive API
 * Powerful persistence
 * Works in IE8+, Firefox, Chrome
-* Responsive design
+* Reponsive design
+
+
+## Dependencies
+
+* JQuery or Zepto
 
 
 ## [Examples](https://golden-layout.com/examples/)

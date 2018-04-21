@@ -1,17 +1,20 @@
-import EventEmitter from 'utils/EventEmitter'
-import { fnBind } from 'utils/utils'
+import EventEmitter from '../utils/EventEmitter'
+import {
+    fnBind, 
+    getTouchEvent
+} from '../utils/utils'
 
-"use strict";
 
-export default class DragListener {
+export default class DragListener extends EventEmitter {
     timeout = null
-    
-    constructor(eElement, nButtonCode) {
-        EventEmitter.call( this );
 
-        this._eElement = $( eElement );
-        this._oDocument = $( document );
-        this._eBody = $( document.body );
+    constructor(eElement, nButtonCode) {
+
+        super();
+
+        this._eElement = $(eElement);
+        this._oDocument = $(document);
+        this._eBody = $(document.body);
         this._nButtonCode = nButtonCode || 0;
 
         /**
@@ -22,7 +25,7 @@ export default class DragListener {
         /**
          * The distance the mouse needs to be moved to qualify as a drag
          */
-        this._nDistance = 10;//TODO - works better with delay only
+        this._nDistance = 10; //TODO - works better with delay only
 
         this._nX = 0;
         this._nY = 0;
@@ -32,95 +35,92 @@ export default class DragListener {
 
         this._bDragging = false;
 
-        this._fMove = fnBind( this.onMouseMove, this );
-        this._fUp = fnBind( this.onMouseUp, this );
-        this._fDown = fnBind( this.onMouseDown, this );
+        this._fMove = fnBind(this.onMouseMove, this);
+        this._fUp = fnBind(this.onMouseUp, this);
+        this._fDown = fnBind(this.onMouseDown, this);
 
 
-        this._eElement.on( 'mousedown touchstart', this._fDown );
+        this._eElement.on('mousedown touchstart', this._fDown);
     }
 
     destroy() {
-		this._eElement.unbind( 'mousedown touchstart', this._fDown );
-        this._oDocument.unbind( 'mouseup touchend', this._fUp );
+        this._eElement.unbind('mousedown touchstart', this._fDown);
+        this._oDocument.unbind('mouseup touchend', this._fUp);
         this._eElement = null;
         this._oDocument = null;
         this._eBody = null;
-	}
+    }
 
     onMouseDown(oEvent) {
-		oEvent.preventDefault();
+        oEvent.preventDefault();
 
-		if( oEvent.button == 0 || oEvent.type === "touchstart" ) {
-			var coordinates = this._getCoordinates( oEvent );
+        if (oEvent.button == 0 || oEvent.type === "touchstart") {
+            var coordinates = this._getCoordinates(oEvent);
 
-			this._nOriginalX = coordinates.x;
-			this._nOriginalY = coordinates.y;
+            this._nOriginalX = coordinates.x;
+            this._nOriginalY = coordinates.y;
 
-			this._oDocument.on( 'mousemove touchmove', this._fMove );
-			this._oDocument.one( 'mouseup touchend', this._fUp );
+            this._oDocument.on('mousemove touchmove', this._fMove);
+            this._oDocument.one('mouseup touchend', this._fUp);
 
-			this._timeout = setTimeout( fnBind( this._startDrag, this ), this._nDelay );
-		}
-	}
+            this._timeout = setTimeout(fnBind(this._startDrag, this), this._nDelay);
+        }
+    }
 
     onMouseMove(oEvent) {
-		if( this._timeout != null ) {
-			oEvent.preventDefault();
+        if (this._timeout != null) {
+            oEvent.preventDefault();
 
-			var coordinates = this._getCoordinates( oEvent );
+            var coordinates = this._getCoordinates(oEvent);
 
-			this._nX = coordinates.x - this._nOriginalX;
-			this._nY = coordinates.y - this._nOriginalY;
+            this._nX = coordinates.x - this._nOriginalX;
+            this._nY = coordinates.y - this._nOriginalY;
 
-			if( this._bDragging === false ) {
-				if(
-					Math.abs( this._nX ) > this._nDistance ||
-					Math.abs( this._nY ) > this._nDistance
-				) {
-					clearTimeout( this._timeout );
-					this._startDrag();
-				}
-			}
+            if (this._bDragging === false) {
+                if (
+                    Math.abs(this._nX) > this._nDistance ||
+                    Math.abs(this._nY) > this._nDistance
+                ) {
+                    clearTimeout(this._timeout);
+                    this._startDrag();
+                }
+            }
 
-			if( this._bDragging ) {
-				this.emit( 'drag', this._nX, this._nY, oEvent );
-			}
-		}
-	}
+            if (this._bDragging) {
+                this.emit('drag', this._nX, this._nY, oEvent);
+            }
+        }
+    }
 
     onMouseUp(oEvent) {
-		if( this._timeout != null ) {
-			clearTimeout( this._timeout );
-			this._eBody.removeClass( 'lm_dragging' );
-			this._eElement.removeClass( 'lm_dragging' );
-			this._oDocument.find( 'iframe' ).css( 'pointer-events', '' );
-			this._oDocument.unbind( 'mousemove touchmove', this._fMove );
-			this._oDocument.unbind( 'mouseup touchend', this._fUp );
+        if (this._timeout != null) {
+            clearTimeout(this._timeout);
+            this._eBody.removeClass('lm_dragging');
+            this._eElement.removeClass('lm_dragging');
+            this._oDocument.find('iframe').css('pointer-events', '');
+            this._oDocument.unbind('mousemove touchmove', this._fMove);
+            this._oDocument.unbind('mouseup touchend', this._fUp);
 
-			if( this._bDragging === true ) {
-				this._bDragging = false;
-				this.emit( 'dragStop', oEvent, this._nOriginalX + this._nX );
-			}
-		}
-	}
+            if (this._bDragging === true) {
+                this._bDragging = false;
+                this.emit('dragStop', oEvent, this._nOriginalX + this._nX);
+            }
+        }
+    }
 
     _startDrag() {
-		this._bDragging = true;
-		this._eBody.addClass( 'lm_dragging' );
-		this._eElement.addClass( 'lm_dragging' );
-		this._oDocument.find( 'iframe' ).css( 'pointer-events', 'none' );
-		this.emit( 'dragStart', this._nOriginalX, this._nOriginalY );
-	}
+        this._bDragging = true;
+        this._eBody.addClass('lm_dragging');
+        this._eElement.addClass('lm_dragging');
+        this._oDocument.find('iframe').css('pointer-events', 'none');
+        this.emit('dragStart', this._nOriginalX, this._nOriginalY);
+    }
 
     _getCoordinates(event) {
-		event = event.originalEvent && event.originalEvent.touches ? event.originalEvent.touches[ 0 ] : event;
-		return {
-			x: event.pageX,
-			y: event.pageY
-		};
-	}
+        event = getTouchEvent(event)
+        return {
+            x: event.pageX,
+            y: event.pageY
+        };
+    }
 }
-
-
-

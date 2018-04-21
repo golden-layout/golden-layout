@@ -9,7 +9,7 @@
   },
   "parser": "babel-eslint",
   "parserOptions": {
-    "sourceType": "script"
+    "sourceType": "module"
   },
   "globals": {
       "lm": 1

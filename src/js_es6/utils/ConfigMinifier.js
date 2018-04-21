@@ -1,4 +1,6 @@
-import { indexOf } from 'utils/utils'
+import {
+    indexOf
+} from '../utils/utils'
 
 /**
  * Minifies and unminifies configs by replacing frequent keys
@@ -7,7 +9,7 @@ import { indexOf } from 'utils/utils'
  *
  * @constructor
  */
-"use strict";
+
 
 export default class ConfigMinifier {
     constructor() {
@@ -49,8 +51,8 @@ export default class ConfigMinifier {
 
             //Maximum 36 entries, do not cross this line!
         ];
-        if( this._keys.length > 36 ) {
-            throw new Error( 'Too many keys in config minifier map' );
+        if (this._keys.length > 36) {
+            throw new Error('Too many keys in config minifier map');
         }
 
         this._values = [
@@ -67,138 +69,137 @@ export default class ConfigMinifier {
         ];
     }
 
+
+    /**
+     * Takes a GoldenLayout configuration object and
+     * replaces its keys and values recursively with
+     * one letter counterparts
+     *
+     * @param   {Object} config A GoldenLayout config object
+     *
+     * @returns {Object} minified config
+     */
     minifyConfig(config) {
-		var min = {};
-		this._nextLevel( config, min, '_min' );
-		return min;
-	}
+        var min = {};
+        this._nextLevel(config, min, '_min');
+        return min;
+    }
 
     /**
-	 * Takes a configuration Object that was previously minified
-	 * using minifyConfig and returns its original version
-	 *
-	 * @param   {Object} minifiedConfig
-	 *
-	 * @returns {Object} the original configuration
-	 */
+     * Takes a configuration Object that was previously minified
+     * using minifyConfig and returns its original version
+     *
+     * @param   {Object} minifiedConfig
+     *
+     * @returns {Object} the original configuration
+     */
     unminifyConfig(minifiedConfig) {
-		var orig = {};
-		this._nextLevel( minifiedConfig, orig, '_max' );
-		return orig;
-	}
+        var orig = {};
+        this._nextLevel(minifiedConfig, orig, '_max');
+        return orig;
+    }
 
     /**
-	 * Recursive function, called for every level of the config structure
-	 *
-	 * @param   {Array|Object} orig
-	 * @param   {Array|Object} min
-	 * @param    {String} translationFn
-	 *
-	 * @returns {void}
-	 */
+     * Recursive function, called for every level of the config structure
+     *
+     * @param   {Array|Object} orig
+     * @param   {Array|Object} min
+     * @param    {String} translationFn
+     *
+     * @returns {void}
+     */
     _nextLevel(from, to, translationFn) {
-		var key, minKey;
+        var key, minKey;
 
-		for( key in from ) {
+        for (key in from) {
 
-			/**
-			 * For in returns array indices as keys, so let's cast them to numbers
-			 */
-			if( from instanceof Array ) key = parseInt( key, 10 );
+            /**
+             * For in returns array indices as keys, so let's cast them to numbers
+             */
+            if (from instanceof Array) key = parseInt(key, 10);
 
-			/**
-			 * In case something has extended Object prototypes
-			 */
-			if( !from.hasOwnProperty( key ) ) continue;
+            /**
+             * In case something has extended Object prototypes
+             */
+            if (!from.hasOwnProperty(key)) continue;
 
-			/**
-			 * Translate the key to a one letter substitute
-			 */
-			minKey = this[ translationFn ]( key, this._keys );
+            /**
+             * Translate the key to a one letter substitute
+             */
+            minKey = this[translationFn](key, this._keys);
 
-			/**
-			 * For Arrays and Objects, create a new Array/Object
-			 * on the minified object and recurse into it
-			 */
-			if( typeof from[ key ] === 'object' ) {
-				to[ minKey ] = from[ key ] instanceof Array ? [] : {};
-				this._nextLevel( from[ key ], to[ minKey ], translationFn );
+            /**
+             * For Arrays and Objects, create a new Array/Object
+             * on the minified object and recurse into it
+             */
+            if (typeof from[key] === 'object') {
+                to[minKey] = from[key] instanceof Array ? [] : {};
+                this._nextLevel(from[key], to[minKey], translationFn);
 
-				/**
-				 * For primitive values (Strings, Numbers, Boolean etc.)
-				 * minify the value
-				 */
-			} else {
-				to[ minKey ] = this[ translationFn ]( from[ key ], this._values );
-			}
-		}
-	}
+                /**
+                 * For primitive values (Strings, Numbers, Boolean etc.)
+                 * minify the value
+                 */
+            } else {
+                to[minKey] = this[translationFn](from[key], this._values);
+            }
+        }
+    }
 
     /**
-	 * Minifies value based on a dictionary
-	 *
-	 * @param   {String|Boolean} value
-	 * @param   {Array<String|Boolean>} dictionary
-	 *
-	 * @returns {String} The minified version
-	 */
+     * Minifies value based on a dictionary
+     *
+     * @param   {String|Boolean} value
+     * @param   {Array<String|Boolean>} dictionary
+     *
+     * @returns {String} The minified version
+     */
     _min(value, dictionary) {
-		/**
-		 * If a value actually is a single character, prefix it
-		 * with ___ to avoid mistaking it for a minification code
-		 */
-		if( typeof value === 'string' && value.length === 1 ) {
-			return '___' + value;
-		}
+        /**
+         * If a value actually is a single character, prefix it
+         * with ___ to avoid mistaking it for a minification code
+         */
+        if (typeof value === 'string' && value.length === 1) {
+            return '___' + value;
+        }
 
-		var index = indexOf( value, dictionary );
+        var index = indexOf(value, dictionary);
 
-		/**
-		 * value not found in the dictionary, return it unmodified
-		 */
-		if( index === -1 ) {
-			return value;
+        /**
+         * value not found in the dictionary, return it unmodified
+         */
+        if (index === -1) {
+            return value;
 
-			/**
-			 * value found in dictionary, return its base36 counterpart
-			 */
-		} else {
-			return index.toString( 36 );
-		}
-	}
+            /**
+             * value found in dictionary, return its base36 counterpart
+             */
+        } else {
+            return index.toString(36);
+        }
+    }
 
     _max(value, dictionary) {
-		/**
-		 * value is a single character. Assume that it's a translation
-		 * and return the original value from the dictionary
-		 */
-		if( typeof value === 'string' && value.length === 1 ) {
-			return dictionary[ parseInt( value, 36 ) ];
-		}
+        /**
+         * value is a single character. Assume that it's a translation
+         * and return the original value from the dictionary
+         */
+        if (typeof value === 'string' && value.length === 1) {
+            return dictionary[parseInt(value, 36)];
+        }
 
-		/**
-		 * value originally was a single character and was prefixed with ___
-		 * to avoid mistaking it for a translation. Remove the prefix
-		 * and return the original character
-		 */
-		if( typeof value === 'string' && value.substr( 0, 3 ) === '___' ) {
-			return value[ 3 ];
-		}
-		/**
-		 * value was not minified
-		 */
-		return value;
-	}
+        /**
+         * value originally was a single character and was prefixed with ___
+         * to avoid mistaking it for a translation. Remove the prefix
+         * and return the original character
+         */
+        if (typeof value === 'string' && value.substr(0, 3) === '___') {
+            return value[3];
+        }
+        /**
+         * value was not minified
+         */
+        return value;
+    }
 }
-
-
-/**
- * Takes a GoldenLayout configuration object and
- * replaces its keys and values recursively with
- * one letter counterparts
- *
- * @param   {Object} config A GoldenLayout config object
- *
- * @returns {Object} minified config
- */
 

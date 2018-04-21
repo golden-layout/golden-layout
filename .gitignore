@@ -4,4 +4,6 @@ typings
 npm-debug.log
 lib/
 dist/
+dist/**
 build/
+package-lock.json

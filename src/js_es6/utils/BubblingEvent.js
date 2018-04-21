@@ -1,4 +1,4 @@
-"use strict";
+
 
 export default class BubblingEvent {
     constructor(name, origin) {

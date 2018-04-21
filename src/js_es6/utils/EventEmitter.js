@@ -1,5 +1,6 @@
-import EventEmitter from 'utils/EventEmitter'
-import { isFunction } from 'utils/utils'
+import {
+    isFunction
+} from '../utils/utils'
 
 /**
  * A generic and very fast EventEmitter
@@ -13,7 +14,8 @@ import { isFunction } from 'utils/utils'
  *
  * @constructor
  */
-"use strict";
+
+export const ALL_EVENT = '__all'
 
 export default class EventEmitter {
     /**
@@ -27,11 +29,10 @@ export default class EventEmitter {
      *
      * @type {String}
      */
-    ALL_EVENT = '__all'  
-    
     constructor() {
         this._mSubscriptions = {};
-        this._mSubscriptions[ EventEmitter.ALL_EVENT ] = [];
+        this._mSubscriptions[ALL_EVENT] = [];
+
 
         /**
          * Listen for events
@@ -42,16 +43,19 @@ export default class EventEmitter {
          *
          * @returns {void}
          */
-        this.on = function( sEvent, fCallback, oContext ) {
-            if( !isFunction( fCallback ) ) {
-                throw new Error( 'Tried to listen to event ' + sEvent + ' with non-function callback ' + fCallback );
+        this.on = function(sEvent, fCallback, oContext) {
+            if (!isFunction(fCallback)) {
+                throw new Error('Tried to listen to event ' + sEvent + ' with non-function callback ' + fCallback);
             }
 
-            if( !this._mSubscriptions[ sEvent ] ) {
-                this._mSubscriptions[ sEvent ] = [];
+            if (!this._mSubscriptions[sEvent]) {
+                this._mSubscriptions[sEvent] = [];
             }
 
-            this._mSubscriptions[ sEvent ].push( { fn: fCallback, ctx: oContext } );
+            this._mSubscriptions[sEvent].push({
+                fn: fCallback,
+                ctx: oContext
+            });
         };
 
         /**
@@ -62,28 +66,28 @@ export default class EventEmitter {
          *
          * @returns {void}
          */
-        this.emit = function( sEvent ) {
+        this.emit = function(sEvent) {
             var i, ctx, args;
 
-            args = Array.prototype.slice.call( arguments, 1 );
+            args = Array.prototype.slice.call(arguments, 1);
 
-            var subs = this._mSubscriptions[ sEvent ];
+            var subs = this._mSubscriptions[sEvent];
 
-            if( subs ) {
+            if (subs) {
                 subs = subs.slice();
-                for( i = 0; i < subs.length; i++ ) {
-                    ctx = subs[ i ].ctx || {};
-                    subs[ i ].fn.apply( ctx, args );
+                for (i = 0; i < subs.length; i++) {
+                    ctx = subs[i].ctx || {};
+                    subs[i].fn.apply(ctx, args);
                 }
             }
 
-            args.unshift( sEvent );
+            args.unshift(sEvent);
 
-            var allEventSubs = this._mSubscriptions[ EventEmitter.ALL_EVENT ].slice()
+            var allEventSubs = this._mSubscriptions[ALL_EVENT].slice()
 
-            for( i = 0; i <allEventSubs.length; i++ ) {
-                ctx = allEventSubs[ i ].ctx || {};
-                allEventSubs[ i ].fn.apply( ctx, args );
+            for (i = 0; i < allEventSubs.length; i++) {
+                ctx = allEventSubs[i].ctx || {};
+                allEventSubs[i].fn.apply(ctx, args);
             }
         };
 
@@ -96,26 +100,25 @@ export default class EventEmitter {
          *
          * @returns {void}
          */
-        this.unbind = function( sEvent, fCallback, oContext ) {
-            if( !this._mSubscriptions[ sEvent ] ) {
-                throw new Error( 'No subscribtions to unsubscribe for event ' + sEvent );
+        this.unbind = function(sEvent, fCallback, oContext) {
+            if (!this._mSubscriptions[sEvent]) {
+                throw new Error('No subscribtions to unsubscribe for event ' + sEvent);
             }
 
             var i, bUnbound = false;
 
-            for( i = 0; i < this._mSubscriptions[ sEvent ].length; i++ ) {
-                if
-                (
-                    ( !fCallback || this._mSubscriptions[ sEvent ][ i ].fn === fCallback ) &&
-                    ( !oContext || oContext === this._mSubscriptions[ sEvent ][ i ].ctx )
+            for (i = 0; i < this._mSubscriptions[sEvent].length; i++) {
+                if (
+                    (!fCallback || this._mSubscriptions[sEvent][i].fn === fCallback) &&
+                    (!oContext || oContext === this._mSubscriptions[sEvent][i].ctx)
                 ) {
-                    this._mSubscriptions[ sEvent ].splice( i, 1 );
+                    this._mSubscriptions[sEvent].splice(i, 1);
                     bUnbound = true;
                 }
             }
 
-            if( bUnbound === false ) {
-                throw new Error( 'Nothing to unbind for ' + sEvent );
+            if (bUnbound === false) {
+                throw new Error('Nothing to unbind for ' + sEvent);
             }
         };
 
@@ -130,4 +133,3 @@ export default class EventEmitter {
         this.trigger = this.emit;
     }
 }
-

@@ -1,5 +1,8 @@
-import DragListener from 'utils/DragListener'
-import { isFunction } from 'utils/utils'
+import DragListener from '../utils/DragListener'
+import DragProxy from '../controls/DragProxy'
+import {
+    isFunction
+} from '../utils/utils'
 
 /**
  * Allows for any DOM item to create a component on drag
@@ -11,7 +14,7 @@ import { isFunction } from 'utils/utils'
  *
  * @constructor
  */
-"use strict";
+
 
 export default class DragSource {
     constructor(element, itemConfig, layoutManager) {
@@ -23,14 +26,20 @@ export default class DragSource {
         this._createDragListener();
     }
 
+
+    /**
+     * Called initially and after every drag
+     *
+     * @returns {void}
+     */
     _createDragListener() {
-        if( this._dragListener !== null ) {
+        if (this._dragListener !== null) {
             this._dragListener.destroy();
         }
 
-        this._dragListener = new DragListener( this._element );
-        this._dragListener.on( 'dragStart', this._onDragStart, this );
-        this._dragListener.on( 'dragStop', this._createDragListener, this );
+        this._dragListener = new DragListener(this._element);
+        this._dragListener.on('dragStart', this._onDragStart, this);
+        this._dragListener.on('dragStop', this._createDragListener, this);
     }
 
     /**
@@ -43,20 +52,12 @@ export default class DragSource {
      */
     _onDragStart(x, y) {
         var itemConfig = this._itemConfig;
-        if( isFunction( itemConfig ) ) {
+        if (isFunction(itemConfig)) {
             itemConfig = itemConfig();
         }
-        var contentItem = this._layoutManager._$normalizeContentItem( $.extend( true, {}, itemConfig ) ),
-            dragProxy = new lm.controls.DragProxy( x, y, this._dragListener, this._layoutManager, contentItem, null );
+        var contentItem = this._layoutManager._$normalizeContentItem($.extend(true, {}, itemConfig)),
+            dragProxy = new DragProxy(x, y, this._dragListener, this._layoutManager, contentItem, null);
 
-        this._layoutManager.transitionIndicator.transitionElements( this._element, dragProxy.element );
+        this._layoutManager.transitionIndicator.transitionElements(this._element, dragProxy.element);
     }
 }
-
-
-/**
- * Called initially and after every drag
- *
- * @returns {void}
- */
-

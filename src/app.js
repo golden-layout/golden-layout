@@ -1,23 +1,61 @@
-import '../test.css'
+import 'less/test.less'
 import 'less/goldenlayout-base.less'
 import 'less/goldenlayout-dark-theme.less'
+// import {beforeMethod, Metadata} from 'aspect.js';
 
-export function trick_preprocessor_and_webpack_hmr (a) {
-  // makes webpack sense that the files (in ./js & subdirs) have changed
-  require('./js/' + a).default
+
+console.log('compling from ES6:', env.ES6) // variable comes from environment (check package.json)
+console.log('ZEPTO active: ', env.ZEPTO)
+console.log('JQUERY active: ', env.JQUERY)
+
+export var GoldenLayout = function trick_preprocessor_and_webpack_hmr (a) {
+  if(env.ES6){
+    return require('js/LayoutManager').default // if ES6 exists 'js/' is alias for 'js_es6/'
+  } else {
+    // makes webpack sense that the files (in ./js & subdirs) have changed and restart the build process via concat()
+    () => require('./js/' + a).default
+    return null
+  }
+}()
+
+if(env.ZEPTO && env.ES6){
+  require('script-loader!../node_modules/zepto/dist/zepto.js');
+  require('../lib/zepto-extras.js');
 }
 
+
+
+// class LoggerAspect {
+//   @beforeMethod({
+//     classNamePattern: /^LayoutManager/,
+//     methodNamePattern: /.*/
+//   })
+//   invokeBeforeMethod(meta: Metadata) {
+//     // meta.woveMetadata == { bar: 42 }
+//     console.log(`Inside of the logger. Called ${meta.className}.${meta.method.name} with args: ${meta.method.args.join(', ')}.`);
+//   }
+// }
+
 window.addEventListener('load', () => {
+
+
+    // $(document).on('mousemove touchmove', (e) => {
+    //   console.log('intercepted event, e:', e.target)
+    // });
+
     // 
     // set layout type
     // 
-    var layout = 'responsive'
+    var layout = 'standard'
 
     // 
     // init
     //
     var config
     switch( layout.toLowerCase() ) {
+      case 'mini':
+        config = createMiniConfig()
+        break
       case 'responsive':
         config = createResponsiveConfig()
         break
@@ -29,11 +67,40 @@ window.addEventListener('load', () => {
         break
     }
 
-    window.myLayout = new window.GoldenLayout( config )
+    window.myLayout = GoldenLayout ? new GoldenLayout( config ) : new window.GoldenLayout( config )
 
     myLayout.registerComponent( 'html', function( container, state ) {} )
 
     myLayout.init()
+
+
+    function createMiniConfig(){
+        return {
+            content: [{
+                        type: 'row',
+                        content: [{
+                                    type: 'component',
+                                    title: 'Golden',
+                                    header: {
+                                        show: 'top'
+                                    },
+                                    isClosable: false,
+                                    componentName: 'html',
+                          width: 30,
+                          componentState: { bg: 'golden_layout_spiral.png' }
+                        },
+                        {
+                          title: 'Layout',
+                          header: { show: 'top', popout: false },
+                          type: 'component',
+                          componentName: 'html',
+                          componentState: { bg: 'golden_layout_text.png' }
+                        }
+
+              ]
+            }]
+      }
+    }
 
     function createStandardConfig() {
       return {

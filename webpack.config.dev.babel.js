@@ -13,17 +13,21 @@ import BrowserSyncPlugin from 'browser-sync-webpack-plugin'
 import WebpackCompileHooksPlugin from './webpack_plugins/WebpackCompileHooksPlugin.js'
 import MinifyPlugin from 'babel-minify-webpack-plugin';
 import _ from 'lodash'
-const { execSync } = require('child_process')
 const concat = require('concat-files')
 const Walker = require( 'walker' )
 const fs = require('fs')
-const extractLESS = new ExtractTextPlugin({filename: 'css/[name].css'})
-const extractStyles = new ExtractTextPlugin({ filename: 'css/[name].css' })
+const extractLESS = new ExtractTextPlugin({filename: path.join('css', 'goldenlayout.css')})
+const extractStyles = new ExtractTextPlugin({ filename: path.join('css', 'goldenlayout.css') })
+
+console.log('process.env', process.env.ZEPTO)
 
 var compileHooksIsRunning = false
 var data = { files: [], directories: [] }
 var basePath = path.resolve( __dirname)
-var jsPath = path.join( basePath, 'src/js' )
+var jsPath = path.join( basePath, process.env.ES6 ?  path.join('src', 'js_es6') : path.join('src', 'js'))
+var jsDir = path.join('dist', 'js')
+var cssDir = path.join('dist', 'css')
+var distFile = 'goldenlayout.js' // for Prototype build only (ES6 is managed by webpack config)
 
 const postcssProcessors = [
   postcssImport,
@@ -37,18 +41,6 @@ const scssProcessors = [
 ]
 
 
-var babelQuery = {
-  cacheDirectory: false,
-  plugins: [
-    'transform-runtime',
-  ],
-  presets: [
-    'es2015',
-    'stage-2'
-  ]
-}
-
-
 module.exports = (env) => {
   const stylesType = process.env.STYLES // postcss or scss
   const stylesExtension = stylesType === 'scss' ? '.scss' : '.css'
@@ -56,16 +48,35 @@ module.exports = (env) => {
   return {
     context: path.resolve(__dirname, 'src'),
 
+    resolve: {
+        alias: {
+            'js': jsPath,
+            'less': path.join(__dirname, path.join('src', 'less')),
+            'css': path.join(__dirname, path.join('src', 'css')),
+        }
+    },    
+
     entry: {
-      main: './app.js',
+      // non-ES6 (Prototype/concat build) needs a dummy name or it will overwrite
+      [process.env.ES6 ? 'goldenlayout' : 'dummy']: env.dev ? ('.' + path.sep + 'app.js') : ('.' + path.sep + 'index.js'),
     },
 
-    output: {
+
+    externals: {
+      "jQuery": "jquery",
+      "Zepto": "zepto"
+    },
+
+    output: Object.assign({
       path: path.resolve(__dirname, 'dist'),
-      filename: 'js/[name].js',
-    },
+      filename: path.join('js', '[name].js'),
+    }, process.env.dev ? {} : {
+      library: 'GoldenLayout',
+      libraryTarget: 'umd', // should be umd for npm-package
+      umdNamedDefine: true      
+    }),
 
-    watch: env.dev,
+    watch: env.dev || env.build_watch,
 
     devtool: 'cheap-module-source-map',
 
@@ -75,21 +86,30 @@ module.exports = (env) => {
     },
 
     module: {
-      rules: [
+      rules: _.compact(
+        (process.env.ZEPTO ? [ 
+          {
+            test: /\.zepto/,
+            use: [ 'script-loader' ]
+          },
+        ] : []).concat([
+
         {
           test: /\.less$/,
           use: extractLESS.extract([ 'css-loader', 'less-loader' ])
 
         },
+
         {
           test: /\.js$/,
-          include: path.resolve(__dirname, 'src/js'),
+          include: path.resolve(__dirname, jsPath),
           use: [
+
             {
               loader: 'babel-loader',
               options: {
                 cacheDirectory: true,
-                plugins: ['transform-runtime'],
+                plugins: ['transform-runtime', 'transform-class-properties'],
               },
             },
             {
@@ -167,47 +187,41 @@ module.exports = (env) => {
             {
               loader: 'file-loader',
               options: {
-                name: 'assets/[name].[ext]',
+                name: path.join('assets', '[name].[ext]'),
               },
             },
           ],
         },
-      ],
+      
+
+      ])),
     },
 
-    plugins: [
-    new CopyWebpackPlugin([
-        // // {output}/file.txt
-        // { from: 'path/to/file.txt' },
-        // // {output}/path/to/build/file.txt
-        // { from: 'path/to/file.txt', to: 'path/to/build/file.txt' },
-        // // {output}/path/to/build/directory/file.txt
-        // { from: 'path/to/file.txt', to: 'path/to/build/directory' },
-        // // Copy directory contents to {output}/
-        // { from: 'path/to/directory' },
-        // Copy directory contents to {output}/path/to/build/directory/
-        { from: '../lib/tracing.js/tracing.js', to: 'lib/' },
-        { from: 'my_traces.js' },
-        { from: '../lib/jquery.js', to: 'lib/' },
-        // // {output}/file/without/extension
-        // {
-        //     from: 'path/to/file.txt',
-        //     to: 'file/without/extension',
-        //     toType: 'file'
-        // },
-        // // {output}/directory/with/extension.ext/file.txt
-        // {
-        //     from: 'path/to/file.txt',
-        //     to: 'directory/with/extension.ext',
-        //     toType: 'dir'
-        // }
-    ], {
+    plugins: _.compact([
+        // new webpack.ProvidePlugin({
+        //    'window.$': 'zepto',
+        //    'Zepto': 'zepto',
+        // }),
+
+        process.env.JQUERY ? new webpack.ProvidePlugin({
+          $: "jquery",
+          jQuery: "jquery",
+          "window.jQuery": "jquery"
+        }): null,
+
+        new CopyWebpackPlugin(process.env.ES6 ? [] : [
+              { from: path.join('..', 'lib', 'jquery.js'), to: 'lib' + path.sep },
+          ].concat(env.dev ? [
+              { from: 'my_traces.js' },
+              { from: path.join('..', 'lib', 'tracing.js', 'tracing.js'), to: 'lib' + path.sep },
+          ]: []), {
         ignore: [
             // Doesn't copy any files with a txt extension
             // '*.txt'
         ]
     }),
-    new WebpackCompileHooksPlugin({
+
+    process.env.ES6 ? null : new WebpackCompileHooksPlugin({
         onBuildStart: function(){
           console.log(chalk.cyan("\n>>> onBuildStart\n"))
           if(compileHooksIsRunning) return
@@ -224,18 +238,18 @@ module.exports = (env) => {
           }
 
           var walker = Walker( jsPath ) // jshint ignore:line
-          var newlineFile = '/../../build/newline.txt'
-          var preWrapFile = '/../../build/wrapperStart.txt'
-          var nsFile = '/../../build/ns.js'
-          var postWrapFile = '/../../build/wrapperEnd.txt'
+          var newlineFile = path.sep + path.join('..', '..', 'build', 'newline.txt')
+          var preWrapFile = path.sep + path.join('..', '..', 'build', 'wrapperStart.txt')
+          var nsFile = path.sep + path.join('..', '..', 'build', 'ns.js')
+          var postWrapFile = path.sep + path.join('..', '..', 'build', 'wrapperEnd.txt')
 
           var earlyFiles = [ 
             newlineFile,
             preWrapFile,
-            '/../../build/ns.js',
-            '/utils/utils.js',
-            '/utils/EventEmitter.js',
-            '/utils/DragListener.js',
+            path.sep + path.join('..', '..', 'build', 'ns.js'),
+            path.sep + path.join('utils', 'utils.js'),
+            path.sep + path.join('utils', 'EventEmitter.js'),
+            path.sep + path.join('utils', 'DragListener.js'),
            ]
 
           walker.on( 'file', function( file ) {
@@ -269,29 +283,32 @@ module.exports = (env) => {
 
         onBuildEnd: function(){
           console.log(chalk.cyan("\n>>> onBuildEnd\n"))
-          var distFile = 'dist/goldenlayout.js'
           var newlineFile = jsPath + data.files[0]
           var fileArray = _.flatten(_.map(data.files, (p) => [jsPath + p, newlineFile]))
           // console.log('final files:', fileArray)
-          concat(fileArray, distFile, function(err) {
-            if (err) throw err
-          })
+          
           data.files = []
           data.directories = []
           compileHooksIsRunning = false
-          }
+          var prototypeDistFile = path.join(basePath, jsDir, distFile)
+          concat(fileArray, prototypeDistFile, function(err) {
+            if (err) throw err
+          })              
+          env.build && setTimeout(() => {
+            // since we use a gulp-concat-like build process, we delete the files that webpack builds in order not to cause confusion
+            try {
+              console.log('unlinking...')
+              fs.unlinkSync(path.join(basePath, jsDir, 'dummy.js'))                
+              fs.unlinkSync(path.join(basePath, jsDir, 'dummy.js.map'))                
+            } catch (err) {
+              console.log('done')
+            }
+          }, 1000)
+        }
       }),
 
       new webpack.DefinePlugin({
-        LANG: JSON.stringify("en"),
-      }),
-
-      new webpack.optimize.CommonsChunkPlugin({
-        name: "common",
-      }),
-
-      new HtmlWebpackPlugin({
-        template: 'index.html'
+        env: JSON.stringify(process.env)
       }),
 
       extractStyles,
@@ -299,13 +316,19 @@ module.exports = (env) => {
 
       new StyleLintPlugin({
         configFile: '.stylelintrc',
-        context: 'src/' + stylesType,
+        context: path.join('src', stylesType),
         files: '**/*' + stylesExtension,
         failOnError: false,
         quiet: true,
       }),
+    ].concat(env.dev ? [
 
-      env.dev ? () => null : new MinifyPlugin,
+      new HtmlWebpackPlugin({
+        template: process.env.ES6 ? 'index_es6.html' : 'index_prototype.html',
+        support_library: process.env.JQUERY ? path.join('lib', 'jquery.js'): path.join('lib', 'zepto.js')
+      }),
+
+      new MinifyPlugin,
 
       new BrowserSyncPlugin({
         files: "dist/**/*.*",
@@ -317,12 +340,7 @@ module.exports = (env) => {
         reloadDebounce: 500,
         reloadOnRestart: true,
       }),
-    ],
-    resolve: {
-        alias: {
-            'less': path.join(__dirname, 'src/less'),
-            'css': path.join(__dirname, 'src/css'),
-        }
-    },    
+
+    ] : [])),
   }
 }
