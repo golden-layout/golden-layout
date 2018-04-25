@@ -183,6 +183,10 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 
 		parentNode.replaceChild( newChild.element[ 0 ], oldChild.element[ 0 ] );
 
+		if( this._activeContentItem === oldChild ) {
+			this._activeContentItem = newChild;
+		}
+
 		/*
 		 * Optionally destroy the old content item
 		 */
