@@ -1,5 +1,4 @@
-import EventEmitter from '../utils/EventEmitter';
-import { ALL_EVENT } from '../utils/EventEmitter';
+import EventEmitter, { ALL_EVENT } from '../utils/EventEmitter';
 
 import BubblingEvent from '../utils/BubblingEvent';
 import Root from './Root';
@@ -101,13 +100,13 @@ export default class AbstractContentItem extends EventEmitter {
    */
   removeChild(contentItem, keepChild) {
     /*
-         * Get the position of the item that's to be removed within all content items this node contains
-         */
+     * Get the position of the item that's to be removed within all content items this node contains
+     */
     const index = indexOf(contentItem, this.contentItems);
 
     /*
-         * Make sure the content item to be removed is actually a child of this item
-         */
+     * Make sure the content item to be removed is actually a child of this item
+     */
     if (index === -1) {
       throw new Error("Can't remove child item. Unknown content item");
     }
@@ -152,13 +151,13 @@ export default class AbstractContentItem extends EventEmitter {
    */
   undisplayChild(contentItem) {
     /*
-         * Get the position of the item that's to be removed within all content items this node contains
-         */
+     * Get the position of the item that's to be removed within all content items this node contains
+     */
     const index = indexOf(contentItem, this.contentItems);
 
     /*
-         * Make sure the content item to be removed is actually a child of this item
-         */
+     * Make sure the content item to be removed is actually a child of this item
+     */
     if (index === -1) {
       throw new Error("Can't remove child item. Unknown content item");
     }
@@ -207,8 +206,8 @@ export default class AbstractContentItem extends EventEmitter {
   replaceChild(oldChild, newChild, _$destroyOldChild) {
     newChild = this.layoutManager._$normalizeContentItem(newChild);
 
-    let index = indexOf(oldChild, this.contentItems),
-      parentNode = oldChild.element[0].parentNode;
+    const index = indexOf(oldChild, this.contentItems);
+    const { parentNode } = oldChild.element[0];
 
     if (index === -1) {
       throw new Error("Can't replace child. oldChild is not child of this");
@@ -389,16 +388,16 @@ export default class AbstractContentItem extends EventEmitter {
    * SELECTOR
    *************************************** */
   getItemsByFilter(filter) {
-    var result = [],
-      next = function(contentItem) {
-        for (let i = 0; i < contentItem.contentItems.length; i++) {
-          if (filter(contentItem.contentItems[i]) === true) {
-            result.push(contentItem.contentItems[i]);
-          }
-
-          next(contentItem.contentItems[i]);
+    const result = [];
+    const next = function(contentItem) {
+      for (let i = 0; i < contentItem.contentItems.length; i++) {
+        if (filter(contentItem.contentItems[i]) === true) {
+          result.push(contentItem.contentItems[i]);
         }
-      };
+
+        next(contentItem.contentItems[i]);
+      }
+    };
 
     next(this);
     return result;
@@ -418,9 +417,9 @@ export default class AbstractContentItem extends EventEmitter {
   }
 
   getComponentsByName(componentName) {
-    let components = this._$getItemsByProperty('componentName', componentName),
-      instances = [],
-      i;
+    const components = this._$getItemsByProperty('componentName', componentName);
+    const instances = [];
+    let i;
 
     for (i = 0; i < components.length; i++) {
       instances.push(components[i].instance);
@@ -461,9 +460,9 @@ export default class AbstractContentItem extends EventEmitter {
   }
 
   _callOnActiveComponents(methodName) {
-    let stacks = this.getItemsByType('stack'),
-      activeContentItem,
-      i;
+    const stacks = this.getItemsByType('stack');
+    let activeContentItem;
+    let i;
 
     for (i = 0; i < stacks.length; i++) {
       activeContentItem = stacks[i].getActiveContentItem();
@@ -500,9 +499,9 @@ export default class AbstractContentItem extends EventEmitter {
   _$getArea(element) {
     element = element || this.element;
 
-    let offset = element.offset(),
-      width = element.width(),
-      height = element.height();
+    const offset = element.offset();
+    const width = element.width();
+    const height = element.height();
 
     return {
       x1: offset.left,
@@ -559,7 +558,8 @@ export default class AbstractContentItem extends EventEmitter {
    * @returns {void}
    */
   _createContentItems(config) {
-    let oContentItem, i;
+    let oContentItem;
+    let i;
 
     if (!(config.content instanceof Array)) {
       throw new ConfigurationError('content must be an Array', config);

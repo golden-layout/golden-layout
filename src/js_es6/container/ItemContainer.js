@@ -54,7 +54,7 @@ export default class ItemContainer extends EventEmitter {
     this.isHidden = false;
     this._element.show();
     // call shown only if the container has a valid size
-    if (this.height != 0 || this.width != 0) {
+    if (this.height !== 0 || this.width !== 0) {
       this.emit('shown');
     }
   }
@@ -73,14 +73,9 @@ export default class ItemContainer extends EventEmitter {
    * @returns {Boolean} resizeSuccesful
    */
   setSize(width, height) {
-    let rowOrColumn = this.parent,
-      rowOrColumnChild = this,
-      totalPixel,
-      percentage,
-      direction,
-      newSize,
-      delta,
-      i;
+    let rowOrColumn = this.parent;
+    let rowOrColumnChild = this;
+    let i;
 
     while (!rowOrColumn.isColumn && !rowOrColumn.isRow) {
       rowOrColumnChild = rowOrColumn;
@@ -94,12 +89,12 @@ export default class ItemContainer extends EventEmitter {
       }
     }
 
-    direction = rowOrColumn.isColumn ? 'height' : 'width';
-    newSize = direction === 'height' ? height : width;
+    const direction = rowOrColumn.isColumn ? 'height' : 'width';
+    const newSize = direction === 'height' ? height : width;
 
-    totalPixel = this[direction] * (1 / (rowOrColumnChild.config[direction] / 100));
-    percentage = newSize / totalPixel * 100;
-    delta =
+    const totalPixel = this[direction] * (1 / (rowOrColumnChild.config[direction] / 100));
+    const percentage = newSize / totalPixel * 100;
+    const delta =
       (rowOrColumnChild.config[direction] - percentage) / (rowOrColumn.contentItems.length - 1);
 
     for (i = 0; i < rowOrColumn.contentItems.length; i++) {

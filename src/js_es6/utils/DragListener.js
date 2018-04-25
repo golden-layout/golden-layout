@@ -48,7 +48,7 @@ export default class DragListener extends EventEmitter {
   onMouseDown(oEvent) {
     oEvent.preventDefault();
 
-    if (oEvent.button == 0 || oEvent.type === 'touchstart') {
+    if (oEvent.button === 0 || oEvent.type === 'touchstart') {
       const coordinates = this._getCoordinates(oEvent);
 
       this._nOriginalX = coordinates.x;

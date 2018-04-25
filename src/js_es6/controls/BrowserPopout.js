@@ -77,27 +77,27 @@ export default class BrowserPopout extends EventEmitter {
    * parent isn't available anymore it falls back to the layout's topmost element
    */
   popIn() {
-    let childConfig,
-      parentItem,
-      index = this._indexInParent;
+    let childConfig;
+    let parentItem;
+    let index = this._indexInParent;
 
     if (this._parentId) {
       /*
-             * The $.extend call seems a bit pointless, but it's crucial to
-             * copy the config returned by this.getGlInstance().toConfig()
-             * onto a new object. Internet Explorer keeps the references
-             * to objects on the child window, resulting in the following error
-             * once the child window is closed:
-             *
-             * The callee (server [not server application]) is not available and disappeared
-             */
+       * The $.extend call seems a bit pointless, but it's crucial to
+       * copy the config returned by this.getGlInstance().toConfig()
+       * onto a new object. Internet Explorer keeps the references
+       * to objects on the child window, resulting in the following error
+       * once the child window is closed:
+       *
+       * The callee (server [not server application]) is not available and disappeared
+       */
       childConfig = $.extend(true, {}, this.getGlInstance().toConfig()).content[0];
       parentItem = this._layoutManager.root.getItemsById(this._parentId)[0];
 
       /*
-             * Fallback if parentItem is not available. Either add it to the topmost
-             * item or make it the topmost item if the layout is empty
-             */
+       * Fallback if parentItem is not available. Either add it to the topmost
+       * item or make it the topmost item if the layout is empty
+       */
       if (!parentItem) {
         if (this._layoutManager.root.contentItems.length > 0) {
           parentItem = this._layoutManager.root.contentItems[0];
@@ -121,30 +121,29 @@ export default class BrowserPopout extends EventEmitter {
    * @returns {void}
    */
   _createWindow() {
-    let checkReadyInterval,
-      url = this._createUrl(),
-      /**
-       * Bogus title to prevent re-usage of existing window with the
-       * same title. The actual title will be set by the new window's
-       * GoldenLayout instance if it detects that it is in subWindowMode
-       */
-      title = Math.floor(Math.random() * 1000000).toString(36),
-      /**
-       * The options as used in the window.open string
-       */
-      options = this._serializeWindowOptions({
-        width: this._dimensions.width,
-        height: this._dimensions.height,
-        innerWidth: this._dimensions.width,
-        innerHeight: this._dimensions.height,
-        menubar: 'no',
-        toolbar: 'no',
-        location: 'no',
-        personalbar: 'no',
-        resizable: 'yes',
-        scrollbars: 'no',
-        status: 'no',
-      });
+    const url = this._createUrl();
+    /**
+     * Bogus title to prevent re-usage of existing window with the
+     * same title. The actual title will be set by the new window's
+     * GoldenLayout instance if it detects that it is in subWindowMode
+     */
+    const title = Math.floor(Math.random() * 1000000).toString(36);
+    /**
+     * The options as used in the window.open string
+     */
+    const options = this._serializeWindowOptions({
+      width: this._dimensions.width,
+      height: this._dimensions.height,
+      innerWidth: this._dimensions.width,
+      innerHeight: this._dimensions.height,
+      menubar: 'no',
+      toolbar: 'no',
+      location: 'no',
+      personalbar: 'no',
+      resizable: 'yes',
+      scrollbars: 'no',
+      status: 'no',
+    });
 
     this._popoutWindow = window.open(url, title, options);
 
@@ -168,7 +167,7 @@ export default class BrowserPopout extends EventEmitter {
      * window or raising an event on the window object - both would introduce knowledge
      * about the parent to the child window which we'd rather avoid
      */
-    checkReadyInterval = setInterval(
+    const checkReadyInterval = setInterval(
       fnBind(function() {
         if (this._popoutWindow.__glInstance && this._popoutWindow.__glInstance.isInitialised) {
           this._onInitialised();
@@ -187,8 +186,8 @@ export default class BrowserPopout extends EventEmitter {
    * @returns {String} serialised window options
    */
   _serializeWindowOptions(windowOptions) {
-    let windowOptionsString = [],
-      key;
+    const windowOptionsString = [];
+    let key;
 
     for (key in windowOptions) {
       windowOptionsString.push(`${key}=${windowOptions[key]}`);
@@ -205,10 +204,9 @@ export default class BrowserPopout extends EventEmitter {
    */
   _createUrl() {
     let config = {
-        content: this._config,
-      },
-      storageKey = `gl-window-config-${getUniqueId()}`,
-      urlParts;
+      content: this._config,
+    };
+    const storageKey = `gl-window-config-${getUniqueId()}`;
 
     config = new ConfigMinifier().minifyConfig(config);
 
@@ -218,7 +216,7 @@ export default class BrowserPopout extends EventEmitter {
       throw new Error(`Error while writing to localStorage ${e.toString()}`);
     }
 
-    urlParts = document.location.href.split('?');
+    const urlParts = document.location.href.split('?');
 
     // URL doesn't contain GET-parameters
     if (urlParts.length === 1) {

@@ -51,8 +51,16 @@ export default class DragSource {
     if (isFunction(itemConfig)) {
       itemConfig = itemConfig();
     }
-    let contentItem = this._layoutManager._$normalizeContentItem($.extend(true, {}, itemConfig)),
-      dragProxy = new DragProxy(x, y, this._dragListener, this._layoutManager, contentItem, null);
+    const contentItem = this._layoutManager._$normalizeContentItem($.extend(true, {}, itemConfig));
+
+    const dragProxy = new DragProxy(
+      x,
+      y,
+      this._dragListener,
+      this._layoutManager,
+      contentItem,
+      null
+    );
 
     this._layoutManager.transitionIndicator.transitionElements(this._element, dragProxy.element);
   }

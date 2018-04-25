@@ -1,5 +1,4 @@
-import EventEmitter from '../utils/EventEmitter';
-import { ALL_EVENT } from '../utils/EventEmitter';
+import EventEmitter, { ALL_EVENT } from '../utils/EventEmitter';
 import { fnBind } from '../utils/utils';
 
 /**
@@ -87,8 +86,8 @@ export default class EventHub extends EventEmitter {
    * @returns {void}
    */
   _propagateToParent(args) {
-    let event,
-      eventName = 'gl_child_event';
+    let event;
+    const eventName = 'gl_child_event';
 
     if (document.createEvent) {
       event = window.opener.document.createEvent('HTMLEvents');
@@ -118,7 +117,8 @@ export default class EventHub extends EventEmitter {
    * @returns {void}
    */
   _propagateToChildren(args) {
-    let childGl, i;
+    let childGl;
+    let i;
 
     for (i = 0; i < this._layoutManager.openPopouts.length; i++) {
       childGl = this._layoutManager.openPopouts[i].getGlInstance();

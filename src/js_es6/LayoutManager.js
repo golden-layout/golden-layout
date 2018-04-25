@@ -158,7 +158,7 @@ export default class LayoutManager extends EventEmitter {
    * @returns {Object} GoldenLayout configuration
    */
   toConfig(root) {
-    let config, next, i;
+    let i;
 
     if (this.isInitialised === false) {
       throw new Error("Can't create config, layout not yet initialised");
@@ -171,7 +171,7 @@ export default class LayoutManager extends EventEmitter {
     /*
          * settings & labels
          */
-    config = {
+    const config = {
       settings: copy({}, this.config.settings),
       dimensions: copy({}, this.config.dimensions),
       labels: copy({}, this.config.labels),
@@ -181,8 +181,9 @@ export default class LayoutManager extends EventEmitter {
          * Content
          */
     config.content = [];
-    next = function(configNode, item) {
-      let key, i;
+    const next = function(configNode, item) {
+      let key;
+      let i;
 
       for (key in item.config) {
         if (key !== 'content') {
@@ -369,7 +370,7 @@ export default class LayoutManager extends EventEmitter {
    * @returns {ContentItem}
    */
   createContentItem(config, parent) {
-    let typeErrorMsg, contentItem;
+    let typeErrorMsg;
 
     if (typeof config.type !== 'string') {
       throw new ConfigurationError("Missing parameter 'type'", config);
@@ -409,7 +410,7 @@ export default class LayoutManager extends EventEmitter {
       };
     }
 
-    contentItem = new this._typeToItem[config.type](this, config, parent);
+    const contentItem = new this._typeToItem[config.type](this, config, parent);
     return contentItem;
   }
 
@@ -425,15 +426,14 @@ export default class LayoutManager extends EventEmitter {
      * @returns {BrowserPopout}
      */
   createPopout(configOrContentItem, dimensions, parentId, indexInParent) {
-    let config = configOrContentItem,
-      isItem = configOrContentItem instanceof AbstractContentItem,
-      self = this,
-      windowLeft,
-      windowTop,
-      offset,
-      parent,
-      child,
-      browserPopout;
+    let config = configOrContentItem;
+    const isItem = configOrContentItem instanceof AbstractContentItem;
+    const self = this;
+    let windowLeft;
+    let windowTop;
+    let offset;
+    let parent;
+    let child;
 
     parentId = parentId || null;
 
@@ -457,7 +457,7 @@ export default class LayoutManager extends EventEmitter {
       }
 
       parent.addId(parentId);
-      if (isNaN(indexInParent)) {
+      if (Number.isNaN(indexInParent)) {
         indexInParent = indexOf(child, parent.contentItems);
       }
     } else if (!(config instanceof Array)) {
@@ -490,7 +490,7 @@ export default class LayoutManager extends EventEmitter {
       configOrContentItem.remove();
     }
 
-    browserPopout = new BrowserPopout(config, dimensions, parentId, indexInParent, this);
+    const browserPopout = new BrowserPopout(config, dimensions, parentId, indexInParent, this);
 
     browserPopout.on('initialised', () => {
       self.emit('windowOpened', browserPopout);
@@ -607,10 +607,10 @@ export default class LayoutManager extends EventEmitter {
   }
 
   _$getArea(x, y) {
-    let i,
-      area,
-      smallestSurface = Infinity,
-      mathingArea = null;
+    let i;
+    let area;
+    let smallestSurface = Infinity;
+    let mathingArea = null;
 
     for (i = 0; i < this._itemAreas.length; i++) {
       area = this._itemAreas[i];
@@ -649,9 +649,9 @@ export default class LayoutManager extends EventEmitter {
   }
 
   _$calculateItemAreas() {
-    let i,
-      area,
-      allContentItems = this._getAllContentItems();
+    let i;
+    let area;
+    const allContentItems = this._getAllContentItems();
     this._itemAreas = [];
 
     /**
@@ -732,8 +732,8 @@ export default class LayoutManager extends EventEmitter {
    * @returns {void}
    */
   _$reconcilePopoutWindows() {
-    let openPopouts = [],
-      i;
+    const openPopouts = [];
+    let i;
 
     for (i = 0; i < this.openPopouts.length; i++) {
       if (this.openPopouts[i].getWindow().closed === false) {
@@ -898,7 +898,8 @@ export default class LayoutManager extends EventEmitter {
    * @returns {void}
    */
   _createSubWindows() {
-    let i, popout;
+    let i;
+    let popout;
 
     for (i = 0; i < this.config.openPopouts.length; i++) {
       popout = this.config.openPopouts[i];
@@ -1020,7 +1021,7 @@ export default class LayoutManager extends EventEmitter {
     }
 
     // If they all still fit, do nothing.
-    const minItemWidth = this.config.dimensions.minItemWidth;
+    const { minItemWidth } = this.config.dimensions;
     const totalMinWidth = columnCount * minItemWidth;
     if (totalMinWidth <= this.width) {
       return;
@@ -1052,8 +1053,8 @@ export default class LayoutManager extends EventEmitter {
   _useResponsiveLayout() {
     return (
       this.config.settings &&
-      (this.config.settings.responsiveMode == 'always' ||
-        (this.config.settings.responsiveMode == 'onload' && this._firstLoad))
+      (this.config.settings.responsiveMode === 'always' ||
+        (this.config.settings.responsiveMode === 'onload' && this._firstLoad))
     );
   }
 
@@ -1100,7 +1101,7 @@ export default class LayoutManager extends EventEmitter {
   _findAllStackContainersRecursive(stackContainers, node) {
     node.contentItems.forEach(
       fnBind(function(item) {
-        if (item.type == 'stack') {
+        if (item.type === 'stack') {
           stackContainers.push(item);
         } else if (!item.isComponent) {
           this._findAllStackContainersRecursive(stackContainers, item);

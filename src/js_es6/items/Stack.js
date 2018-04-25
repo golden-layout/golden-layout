@@ -44,7 +44,7 @@ export default class Stack extends AbstractContentItem {
       fnBind(function(event) {
         if (this._docker && this._docker.docked)
           this.childElementContainer[this._docker.dimension](
-            event.type == 'mouseenter' ? this._docker.realSize : 0
+            event.type === 'mouseenter' ? this._docker.realSize : 0
           );
       }, this)
     );
@@ -60,20 +60,20 @@ export default class Stack extends AbstractContentItem {
 
   setSize() {
     if (this.element.css('display') === 'none') return;
-    let isDocked = this._docker && this._docker.docked,
-      content = {
-        width: this.element.width(),
-        height: this.element.height(),
-      };
+    const isDocked = this._docker && this._docker.docked;
+    const content = {
+      width: this.element.width(),
+      height: this.element.height(),
+    };
 
     if (this._header.show)
       content[
         this._sided ? 'width' : 'height'
       ] -= this.layoutManager.config.dimensions.headerHeight;
     if (isDocked) content[this._docker.dimension] = this._docker.realSize;
-    if (!isDocked || this._docker.dimension == 'height')
+    if (!isDocked || this._docker.dimension === 'height')
       this.childElementContainer.width(content.width);
-    if (!isDocked || this._docker.dimension == 'width')
+    if (!isDocked || this._docker.dimension === 'width')
       this.childElementContainer.height(content.height);
 
     for (let i = 0; i < this.contentItems.length; i++) {
@@ -85,7 +85,8 @@ export default class Stack extends AbstractContentItem {
   }
 
   _$init() {
-    let i, initialItem;
+    let i;
+    let initialItem;
 
     if (this.isInitialised === true) return;
 
@@ -172,7 +173,10 @@ export default class Stack extends AbstractContentItem {
    * @returns {void}
    */
   _$validateClosability() {
-    let contentItem, isClosable, len, i;
+    let contentItem;
+    let isClosable;
+    let len;
+    let i;
 
     isClosable = this.header._isClosable();
 
@@ -216,9 +220,9 @@ export default class Stack extends AbstractContentItem {
    */
   _$onDrop(contentItem) {
     /*
-         * The item was dropped on the header area. Just add it as a child of this stack and
-         * get the hell out of this logic
-         */
+     * The item was dropped on the header area. Just add it as a child of this stack and
+     * get the hell out of this logic
+     */
     if (this._dropSegment === 'header') {
       this._resetHeaderDropZone();
       this.addChild(contentItem, this._dropIndex);
@@ -226,31 +230,31 @@ export default class Stack extends AbstractContentItem {
     }
 
     /*
-         * The stack is empty. Let's just add the element.
-         */
+     * The stack is empty. Let's just add the element.
+     */
     if (this._dropSegment === 'body') {
       this.addChild(contentItem);
       return;
     }
 
     /*
-         * The item was dropped on the top-, left-, bottom- or right- part of the content. Let's
-         * aggregate some conditions to make the if statements later on more readable
-         */
-    let isVertical = this._dropSegment === 'top' || this._dropSegment === 'bottom',
-      isHorizontal = this._dropSegment === 'left' || this._dropSegment === 'right',
-      insertBefore = this._dropSegment === 'top' || this._dropSegment === 'left',
-      hasCorrectParent =
-        (isVertical && this.parent.isColumn) || (isHorizontal && this.parent.isRow),
-      type = isVertical ? 'column' : 'row',
-      dimension = isVertical ? 'height' : 'width',
-      index,
-      stack,
-      rowOrColumn;
+     * The item was dropped on the top-, left-, bottom- or right- part of the content. Let's
+     * aggregate some conditions to make the if statements later on more readable
+     */
+    const isVertical = this._dropSegment === 'top' || this._dropSegment === 'bottom';
+    const isHorizontal = this._dropSegment === 'left' || this._dropSegment === 'right';
+    const insertBefore = this._dropSegment === 'top' || this._dropSegment === 'left';
+    const hasCorrectParent =
+      (isVertical && this.parent.isColumn) || (isHorizontal && this.parent.isRow);
+    let type = isVertical ? 'column' : 'row';
+    const dimension = isVertical ? 'height' : 'width';
+    let index;
+    let stack;
+    let rowOrColumn;
 
     /*
-         * The content item can be either a component or a stack. If it is a component, wrap it into a stack
-         */
+     * The content item can be either a component or a stack. If it is a component, wrap it into a stack
+     */
     if (contentItem.isComponent) {
       stack = this.layoutManager.createContentItem(
         {
@@ -265,9 +269,9 @@ export default class Stack extends AbstractContentItem {
     }
 
     /*
-         * If the item is dropped on top or bottom of a column or left and right of a row, it's already
-         * layd out in the correct way. Just add it as a child
-         */
+     * If the item is dropped on top or bottom of a column or left and right of a row, it's already
+     * layd out in the correct way. Just add it as a child
+     */
     if (hasCorrectParent) {
       index = indexOf(this, this.parent.contentItems);
       this.parent.addChild(contentItem, insertBefore ? index : index + 1, true);
@@ -275,9 +279,9 @@ export default class Stack extends AbstractContentItem {
       contentItem.config[dimension] = this.config[dimension];
       this.parent.callDownwards('setSize');
       /*
-             * This handles items that are dropped on top or bottom of a row or left / right of a column. We need
-             * to create the appropriate contentItem for them to live in
-             */
+       * This handles items that are dropped on top or bottom of a row or left / right of a column. We need
+       * to create the appropriate contentItem for them to live in
+       */
     } else {
       type = isVertical ? 'column' : 'row';
       rowOrColumn = this.layoutManager.createContentItem(
@@ -308,7 +312,8 @@ export default class Stack extends AbstractContentItem {
    * @returns {void}
    */
   _$highlightDropZone(x, y) {
-    let segment, area;
+    let segment;
+    let area;
 
     for (segment in this._contentAreaDimensions) {
       area = this._contentAreaDimensions[segment].hoverArea;
@@ -332,11 +337,11 @@ export default class Stack extends AbstractContentItem {
       return null;
     }
 
-    let getArea = AbstractContentItem.prototype._$getArea,
-      headerArea = getArea.call(this, this.header.element),
-      contentArea = getArea.call(this, this.childElementContainer),
-      contentWidth = contentArea.x2 - contentArea.x1,
-      contentHeight = contentArea.y2 - contentArea.y1;
+    const getArea = AbstractContentItem.prototype._$getArea;
+    const headerArea = getArea.call(this, this.header.element);
+    const contentArea = getArea.call(this, this.childElementContainer);
+    const contentWidth = contentArea.x2 - contentArea.x1;
+    const contentHeight = contentArea.y2 - contentArea.y1;
 
     this._contentAreaDimensions = {
       header: {
@@ -449,17 +454,15 @@ export default class Stack extends AbstractContentItem {
   }
 
   _highlightHeaderDropZone(x) {
-    let i,
-      tabElement,
-      tabsLength = this.header.tabs.length,
-      isAboveTab = false,
-      tabTop,
-      tabLeft,
-      offset,
-      placeHolderLeft,
-      headerOffset,
-      tabWidth,
-      halfX;
+    let i;
+    let tabElement;
+    const tabsLength = this.header.tabs.length;
+    let isAboveTab = false;
+    let tabTop;
+    let tabLeft;
+    let offset;
+    let headerOffset;
+    let tabWidth;
 
     // Empty stack
     if (tabsLength === 0) {
@@ -498,7 +501,7 @@ export default class Stack extends AbstractContentItem {
       return;
     }
 
-    halfX = tabLeft + tabWidth / 2;
+    const halfX = tabLeft + tabWidth / 2;
 
     if (x < halfX) {
       this._dropIndex = i;
@@ -518,7 +521,7 @@ export default class Stack extends AbstractContentItem {
       });
       return;
     }
-    placeHolderLeft = this.layoutManager.tabDropPlaceholder.offset().left;
+    const placeHolderLeft = this.layoutManager.tabDropPlaceholder.offset().left;
 
     this.layoutManager.dropTargetIndicator.highlightArea({
       x1: placeHolderLeft,
@@ -552,7 +555,7 @@ export default class Stack extends AbstractContentItem {
   }
 
   _highlightBodyDropZone(segment) {
-    const highlightArea = this._contentAreaDimensions[segment].highlightArea;
+    const { highlightArea } = this._contentAreaDimensions[segment];
     this.layoutManager.dropTargetIndicator.highlightArea(highlightArea);
     this._dropSegment = segment;
   }

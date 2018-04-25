@@ -93,9 +93,9 @@ export default class DragProxy extends EventEmitter {
   _onDrag(offsetX, offsetY, event) {
     event = getTouchEvent(event);
 
-    let x = event.pageX,
-      y = event.pageY,
-      isWithinContainer = x > this._minX && x < this._maxX && y > this._minY && y < this._maxY;
+    const x = event.pageX;
+    const y = event.pageY;
+    const isWithinContainer = x > this._minX && x < this._maxX && y > this._minY && y < this._maxY;
 
     if (
       !isWithinContainer &&
@@ -219,9 +219,9 @@ export default class DragProxy extends EventEmitter {
    * @returns {void}
    */
   _setDimensions() {
-    let dimensions = this._layoutManager.config.dimensions,
-      width = dimensions.dragProxyWidth,
-      height = dimensions.dragProxyHeight;
+    const { dimensions } = this._layoutManager.config;
+    let width = dimensions.dragProxyWidth;
+    let height = dimensions.dragProxyHeight;
 
     this.element.width(width);
     this.element.height(height);

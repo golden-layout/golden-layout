@@ -102,7 +102,8 @@ export default class ConfigMinifier {
    * @returns {void}
    */
   _nextLevel(from, to, translationFn) {
-    let key, minKey;
+    let key;
+    let minKey;
 
     for (key in from) {
       /**

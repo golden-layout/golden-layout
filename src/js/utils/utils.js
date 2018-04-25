@@ -14,12 +14,12 @@ lm.utils.createObject = function(prototype) {
 };
 
 lm.utils.objectKeys = function(object) {
-  let keys, key;
+  const keys = [];
+  let key;
 
   if (typeof Object.keys === 'function') {
     return Object.keys(object);
   }
-  keys = [];
   for (key in object) {
     keys.push(key);
   }
@@ -27,7 +27,7 @@ lm.utils.objectKeys = function(object) {
 };
 
 lm.utils.getHashValue = function(key) {
-  const matches = location.hash.match(new RegExp(`${key}=([^&]*)`));
+  const matches = window.location.hash.match(new RegExp(`${key}=([^&]*)`));
   return matches ? matches[1] : null;
 };
 
@@ -38,10 +38,10 @@ lm.utils.getQueryStringParam = function(param) {
     return null;
   }
 
-  let keyValuePairs = window.location.search.substr(1).split('&'),
-    params = {},
-    pair,
-    i;
+  const keyValuePairs = window.location.search.substr(1).split('&');
+  const params = {};
+  let pair;
+  let i;
 
   for (i = 0; i < keyValuePairs.length; i++) {
     pair = keyValuePairs[i].split('=');
