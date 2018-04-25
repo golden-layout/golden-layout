@@ -43,7 +43,6 @@ export default class BrowserPopout extends EventEmitter {
     toConfig() {
         if (this.isInitialised === false) {
             throw new Error('Can\'t create config, layout not yet initialised');
-            return;
         }
         return {
             dimensions: {
@@ -72,7 +71,9 @@ export default class BrowserPopout extends EventEmitter {
         } else {
             try {
                 this.getWindow().close();
-            } catch (e) {}
+            } catch (e) {
+                //
+            }
         }
     }
 
