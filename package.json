@@ -20,10 +20,6 @@
   "directories": {
     "test": "test"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/deepstreamIO/golden-layout.git"
-  },
   "scripts": {
     "build": "npm run clean && cross-env STYLES=scss JQUERY=true webpack --progress --env.build --config webpack.config.dev.babel.js",
     "build_es6j": "npm run clean && cross-env STYLES=scss ES6=true JQUERY=true webpack --progress --env.build --config webpack.config.dev.babel.js",
@@ -100,6 +96,10 @@
     "walker": "^1.0.7",
     "webpack": "^3.0.0",
     "webpack-dev-server": "^2.3.0"
+  },
+  "optionalDependencies": {
+    "react": "14 || 15 || 16",
+    "react-dom": "14 || 15 || 16"
   },
   "engines": {
     "node": ">=6.9.0"
