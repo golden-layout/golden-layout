@@ -47,8 +47,9 @@
       ]
     }
   ],
+  "main": "dist/js/goldenlayout",
   "jspm": {
-    "main": "dist/goldenlayout",
+    "main": "dist/js/goldenlayout",
     "format": "global",
     "registry": "jspm",
     "dependencies": {
@@ -60,52 +61,44 @@
       ]
     }
   },
-  "main": "webpack.config.dev.babel.js",
+  "module": "GoldenLayout",
   "engines": {
     "node": ">=6.9.0"
   },
   "scripts": {
-    "clean": "npm-run-all clean:*",
+    "clean": "npm-run-all --parallel clean:*",
     "clean:dist": "del-cli dist",
-    "prestart": "npm-run-all --parallel clean",
-
-    "start": "npm run clean && cross-env STYLES=scss JQUERY=true webpack --progress --env.dev --config webpack.config.dev.babel.js",
-    "build": "npm run clean && cross-env STYLES=scss JQUERY=true webpack --progress --env.build --config webpack.config.dev.babel.js",
-
-    "start_es6j": "npm run clean && cross-env STYLES=scss ES6=true JQUERY=true webpack --progress --env.dev --config webpack.config.dev.babel.js",
-    "start_es6z": "npm run clean && cross-env STYLES=scss ES6=true ZEPTO=true webpack --progress --env.dev --config webpack.config.dev.babel.js",
-
-    "build_es6j": "npm run clean && cross-env STYLES=scss ES6=true JQUERY=true webpack --progress --env.build --config webpack.config.dev.babel.js",
-    "build_es6j_watch": "npm run clean && cross-env STYLES=scss ES6=true JQUERY=true webpack --progress --env.build --env.build_watch --config webpack.config.dev.babel.js",
-
-
-    "build_es6z": "npm run clean && cross-env STYLES=scss ES6=true ZEPTO=true webpack --progress --env.build --config webpack.config.dev.babel.js",
-    "build_es6z_watch": "npm run clean && cross-env STYLES=scss ES6=true ZEPTO=true webpack --progress --env.build --env.build_watch --config webpack.config.dev.babel.js",
-
-    "lint_es6:autofix": "stylelint src/scss/**/*.scss --fix && eslint src/js_es6 --fix",
-    "lint:autofix": "stylelint src/scss/**/*.scss --fix && eslint src/js --fix",
+    "start": "npm run clean && cross-env STYLES=scss webpack --progress --env.dev --config webpack.config.dev.babel.js",
+    "start_es6": "npm run clean && cross-env STYLES=scss ES6=true webpack --progress --env.dev --config webpack.config.dev.babel.js",
+    "build": "npm run clean && cross-env STYLES=scss webpack --progress --env.build --config webpack.config.dev.babel.js",
+    "build_es6": "npm run clean && cross-env STYLES=scss ES6=true webpack --progress --env.build --config webpack.config.dev.babel.js",
+    "build_es6_watch": "npm run clean && cross-env STYLES=scss ES6=true webpack --progress --env.build --env.build_watch --config webpack.config.dev.babel.js",
+    "lint:autofix": "stylelint src/scss/**/*.scss --fix && eslint src/js_es6 --fix",
     "postinstall": "del-cli node_modules/**/*.info"
   },
   "dependencies": {
-    "imports-loader": "^0.8.0",
-    "jquery": "^3.3.1",
-    "zepto": "^1.2.0"
+    "jquery": "^3.3.1"
   },
   "devDependencies": {
-    "autoprefixer": "^7.0.1",
-    "babel-cli": "^6.26.0",
-    "babel-core": "^6.22.1",
+    "@babel/cli": "7.0.0-beta.44",
+    "@babel/core": "7.0.0-beta.44",
+    "@babel/plugin-proposal-class-properties": "^7.0.0-beta.44",
+    "@babel/plugin-proposal-decorators": "^7.0.0-beta.44",
+    "@babel/plugin-transform-runtime": "^7.0.0-beta.44",
+    "@babel/preset-env": "^7.0.0-beta.44",
+    "@babel/preset-stage-0": "^7.0.0-beta.44",
+    "@babel/preset-stage-2": "^7.0.0-beta.44",
+    "@babel/register": "^7.0.0-beta.44",
+    "@babel/runtime": "7.0.0-beta.44",
+    "aspect.js": "^0.7.3",
+    "autoprefixer": "^8.3.0",
     "babel-eslint": "^8.2.1",
-    "babel-loader": "^7.0.0",
-    "babel-minify-webpack-plugin": "^0.2.0",
+    "babel-loader": "^8.0.0-beta.0",
+    "babel-minify": "^0.4.0",
     "babel-plugin-transform-class-properties": "^6.24.1",
-    "babel-plugin-transform-runtime": "^6.22.0",
-    "babel-preset-env": "^1.6.0",
-    "babel-preset-es2015": "^6.24.1",
-    "babel-preset-stage-2": "^6.24.1",
-    "babel-runtime": "^6.22.0",
+    "babel-plugin-transform-decorators-legacy": "^1.3.4",
     "browser-sync": "^2.18.8",
-    "browser-sync-webpack-plugin": "^1.1.4",
+    "browser-sync-webpack-plugin": "^2.2.2",
     "chalk": "^2.3.2",
     "concat-files": "^0.1.1",
     "copy-webpack-plugin": "^4.5.1",
@@ -114,15 +107,15 @@
     "del-cli": "^1.0.0",
     "eslint": "^4.1.1",
     "eslint-config-airbnb": "^16.1.0",
-    "eslint-loader": "^1.6.1",
+    "eslint-loader": "^2.0.0",
     "eslint-plugin-import": "^2.2.0",
     "eslint-plugin-jsx-a11y": "^6.0.2",
     "eslint-plugin-react": "^7.3.0",
-    "exports-loader": "^0.6.3",
-    "extract-text-webpack-plugin": "^3.0.2",
+    "exports-loader": "^0.7.0",
+    "extract-text-webpack-plugin": "^4.0.0-beta.0",
     "file-loader": "^1.1.6",
     "html-loader": "^0.5.0",
-    "html-webpack-plugin": "^2.28.0",
+    "html-webpack-plugin": "^3.2.0",
     "image-webpack-loader": "^4.0.0",
     "less": "^3.0.1",
     "less-loader": "^4.1.0",
@@ -135,16 +128,16 @@
     "postcss-loader": "^2.0.5",
     "postcss-reporter": "^5.0.0",
     "pug-html-loader": "^1.1.0",
-    "sass-loader": "^6.0.0",
-    "script-loader": "^0.7.2",
-    "style-loader": "^0.20.1",
-    "stylelint": "^8.0.0",
+    "sass-loader": "^7.0.1",
+    "style-loader": "^0.21.0",
+    "stylelint": "^9.2.0",
     "stylelint-config-standard": "^18.0.0",
-    "stylelint-scss": "^2.0.1",
+    "stylelint-scss": "^3.0.1",
     "stylelint-webpack-plugin": "^0.10.1",
-    "url-loader": "^0.6.2",
+    "url-loader": "^1.0.1",
     "walker": "^1.0.7",
-    "webpack": "^3.0.0",
-    "webpack-dev-server": "^2.3.0"
+    "webpack": "^4.6.0",
+    "webpack-cli": "^2.0.14",
+    "webpack-dev-server": "^3.1.3"
   }
 }

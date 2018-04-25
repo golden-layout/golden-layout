@@ -239,7 +239,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 		this.emitBubblingEvent( 'stateChanged' );
 		this._validateDocking();
 	},
-	
+
 	/**
 	 * Invoked recursively by the layout manager. AbstractContentItem.init appends
 	 * the contentItem's DOM elements to the container, RowOrColumn init adds splitters
@@ -321,7 +321,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 					totalWidth -= headerSize - this._splitterSize;
 				}
 		}
-	
+
 		for( i = 0; i < this.contentItems.length; i++ ) {
 			if( this._isColumn ) {
 				itemSize = Math.floor( totalHeight * ( this.contentItems[ i ].config.height / 100 ) );
