@@ -1,94 +1,40 @@
 {
   "name": "golden-layout",
   "version": "1.5.9",
-  "author": "deepstreamHub GmbH",
-  "license": "MIT",
+  "description": "A multi-screen javascript Layout manager \r https://golden-layout.com",
   "keywords": [
-    "layout manager",
-    "javascript",
     "docker",
+    "javascript",
     "layout",
+    "layout manager",
     "popouts"
   ],
   "homepage": "https://github.com/deepstreamIO/golden-layout",
   "bugs": {
     "url": "https://github.com/deepstreamIO/golden-layout/issues"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/deepstreamIO/golden-layout.git"
-  },
-  "description": "A multi-screen javascript Layout manager \r https://golden-layout.com",
+  "license": "MIT",
+  "author": "deepstreamHub GmbH",
+  "main": "webpack.config.dev.babel.js",
   "typings": "./index.d.ts",
   "directories": {
     "test": "test"
   },
-  "npmName": "golden-layout",
-  "npmFileMap": [
-    {
-      "basePath": "/dist/",
-      "files": [
-        "goldenlayout.js",
-        "goldenlayout.min.js"
-      ]
-    },
-    {
-      "basePath": "/src/css/",
-      "files": [
-        "goldenlayout.base.css",
-        "goldenlayout-dark-theme.css",
-        "goldenlayout-light-theme.css"
-      ]
-    },
-    {
-      "basePath": "/",
-      "files": [
-        "typings.json"
-      ]
-    }
-  ],
-  "jspm": {
-    "main": "dist/goldenlayout",
-    "format": "global",
-    "registry": "jspm",
-    "dependencies": {
-      "jquery": "^2.1.0"
-    },
-    "shim": {
-      "dist/goldenlayout": [
-        "jquery"
-      ]
-    }
-  },
-  "optionalDependencies": {
-    "react": "14 || 15 || 16",
-    "react-dom": "14 || 15 || 16"
-  },
-  "main": "webpack.config.dev.babel.js",
-  "engines": {
-    "node": ">=6.9.0"
-  },
   "scripts": {
-    "clean": "npm-run-all clean:*",
-    "clean:dist": "del-cli dist",
-    "prestart": "npm-run-all --parallel clean",
-
-    "start": "npm run clean && cross-env STYLES=scss JQUERY=true webpack --progress --env.dev --config webpack.config.dev.babel.js",
     "build": "npm run clean && cross-env STYLES=scss JQUERY=true webpack --progress --env.build --config webpack.config.dev.babel.js",
-
-    "start_es6j": "npm run clean && cross-env STYLES=scss ES6=true JQUERY=true webpack --progress --env.dev --config webpack.config.dev.babel.js",
-    "start_es6z": "npm run clean && cross-env STYLES=scss ES6=true ZEPTO=true webpack --progress --env.dev --config webpack.config.dev.babel.js",
-
     "build_es6j": "npm run clean && cross-env STYLES=scss ES6=true JQUERY=true webpack --progress --env.build --config webpack.config.dev.babel.js",
     "build_es6j_watch": "npm run clean && cross-env STYLES=scss ES6=true JQUERY=true webpack --progress --env.build --env.build_watch --config webpack.config.dev.babel.js",
-
-
     "build_es6z": "npm run clean && cross-env STYLES=scss ES6=true ZEPTO=true webpack --progress --env.build --config webpack.config.dev.babel.js",
     "build_es6z_watch": "npm run clean && cross-env STYLES=scss ES6=true ZEPTO=true webpack --progress --env.build --env.build_watch --config webpack.config.dev.babel.js",
-
-    "lint_es6:autofix": "stylelint src/scss/**/*.scss --fix && eslint src/js_es6 --fix",
+    "clean": "npm-run-all clean:*",
+    "clean:dist": "del-cli dist",
+    "postinstall": "del-cli node_modules/**/*.info",
     "lint:autofix": "stylelint src/scss/**/*.scss --fix && eslint src/js --fix",
-    "postinstall": "del-cli node_modules/**/*.info"
+    "lint_es6:autofix": "stylelint src/scss/**/*.scss --fix && eslint src/js_es6 --fix",
+    "prestart": "npm-run-all --parallel clean",
+    "start": "npm run clean && cross-env STYLES=scss JQUERY=true webpack --progress --env.dev --config webpack.config.dev.babel.js",
+    "start_es6j": "npm run clean && cross-env STYLES=scss ES6=true JQUERY=true webpack --progress --env.dev --config webpack.config.dev.babel.js",
+    "start_es6z": "npm run clean && cross-env STYLES=scss ES6=true ZEPTO=true webpack --progress --env.dev --config webpack.config.dev.babel.js"
   },
   "dependencies": {
     "imports-loader": "^0.8.0",
@@ -150,5 +96,49 @@
     "walker": "^1.0.7",
     "webpack": "^3.0.0",
     "webpack-dev-server": "^2.3.0"
-  }
+  },
+  "optionalDependencies": {
+    "react": "14 || 15 || 16",
+    "react-dom": "14 || 15 || 16"
+  },
+  "engines": {
+    "node": ">=6.9.0"
+  },
+  "jspm": {
+    "main": "dist/goldenlayout",
+    "format": "global",
+    "registry": "jspm",
+    "dependencies": {
+      "jquery": "^2.1.0"
+    },
+    "shim": {
+      "dist/goldenlayout": [
+        "jquery"
+      ]
+    }
+  },
+  "npmFileMap": [
+    {
+      "basePath": "/dist/",
+      "files": [
+        "goldenlayout.js",
+        "goldenlayout.min.js"
+      ]
+    },
+    {
+      "basePath": "/src/css/",
+      "files": [
+        "goldenlayout.base.css",
+        "goldenlayout-dark-theme.css",
+        "goldenlayout-light-theme.css"
+      ]
+    },
+    {
+      "basePath": "/",
+      "files": [
+        "typings.json"
+      ]
+    }
+  ],
+  "npmName": "golden-layout"
 }
