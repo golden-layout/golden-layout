@@ -1,6 +1,5 @@
-import AbstractContentItem from '../items/AbstractContentItem'
-import ItemContainer from '../container/ItemContainer'
-
+import AbstractContentItem from '../items/AbstractContentItem';
+import ItemContainer from '../container/ItemContainer';
 
 /**
  * @param {[type]} layoutManager [description]
@@ -8,70 +7,68 @@ import ItemContainer from '../container/ItemContainer'
  * @param {[type]} parent        [description]
  */
 
-
 export default class Component extends AbstractContentItem {
-    constructor(layoutManager, config, parent) {
+  constructor(layoutManager, config, parent) {
+    super(layoutManager, config, parent);
 
-        super(layoutManager, config, parent);
+    let ComponentConstructor = layoutManager.getComponent(this.config.componentName),
+      componentConfig = $.extend(true, {}, this.config.componentState || {});
 
-        var ComponentConstructor = layoutManager.getComponent(this.config.componentName),
-            componentConfig = $.extend(true, {}, this.config.componentState || {});
+    componentConfig.componentName = this.config.componentName;
+    this.componentName = this.config.componentName;
 
-        componentConfig.componentName = this.config.componentName;
-        this.componentName = this.config.componentName;
-
-        if (this.config.title === '') {
-            this.config.title = this.config.componentName;
-        }
-
-        this.isComponent = true;
-        this.container = new ItemContainer(this.config, this, layoutManager);
-        this.instance = new ComponentConstructor(this.container, componentConfig);
-        this.element = this.container._element;
+    if (this.config.title === '') {
+      this.config.title = this.config.componentName;
     }
 
-    close() {
-        this.parent.removeChild(this);
-    }
+    this.isComponent = true;
+    this.container = new ItemContainer(this.config, this, layoutManager);
+    this.instance = new ComponentConstructor(this.container, componentConfig);
+    this.element = this.container._element;
+  }
 
-    setSize() {
-        if (this.element.css('display') !== 'none') {
-            // Do not update size of hidden components to prevent unwanted reflows
-            this.container._$setSize(this.element.width(), this.element.height());
-        }
-    }
+  close() {
+    this.parent.removeChild(this);
+  }
 
-    _$init() {
-        AbstractContentItem.prototype._$init.call(this);
-        this.container.emit('open');
+  setSize() {
+    if (this.element.css('display') !== 'none') {
+      // Do not update size of hidden components to prevent unwanted reflows
+      this.container._$setSize(this.element.width(), this.element.height());
     }
+  }
 
-    _$hide() {
-        this.container.hide();
-        AbstractContentItem.prototype._$hide.call(this);
-    }
+  _$init() {
+    AbstractContentItem.prototype._$init.call(this);
+    this.container.emit('open');
+  }
 
-    _$show() {
-        this.container.show();
-        AbstractContentItem.prototype._$show.call(this);
-    }
+  _$hide() {
+    this.container.hide();
+    AbstractContentItem.prototype._$hide.call(this);
+  }
 
-    _$shown() {
-        this.container.shown();
-        AbstractContentItem.prototype._$shown.call(this);
-    }
+  _$show() {
+    this.container.show();
+    AbstractContentItem.prototype._$show.call(this);
+  }
 
-    _$destroy() {
-        this.container.emit('destroy', this);
-        AbstractContentItem.prototype._$destroy.call(this);
-    }
+  _$shown() {
+    this.container.shown();
+    AbstractContentItem.prototype._$shown.call(this);
+  }
 
-    /**
-     * Dragging onto a component directly is not an option
-     *
-     * @returns null
-     */
-    _$getArea() {
-        return null;
-    }
+  _$destroy() {
+    this.container.emit('destroy', this);
+    AbstractContentItem.prototype._$destroy.call(this);
+  }
+
+  /**
+   * Dragging onto a component directly is not an option
+   *
+   * @returns null
+   */
+  _$getArea() {
+    return null;
+  }
 }

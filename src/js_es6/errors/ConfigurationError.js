@@ -1,13 +1,11 @@
-
-
 export default class ConfigurationError extends Error {
-    constructor(message, node) {
-        super();
+  constructor(message, node) {
+    super();
 
-        this.name = 'Configuration Error';
-        this.message = message;
-        this.node = node;
-    }
+    this.name = 'Configuration Error';
+    this.message = message;
+    this.node = node;
+  }
 }
 
 ConfigurationError.prototype = new Error();

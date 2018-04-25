@@ -1,6 +1,4 @@
-import {
-    isFunction
-} from '../utils/utils'
+import { isFunction } from '../utils/utils';
 
 /**
  * A generic and very fast EventEmitter
@@ -15,121 +13,123 @@ import {
  * @constructor
  */
 
-export const ALL_EVENT = '__all'
+export const ALL_EVENT = '__all';
 
 export default class EventEmitter {
+  /**
+   * The name of the event that's triggered for every other event
+   *
+   * usage
+   *
+   * myEmitter.on( EventEmitter.ALL_EVENT, function( eventName, argsArray ){
+   *  //do stuff
+   * });
+   *
+   * @type {String}
+   */
+  constructor() {
+    this._mSubscriptions = {};
+    this._mSubscriptions[ALL_EVENT] = [];
+
     /**
-     * The name of the event that's triggered for every other event
+     * Listen for events
      *
-     * usage
+     * @param   {String} sEvent    The name of the event to listen to
+     * @param   {Function} fCallback The callback to execute when the event occurs
+     * @param   {[Object]} oContext The value of the this pointer within the callback function
      *
-     * myEmitter.on( EventEmitter.ALL_EVENT, function( eventName, argsArray ){
-     *  //do stuff
-     * });
-     *
-     * @type {String}
+     * @returns {void}
      */
-    constructor() {
-        this._mSubscriptions = {};
-        this._mSubscriptions[ALL_EVENT] = [];
+    this.on = function(sEvent, fCallback, oContext) {
+      if (!isFunction(fCallback)) {
+        throw new Error(
+          `Tried to listen to event ${sEvent} with non-function callback ${fCallback}`
+        );
+      }
 
+      if (!this._mSubscriptions[sEvent]) {
+        this._mSubscriptions[sEvent] = [];
+      }
 
-        /**
-         * Listen for events
-         *
-         * @param   {String} sEvent    The name of the event to listen to
-         * @param   {Function} fCallback The callback to execute when the event occurs
-         * @param   {[Object]} oContext The value of the this pointer within the callback function
-         *
-         * @returns {void}
-         */
-        this.on = function(sEvent, fCallback, oContext) {
-            if (!isFunction(fCallback)) {
-                throw new Error('Tried to listen to event ' + sEvent + ' with non-function callback ' + fCallback);
-            }
+      this._mSubscriptions[sEvent].push({
+        fn: fCallback,
+        ctx: oContext,
+      });
+    };
 
-            if (!this._mSubscriptions[sEvent]) {
-                this._mSubscriptions[sEvent] = [];
-            }
+    /**
+     * Emit an event and notify listeners
+     *
+     * @param   {String} sEvent The name of the event
+     * @param    {Mixed}  various additional arguments that will be passed to the listener
+     *
+     * @returns {void}
+     */
+    this.emit = function(sEvent) {
+      let i, ctx, args;
 
-            this._mSubscriptions[sEvent].push({
-                fn: fCallback,
-                ctx: oContext
-            });
-        };
+      args = Array.prototype.slice.call(arguments, 1);
 
-        /**
-         * Emit an event and notify listeners
-         *
-         * @param   {String} sEvent The name of the event
-         * @param    {Mixed}  various additional arguments that will be passed to the listener
-         *
-         * @returns {void}
-         */
-        this.emit = function(sEvent) {
-            var i, ctx, args;
+      let subs = this._mSubscriptions[sEvent];
 
-            args = Array.prototype.slice.call(arguments, 1);
+      if (subs) {
+        subs = subs.slice();
+        for (i = 0; i < subs.length; i++) {
+          ctx = subs[i].ctx || {};
+          subs[i].fn.apply(ctx, args);
+        }
+      }
 
-            var subs = this._mSubscriptions[sEvent];
+      args.unshift(sEvent);
 
-            if (subs) {
-                subs = subs.slice();
-                for (i = 0; i < subs.length; i++) {
-                    ctx = subs[i].ctx || {};
-                    subs[i].fn.apply(ctx, args);
-                }
-            }
+      const allEventSubs = this._mSubscriptions[ALL_EVENT].slice();
 
-            args.unshift(sEvent);
+      for (i = 0; i < allEventSubs.length; i++) {
+        ctx = allEventSubs[i].ctx || {};
+        allEventSubs[i].fn.apply(ctx, args);
+      }
+    };
 
-            var allEventSubs = this._mSubscriptions[ALL_EVENT].slice()
+    /**
+     * Removes a listener for an event, or all listeners if no callback and context is provided.
+     *
+     * @param   {String} sEvent    The name of the event
+     * @param   {Function} fCallback The previously registered callback method (optional)
+     * @param   {Object} oContext  The previously registered context (optional)
+     *
+     * @returns {void}
+     */
+    this.unbind = function(sEvent, fCallback, oContext) {
+      if (!this._mSubscriptions[sEvent]) {
+        throw new Error(`No subscribtions to unsubscribe for event ${sEvent}`);
+      }
 
-            for (i = 0; i < allEventSubs.length; i++) {
-                ctx = allEventSubs[i].ctx || {};
-                allEventSubs[i].fn.apply(ctx, args);
-            }
-        };
+      let i,
+        bUnbound = false;
 
-        /**
-         * Removes a listener for an event, or all listeners if no callback and context is provided.
-         *
-         * @param   {String} sEvent    The name of the event
-         * @param   {Function} fCallback The previously registered callback method (optional)
-         * @param   {Object} oContext  The previously registered context (optional)
-         *
-         * @returns {void}
-         */
-        this.unbind = function(sEvent, fCallback, oContext) {
-            if (!this._mSubscriptions[sEvent]) {
-                throw new Error('No subscribtions to unsubscribe for event ' + sEvent);
-            }
+      for (i = 0; i < this._mSubscriptions[sEvent].length; i++) {
+        if (
+          (!fCallback || this._mSubscriptions[sEvent][i].fn === fCallback) &&
+          (!oContext || oContext === this._mSubscriptions[sEvent][i].ctx)
+        ) {
+          this._mSubscriptions[sEvent].splice(i, 1);
+          bUnbound = true;
+        }
+      }
 
-            var i, bUnbound = false;
+      if (bUnbound === false) {
+        throw new Error(`Nothing to unbind for ${sEvent}`);
+      }
+    };
 
-            for (i = 0; i < this._mSubscriptions[sEvent].length; i++) {
-                if (
-                    (!fCallback || this._mSubscriptions[sEvent][i].fn === fCallback) &&
-                    (!oContext || oContext === this._mSubscriptions[sEvent][i].ctx)
-                ) {
-                    this._mSubscriptions[sEvent].splice(i, 1);
-                    bUnbound = true;
-                }
-            }
+    /**
+     * Alias for unbind
+     */
+    this.off = this.unbind;
 
-            if (bUnbound === false) {
-                throw new Error('Nothing to unbind for ' + sEvent);
-            }
-        };
-
-        /**
-         * Alias for unbind
-         */
-        this.off = this.unbind;
-
-        /**
-         * Alias for emit
-         */
-        this.trigger = this.emit;
-    }
+    /**
+     * Alias for emit
+     */
+    this.trigger = this.emit;
+  }
 }

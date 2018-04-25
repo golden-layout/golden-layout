@@ -1,7 +1,7 @@
 const itemDefaultConfig = {
-    isClosable: true,
-    reorderEnabled: true,
-    title: ''
-}
+  isClosable: true,
+  reorderEnabled: true,
+  title: '',
+};
 
-export default itemDefaultConfig
+export default itemDefaultConfig;
