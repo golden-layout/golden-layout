@@ -117,7 +117,7 @@ module.exports = (env) => {
               options: {
                 cache: true,
                 emitWarning: true,
-                configFile: '.eslintrc',
+                configFile: '.eslintrc.js',
               },
             },
           ],

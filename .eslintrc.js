@@ -15,7 +15,7 @@ module.exports = {
     'sourceType': 'module'
   },
   'globals': {
-      'lm': warn
+    'lm': warn,
   },  
   'rules': {
     'block-scoped-var': warn,
@@ -26,7 +26,7 @@ module.exports = {
     'import/no-mutable-exports': warn,
     'no-continue': warn,
     'no-multi-assign': warn,
-    'no-new': warn
+    'no-new': warn,
     'no-param-reassign': [
       'warn',
       {
@@ -60,5 +60,5 @@ module.exports = {
     ],
     'strict': ignore,
     'vars-on-top': warn,
-  }
-}
+  },
+};
