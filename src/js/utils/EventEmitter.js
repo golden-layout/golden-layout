@@ -44,9 +44,9 @@ lm.utils.EventEmitter = function() {
    * @returns {void}
    */
   this.emit = function(sEvent) {
-    let i, ctx, args;
-
-    args = Array.prototype.slice.call(arguments, 1);
+    let i;
+    let ctx;
+    const args = Array.prototype.slice.call(arguments, 1);
 
     let subs = this._mSubscriptions[sEvent];
 
@@ -82,8 +82,8 @@ lm.utils.EventEmitter = function() {
       throw new Error(`No subscribtions to unsubscribe for event ${sEvent}`);
     }
 
-    let i,
-      bUnbound = false;
+    let i;
+    let bUnbound = false;
 
     for (i = 0; i < this._mSubscriptions[sEvent].length; i++) {
       if (

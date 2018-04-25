@@ -71,13 +71,12 @@ lm.utils.copy(lm.utils.ReactComponentHandler.prototype, {
    */
   _getReactClass() {
     const componentName = this._container._config.component;
-    let reactClass;
 
     if (!componentName) {
       throw new Error('No react component name. type: react-component needs a field `component`');
     }
 
-    reactClass = this._container.layoutManager.getComponent(componentName);
+    const reactClass = this._container.layoutManager.getComponent(componentName);
 
     if (!reactClass) {
       throw new Error(

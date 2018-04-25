@@ -52,7 +52,7 @@ lm.utils.copy(lm.controls.Header.prototype, {
    * @returns {void}
    */
   createTab(contentItem, index) {
-    let tab, i;
+    let i;
 
     // If there's already a tab relating to the
     // content item, don't do anything
@@ -62,7 +62,7 @@ lm.utils.copy(lm.controls.Header.prototype, {
       }
     }
 
-    tab = new lm.controls.Tab(this, contentItem);
+    const tab = new lm.controls.Tab(this, contentItem);
 
     if (this.tabs.length === 0) {
       this.tabs.push(tab);
@@ -109,7 +109,10 @@ lm.utils.copy(lm.controls.Header.prototype, {
    * @param {lm.item.AbstractContentItem} contentItem
    */
   setActiveContentItem(contentItem) {
-    let i, j, isActive, activeTab;
+    let i;
+    let j;
+    let isActive;
+    let activeTab;
 
     for (i = 0; i < this.tabs.length; i++) {
       isActive = this.tabs[i].contentItem === contentItem;
@@ -154,7 +157,7 @@ lm.utils.copy(lm.controls.Header.prototype, {
     if (this.parent._docker && this.parent._docker.docked)
       throw new Error("Can't change header position in docked stack");
     if (previous && !this.parent._side) previous = 'top';
-    if (position !== undefined && this.parent._header.show != position) {
+    if (position !== undefined && this.parent._header.show !== position) {
       this.parent._header.show = position;
       this.parent._setupHeaderPosition();
     }
@@ -226,21 +229,19 @@ lm.utils.copy(lm.controls.Header.prototype, {
    * @returns {void}
    */
   _createControls() {
-    var closeStack,
-      popout,
-      label,
-      maximiseLabel,
-      minimiseLabel,
-      maximise,
-      maximiseButton,
-      tabDropdownLabel,
-      showTabDropdown;
+    let closeStack;
+    let popout;
+    let label;
+    let maximiseLabel;
+    let minimiseLabel;
+    let maximise;
+    let maximiseButton;
 
     /**
      * Dropdown to show additional tabs.
      */
-    showTabDropdown = lm.utils.fnBind(this._showAdditionalTabsDropdown, this);
-    tabDropdownLabel = this.layoutManager.config.labels.tabDropdown;
+    const showTabDropdown = lm.utils.fnBind(this._showAdditionalTabsDropdown, this);
+    const tabDropdownLabel = this.layoutManager.config.labels.tabDropdown;
     this.tabDropdownButton = new lm.controls.HeaderButton(
       this,
       tabDropdownLabel,
@@ -251,7 +252,7 @@ lm.utils.copy(lm.controls.Header.prototype, {
 
     if (this.parent._header && this.parent._header.dock) {
       const button = lm.utils.fnBind(this.parent.dock, this.parent);
-      var label = this._getHeaderSetting('dock');
+      label = this._getHeaderSetting('dock');
       this.dockButton = new lm.controls.HeaderButton(this, label, 'lm_dock', button);
     }
 
@@ -360,19 +361,19 @@ lm.utils.copy(lm.controls.Header.prototype, {
     this.element.css(size(!this.parent._sided), '');
     this.element[size(this.parent._sided)](this.layoutManager.config.dimensions.headerHeight);
     let availableWidth =
-        this.element.outerWidth() - this.controlsContainer.outerWidth() - this._tabControlOffset,
-      cumulativeTabWidth = 0,
-      visibleTabWidth = 0,
-      tabElement,
-      i,
-      j,
-      marginLeft,
-      overlap = 0,
-      tabWidth,
-      tabOverlapAllowance = this.layoutManager.config.settings.tabOverlapAllowance,
-      tabOverlapAllowanceExceeded = false,
-      activeIndex = this.activeContentItem ? this.tabs.indexOf(this.activeContentItem.tab) : 0,
-      activeTab = this.tabs[activeIndex];
+      this.element.outerWidth() - this.controlsContainer.outerWidth() - this._tabControlOffset;
+    let cumulativeTabWidth = 0;
+    let visibleTabWidth = 0;
+    let tabElement;
+    let i;
+    let j;
+    let marginLeft;
+    let overlap = 0;
+    let tabWidth;
+    const { tabOverlapAllowance } = this.layoutManager.config.settings;
+    let tabOverlapAllowanceExceeded = false;
+    const activeIndex = this.activeContentItem ? this.tabs.indexOf(this.activeContentItem.tab) : 0;
+    const activeTab = this.tabs[activeIndex];
     if (this.parent._sided)
       availableWidth =
         this.element.outerHeight() - this.controlsContainer.outerHeight() - this._tabControlOffset;

@@ -6,8 +6,8 @@
 lm.items.Component = function(layoutManager, config, parent) {
   lm.items.AbstractContentItem.call(this, layoutManager, config, parent);
 
-  let ComponentConstructor = layoutManager.getComponent(this.config.componentName),
-    componentConfig = $.extend(true, {}, this.config.componentState || {});
+  const ComponentConstructor = layoutManager.getComponent(this.config.componentName);
+  const componentConfig = $.extend(true, {}, this.config.componentState || {});
 
   componentConfig.componentName = this.config.componentName;
   this.componentName = this.config.componentName;

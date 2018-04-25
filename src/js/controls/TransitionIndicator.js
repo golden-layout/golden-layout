@@ -26,11 +26,11 @@ lm.utils.copy(lm.controls.TransitionIndicator.prototype, {
   },
 
   _nextAnimationFrame() {
-    let toDimensions = this._measure(this._toElement),
-      animationProgress =
-        (lm.utils.now() - this._animationStartTime) / this._totalAnimationDuration,
-      currentFrameStyles = {},
-      cssProperty;
+    const toDimensions = this._measure(this._toElement);
+    const animationProgress =
+      (lm.utils.now() - this._animationStartTime) / this._totalAnimationDuration;
+    const currentFrameStyles = {};
+    let cssProperty;
 
     if (animationProgress >= 1) {
       this._element.hide();

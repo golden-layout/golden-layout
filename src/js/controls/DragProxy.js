@@ -88,9 +88,9 @@ lm.utils.copy(lm.controls.DragProxy.prototype, {
     event =
       event.originalEvent && event.originalEvent.touches ? event.originalEvent.touches[0] : event;
 
-    let x = event.pageX,
-      y = event.pageY,
-      isWithinContainer = x > this._minX && x < this._maxX && y > this._minY && y < this._maxY;
+    const x = event.pageX;
+    const y = event.pageY;
+    const isWithinContainer = x > this._minX && x < this._maxX && y > this._minY && y < this._maxY;
 
     if (
       !isWithinContainer &&
@@ -194,9 +194,9 @@ lm.utils.copy(lm.controls.DragProxy.prototype, {
    * @returns {void}
    */
   _setDimensions() {
-    let dimensions = this._layoutManager.config.dimensions,
-      width = dimensions.dragProxyWidth,
-      height = dimensions.dragProxyHeight;
+    const dimensions = this._layoutManager.config.dimensions;
+    let width = dimensions.dragProxyWidth;
+    let height = dimensions.dragProxyHeight;
 
     this.element.width(width);
     this.element.height(height);

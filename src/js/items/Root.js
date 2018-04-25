@@ -63,11 +63,11 @@ lm.utils.copy(lm.items.Root.prototype, {
     if (!this.contentItems.length) {
       this.addChild(contentItem);
     } else {
-      const type = area.side[0] == 'x' ? 'row' : 'column';
-      const dimension = area.side[0] == 'x' ? 'width' : 'height';
-      const insertBefore = area.side[1] == '2';
+      const type = area.side[0] === 'x' ? 'row' : 'column';
+      const dimension = area.side[0] === 'x' ? 'width' : 'height';
+      const insertBefore = area.side[1] === '2';
       const column = this.contentItems[0];
-      if (!(column instanceof lm.items.RowOrColumn) || column.type != type) {
+      if (!(column instanceof lm.items.RowOrColumn) || column.type !== type) {
         const rowOrColumn = this.layoutManager.createContentItem({ type }, this);
         this.replaceChild(column, rowOrColumn);
         rowOrColumn.addChild(contentItem, insertBefore ? 0 : undefined, true);

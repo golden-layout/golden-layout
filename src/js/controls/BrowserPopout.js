@@ -71,9 +71,9 @@ lm.utils.copy(lm.controls.BrowserPopout.prototype, {
    * parent isn't available anymore it falls back to the layout's topmost element
    */
   popIn() {
-    let childConfig,
-      parentItem,
-      index = this._indexInParent;
+    let childConfig;
+    let parentItem;
+    let index = this._indexInParent;
 
     if (this._parentId) {
       /*
@@ -115,30 +115,29 @@ lm.utils.copy(lm.controls.BrowserPopout.prototype, {
    * @returns {void}
    */
   _createWindow() {
-    let checkReadyInterval,
-      url = this._createUrl(),
-      /**
-       * Bogus title to prevent re-usage of existing window with the
-       * same title. The actual title will be set by the new window's
-       * GoldenLayout instance if it detects that it is in subWindowMode
-       */
-      title = Math.floor(Math.random() * 1000000).toString(36),
-      /**
-       * The options as used in the window.open string
-       */
-      options = this._serializeWindowOptions({
-        width: this._dimensions.width,
-        height: this._dimensions.height,
-        innerWidth: this._dimensions.width,
-        innerHeight: this._dimensions.height,
-        menubar: 'no',
-        toolbar: 'no',
-        location: 'no',
-        personalbar: 'no',
-        resizable: 'yes',
-        scrollbars: 'no',
-        status: 'no',
-      });
+    const url = this._createUrl();
+    /**
+     * Bogus title to prevent re-usage of existing window with the
+     * same title. The actual title will be set by the new window's
+     * GoldenLayout instance if it detects that it is in subWindowMode
+     */
+    const title = Math.floor(Math.random() * 1000000).toString(36);
+    /**
+     * The options as used in the window.open string
+     */
+    const options = this._serializeWindowOptions({
+      width: this._dimensions.width,
+      height: this._dimensions.height,
+      innerWidth: this._dimensions.width,
+      innerHeight: this._dimensions.height,
+      menubar: 'no',
+      toolbar: 'no',
+      location: 'no',
+      personalbar: 'no',
+      resizable: 'yes',
+      scrollbars: 'no',
+      status: 'no',
+    });
 
     this._popoutWindow = window.open(url, title, options);
 
@@ -162,7 +161,7 @@ lm.utils.copy(lm.controls.BrowserPopout.prototype, {
      * window or raising an event on the window object - both would introduce knowledge
      * about the parent to the child window which we'd rather avoid
      */
-    checkReadyInterval = setInterval(
+    const checkReadyInterval = setInterval(
       lm.utils.fnBind(function() {
         if (this._popoutWindow.__glInstance && this._popoutWindow.__glInstance.isInitialised) {
           this._onInitialised();
@@ -181,8 +180,8 @@ lm.utils.copy(lm.controls.BrowserPopout.prototype, {
    * @returns {String} serialised window options
    */
   _serializeWindowOptions(windowOptions) {
-    let windowOptionsString = [],
-      key;
+    const windowOptionsString = [];
+    let key;
 
     for (key in windowOptions) {
       windowOptionsString.push(`${key}=${windowOptions[key]}`);
@@ -198,9 +197,8 @@ lm.utils.copy(lm.controls.BrowserPopout.prototype, {
    * @returns {String} URL
    */
   _createUrl() {
-    let config = { content: this._config },
-      storageKey = `gl-window-config-${lm.utils.getUniqueId()}`,
-      urlParts;
+    let config = { content: this._config };
+    const storageKey = `gl-window-config-${lm.utils.getUniqueId()}`;
 
     config = new lm.utils.ConfigMinifier().minifyConfig(config);
 
@@ -210,7 +208,7 @@ lm.utils.copy(lm.controls.BrowserPopout.prototype, {
       throw new Error(`Error while writing to localStorage ${e.toString()}`);
     }
 
-    urlParts = document.location.href.split('?');
+    const urlParts = document.location.href.split('?');
 
     // URL doesn't contain GET-parameters
     if (urlParts.length === 1) {

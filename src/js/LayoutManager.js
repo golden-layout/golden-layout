@@ -128,7 +128,7 @@ lm.utils.copy(lm.LayoutManager.prototype, {
    * @returns {Object} GoldenLayout configuration
    */
   toConfig(root) {
-    let config, next, i;
+    let i;
 
     if (this.isInitialised === false) {
       throw new Error("Can't create config, layout not yet initialised");
@@ -141,7 +141,7 @@ lm.utils.copy(lm.LayoutManager.prototype, {
     /*
 		 * settings & labels
 		 */
-    config = {
+    const config = {
       settings: lm.utils.copy({}, this.config.settings),
       dimensions: lm.utils.copy({}, this.config.dimensions),
       labels: lm.utils.copy({}, this.config.labels),
@@ -151,8 +151,9 @@ lm.utils.copy(lm.LayoutManager.prototype, {
 		 * Content
 		 */
     config.content = [];
-    next = function(configNode, item) {
-      let key, i;
+    const next = function(configNode, item) {
+      let key;
+      let i;
 
       for (key in item.config) {
         if (key !== 'content') {
@@ -337,7 +338,7 @@ lm.utils.copy(lm.LayoutManager.prototype, {
    * @returns {lm.items.ContentItem}
    */
   createContentItem(config, parent) {
-    let typeErrorMsg, contentItem;
+    let typeErrorMsg;
 
     if (typeof config.type !== 'string') {
       throw new lm.errors.ConfigurationError("Missing parameter 'type'", config);
@@ -377,7 +378,7 @@ lm.utils.copy(lm.LayoutManager.prototype, {
       };
     }
 
-    contentItem = new this._typeToItem[config.type](this, config, parent);
+    const contentItem = new this._typeToItem[config.type](this, config, parent);
     return contentItem;
   },
 
@@ -393,15 +394,14 @@ lm.utils.copy(lm.LayoutManager.prototype, {
 	 * @returns {lm.controls.BrowserPopout}
 	 */
   createPopout(configOrContentItem, dimensions, parentId, indexInParent) {
-    let config = configOrContentItem,
-      isItem = configOrContentItem instanceof lm.items.AbstractContentItem,
-      self = this,
-      windowLeft,
-      windowTop,
-      offset,
-      parent,
-      child,
-      browserPopout;
+    let config = configOrContentItem;
+    const isItem = configOrContentItem instanceof lm.items.AbstractContentItem;
+    const self = this;
+    let windowLeft;
+    let windowTop;
+    let offset;
+    let parent;
+    let child;
 
     parentId = parentId || null;
 
@@ -425,7 +425,7 @@ lm.utils.copy(lm.LayoutManager.prototype, {
       }
 
       parent.addId(parentId);
-      if (isNaN(indexInParent)) {
+      if (Number.isNaN(indexInParent)) {
         indexInParent = lm.utils.indexOf(child, parent.contentItems);
       }
     } else if (!(config instanceof Array)) {
@@ -458,7 +458,7 @@ lm.utils.copy(lm.LayoutManager.prototype, {
       configOrContentItem.remove();
     }
 
-    browserPopout = new lm.controls.BrowserPopout(
+    const browserPopout = new lm.controls.BrowserPopout(
       config,
       dimensions,
       parentId,
@@ -581,10 +581,10 @@ lm.utils.copy(lm.LayoutManager.prototype, {
   },
 
   _$getArea(x, y) {
-    let i,
-      area,
-      smallestSurface = Infinity,
-      mathingArea = null;
+    let i;
+    let area;
+    let smallestSurface = Infinity;
+    let mathingArea = null;
 
     for (i = 0; i < this._itemAreas.length; i++) {
       area = this._itemAreas[i];
@@ -618,9 +618,9 @@ lm.utils.copy(lm.LayoutManager.prototype, {
   },
 
   _$calculateItemAreas() {
-    let i,
-      area,
-      allContentItems = this._getAllContentItems();
+    let i;
+    let area;
+    const allContentItems = this._getAllContentItems();
     this._itemAreas = [];
 
     /**
@@ -701,8 +701,8 @@ lm.utils.copy(lm.LayoutManager.prototype, {
    * @returns {void}
    */
   _$reconcilePopoutWindows() {
-    let openPopouts = [],
-      i;
+    const openPopouts = [];
+    let i;
 
     for (i = 0; i < this.openPopouts.length; i++) {
       if (this.openPopouts[i].getWindow().closed === false) {
@@ -868,7 +868,8 @@ lm.utils.copy(lm.LayoutManager.prototype, {
    * @returns {void}
    */
   _createSubWindows() {
-    let i, popout;
+    let i;
+    let popout;
 
     for (i = 0; i < this.config.openPopouts.length; i++) {
       popout = this.config.openPopouts[i];
@@ -1016,8 +1017,8 @@ lm.utils.copy(lm.LayoutManager.prototype, {
   _useResponsiveLayout() {
     return (
       this.config.settings &&
-      (this.config.settings.responsiveMode == 'always' ||
-        (this.config.settings.responsiveMode == 'onload' && this._firstLoad))
+      (this.config.settings.responsiveMode === 'always' ||
+        (this.config.settings.responsiveMode === 'onload' && this._firstLoad))
     );
   },
 
@@ -1064,7 +1065,7 @@ lm.utils.copy(lm.LayoutManager.prototype, {
   _findAllStackContainersRecursive(stackContainers, node) {
     node.contentItems.forEach(
       lm.utils.fnBind(function(item) {
-        if (item.type == 'stack') {
+        if (item.type === 'stack') {
           stackContainers.push(item);
         } else if (!item.isComponent) {
           this._findAllStackContainersRecursive(stackContainers, item);
@@ -1081,7 +1082,7 @@ lm.utils.copy(lm.LayoutManager.prototype, {
   /* global define */
   if (typeof define === 'function' && define.amd) {
     define(['jquery'], jquery => {
-      $ = jquery;
+      window.$ = jquery;
       return lm.LayoutManager;
     }); // jshint ignore:line
   } else if (typeof exports === 'object') {

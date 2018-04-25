@@ -80,8 +80,8 @@ lm.utils.EventHub.prototype._onEventFromChild = function(event) {
  * @returns {void}
  */
 lm.utils.EventHub.prototype._propagateToParent = function(args) {
-  let event,
-    eventName = 'gl_child_event';
+  let event;
+  const eventName = 'gl_child_event';
 
   if (document.createEvent) {
     event = window.opener.document.createEvent('HTMLEvents');
@@ -111,7 +111,8 @@ lm.utils.EventHub.prototype._propagateToParent = function(args) {
  * @returns {void}
  */
 lm.utils.EventHub.prototype._propagateToChildren = function(args) {
-  let childGl, i;
+  let childGl;
+  let i;
 
   for (i = 0; i < this._layoutManager.openPopouts.length; i++) {
     childGl = this._layoutManager.openPopouts[i].getGlInstance();

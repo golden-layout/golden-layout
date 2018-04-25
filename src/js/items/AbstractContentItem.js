@@ -171,8 +171,8 @@ lm.utils.copy(lm.items.AbstractContentItem.prototype, {
   replaceChild(oldChild, newChild, _$destroyOldChild) {
     newChild = this.layoutManager._$normalizeContentItem(newChild);
 
-    let index = lm.utils.indexOf(oldChild, this.contentItems),
-      parentNode = oldChild.element[0].parentNode;
+    const index = lm.utils.indexOf(oldChild, this.contentItems);
+    const parentNode = oldChild.element[0].parentNode;
 
     if (index === -1) {
       throw new Error("Can't replace child. oldChild is not child of this");
@@ -353,16 +353,16 @@ lm.utils.copy(lm.items.AbstractContentItem.prototype, {
    * SELECTOR
    *************************************** */
   getItemsByFilter(filter) {
-    var result = [],
-      next = function(contentItem) {
-        for (let i = 0; i < contentItem.contentItems.length; i++) {
-          if (filter(contentItem.contentItems[i]) === true) {
-            result.push(contentItem.contentItems[i]);
-          }
-
-          next(contentItem.contentItems[i]);
+    const result = [];
+    const next = function(contentItem) {
+      for (let i = 0; i < contentItem.contentItems.length; i++) {
+        if (filter(contentItem.contentItems[i]) === true) {
+          result.push(contentItem.contentItems[i]);
         }
-      };
+
+        next(contentItem.contentItems[i]);
+      }
+    };
 
     next(this);
     return result;
@@ -382,9 +382,9 @@ lm.utils.copy(lm.items.AbstractContentItem.prototype, {
   },
 
   getComponentsByName(componentName) {
-    let components = this._$getItemsByProperty('componentName', componentName),
-      instances = [],
-      i;
+    const components = this._$getItemsByProperty('componentName', componentName);
+    const instances = [];
+    let i;
 
     for (i = 0; i < components.length; i++) {
       instances.push(components[i].instance);
@@ -425,9 +425,9 @@ lm.utils.copy(lm.items.AbstractContentItem.prototype, {
   },
 
   _callOnActiveComponents(methodName) {
-    let stacks = this.getItemsByType('stack'),
-      activeContentItem,
-      i;
+    const stacks = this.getItemsByType('stack');
+    let activeContentItem;
+    let i;
 
     for (i = 0; i < stacks.length; i++) {
       activeContentItem = stacks[i].getActiveContentItem();
@@ -464,9 +464,9 @@ lm.utils.copy(lm.items.AbstractContentItem.prototype, {
   _$getArea(element) {
     element = element || this.element;
 
-    let offset = element.offset(),
-      width = element.width(),
-      height = element.height();
+    const offset = element.offset();
+    const width = element.width();
+    const height = element.height();
 
     return {
       x1: offset.left,
@@ -523,7 +523,8 @@ lm.utils.copy(lm.items.AbstractContentItem.prototype, {
    * @returns {void}
    */
   _createContentItems(config) {
-    let oContentItem, i;
+    let oContentItem;
+    let i;
 
     if (!(config.content instanceof Array)) {
       throw new lm.errors.ConfigurationError('content must be an Array', config);

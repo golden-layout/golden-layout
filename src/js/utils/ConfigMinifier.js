@@ -99,7 +99,8 @@ lm.utils.copy(lm.utils.ConfigMinifier.prototype, {
    * @returns {void}
    */
   _nextLevel(from, to, translationFn) {
-    let key, minKey;
+    let key;
+    let minKey;
 
     for (key in from) {
       /**

@@ -37,7 +37,7 @@ lm.items.Stack = function(layoutManager, config, parent) {
     lm.utils.fnBind(function(event) {
       if (this._docker && this._docker.docked)
         this.childElementContainer[this._docker.dimension](
-          event.type == 'mouseenter' ? this._docker.realSize : 0
+          event.type === 'mouseenter' ? this._docker.realSize : 0
         );
     }, this)
   );
@@ -56,17 +56,17 @@ lm.utils.copy(lm.items.Stack.prototype, {
   },
   setSize() {
     if (!this.element.is(':visible')) return;
-    let isDocked = this._docker && this._docker.docked,
-      content = { width: this.element.width(), height: this.element.height() };
+    const isDocked = this._docker && this._docker.docked;
+    const content = { width: this.element.width(), height: this.element.height() };
 
     if (this._header.show)
       content[
         this._sided ? 'width' : 'height'
       ] -= this.layoutManager.config.dimensions.headerHeight;
     if (isDocked) content[this._docker.dimension] = this._docker.realSize;
-    if (!isDocked || this._docker.dimension == 'height')
+    if (!isDocked || this._docker.dimension === 'height')
       this.childElementContainer.width(content.width);
-    if (!isDocked || this._docker.dimension == 'width')
+    if (!isDocked || this._docker.dimension === 'width')
       this.childElementContainer.height(content.height);
 
     for (let i = 0; i < this.contentItems.length; i++) {
@@ -77,7 +77,8 @@ lm.utils.copy(lm.items.Stack.prototype, {
   },
 
   _$init() {
-    let i, initialItem;
+    let i;
+    let initialItem;
 
     if (this.isInitialised === true) return;
 
@@ -157,7 +158,10 @@ lm.utils.copy(lm.items.Stack.prototype, {
    * @returns {void}
    */
   _$validateClosability() {
-    let contentItem, isClosable, len, i;
+    let contentItem;
+    let isClosable;
+    let len;
+    let i;
 
     isClosable = this.header._isClosable();
 
@@ -222,16 +226,16 @@ lm.utils.copy(lm.items.Stack.prototype, {
 		 * The item was dropped on the top-, left-, bottom- or right- part of the content. Let's
 		 * aggregate some conditions to make the if statements later on more readable
 		 */
-    let isVertical = this._dropSegment === 'top' || this._dropSegment === 'bottom',
-      isHorizontal = this._dropSegment === 'left' || this._dropSegment === 'right',
-      insertBefore = this._dropSegment === 'top' || this._dropSegment === 'left',
-      hasCorrectParent =
-        (isVertical && this.parent.isColumn) || (isHorizontal && this.parent.isRow),
-      type = isVertical ? 'column' : 'row',
-      dimension = isVertical ? 'height' : 'width',
-      index,
-      stack,
-      rowOrColumn;
+    const isVertical = this._dropSegment === 'top' || this._dropSegment === 'bottom';
+    const isHorizontal = this._dropSegment === 'left' || this._dropSegment === 'right';
+    const insertBefore = this._dropSegment === 'top' || this._dropSegment === 'left';
+    const hasCorrectParent =
+      (isVertical && this.parent.isColumn) || (isHorizontal && this.parent.isRow);
+    let type = isVertical ? 'column' : 'row';
+    const dimension = isVertical ? 'height' : 'width';
+    let index;
+    let stack;
+    let rowOrColumn;
 
     /*
 		 * The content item can be either a component or a stack. If it is a component, wrap it into a stack
@@ -288,7 +292,8 @@ lm.utils.copy(lm.items.Stack.prototype, {
    * @returns {void}
    */
   _$highlightDropZone(x, y) {
-    let segment, area;
+    let segment;
+    let area;
 
     for (segment in this._contentAreaDimensions) {
       area = this._contentAreaDimensions[segment].hoverArea;
@@ -312,11 +317,11 @@ lm.utils.copy(lm.items.Stack.prototype, {
       return null;
     }
 
-    let getArea = lm.items.AbstractContentItem.prototype._$getArea,
-      headerArea = getArea.call(this, this.header.element),
-      contentArea = getArea.call(this, this.childElementContainer),
-      contentWidth = contentArea.x2 - contentArea.x1,
-      contentHeight = contentArea.y2 - contentArea.y1;
+    const getArea = lm.items.AbstractContentItem.prototype._$getArea;
+    const headerArea = getArea.call(this, this.header.element);
+    const contentArea = getArea.call(this, this.childElementContainer);
+    const contentWidth = contentArea.x2 - contentArea.x1;
+    const contentHeight = contentArea.y2 - contentArea.y1;
 
     this._contentAreaDimensions = {
       header: {
@@ -429,17 +434,15 @@ lm.utils.copy(lm.items.Stack.prototype, {
   },
 
   _highlightHeaderDropZone(x) {
-    let i,
-      tabElement,
-      tabsLength = this.header.tabs.length,
-      isAboveTab = false,
-      tabTop,
-      tabLeft,
-      offset,
-      placeHolderLeft,
-      headerOffset,
-      tabWidth,
-      halfX;
+    let i;
+    let tabElement;
+    const tabsLength = this.header.tabs.length;
+    let isAboveTab = false;
+    let tabTop;
+    let tabLeft;
+    let offset;
+    let headerOffset;
+    let tabWidth;
 
     // Empty stack
     if (tabsLength === 0) {
@@ -478,7 +481,7 @@ lm.utils.copy(lm.items.Stack.prototype, {
       return;
     }
 
-    halfX = tabLeft + tabWidth / 2;
+    const halfX = tabLeft + tabWidth / 2;
 
     if (x < halfX) {
       this._dropIndex = i;
@@ -498,7 +501,7 @@ lm.utils.copy(lm.items.Stack.prototype, {
       });
       return;
     }
-    placeHolderLeft = this.layoutManager.tabDropPlaceholder.offset().left;
+    const placeHolderLeft = this.layoutManager.tabDropPlaceholder.offset().left;
 
     this.layoutManager.dropTargetIndicator.highlightArea({
       x1: placeHolderLeft,

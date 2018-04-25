@@ -32,7 +32,9 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
    * @returns {void}
    */
   addChild(contentItem, index, _$suspendResize) {
-    let newItemSize, itemSize, i, splitterElement;
+    let itemSize;
+    let i;
+    let splitterElement;
 
     contentItem = this.layoutManager._$normalizeContentItem(contentItem, this);
 
@@ -60,7 +62,7 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
 
     lm.items.AbstractContentItem.prototype.addChild.call(this, contentItem, index);
 
-    newItemSize = 1 / this.contentItems.length * 100;
+    const newItemSize = 1 / this.contentItems.length * 100;
 
     if (_$suspendResize === true) {
       this.emitBubblingEvent('stateChanged');
@@ -90,11 +92,11 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
    * @returns {void}
    */
   removeChild(contentItem, keepChild) {
-    let removedItemSize = contentItem.config[this._dimension],
-      index = lm.utils.indexOf(contentItem, this.contentItems),
-      splitterIndex = Math.max(index - 1, 0),
-      i,
-      childItem;
+    const removedItemSize = contentItem.config[this._dimension];
+    const index = lm.utils.indexOf(contentItem, this.contentItems);
+    const splitterIndex = Math.max(index - 1, 0);
+    let i;
+    let childItem;
 
     if (index === -1) {
       throw new Error("Can't remove child. ContentItem is not child of this Row or Column");
@@ -179,20 +181,20 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
   dock(contentItem, mode, collapsed) {
     if (this.contentItems.length === 1) throw new Error("Can't dock child when it single");
 
-    let removedItemSize = contentItem.config[this._dimension],
-      headerSize = this.layoutManager.config.dimensions.headerHeight,
-      index = lm.utils.indexOf(contentItem, this.contentItems),
-      splitterIndex = Math.max(index - 1, 0);
+    const removedItemSize = contentItem.config[this._dimension];
+    const headerSize = this.layoutManager.config.dimensions.headerHeight;
+    const index = lm.utils.indexOf(contentItem, this.contentItems);
+    const splitterIndex = Math.max(index - 1, 0);
 
     if (index === -1) {
       throw new Error("Can't dock child. ContentItem is not child of this Row or Column");
     }
     const isDocked = contentItem._docker && contentItem._docker.docked;
-    if (typeof mode !== 'undefined') if (mode == isDocked) return;
+    if (typeof mode !== 'undefined') if (mode === isDocked) return;
     if (isDocked) {
       // undock it
       this._splitter[splitterIndex].element.show();
-      for (var i = 0; i < this.contentItems.length; i++) {
+      for (let i = 0; i < this.contentItems.length; i++) {
         const newItemSize = contentItem._docker.size;
         if (this.contentItems[i] === contentItem) {
           contentItem.config[this._dimension] = newItemSize;
@@ -211,13 +213,13 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
         row: { first: 'left', last: 'right' },
       };
       const required = autoside[this.config.type][index ? 'last' : 'first'];
-      if (contentItem.header.position() != required) contentItem.header.position(required);
+      if (contentItem.header.position() !== required) contentItem.header.position(required);
 
       if (this._splitter[splitterIndex]) {
         this._splitter[splitterIndex].element.hide();
       }
       const docked = this._isDocked();
-      for (var i = 0; i < this.contentItems.length; i++) {
+      for (let i = 0; i < this.contentItems.length; i++) {
         if (this.contentItems[i] !== contentItem) {
           if (!this._isDocked(i))
             this.contentItems[i].config[this._dimension] +=
@@ -273,8 +275,8 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
    * @returns {void}
    */
   _setAbsoluteSizes() {
-    let i,
-      sizeData = this._calculateAbsoluteSizes();
+    let i;
+    const sizeData = this._calculateAbsoluteSizes();
 
     for (i = 0; i < this.contentItems.length; i++) {
       if (sizeData.additionalPixel - i > 0) {
@@ -296,15 +298,14 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
    * @returns {object} - Set with absolute sizes and additional pixels.
    */
   _calculateAbsoluteSizes() {
-    let i,
-      totalSplitterSize = (this.contentItems.length - 1) * this._splitterSize,
-      headerSize = this.layoutManager.config.dimensions.headerHeight,
-      totalWidth = this.element.width(),
-      totalHeight = this.element.height(),
-      totalAssigned = 0,
-      additionalPixel,
-      itemSize,
-      itemSizes = [];
+    let i;
+    const totalSplitterSize = (this.contentItems.length - 1) * this._splitterSize;
+    const headerSize = this.layoutManager.config.dimensions.headerHeight;
+    let totalWidth = this.element.width();
+    let totalHeight = this.element.height();
+    let totalAssigned = 0;
+    let itemSize;
+    const itemSizes = [];
 
     if (this._isColumn) {
       totalHeight -= totalSplitterSize;
@@ -332,7 +333,7 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
       itemSizes.push(itemSize);
     }
 
-    additionalPixel = Math.floor((this._isColumn ? totalHeight : totalWidth) - totalAssigned);
+    const additionalPixel = Math.floor((this._isColumn ? totalHeight : totalWidth) - totalAssigned);
 
     return {
       itemSizes,
@@ -364,10 +365,10 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
    * @returns {void}
    */
   _calculateRelativeSizes() {
-    let i,
-      total = 0,
-      itemsWithoutSetDimension = [],
-      dimension = this._isColumn ? 'height' : 'width';
+    let i;
+    let total = 0;
+    const itemsWithoutSetDimension = [];
+    const dimension = this._isColumn ? 'height' : 'width';
 
     for (i = 0; i < this.contentItems.length; i++) {
       if (this.contentItems[i].config[dimension] !== undefined) {
@@ -425,20 +426,19 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
    * @returns {}
    */
   _respectMinItemWidth() {
-    let minItemWidth = this.layoutManager.config.dimensions
-        ? this.layoutManager.config.dimensions.minItemWidth || 0
-        : 0,
-      sizeData = null,
-      entriesOverMin = [],
-      totalOverMin = 0,
-      totalUnderMin = 0,
-      remainingWidth = 0,
-      itemSize = 0,
-      contentItem = null,
-      reducePercent,
-      reducedWidth,
-      allEntries = [],
-      entry;
+    const minItemWidth = this.layoutManager.config.dimensions
+      ? this.layoutManager.config.dimensions.minItemWidth || 0
+      : 0;
+    let sizeData = null;
+    const entriesOverMin = [];
+    let totalOverMin = 0;
+    let totalUnderMin = 0;
+    let remainingWidth = 0;
+    let itemSize = 0;
+    let contentItem = null;
+    let reducedWidth;
+    const allEntries = [];
+    let entry;
 
     if (this._isColumn || !minItemWidth || this.contentItems.length <= 1) {
       return;
@@ -475,7 +475,7 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
     /**
      * Evenly reduce all columns that are over the min item width to make up the difference.
      */
-    reducePercent = totalUnderMin / totalOverMin;
+    const reducePercent = totalUnderMin / totalOverMin;
     remainingWidth = totalUnderMin;
     for (i = 0; i < entriesOverMin.length; i++) {
       entry = entriesOverMin[i];
@@ -510,8 +510,11 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
    * @returns {lm.controls.Splitter}
    */
   _createSplitter(index) {
-    let splitter;
-    splitter = new lm.controls.Splitter(this._isColumn, this._splitterSize, this._splitterGrabSize);
+    const splitter = new lm.controls.Splitter(
+      this._isColumn,
+      this._splitterSize,
+      this._splitterGrabSize
+    );
     splitter.on('drag', lm.utils.fnBind(this._onSplitterDrag, this, [splitter]), this);
     splitter.on('dragStop', lm.utils.fnBind(this._onSplitterDragStop, this, [splitter]), this);
     splitter.on('dragStart', lm.utils.fnBind(this._onSplitterDragStart, this, [splitter]), this);
@@ -572,8 +575,8 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
    * @private
    */
   _getMinimumDimensions(arr) {
-    let minWidth = 0,
-      minHeight = 0;
+    let minWidth = 0;
+    let minHeight = 0;
 
     for (let i = 0; i < arr.length; ++i) {
       minWidth = Math.max(arr[i].minWidth || 0, minWidth);
@@ -592,10 +595,10 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
    * @returns {void}
    */
   _onSplitterDragStart(splitter) {
-    let items = this._getItemsForSplitter(splitter),
-      minSize = this.layoutManager.config.dimensions[
-        this._isColumn ? 'minItemHeight' : 'minItemWidth'
-      ];
+    const items = this._getItemsForSplitter(splitter);
+    const minSize = this.layoutManager.config.dimensions[
+      this._isColumn ? 'minItemHeight' : 'minItemWidth'
+    ];
 
     const beforeMinDim = this._getMinimumDimensions(items.before.config.content);
     const beforeMinSize = this._isColumn ? beforeMinDim.vertical : beforeMinDim.horizontal;
@@ -638,12 +641,13 @@ lm.utils.copy(lm.items.RowOrColumn.prototype, {
    * @returns {void}
    */
   _onSplitterDragStop(splitter) {
-    let items = this._getItemsForSplitter(splitter),
-      sizeBefore = items.before.element[this._dimension](),
-      sizeAfter = items.after.element[this._dimension](),
-      splitterPositionInRange = (this._splitterPosition + sizeBefore) / (sizeBefore + sizeAfter),
-      totalRelativeSize =
-        items.before.config[this._dimension] + items.after.config[this._dimension];
+    const items = this._getItemsForSplitter(splitter);
+    const sizeBefore = items.before.element[this._dimension]();
+    const sizeAfter = items.after.element[this._dimension]();
+    const splitterPositionInRange =
+      (this._splitterPosition + sizeBefore) / (sizeBefore + sizeAfter);
+    const totalRelativeSize =
+      items.before.config[this._dimension] + items.after.config[this._dimension];
 
     items.before.config[this._dimension] = splitterPositionInRange * totalRelativeSize;
     items.after.config[this._dimension] = (1 - splitterPositionInRange) * totalRelativeSize;
