@@ -760,7 +760,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	 */
 	_bindEvents: function() {
 		if( this._isFullPage ) {
-			$( window ).resize( this._resizeFunction );
+			$( window ).on( 'resize', this._resizeFunction );
 		}
 		$( window ).on( 'unload beforeunload', this._unloadFunction );
 	},
@@ -834,7 +834,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 			'<div class="lm_bg"></div>' +
 			'</div>' );
 
-		popInButton.click( lm.utils.fnBind( function() {
+		popInButton.on( 'click', lm.utils.fnBind( function() {
 			this.emit( 'popIn' );
 		}, this ) );
 
