@@ -104,7 +104,7 @@ module.exports = (env) => {
           test: /\.js$/,
           include: [
             path.resolve(__dirname, jsPath),
-            path.join(__dirname, 'test')
+            path.join(__dirname, 'test'),
             path.join(__dirname, 'test/specs')
           ],
           exclude: /node_modules/,          
