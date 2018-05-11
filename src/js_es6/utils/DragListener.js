@@ -6,11 +6,12 @@ import {
 
 
 export default class DragListener extends EventEmitter {
-    timeout = null
-
     constructor(eElement, nButtonCode) {
 
         super();
+
+        this._timeout = null
+
 
         this._eElement = $(eElement);
         this._oDocument = $(document);
