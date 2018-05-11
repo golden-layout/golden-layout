@@ -128,6 +128,16 @@ export default class Stack extends AbstractContentItem {
     }
 
     addChild(contentItem, index) {
+        if(index > this.contentItems.length){
+            /* 
+             * UGLY PATCH: PR #428, commit a4e84ec5 fixed a bug appearing on touchscreens during the drag of a panel. 
+             * The bug was caused by the physical removal of the element on drag: partial documentation is at issue #425. 
+             * The fix introduced the function undisplayChild() (called 'undisplay' to differentiate it from jQuery.hide), 
+             * which doesn't remove the element but only hides it: that's why when a tab is dragged & dropped into its 
+             * original container (at the end), the index here could be off by one.
+             */
+            index -= 1
+        }        
         contentItem = this.layoutManager._$normalizeContentItem(contentItem, this);
         AbstractContentItem.prototype.addChild.call(this, contentItem, index);
         this.childElementContainer.append(contentItem.element);
@@ -159,10 +169,15 @@ export default class Stack extends AbstractContentItem {
     }
 
     undisplayChild(contentItem) {
-        this.element.css('display', 'none')
-        AbstractContentItem.prototype.undisplayChild.call(this, contentItem);
-        if (this.parent instanceof RowOrColumn)
-            this.parent._validateDocking();
+        if(this.contentItems.length > 1){
+            var index = indexOf(contentItem, this.contentItems)
+            contentItem._$hide && contentItem._$hide()
+            this.setActiveContentItem(this.contentItems[index === 0 ? index+1 : index-1])
+        } else {        
+            AbstractContentItem.prototype.undisplayChild.call(this, contentItem);
+            if (this.parent instanceof RowOrColumn)
+                this.parent._validateDocking();
+        }
         this.emitBubblingEvent('stateChanged');
     }
 
