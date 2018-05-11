@@ -328,8 +328,6 @@ module.exports = (env) => {
         support_library: process.env.JQUERY ? path.join('lib', 'jquery.js'): path.join('lib', 'zepto.js')
       }),
 
-      new MinifyPlugin,
-
       new BrowserSyncPlugin({
         files: "dist/**/*.*",
         hostname: "localhost",
@@ -341,6 +339,10 @@ module.exports = (env) => {
         reloadOnRestart: true,
       }),
 
-    ] : [])),
+    ] : [
+    
+      new MinifyPlugin,
+
+    ])),
   }
 }
