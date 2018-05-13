@@ -151,7 +151,7 @@ module.exports = (env) => {
             path.join(__dirname, 'test/specs')
           ],
           exclude: /node_modules/,          
-          use: [
+          use: _.compact([
             {
               loader: 'babel-loader',
               query: {
@@ -162,7 +162,7 @@ module.exports = (env) => {
                 ],
               },
             },
-
+          ].concat(env.dev ? [
             /* 
              * Uncomment preprocessor-loader to enable tracing 
              * (here commented because CircleCi is dumb)
@@ -175,7 +175,7 @@ module.exports = (env) => {
             //     config: path.join(__dirname, 'preprocessor-loader-config.json')
             //   }
             // },
-            {
+          ] : []).concat([{
               loader: 'eslint-loader',
               options: {
                 cache: true,
@@ -183,7 +183,7 @@ module.exports = (env) => {
                 configFile: '.eslintrc',
               },
             },
-          ],
+          ])),
         },
         {
           test: /\.css$/,
