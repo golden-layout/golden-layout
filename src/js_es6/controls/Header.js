@@ -111,7 +111,7 @@ export default class Header extends EventEmitter {
             }
         }
 
-        for (var i = 0; i < this.tabsMarkedForRemoval.length; i++) {
+        for (i = 0; i < this.tabsMarkedForRemoval.length; i++) {
             if (this.tabsMarkedForRemoval[i].contentItem === contentItem) {
                 this.tabsMarkedForRemoval[i]._$destroy();
                 this.tabsMarkedForRemoval.splice(i, 1);

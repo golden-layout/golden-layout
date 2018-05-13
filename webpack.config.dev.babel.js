@@ -162,14 +162,19 @@ module.exports = (env) => {
                 ],
               },
             },
-            {
-              loader: '../lib/preprocessor-loader/preprocessor-loader.js',
-              query: {
-                line: '',
-                file: '', 
-                config: path.join(__dirname, 'preprocessor-loader-config.json')
-              }
-            },
+
+            /* 
+             * Uncomment preprocessor-loader to enable tracing 
+             * (here commented because CircleCi is dumb)
+             */
+            // {
+            //   loader: '../lib/preprocessor-loader/preprocessor-loader.js',
+            //   query: {
+            //     line: '',
+            //     file: '', 
+            //     config: path.join(__dirname, 'preprocessor-loader-config.json')
+            //   }
+            // },
             {
               loader: 'eslint-loader',
               options: {
