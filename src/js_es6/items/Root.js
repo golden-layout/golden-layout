@@ -66,6 +66,19 @@ export default class Root extends AbstractContentItem {
         if (!this.contentItems.length) {
             this.addChild(contentItem);
         } else {
+            /*
+             * If the contentItem that's being dropped is not dropped on a Stack (cases which just passed above and 
+             * which would wrap the contentItem in a Stack) we need to check whether contentItem is a RowOrColumn.
+             * If it is, we need to re-wrap it in a Stack like it was when it was dragged by its Tab (it was dragged!).
+             */
+            if(contentItem.config.type === 'row' || contentItem.config.type === 'column'){
+                stack = this.layoutManager.createContentItem({
+                    type: 'stack'
+                }, this)
+                stack.addChild(contentItem)
+                contentItem = stack
+            }
+
             var type = area.side[0] == 'x' ? 'row' : 'column';
             var dimension = area.side[0] == 'x' ? 'width' : 'height';
             var insertBefore = area.side[1] == '2';

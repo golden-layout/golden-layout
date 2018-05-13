@@ -41,6 +41,7 @@ export default class Header extends EventEmitter {
         this.parent = parent;
         this.parent.on('resize', this._updateTabSizes, this);
         this.tabs = [];
+        this.tabsMarkedForRemoval = [];
         this.activeContentItem = null;
         this.closeButton = null;
         this.dockButton = null;
@@ -109,6 +110,36 @@ export default class Header extends EventEmitter {
                 return;
             }
         }
+
+        for (var i = 0; i < this.tabsMarkedForRemoval.length; i++) {
+            if (this.tabsMarkedForRemoval[i].contentItem === contentItem) {
+                this.tabsMarkedForRemoval[i]._$destroy();
+                this.tabsMarkedForRemoval.splice(i, 1);
+                return;
+            }
+        }
+
+
+        throw new Error('contentItem is not controlled by this header');
+    }
+
+    /**
+     * Finds a tab based on the contentItem its associated with and marks it
+     * for removal, hiding it too.
+     *
+     * @param    {AbstractContentItem} contentItem
+     *
+     * @returns {void}
+     */
+    hideTab(contentItem){
+        for (var i = 0; i < this.tabs.length; i++) {
+            if (this.tabs[i].contentItem === contentItem) {
+                this.tabs[i].element.hide()
+                this.tabsMarkedForRemoval.push(this.tabs[i])
+                this.tabs.splice(i, 1);
+                return;
+            }
+        }        
 
         throw new Error('contentItem is not controlled by this header');
     }

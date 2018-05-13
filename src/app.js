@@ -171,28 +171,46 @@ window.addEventListener('load', () => {
                 ]
               },
               {
-                width: 20,
-                type: 'column',
-                content: [
-                  {
-                    type: 'component',
-                    title: 'Performance',
-                    componentName: 'html'
-                  },
-                  {
-                    height: 40,
-                    type: 'component',
-                    title: 'Market',
-                    componentName: 'html'
-                  }
-                ]
+                width: 50,
+                type: 'stack',
+                title: 'test stack',
+                content: [{
+                  type: 'row',
+                  title: 'test row',
+                  content: [
+                    {
+                      type: 'component',
+                      title: 'comp 1',
+                      componentName: 'html',
+                      componentState: {
+                        companyName: 'Stock X'
+                      }
+                    },
+                    {
+                      type: 'component',
+                      title: 'comp 2',
+                      componentName: 'html',
+                      componentState: {
+                        companyName: 'Stock Y'
+                      }
+                    },
+                    {
+                      type: 'component',
+                      title: 'comp 3',
+                      componentName: 'html',
+                      componentState: {
+                        companyName: 'Stock Z'
+                      }
+                    }
+                  ]
+                }]
+
               }
             ]
           }
         ]
       }
     }
-
     function createResponsiveConfig() {
       return {
         settings: {
