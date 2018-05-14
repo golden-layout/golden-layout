@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>GoldenLayout- a multi-window javascript layout manager for webapps</title>
+	
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<meta name="keywords" content="HTML5, JavaScript, Layout Manager, webapp" />
+	<meta name="description" content="GoldenLayout- a multi-window javascript layout manager for webapps" />
+	<meta name="author" content="Wolfram Hempel" />
+	<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+	<link rel="icon" href="/favicon.ico" type="image/x-icon">
+	<link href='https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700' rel='stylesheet' type='text/css'>
+	<link rel="stylesheet" type="text/css" href="../assets/css/screen.css" />
+	
+	<script type="text/javascript">
+	document.createElement( 'header' );
+	document.createElement( 'nav' );
+	</script>
+	<script type="text/javascript" src="../assets/js/jquery.js"></script>
+</head>
+<body class="category_faq">
+	<div id="modal" class="loading">
+		<div class="background"></div>
+		<div class="content-wrapper">
+			<div class="head">
+				<div class="close"></div>
+				<span class="title"></span>
+			</div>
+			<div class="content"></div>
+		</div>
+	</div>
+	
+	<div id="outerWrapper">
+		
+
+		
+		<div id="nav" class="standalone">
+			<div class="start-bg"></div>
+			<ul>
+				<li ><a href="..">Start</a></li>
+				<li ><a href="../download">Download</a></li>
+				<li ><a href="../examples">Demos</a></li>
+				<li ><a href="../tutorials">Tutorials</a></li>
+				<li ><a href="../docs">Docs</a></li>
+				<li class="active"><a href="../faq">Faq</a></li>
+			</ul>
+			<iframe src="https://ghbtns.com/github-btn.html?user=deepstreamIO&repo=golden-layout&type=star&count=true&size=large" frameborder="0" scrolling="0" width="160px" height="30px"></iframe>
+
+		</div>
+		
+		<div class="content main">
+			<div id="faq">
+<ul>
+	<li>
+		<h3>Are there any other layout managers like GoldenLayout?</h3>
+		<p>
+			Yes, this type of layout paradigm is referred to as "docker" (not to be confused with the virtualisation containers).
+			Examples for frameworks that implement the docker paradigm are <a href="http://phosphorjs.github.io/examples/dockpanel/">PhosphorJS</a>, <a href="http://docker.webcabin.org/" target="_blank">wcDocker</a>
+			or <a href="http://www.dockspawn.com/" target="_blank">dockspawn</a>
+			A similar approach (without the re-ordering) is provided by <a href="http://layout.jquery-dev.com/" target="_blank">jQuery Layout</a>
+			and <a href="http://dev.sencha.com/deploy/ext-4.0.0/examples/layout-browser/layout-browser.html" target="_blank">ExtJS</a>
+		</p>
+		<p>
+			Depending on your usecase you might also prefer <a target="_blank" href="http://gridster.net/">Gridster</a>, <a target="_blank" href="http://masonry.desandro.com/">Masonry</a> or <a target="_blank" href="http://isotope.metafizzy.co/">Isotope</a>.
+			To our knowledge there isn't another layout manager / framework that supports browser based multi window / multi screen webapps.
+		</p>
+	</li>
+	<li class="angular">
+			<a  name="angular">
+				<h3>How do I use GoldenLayout with Angular 2?</h3>
+			</a>
+			<p>
+			I wish I knew. If you’re an Angular 2 Guru your contribution would be very welcome. Please find an associated Github issue <a href="https://github.com/deepstreamIO/golden-layout/issues/75">here</a>.
+			</p>
+	</li>
+	<li>
+		<h3>How can I contribute to GoldenLayout</h3>
+		<p>
+			Fork the <a href="https://github.com/deepstreamIO/golden-layout/">Github repo</a> and raise a pull request. There aren’t any other hard rules for contributions, just try to stick to the coding style. Oh, and don’t be disappointed if you submit a pull request that fundamentally changes GoldenLayout’s behaviour or breaks backwards compatibility and it gets rejected – GoldenLayout is used by a large number of giant institutions that have come to rely on it and maintaining compatibility is a priority.
+		</p>
+	</li>
+	<li>
+		<h3>Can I create my layout in a specific element / create multiple layouts on the same page?</h3>
+		<p>
+			The second (optional) argument for the GoldenLayout constructor isa dom element the layout should be rendered into.
+		</p>
+	</li>
+	<li>
+		<h3>I'm using an iFrame in a GoldenLayout panel and it reloads whenever I move it</h3>
+		<p>I'm afraid so. Whenever an iFrame is repositioned within the DOM it reloads. There is unfortunately little GoldenLayout can do about that.</p>
+	</li>
+
+</ul>
+<style type="text/css">
+.angular a{
+	display: block;
+}
+.angular.target{
+	background: #D6C7D8;
+}
+.angular.target h3{
+	color: #6B0E79 !important;
+}
+
+</style>
+<script type="text/javascript">
+	if( document.location.hash.indexOf( 'angular' ) !== -1 ) {
+		$( '.angular' ).addClass( 'target' );
+	}
+</script>
+<ul>
+	<li>
+		<h3>How does this pop out window stuff actually work?</h3>
+		<p>GoldenLayout doesn’t actually move the DOM element to a new window. Instead, it takes its current state, saves it in local storage, destroys the old component and opens a new window at  the size and position that the component used to be at (plus/minus a bit – depending on which browser you’re using and how many toolbars etc. you have installed, inner and outer window sizes will differ).</p>
+		<p>The new window has the same URL as the old window plus a GET-parameter containing the localstorage item key that the old component’s state / window configuration can be found under. The GoldenLayout instance in the new window detects the presence of this parameter and launches GoldenLayout with it as a configuration.</p>
+	</li>
+	<li>
+		<h3>Didn't this use to be proprietary / commercial before?</h3>
+		<p>
+			Yes, GoldenLayout used to be only available under a GPL license – which requires the licensee to release their source code under the same license. As this wasn’t an option for most enterprise customers, a paid for proprietary license was offered as well.
+			Whilst being commercially successful, there were two things that bothered me about this:
+		</p>
+		<ol>
+			<li>
+				I believe in open source – and felt that GoldenLayout was a good library that could be of use for a wide audience – yet the licensing model prevented it from finding proper community adoption.
+			</li>
+			<li>
+				GoldenLayout used to be a side project of mine. I am now in the fortunate position to run a fast growing startup (deepstreamhub.com) and it turns out this is exactly as much work as everyone says. As a result I couldn’t give the customers the support they’ve needed, Github issues remained open and questions stayed unanswered. I didn’t want to see GoldenLayout go down this route, so I felt re-releasing it under a permissive open source license (MIT) was the right step.
+			</li>
+		</ol>
+	</li>
+
+</ul>
+</div>
+
+
+
+
+
+
+
+
+
+		</div>
+		
+		<div id="footerPush"></div>
+	</div>
+	<div id="footer">
+		<div class="footer-content">
+			<div class="copyright">&copy;<span class="year"></span> deepstreamHub GmbH</div>
+			<script type="text/javascript">
+			$('.year').html( (new Date()).getFullYear() );
+			</script>
+			<ul class="footerItems">
+				<li>
+					<a href="https://github.com/deepstreamIO/golden-layout">Github</a>
+					<a href="https://www.npmjs.com/package/golden-layout">NPM</a>
+					<div>bower/npm: <code>'golden-layout'</code></div>
+				</li>
+				<li>
+					<div>deepstreamHub GmbH</div>
+					<div>Lindenstrasse 20-25</div>
+					<div>10969 Berlin</div>
+				</li>
+				<li>
+					<a href="mailto:info@deepstreamhub.com">info@deepstreamhub.com</a>
+					<a href="https://deepstreamhub.com/">deepstreamHub.com</a><br />
+					<a href="https://twitter.com/wolframhempel">by @wolframhempel</a>
+
+				</li>
+			</ul>
+		</div>
+	</div>
+
+	<script type="text/javascript" src="../assets/js/Modal.js"></script>
+	
+	<script>
+	  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+	  ga('create', 'UA-63583386-5', 'auto');
+	  ga('send', 'pageview');
+
+	</script>
+	
+</body>
+</html>

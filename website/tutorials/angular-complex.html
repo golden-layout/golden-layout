@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>GoldenLayout- a multi-window javascript layout manager for webapps</title>
+	
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<meta name="keywords" content="HTML5, JavaScript, Layout Manager, webapp" />
+	<meta name="description" content="GoldenLayout- a multi-window javascript layout manager for webapps" />
+	<meta name="author" content="Wolfram Hempel" />
+	<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+	<link rel="icon" href="/favicon.ico" type="image/x-icon">
+	<link href='https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700' rel='stylesheet' type='text/css'>
+	<link rel="stylesheet" type="text/css" href="../assets/css/screen.css" />
+	
+	<link rel="stylesheet" type="text/css" href="../assets/css/api.css" />
+	<link rel="stylesheet" type="text/css" href="../assets/css/syntaxhighlighter.css" />
+	
+	<script type="text/javascript">
+	document.createElement( 'header' );
+	document.createElement( 'nav' );
+	</script>
+	<script type="text/javascript" src="../assets/js/jquery.js"></script>
+</head>
+<body class="category_tutorials">
+	<div id="modal" class="loading">
+		<div class="background"></div>
+		<div class="content-wrapper">
+			<div class="head">
+				<div class="close"></div>
+				<span class="title"></span>
+			</div>
+			<div class="content"></div>
+		</div>
+	</div>
+	
+	<div id="outerWrapper">
+		
+
+		
+		<div id="nav" class="standalone">
+			<div class="start-bg"></div>
+			<ul>
+				<li ><a href="..">Start</a></li>
+				<li ><a href="../download">Download</a></li>
+				<li ><a href="../examples">Demos</a></li>
+				<li class="active"><a href="../tutorials">Tutorials</a></li>
+				<li ><a href="../docs">Docs</a></li>
+				<li ><a href="../faq">Faq</a></li>
+			</ul>
+			<iframe src="https://ghbtns.com/github-btn.html?user=deepstreamIO&repo=golden-layout&type=star&count=true&size=large" frameborder="0" scrolling="0" width="160px" height="30px"></iframe>
+
+		</div>
+		
+		<div id="wrapper" class="main">
+			<ul id="subnav">
+	<li class="head first">GoldenLayout</li>
+	<li >
+		<a href="getting-started.html">Getting Started</a>
+	</li>
+	<li >
+		<a href="getting-started-react.html">Getting Started ReactJS</a>
+	</li>
+	<li >
+		<a href="saving-state.html">Saving State</a>
+	</li>
+	<li >
+		<a href="dynamically-adding-components.html">Adding Items</a>
+	</li>
+	<li >
+		<a href="adding-controls-to-header.html">Header Controls</a>
+	</li>
+	<li >
+		<a href="working-with-popouts.html">Popouts</a>
+	</li>
+	<li >
+		<a href="extending-tabs.html">Extending Tabs</a>
+	</li>
+
+	<li class="head">Usage with...</li>
+	<li >
+		<a href="requirejs.html">RequireJS</a>
+	</li>
+	<li >
+		<a href="angular-simple.html">Angular (simple)</a>
+	</li>
+	<li class="active">
+		<a href="angular-complex.html">Angular (complex)</a>
+	</li>
+	<li >
+		<a href="highcharts.html">HighCharts</a>
+	</li>
+	<li >
+		<a href="slickgrid.html">SlickGrid</a>
+	</li>
+</ul>
+			<div id="content">
+				<h1>Using GoldenLayout with Angular</h1><p>Angular’s popularity is exploding and it’s easy to see why: It provides a set of solutions to common problems and good integration-points for usage of third part components.</p><p>Using Angular within third party components (e.g. GoldenLayout) however can be challenging. But fear not, this tutorial is here to help.</p><p>The main challenges are</p><ul>
+<li>working with multiple modules</li>
+<li>bootstrapping a module directly into a DOM element at runtime</li>
+<li>injecting external dependencies (container, state) into a module</li>
+<li>communicating between modules</li>
+</ul>
+<p>To address these we’ll build a user management app consisting of two modules: a list of users and a user-detail panel.</p><ul>
+<li>Each module will live in its own GoldenLayout container</li>
+<li>Selecting an user in the list will show its details in the detail panel (communication between modules)</li>
+<li>Both modules can be opened in their own popout window, but communication still has to work.</li>
+<li>The initially selected user will be configured as part of GoldenLayout’s component state (external dependency).</li>
+</ul>
+<h3>Here’s the result</h3><p><p data-height="268" data-theme-id="7376" data-slug-hash="9cc03061dd363f9b3d014ad4c6b7937d" data-default-tab="result" class='codepen'>See the Pen <a href='http://codepen.io/wolframhempel/pen/9cc03061dd363f9b3d014ad4c6b7937d/'>Angular and GoldenLayout</a> by Wolfram Hempel (<a href='http://codepen.io/wolframhempel'>@wolframhempel</a>) on <a href='http://codepen.io'>CodePen</a>.</p></p><script async src="//codepen.io/assets/embed/ei.js"></script>
+
+<h3>The user list</h3><pre><code>angular<span class="token punctuation" >.</span><span class="token function" >module<span class="token punctuation" >(</span></span><span class="token string" >'userlist'</span><span class="token punctuation" >,</span> <span class="token punctuation" >[</span><span class="token punctuation" >]</span> <span class="token punctuation" >)</span>
+<span class="token punctuation" >.</span><span class="token function" >controller<span class="token punctuation" >(</span></span><span class="token string" >'userlistController'</span><span class="token punctuation" >,</span> <span class="token keyword" >function</span><span class="token punctuation" >(</span> $scope<span class="token punctuation" >,</span> $timeout<span class="token punctuation" >,</span> container<span class="token punctuation" >,</span> state <span class="token punctuation" >)</span> <span class="token punctuation" >{</span>
+
+    <span class="token keyword" >var</span> selectedUser <span class="token operator" >=</span> <span class="token punctuation" >{</span><span class="token punctuation" >}</span><span class="token punctuation" >;</span>
+
+   <span class="token comment" spellcheck="true"> //Some demo users
+</span>    $scope<span class="token punctuation" >.</span>users <span class="token operator" >=</span> <span class="token punctuation" >[</span>
+        <span class="token punctuation" >{</span> name<span class="token punctuation" >:</span> <span class="token string" >'Jackson Turner'</span><span class="token punctuation" >,</span> street<span class="token punctuation" >:</span> <span class="token string" >'217 Tawny End'</span><span class="token punctuation" >,</span> img<span class="token punctuation" >:</span> <span class="token string" >'men/1.jpg'</span> <span class="token punctuation" >}</span><span class="token punctuation" >,</span>
+        <span class="token punctuation" >{</span> name<span class="token punctuation" >:</span> <span class="token string" >'Megan Perry'</span><span class="token punctuation" >,</span> street<span class="token punctuation" >:</span> <span class="token string" >'77 Burning Ramp'</span><span class="token punctuation" >,</span> img<span class="token punctuation" >:</span> <span class="token string" >'women/1.jpg'</span> <span class="token punctuation" >}</span><span class="token punctuation" >,</span>
+        <span class="token punctuation" >{</span> name<span class="token punctuation" >:</span> <span class="token string" >'Ryan Harris'</span><span class="token punctuation" >,</span> street<span class="token punctuation" >:</span> <span class="token string" >'12 Hazy Apple Route'</span><span class="token punctuation" >,</span> img<span class="token punctuation" >:</span> <span class="token string" >'men/2.jpg'</span> <span class="token punctuation" >}</span><span class="token punctuation" >,</span>
+        <span class="token punctuation" >{</span> name<span class="token punctuation" >:</span> <span class="token string" >'Jennifer Edwards'</span><span class="token punctuation" >,</span> street<span class="token punctuation" >:</span> <span class="token string" >'33 Maple Drive'</span><span class="token punctuation" >,</span> img<span class="token punctuation" >:</span> <span class="token string" >'women/2.jpg'</span> <span class="token punctuation" >}</span><span class="token punctuation" >,</span>
+        <span class="token punctuation" >{</span> name<span class="token punctuation" >:</span> <span class="token string" >'Noah Jenkins'</span><span class="token punctuation" >,</span> street<span class="token punctuation" >:</span> <span class="token string" >'423 Indian Pond Cape'</span><span class="token punctuation" >,</span> img<span class="token punctuation" >:</span> <span class="token string" >'men/3.jpg'</span> <span class="token punctuation" >}</span>
+    <span class="token punctuation" >]</span><span class="token punctuation" >;</span>
+
+   <span class="token comment" spellcheck="true"> // Change the selected user
+</span>    $scope<span class="token punctuation" >.</span>select <span class="token operator" >=</span> <span class="token keyword" >function</span><span class="token punctuation" >(</span> user <span class="token punctuation" >)</span> <span class="token punctuation" >{</span>
+        selectedUser<span class="token punctuation" >.</span>isSelected <span class="token operator" >=</span> <span class="token keyword" >false</span><span class="token punctuation" >;</span>
+        user<span class="token punctuation" >.</span>isSelected <span class="token operator" >=</span> <span class="token keyword" >true</span><span class="token punctuation" >;</span>
+        selectedUser <span class="token operator" >=</span> user<span class="token punctuation" >;</span>
+        container<span class="token punctuation" >.</span><span class="token function" >extendState<span class="token punctuation" >(</span></span><span class="token punctuation" >{</span> selectedUserIndex<span class="token punctuation" >:</span> $scope<span class="token punctuation" >.</span>users<span class="token punctuation" >.</span><span class="token function" >indexOf<span class="token punctuation" >(</span></span> user <span class="token punctuation" >)</span> <span class="token punctuation" >}</span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+        container<span class="token punctuation" >.</span>layoutManager<span class="token punctuation" >.</span>eventHub<span class="token punctuation" >.</span><span class="token function" >emit<span class="token punctuation" >(</span></span> <span class="token string" >'userSelected'</span><span class="token punctuation" >,</span> user <span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+    <span class="token punctuation" >}</span><span class="token punctuation" >;</span>
+
+   <span class="token comment" spellcheck="true"> // Select the initial user, based on the Component config
+</span>    $<span class="token function" >timeout<span class="token punctuation" >(</span></span><span class="token keyword" >function</span><span class="token punctuation" >(</span><span class="token punctuation" >)</span><span class="token punctuation" >{</span>
+        $scope<span class="token punctuation" >.</span><span class="token function" >select<span class="token punctuation" >(</span></span> $scope<span class="token punctuation" >.</span>users<span class="token punctuation" >[</span> state<span class="token punctuation" >.</span>selectedUserIndex <span class="token punctuation" >]</span> <span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+    <span class="token punctuation" >}</span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+<span class="token punctuation" >}</span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+</code></pre><h3>The details panel</h3><pre><code>angular<span class="token punctuation" >.</span><span class="token function" >module<span class="token punctuation" >(</span></span><span class="token string" >'userdetails'</span><span class="token punctuation" >,</span> <span class="token punctuation" >[</span><span class="token punctuation" >]</span> <span class="token punctuation" >)</span>
+<span class="token punctuation" >.</span><span class="token function" >controller<span class="token punctuation" >(</span></span><span class="token string" >'userdetailsController'</span><span class="token punctuation" >,</span> <span class="token keyword" >function</span><span class="token punctuation" >(</span> $scope<span class="token punctuation" >,</span> container<span class="token punctuation" >,</span> state <span class="token punctuation" >)</span> <span class="token punctuation" >{</span>
+    $scope<span class="token punctuation" >.</span>user <span class="token operator" >=</span> state<span class="token punctuation" >.</span>user <span class="token operator" >||</span> <span class="token keyword" >null</span><span class="token punctuation" >;</span>
+
+    container<span class="token punctuation" >.</span>layoutManager<span class="token punctuation" >.</span>eventHub<span class="token punctuation" >.</span><span class="token function" >on<span class="token punctuation" >(</span></span> <span class="token string" >'userSelected'</span><span class="token punctuation" >,</span> <span class="token keyword" >function</span><span class="token punctuation" >(</span> user <span class="token punctuation" >)</span><span class="token punctuation" >{</span>
+        $scope<span class="token punctuation" >.</span>user <span class="token operator" >=</span> user<span class="token punctuation" >;</span>
+        container<span class="token punctuation" >.</span><span class="token function" >extendState<span class="token punctuation" >(</span></span><span class="token punctuation" >{</span> user<span class="token punctuation" >:</span> user <span class="token punctuation" >}</span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+        $scope<span class="token punctuation" >.</span>$<span class="token function" >apply<span class="token punctuation" >(</span></span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+    <span class="token punctuation" >}</span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+<span class="token punctuation" >}</span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+</code></pre><h3>Communicating between modules</h3><p>Communication between modules is facilitated by an EventHub. This EventHub is part of GoldenLayout and can be 
+accessed as <code>myLayout.eventHub</code> or <code>container.layoutManager.eventHub</code>. It&#39;s just a normal <a href="../docs/EventEmitter.html">EventEmitter</a> - but with a twist: It works across all open popout windows in both directions. This happens implicitly, so as far as usage is concerned just use the usual on, off and emit methods.</p><h3>Injecting container and state</h3><p>You’ve probably noticed the code that selects the initial user based on a configured state.</p><pre><code>$<span class="token function" >timeout<span class="token punctuation" >(</span></span><span class="token keyword" >function</span><span class="token punctuation" >(</span><span class="token punctuation" >)</span><span class="token punctuation" >{</span>
+    $scope<span class="token punctuation" >.</span><span class="token function" >select<span class="token punctuation" >(</span></span> $scope<span class="token punctuation" >.</span>users<span class="token punctuation" >[</span> state<span class="token punctuation" >.</span>selectedUserIndex <span class="token punctuation" >]</span> <span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+<span class="token punctuation" >}</span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+</code></pre><p><code>selectedUserIndex</code> is part of the GoldenLayout configuration and will be passed to the component&#39;s constructor function.
+From there it needs to get into Angular. Since the bootstrapping process for Angular modules is pretty much always the same, we&#39;ll write a generic component for it and tell it via configuration which template to load and which module to create. Our component configuration would therefor look like this</p><pre><code>componentName<span class="token punctuation" >:</span> <span class="token string" >'angularModule'</span><span class="token punctuation" >,</span>
+componentState<span class="token punctuation" >:</span> <span class="token punctuation" >{</span>
+    module<span class="token punctuation" >:</span> <span class="token string" >'userlist'</span><span class="token punctuation" >,</span>
+    templateId<span class="token punctuation" >:</span> <span class="token string" >'userlistTemplate'</span><span class="token punctuation" >,</span>
+    selectedUserIndex<span class="token punctuation" >:</span> <span class="token number" >2</span>
+<span class="token punctuation" >}</span>
+</code></pre><p>and the component that uses it like this</p><pre><code><span class="token keyword" >var</span> AngularModuleComponent <span class="token operator" >=</span> <span class="token keyword" >function</span><span class="token punctuation" >(</span> container<span class="token punctuation" >,</span> state <span class="token punctuation" >)</span> <span class="token punctuation" >{</span>
+
+   <span class="token comment" spellcheck="true"> // Templates are stored in template tags in the DOM.
+</span>    <span class="token keyword" >var</span> html <span class="token operator" >=</span> $<span class="token punctuation" >(</span> <span class="token string" >'#'</span> <span class="token operator" >+</span> state<span class="token punctuation" >.</span>templateId <span class="token punctuation" >)</span><span class="token punctuation" >.</span><span class="token function" >html<span class="token punctuation" >(</span></span><span class="token punctuation" >)</span><span class="token punctuation" >,</span>
+        element <span class="token operator" >=</span> container<span class="token punctuation" >.</span><span class="token function" >getElement<span class="token punctuation" >(</span></span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+
+   <span class="token comment" spellcheck="true"> // Write the template's html into the container
+</span>    element<span class="token punctuation" >.</span><span class="token function" >html<span class="token punctuation" >(</span></span> html <span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+
+   <span class="token comment" spellcheck="true"> // Inject container and state into the module. If multiple instances of
+</span>   <span class="token comment" spellcheck="true"> // the same module are created this will override the previous module's container
+</span>   <span class="token comment" spellcheck="true"> // and state with the current (correct) one
+</span>    angular
+        <span class="token punctuation" >.</span><span class="token function" >module<span class="token punctuation" >(</span></span> state<span class="token punctuation" >.</span>module <span class="token punctuation" >)</span>
+        <span class="token punctuation" >.</span><span class="token function" >value<span class="token punctuation" >(</span></span> <span class="token string" >'container'</span><span class="token punctuation" >,</span> container <span class="token punctuation" >)</span>
+        <span class="token punctuation" >.</span><span class="token function" >value<span class="token punctuation" >(</span></span> <span class="token string" >'state'</span><span class="token punctuation" >,</span> state <span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+
+   <span class="token comment" spellcheck="true"> // Actually kick off Angular's magic
+</span>    angular<span class="token punctuation" >.</span><span class="token function" >bootstrap<span class="token punctuation" >(</span></span> element<span class="token punctuation" >[</span> <span class="token number" >0</span> <span class="token punctuation" >]</span><span class="token punctuation" >,</span> <span class="token punctuation" >[</span> state<span class="token punctuation" >.</span>module <span class="token punctuation" >]</span> <span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+<span class="token punctuation" >}</span><span class="token punctuation" >;</span>
+</code></pre>
+				
+				<h3>Comments and Questions</h3>
+				<div id="disqusContainer">
+					<div id="disqus_thread"></div>
+				    <script type="text/javascript">
+				        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+				        var disqus_shortname = 'goldenlayoutcom'; // required: replace example with your forum shortname
+
+				        /* * * DON'T EDIT BELOW THIS LINE * * */
+				        (function() {
+				            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+				            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+				            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+				        })();
+				    </script>
+				    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+				    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+			    
+					
+					
+				</div>
+			</div>
+		</div>
+		<script type="text/javascript" src="../assets/js/docs.js"></script>
+		
+		<div id="footerPush"></div>
+	</div>
+	<div id="footer">
+		<div class="footer-content">
+			<div class="copyright">&copy;<span class="year"></span> deepstreamHub GmbH</div>
+			<script type="text/javascript">
+			$('.year').html( (new Date()).getFullYear() );
+			</script>
+			<ul class="footerItems">
+				<li>
+					<a href="https://github.com/deepstreamIO/golden-layout">Github</a>
+					<a href="https://www.npmjs.com/package/golden-layout">NPM</a>
+					<div>bower/npm: <code>'golden-layout'</code></div>
+				</li>
+				<li>
+					<div>deepstreamHub GmbH</div>
+					<div>Lindenstrasse 20-25</div>
+					<div>10969 Berlin</div>
+				</li>
+				<li>
+					<a href="mailto:info@deepstreamhub.com">info@deepstreamhub.com</a>
+					<a href="https://deepstreamhub.com/">deepstreamHub.com</a><br />
+					<a href="https://twitter.com/wolframhempel">by @wolframhempel</a>
+
+				</li>
+			</ul>
+		</div>
+	</div>
+
+	<script type="text/javascript" src="../assets/js/Modal.js"></script>
+	
+	<script>
+	  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+	  ga('create', 'UA-63583386-5', 'auto');
+	  ga('send', 'pageview');
+
+	</script>
+	
+</body>
+</html>
