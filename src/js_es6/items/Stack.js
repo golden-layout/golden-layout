@@ -12,7 +12,6 @@ import {
 
 export default class Stack extends AbstractContentItem {
     constructor(layoutManager, config, parent) {
-      
         super(layoutManager, config, parent)
 
         this.element = $('<div class="lm_item lm_stack"></div>');
@@ -173,7 +172,9 @@ export default class Stack extends AbstractContentItem {
             var index = indexOf(contentItem, this.contentItems)
             contentItem._$hide && contentItem._$hide()
             this.setActiveContentItem(this.contentItems[index === 0 ? index+1 : index-1])
-        } else {        
+        } else {
+            this.header.hideTab(contentItem);
+            contentItem._$hide && contentItem._$hide()
             AbstractContentItem.prototype.undisplayChild.call(this, contentItem);
             if (this.parent instanceof RowOrColumn)
                 this.parent._validateDocking();
@@ -235,7 +236,6 @@ export default class Stack extends AbstractContentItem {
      * @returns {void}
      */
     _$onDrop(contentItem) {
-
         /*
          * The item was dropped on the header area. Just add it as a child of this stack and
          * get the hell out of this logic
@@ -279,6 +279,20 @@ export default class Stack extends AbstractContentItem {
             stack._$init();
             stack.addChild(contentItem);
             contentItem = stack;
+        }
+
+
+        /*
+         * If the contentItem that's being dropped is not dropped on a Stack (cases which just passed above and 
+         * which would wrap the contentItem in a Stack) we need to check whether contentItem is a RowOrColumn.
+         * If it is, we need to re-wrap it in a Stack like it was when it was dragged by its Tab (it was dragged!).
+         */
+        if(contentItem.config.type === 'row' || contentItem.config.type === 'column'){
+            stack = this.layoutManager.createContentItem({
+                type: 'stack'
+            }, this)
+            stack.addChild(contentItem)
+            contentItem = stack
         }
 
         /*

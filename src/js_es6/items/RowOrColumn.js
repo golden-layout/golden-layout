@@ -96,10 +96,9 @@ export default class RowOrColumn extends AbstractContentItem {
 
 
     /**
-     * Removes a child of this element
+     * Undisplays a child of this element
      *
      * @param   {AbstractContentItem} contentItem
-     * @param   {boolean} keepChild   If true the child will be removed, but not destroyed
      *
      * @returns {void}
      */
@@ -115,20 +114,20 @@ export default class RowOrColumn extends AbstractContentItem {
         }
 
         /**
-         * Remove the splitter before the item or after if the item happens
+         * Hide the splitter before the item or after if the item happens
          * to be the first in the row/column
          */
         if (this._splitter[splitterIndex]) {
             this._splitter[splitterIndex].element.hide();
-            this._splitter.splice(splitterIndex, 1);
         }
 
         if (splitterIndex < this._splitter.length) {
             if (this._isDocked(splitterIndex))
                 this._splitter[splitterIndex].element.hide();
         }
+
         /**
-         * Allocate the space that the removed item occupied to the remaining items
+         * Allocate the space that the hidden item occupied to the remaining items
          */
         var docked = this._isDocked();
         for (i = 0; i < this.contentItems.length; i++) {
@@ -138,6 +137,10 @@ export default class RowOrColumn extends AbstractContentItem {
             } else {
               this.contentItems[i].config[this._dimension] = 0
             }
+        }
+
+        if(this.contentItems.length === 1){
+            AbstractContentItem.prototype.undisplayChild.call(this, contentItem);
         }
 
         this.callDownwards('setSize');

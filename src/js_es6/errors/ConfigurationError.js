@@ -9,5 +9,3 @@ export default class ConfigurationError extends Error {
         this.node = node;
     }
 }
-
-ConfigurationError.prototype = new Error();

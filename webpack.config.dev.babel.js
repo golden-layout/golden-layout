@@ -18,8 +18,7 @@ const Walker = require( 'walker' )
 const fs = require('fs')
 const extractLESS = new ExtractTextPlugin({filename: path.join('css', 'goldenlayout.css')})
 const extractStyles = new ExtractTextPlugin({ filename: path.join('css', 'goldenlayout.css') })
-
-console.log('process.env', process.env.ZEPTO)
+var esprima = require('esprima');
 
 var compileHooksIsRunning = false
 var data = { files: [], directories: [] }
@@ -40,6 +39,50 @@ const scssProcessors = [
   postcssReporter({ clearReportedMessages: true }),
 ]
 
+var filesToPreprocess = [
+   // 'AbstractContentItem.js',
+   // 'BrowserPopout.js',
+   // 'BubblingEvent.js',
+   // 'Component.js',
+   // 'ConfigMinifier.js',
+   // 'ConfigurationError.js',
+   // 'defaultConfig.js',
+   // 'DragListener.js',
+   // 'DragProxy.js',
+   // 'DragSource.js',
+   // 'DropTargetIndicator.js',
+   // 'EventEmitter.js',
+   // 'EventHub.js',
+   // 'Header.js',
+   // 'ItemContainer.js',
+   // 'ItemDefaultConfig.js',
+   // 'ReactComponentHandler.js',
+   // 'Root.js',
+   // 'RowOrColumn.js',
+   // 'Splitter.js ',
+   // 'Splitter.js',
+   // 'Stack.js',
+   // 'TransitionIndicator.js',
+   // 'utils.js',
+]
+
+global._preprocessor_loader_callback = function(source_in, fileName, fullPath){
+  if(filesToPreprocess.indexOf(fileName) !== -1){
+    var entries = []
+    var sanitized = source_in.replace(/\r\n|\n\r|\n|\r/g,"\n")
+    var ret = esprima.parseModule(sanitized, {}, function (node, meta) {
+      node.type && node.type === 'MethodDefinition' && entries.push({
+          name: node.key.name,
+          start: meta.start.line,
+          end: meta.end.line
+      })
+    })
+    var byLine = sanitized.split("\n")
+    _.forEach(entries, (entry, idx) => byLine.splice(entry.start + idx, 0, 'console.info("' + entry.name + ':", arguments)') )
+    return byLine.join("\n")
+  }
+  return source_in
+}
 
 module.exports = (env) => {
   const stylesType = process.env.STYLES // postcss or scss
@@ -102,17 +145,37 @@ module.exports = (env) => {
 
         {
           test: /\.js$/,
-          include: path.resolve(__dirname, jsPath),
-          use: [
-
+          include: [
+            path.resolve(__dirname, jsPath),
+            path.join(__dirname, 'test'),
+            path.join(__dirname, 'test/specs')
+          ],
+          exclude: /node_modules/,          
+          use: _.compact([
             {
               loader: 'babel-loader',
-              options: {
+              query: {
+                babelrc: false,
                 cacheDirectory: true,
-                plugins: ['transform-runtime', 'transform-class-properties'],
+                plugins: [
+                  "transform-runtime", "transform-class-properties"
+                ],
               },
             },
-            {
+          ].concat(env.dev ? [
+            /* 
+             * Uncomment preprocessor-loader to enable tracing 
+             * (here commented because CircleCi is dumb)
+             */
+            // {
+            //   loader: '../lib/preprocessor-loader/preprocessor-loader.js',
+            //   query: {
+            //     line: '',
+            //     file: '', 
+            //     config: path.join(__dirname, 'preprocessor-loader-config.json')
+            //   }
+            // },
+          ] : []).concat([{
               loader: 'eslint-loader',
               options: {
                 cache: true,
@@ -120,7 +183,7 @@ module.exports = (env) => {
                 configFile: '.eslintrc',
               },
             },
-          ],
+          ])),
         },
         {
           test: /\.css$/,
@@ -209,17 +272,17 @@ module.exports = (env) => {
           "window.jQuery": "jquery"
         }): null,
 
-        new CopyWebpackPlugin(process.env.ES6 ? [] : [
+        new CopyWebpackPlugin((process.env.ES6 ? [] : [
               { from: path.join('..', 'lib', 'jquery.js'), to: 'lib' + path.sep },
-          ].concat(env.dev ? [
+          ]).concat(env.dev ? [
               { from: 'my_traces.js' },
               { from: path.join('..', 'lib', 'tracing.js', 'tracing.js'), to: 'lib' + path.sep },
           ]: []), {
-        ignore: [
-            // Doesn't copy any files with a txt extension
-            // '*.txt'
-        ]
-    }),
+            ignore: [
+                // Doesn't copy any files with a txt extension
+                // '*.txt'
+            ]
+        }),
 
     process.env.ES6 ? null : new WebpackCompileHooksPlugin({
         onBuildStart: function(){
