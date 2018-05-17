@@ -119,7 +119,6 @@ export default class RowOrColumn extends AbstractContentItem {
          */
         if (this._splitter[splitterIndex]) {
             this._splitter[splitterIndex].element.hide();
-            this._splitter.splice(splitterIndex, 1);
         }
 
         if (splitterIndex < this._splitter.length) {
