@@ -106,6 +106,8 @@ export default class Stack extends AbstractContentItem {
     }
 
     setActiveContentItem(contentItem) {
+        if (this._activeContentItem === contentItem) return;
+
         if (indexOf(contentItem, this.contentItems) === -1) {
             throw new Error('contentItem is not a child of this stack');
         }

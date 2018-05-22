@@ -152,6 +152,8 @@ export default class Header extends EventEmitter {
     setActiveContentItem(contentItem) {
         var i, j, isActive, activeTab;
 
+        if (this.activeContentItem === contentItem) return;
+
         for (i = 0; i < this.tabs.length; i++) {
             isActive = this.tabs[i].contentItem === contentItem;
             this.tabs[i].setActive(isActive);
