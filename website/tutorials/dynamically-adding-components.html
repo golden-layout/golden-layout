@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>GoldenLayout- a multi-window javascript layout manager for webapps</title>
+	
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<meta name="keywords" content="HTML5, JavaScript, Layout Manager, webapp" />
+	<meta name="description" content="GoldenLayout- a multi-window javascript layout manager for webapps" />
+	<meta name="author" content="Wolfram Hempel" />
+	<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+	<link rel="icon" href="/favicon.ico" type="image/x-icon">
+	<link href='https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700' rel='stylesheet' type='text/css'>
+	<link rel="stylesheet" type="text/css" href="../assets/css/screen.css" />
+	
+	<link rel="stylesheet" type="text/css" href="../assets/css/api.css" />
+	<link rel="stylesheet" type="text/css" href="../assets/css/syntaxhighlighter.css" />
+	
+	<script type="text/javascript">
+	document.createElement( 'header' );
+	document.createElement( 'nav' );
+	</script>
+	<script type="text/javascript" src="../assets/js/jquery.js"></script>
+</head>
+<body class="category_tutorials">
+	<div id="modal" class="loading">
+		<div class="background"></div>
+		<div class="content-wrapper">
+			<div class="head">
+				<div class="close"></div>
+				<span class="title"></span>
+			</div>
+			<div class="content"></div>
+		</div>
+	</div>
+	
+	<div id="outerWrapper">
+		
+
+		
+		<div id="nav" class="standalone">
+			<div class="start-bg"></div>
+			<ul>
+				<li ><a href="..">Start</a></li>
+				<li ><a href="../download">Download</a></li>
+				<li ><a href="../examples">Demos</a></li>
+				<li class="active"><a href="../tutorials">Tutorials</a></li>
+				<li ><a href="../docs">Docs</a></li>
+				<li ><a href="../faq">Faq</a></li>
+			</ul>
+			<iframe src="https://ghbtns.com/github-btn.html?user=deepstreamIO&repo=golden-layout&type=star&count=true&size=large" frameborder="0" scrolling="0" width="160px" height="30px"></iframe>
+
+		</div>
+		
+		<div id="wrapper" class="main">
+			<ul id="subnav">
+	<li class="head first">GoldenLayout</li>
+	<li >
+		<a href="getting-started.html">Getting Started</a>
+	</li>
+	<li >
+		<a href="getting-started-react.html">Getting Started ReactJS</a>
+	</li>
+	<li >
+		<a href="saving-state.html">Saving State</a>
+	</li>
+	<li class="active">
+		<a href="dynamically-adding-components.html">Adding Items</a>
+	</li>
+	<li >
+		<a href="adding-controls-to-header.html">Header Controls</a>
+	</li>
+	<li >
+		<a href="working-with-popouts.html">Popouts</a>
+	</li>
+	<li >
+		<a href="extending-tabs.html">Extending Tabs</a>
+	</li>
+
+	<li class="head">Usage with...</li>
+	<li >
+		<a href="requirejs.html">RequireJS</a>
+	</li>
+	<li >
+		<a href="angular-simple.html">Angular (simple)</a>
+	</li>
+	<li >
+		<a href="angular-complex.html">Angular (complex)</a>
+	</li>
+	<li >
+		<a href="highcharts.html">HighCharts</a>
+	</li>
+	<li >
+		<a href="slickgrid.html">SlickGrid</a>
+	</li>
+</ul>
+			<div id="content">
+				<h1>Dynamically adding Components</h1><p>Often you&#39;d want to give your users the ability to add new items to an existing layout. GoldenLayout offers a number of ways to do this.</p><ul>
+<li>You can turn any DOM element on the page into a &#39;dragSource&#39; that turns into a layoutItem when dragged</li>
+<li>You can let the user select an element and add items to it</li>
+<li>You can add items to a specified element</li>
+</ul>
+<h3>Creating a layout</h3><p>For this tutorial we won&#39;t insert the layout directly into the body, but rather into a div to leave some space for a component menu.</p><pre><code><span class="token operator" >&lt;</span>div id<span class="token operator" >=</span><span class="token string" >"wrapper"</span><span class="token operator" >></span>
+    <span class="token operator" >&lt;</span>ul id<span class="token operator" >=</span><span class="token string" >"menuContainer"</span><span class="token operator" >></span><span class="token operator" >&lt;</span><span class="token operator" >/</span>ul<span class="token operator" >></span>
+    <span class="token operator" >&lt;</span>div id<span class="token operator" >=</span><span class="token string" >"layoutContainer"</span><span class="token operator" >></span><span class="token operator" >&lt;</span><span class="token operator" >/</span>div<span class="token operator" >></span>
+<span class="token operator" >&lt;</span><span class="token operator" >/</span>div<span class="token operator" >></span>
+</code></pre><p>Let&#39;s keep things simple: Create a basic layout with two components in a row</p><pre><code><span class="token keyword" >var</span> config <span class="token operator" >=</span> <span class="token punctuation" >{</span>
+    content<span class="token punctuation" >:</span> <span class="token punctuation" >[</span><span class="token punctuation" >{</span>
+        type<span class="token punctuation" >:</span> <span class="token string" >'row'</span><span class="token punctuation" >,</span>
+        content<span class="token punctuation" >:</span> <span class="token punctuation" >[</span><span class="token punctuation" >{</span>
+            type<span class="token punctuation" >:</span><span class="token string" >'component'</span><span class="token punctuation" >,</span>
+            componentName<span class="token punctuation" >:</span> <span class="token string" >'example'</span><span class="token punctuation" >,</span>
+            componentState<span class="token punctuation" >:</span> <span class="token punctuation" >{</span> text<span class="token punctuation" >:</span> <span class="token string" >'Component 1'</span> <span class="token punctuation" >}</span>
+        <span class="token punctuation" >}</span><span class="token punctuation" >,</span>
+        <span class="token punctuation" >{</span>
+            type<span class="token punctuation" >:</span><span class="token string" >'component'</span><span class="token punctuation" >,</span>
+            componentName<span class="token punctuation" >:</span> <span class="token string" >'example'</span><span class="token punctuation" >,</span>
+            componentState<span class="token punctuation" >:</span> <span class="token punctuation" >{</span> text<span class="token punctuation" >:</span> <span class="token string" >'Component 2'</span> <span class="token punctuation" >}</span>
+        <span class="token punctuation" >}</span><span class="token punctuation" >]</span>
+    <span class="token punctuation" >}</span><span class="token punctuation" >]</span>
+<span class="token punctuation" >}</span><span class="token punctuation" >;</span>
+
+<span class="token keyword" >var</span> myLayout <span class="token operator" >=</span> <span class="token keyword" >new</span> <span class="token class-name" >window<span class="token punctuation" >.</span>GoldenLayout</span><span class="token punctuation" >(</span> config<span class="token punctuation" >,</span> $<span class="token punctuation" >(</span><span class="token string" >'#layoutContainer'</span><span class="token punctuation" >)</span> <span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+
+myLayout<span class="token punctuation" >.</span><span class="token function" >registerComponent<span class="token punctuation" >(</span></span> <span class="token string" >'example'</span><span class="token punctuation" >,</span> <span class="token keyword" >function</span><span class="token punctuation" >(</span> container<span class="token punctuation" >,</span> state <span class="token punctuation" >)</span><span class="token punctuation" >{</span>
+    container<span class="token punctuation" >.</span><span class="token function" >getElement<span class="token punctuation" >(</span></span><span class="token punctuation" >)</span><span class="token punctuation" >.</span><span class="token function" >html<span class="token punctuation" >(</span></span> <span class="token string" >'&lt;h2>'</span> <span class="token operator" >+</span> state<span class="token punctuation" >.</span>text <span class="token operator" >+</span> <span class="token string" >'&lt;/h2>'</span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+<span class="token punctuation" >}</span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+
+myLayout<span class="token punctuation" >.</span><span class="token function" >init<span class="token punctuation" >(</span></span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+</code></pre><h3>Creating the &quot;insert component&quot; menu</h3><p>The &quot;insert component&quot; menu will be created programmatically as well. That&#39;s where we&#39;ll add the actual insertion code later on</p><pre><code><span class="token keyword" >var</span> addMenuItem <span class="token operator" >=</span> <span class="token keyword" >function</span><span class="token punctuation" >(</span> text <span class="token punctuation" >)</span> <span class="token punctuation" >{</span>
+    <span class="token keyword" >var</span> element <span class="token operator" >=</span> $<span class="token punctuation" >(</span> <span class="token string" >'&lt;li>'</span> <span class="token operator" >+</span> text <span class="token operator" >+</span> <span class="token string" >'&lt;/li>'</span> <span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+    $<span class="token punctuation" >(</span> <span class="token string" >'#menuContainer'</span> <span class="token punctuation" >)</span><span class="token punctuation" >.</span><span class="token function" >append<span class="token punctuation" >(</span></span> element <span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+
+   <span class="token comment" spellcheck="true"> //insertion code will go here
+</span><span class="token punctuation" >}</span><span class="token punctuation" >;</span>
+
+<span class="token function" >addMenuItem<span class="token punctuation" >(</span></span> <span class="token string" >'User added component A'</span> <span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+<span class="token function" >addMenuItem<span class="token punctuation" >(</span></span> <span class="token string" >'User added component B'</span> <span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+</code></pre><h3>Adding items to a layout - in general</h3><p>Time to write some &quot;add component&quot; functionality. GoldenLayout builds up a tree of items internally that can be accessed through &#39;myLayout.root&#39; once the layout is initialised. Every one of these items has an <code>addChild</code> method that expects two parameters: <code>itemOrConfig</code> and <code>index</code>.</p><p>Nevermind <code>index</code> for now. It&#39;s optional and specifies at which position the new child will be added. The important bit for us is <code>itemOrConfig</code>. This can be any kind of item config - which means it&#39;s also possible to create / insert a whole tree of new items at once.</p><p>Let&#39;s prepare a bit of item configuration in our &#39;addMenuItem&#39; function</p><pre><code><span class="token keyword" >var</span> newItemConfig <span class="token operator" >=</span> <span class="token punctuation" >{</span>
+    type<span class="token punctuation" >:</span> <span class="token string" >'component'</span><span class="token punctuation" >,</span>
+    componentName<span class="token punctuation" >:</span> <span class="token string" >'example'</span><span class="token punctuation" >,</span>
+    componentState<span class="token punctuation" >:</span> <span class="token punctuation" >{</span> text<span class="token punctuation" >:</span> text <span class="token punctuation" >}</span>
+<span class="token punctuation" >}</span><span class="token punctuation" >;</span>
+</code></pre><p>The tricky bit is not so much creating the item, but selecting the element to which to add the item to. All three approaches we&#39;ll cover next are basically just that: different ways of selecting the parent for the new item.</p><h3>First: The really awesome way</h3><p>GoldenLayout makes it simple to turn any DOM element into a &quot;dragSource&quot; - which allows for the creation of components by simply dragging the element onto the layout.</p><p>All that needs adding to our &#39;addMenuItem&#39; method is this line:</p><pre><code>myLayout<span class="token punctuation" >.</span><span class="token function" >createDragSource<span class="token punctuation" >(</span></span> element<span class="token punctuation" >,</span> newItemConfig <span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+</code></pre><p>Works like a charm:</p><p><p data-height="268" data-theme-id="7376" data-slug-hash="d508753b29c3001c24218bf3a6b25141" data-default-tab="result" class='codepen'>See the Pen <a href='http://codepen.io/wolframhempel/pen/d508753b29c3001c24218bf3a6b25141/'>Adding items from drag Sources</a> by Wolfram Hempel (<a href='http://codepen.io/wolframhempel'>@wolframhempel</a>) on <a href='http://codepen.io'>CodePen</a>.</p></p><script async src="//codepen.io/assets/embed/ei.js"></script>
+
+
+<h3>Second: Add items to a selected stack</h3><p>GoldenLayout supports selecting items by clicking the empty space in the header area. This is however disabled by default. To enable it, simply add this to your config:</p><pre><code><span class="token keyword" >var</span> config <span class="token operator" >=</span> <span class="token punctuation" >{</span>
+    settings<span class="token punctuation" >:</span> <span class="token punctuation" >{</span>
+        selectionEnabled<span class="token punctuation" >:</span> <span class="token keyword" >true</span>
+    <span class="token punctuation" >}</span><span class="token punctuation" >,</span>
+    content<span class="token punctuation" >:</span> <span class="token punctuation" >[</span><span class="token punctuation" >.</span><span class="token punctuation" >.</span><span class="token punctuation" >.</span><span class="token punctuation" >]</span>
+<span class="token punctuation" >}</span><span class="token punctuation" >;</span>
+</code></pre><p>Now if the user clicks a header it turns into a different color, GoldenLayout emits a &#39;selectionChanged&#39; event and the value of &#39;myLayout.selectedItem&#39; points to the selected item.</p><p>To use this we&#39;ll change our insert logic to this:</p><pre><code>element<span class="token punctuation" >.</span><span class="token function" >click<span class="token punctuation" >(</span></span><span class="token keyword" >function</span><span class="token punctuation" >(</span><span class="token punctuation" >)</span><span class="token punctuation" >{</span>
+    <span class="token keyword" >if</span><span class="token punctuation" >(</span> myLayout<span class="token punctuation" >.</span>selectedItem <span class="token operator" >===</span> <span class="token keyword" >null</span> <span class="token punctuation" >)</span> <span class="token punctuation" >{</span>
+        <span class="token function" >alert<span class="token punctuation" >(</span></span> <span class="token string" >'No item selected'</span> <span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+    <span class="token punctuation" >}</span> <span class="token keyword" >else</span> <span class="token punctuation" >{</span>
+        myLayout<span class="token punctuation" >.</span>selectedItem<span class="token punctuation" >.</span><span class="token function" >addChild<span class="token punctuation" >(</span></span> newItemConfig <span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+    <span class="token punctuation" >}</span>
+<span class="token punctuation" >}</span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+</code></pre><p>Now clicking a li in the &quot;insert component&quot; menu will add the component to whatever
+stack is selected - or alert if no selection has been made.</p><p><p data-height="268" data-theme-id="7376" data-slug-hash="9dd68b285dc421364ac9ec13f2bdc999" data-default-tab="result" class='codepen'>See the Pen <a href='http://codepen.io/wolframhempel/pen/9dd68b285dc421364ac9ec13f2bdc999/'>Adding items to selected stacks</a> by Wolfram Hempel (<a href='http://codepen.io/wolframhempel'>@wolframhempel</a>) on <a href='http://codepen.io'>CodePen</a>.</p></p><script async src="//codepen.io/assets/embed/ei.js"></script>
+
+<h3>Third: Adding items to a previously specified element</h3><p>If we don&#39;t want to give the user a choice of where to add the new item, we can just specify an element ourselves. Either by using one of the getter-functions, (e.g. <code>myLayout.root.getItemsById( &#39;someItem&#39; );</code>) or by traversing the item tree.</p><p>For instance, if we always want to add items to the topmost row, it would look like this:</p><pre><code>element<span class="token punctuation" >.</span><span class="token function" >click<span class="token punctuation" >(</span></span><span class="token keyword" >function</span><span class="token punctuation" >(</span><span class="token punctuation" >)</span><span class="token punctuation" >{</span>
+    myLayout<span class="token punctuation" >.</span>root<span class="token punctuation" >.</span>contentItems<span class="token punctuation" >[</span> <span class="token number" >0</span> <span class="token punctuation" >]</span><span class="token punctuation" >.</span><span class="token function" >addChild<span class="token punctuation" >(</span></span> newItemConfig <span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+<span class="token punctuation" >}</span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+</code></pre><p><p data-height="268" data-theme-id="7376" data-slug-hash="cdcb9de8e7b305d2ec81b4ae4e392832" data-default-tab="result" class='codepen'>See the Pen <a href='http://codepen.io/wolframhempel/pen/cdcb9de8e7b305d2ec81b4ae4e392832/'>Adding items to a predefined parent</a> by Wolfram Hempel (<a href='http://codepen.io/wolframhempel'>@wolframhempel</a>) on <a href='http://codepen.io'>CodePen</a>.</p></p><script async src="//codepen.io/assets/embed/ei.js"></script>
+				
+				<h3>Comments and Questions</h3>
+				<div id="disqusContainer">
+					<div id="disqus_thread"></div>
+				    <script type="text/javascript">
+				        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+				        var disqus_shortname = 'goldenlayoutcom'; // required: replace example with your forum shortname
+
+				        /* * * DON'T EDIT BELOW THIS LINE * * */
+				        (function() {
+				            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+				            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+				            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+				        })();
+				    </script>
+				    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+				    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+			    
+					
+					
+				</div>
+			</div>
+		</div>
+		<script type="text/javascript" src="../assets/js/docs.js"></script>
+		
+		<div id="footerPush"></div>
+	</div>
+	<div id="footer">
+		<div class="footer-content">
+			<div class="copyright">&copy;<span class="year"></span> deepstreamHub GmbH</div>
+			<script type="text/javascript">
+			$('.year').html( (new Date()).getFullYear() );
+			</script>
+			<ul class="footerItems">
+				<li>
+					<a href="https://github.com/deepstreamIO/golden-layout">Github</a>
+					<a href="https://www.npmjs.com/package/golden-layout">NPM</a>
+					<div>bower/npm: <code>'golden-layout'</code></div>
+				</li>
+				<li>
+					<div>deepstreamHub GmbH</div>
+					<div>Lindenstrasse 20-25</div>
+					<div>10969 Berlin</div>
+				</li>
+				<li>
+					<a href="mailto:info@deepstreamhub.com">info@deepstreamhub.com</a>
+					<a href="https://deepstreamhub.com/">deepstreamHub.com</a><br />
+					<a href="https://twitter.com/wolframhempel">by @wolframhempel</a>
+
+				</li>
+			</ul>
+		</div>
+	</div>
+
+	<script type="text/javascript" src="../assets/js/Modal.js"></script>
+	
+	<script>
+	  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+	  ga('create', 'UA-63583386-5', 'auto');
+	  ga('send', 'pageview');
+
+	</script>
+	
+</body>
+</html>

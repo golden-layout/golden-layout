@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>GoldenLayout- a multi-window javascript layout manager for webapps</title>
+	
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<meta name="keywords" content="HTML5, JavaScript, Layout Manager, webapp" />
+	<meta name="description" content="GoldenLayout- a multi-window javascript layout manager for webapps" />
+	<meta name="author" content="Wolfram Hempel" />
+	<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+	<link rel="icon" href="/favicon.ico" type="image/x-icon">
+	<link href='https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700' rel='stylesheet' type='text/css'>
+	<link rel="stylesheet" type="text/css" href="../assets/css/screen.css" />
+	
+	<link rel="stylesheet" type="text/css" href="../assets/css/api.css" />
+	<link rel="stylesheet" type="text/css" href="../assets/css/syntaxhighlighter.css" />
+	
+	<script type="text/javascript">
+	document.createElement( 'header' );
+	document.createElement( 'nav' );
+	</script>
+	<script type="text/javascript" src="../assets/js/jquery.js"></script>
+</head>
+<body class="category_tutorials">
+	<div id="modal" class="loading">
+		<div class="background"></div>
+		<div class="content-wrapper">
+			<div class="head">
+				<div class="close"></div>
+				<span class="title"></span>
+			</div>
+			<div class="content"></div>
+		</div>
+	</div>
+	
+	<div id="outerWrapper">
+		
+
+		
+		<div id="nav" class="standalone">
+			<div class="start-bg"></div>
+			<ul>
+				<li ><a href="..">Start</a></li>
+				<li ><a href="../download">Download</a></li>
+				<li ><a href="../examples">Demos</a></li>
+				<li class="active"><a href="../tutorials">Tutorials</a></li>
+				<li ><a href="../docs">Docs</a></li>
+				<li ><a href="../faq">Faq</a></li>
+			</ul>
+			<iframe src="https://ghbtns.com/github-btn.html?user=deepstreamIO&repo=golden-layout&type=star&count=true&size=large" frameborder="0" scrolling="0" width="160px" height="30px"></iframe>
+
+		</div>
+		
+		<div id="wrapper" class="main">
+			<ul id="subnav">
+	<li class="head first">GoldenLayout</li>
+	<li class="active">
+		<a href="getting-started.html">Getting Started</a>
+	</li>
+	<li >
+		<a href="getting-started-react.html">Getting Started ReactJS</a>
+	</li>
+	<li >
+		<a href="saving-state.html">Saving State</a>
+	</li>
+	<li >
+		<a href="dynamically-adding-components.html">Adding Items</a>
+	</li>
+	<li >
+		<a href="adding-controls-to-header.html">Header Controls</a>
+	</li>
+	<li >
+		<a href="working-with-popouts.html">Popouts</a>
+	</li>
+	<li >
+		<a href="extending-tabs.html">Extending Tabs</a>
+	</li>
+
+	<li class="head">Usage with...</li>
+	<li >
+		<a href="requirejs.html">RequireJS</a>
+	</li>
+	<li >
+		<a href="angular-simple.html">Angular (simple)</a>
+	</li>
+	<li >
+		<a href="angular-complex.html">Angular (complex)</a>
+	</li>
+	<li >
+		<a href="highcharts.html">HighCharts</a>
+	</li>
+	<li >
+		<a href="slickgrid.html">SlickGrid</a>
+	</li>
+</ul>
+			<div id="content">
+				<h1>Getting started</h1><p>Getting started with GoldenLayout is a breeze, but a bit of handholding is always nice. This tutorial takes you through the initial steps until you&#39;re up and running with your first managed layout.</p><h3>Including dependencies</h3><p>GoldenLayout needs jQuery to work - that’s it. Either include it directly, using a script tag, e.g.</p><pre><code><span class="token operator" >&lt;</span>script type<span class="token operator" >=</span><span class="token string" >"text/javascript"</span> src<span class="token operator" >=</span><span class="token string" >"http://code.jquery.com/jquery-1.11.1.min.js"</span><span class="token operator" >></span>
+<span class="token operator" >&lt;</span><span class="token operator" >/</span>script<span class="token operator" >></span>
+</code></pre><p>or, if you’re using RequireJs, make jQuery available as a path, e.g. by adding this to your require config</p><pre><code>paths<span class="token punctuation" >:</span> <span class="token punctuation" >{</span>
+    <span class="token string" >'jquery'</span><span class="token punctuation" >:</span>  <span class="token string" >'../bower_components/jquery/dist/jquery.min'</span>
+<span class="token punctuation" >}</span>
+</code></pre><p>Next, add GoldenLayout&#39;s main JS and CSS file, e.g.</p><pre><code><span class="token operator" >&lt;</span>script type<span class="token operator" >=</span><span class="token string" >"text/javascript"</span> src<span class="token operator" >=</span><span class="token string" >"https://golden-layout.com/files/latest/js/goldenlayout.min.js"</span><span class="token operator" >></span><span class="token operator" >&lt;</span><span class="token operator" >/</span>script<span class="token operator" >></span>
+<span class="token operator" >&lt;</span>link type<span class="token operator" >=</span><span class="token string" >"text/css"</span> rel<span class="token operator" >=</span><span class="token string" >"stylesheet"</span> href<span class="token operator" >=</span><span class="token string" >"https://golden-layout.com/files/latest/css/goldenlayout-base.css"</span> <span class="token operator" >/</span><span class="token operator" >></span>
+</code></pre><p><code>goldenlayout-base.css</code> contains purely the structural bits, so you also need a theme. Just pick one of the available
+ones and include its CSS file</p><pre><code><span class="token operator" >&lt;</span>link type<span class="token operator" >=</span><span class="token string" >"text/css"</span> rel<span class="token operator" >=</span><span class="token string" >"stylesheet"</span> href<span class="token operator" >=</span><span class="token string" >"https://golden-layout.com/files/latest/css/goldenlayout-dark-theme.css"</span> <span class="token operator" >/</span><span class="token operator" >></span>
+</code></pre><h3>Configuring the Layout</h3><p>Next we need to configure the initial layout (the user can move things around later).
+For this example we&#39;ll create a big component on the left of the screen and two smaller ones on the right,
+on top of each other, like so:</p><p><img class="centered" src="../assets/images/tutorial_1_image_1.png" width="204" height="130" /></p><p>All GoldenLayout structures are created from three building blocks: Rows, Columns and Stacks. Row&#39;s arrange items from left to right, Columns from top to bottom and Stacks from front to back (as a tab-strip). These can be nested.</p><p>The actual parts that your app is composed of (forms, charts, tables etc.) are referred to as &quot;components&quot;. Components can be put into any of these building blocks.</p><p>For our example we&#39;ll start with a row. The first item in this row is the big component that we want to put on the left hand side (A). To the right we want two components on top of each other (B and C) - so we need to put them into a column.</p><p>The whole structure should look like this:</p><p><img class="centered" src="../assets/images/tutorial_1_image_2.png" width="204" height="130" /></p><p>Or as GoldenLayout configuration</p><pre><code><span class="token keyword" >var</span> config <span class="token operator" >=</span> <span class="token punctuation" >{</span>
+    content<span class="token punctuation" >:</span> <span class="token punctuation" >[</span><span class="token punctuation" >{</span>
+        type<span class="token punctuation" >:</span> <span class="token string" >'row'</span><span class="token punctuation" >,</span>
+        content<span class="token punctuation" >:</span><span class="token punctuation" >[</span><span class="token punctuation" >{</span>
+            type<span class="token punctuation" >:</span> <span class="token string" >'component'</span><span class="token punctuation" >,</span>
+            componentName<span class="token punctuation" >:</span> <span class="token string" >'testComponent'</span><span class="token punctuation" >,</span>
+            componentState<span class="token punctuation" >:</span> <span class="token punctuation" >{</span> label<span class="token punctuation" >:</span> <span class="token string" >'A'</span> <span class="token punctuation" >}</span>
+        <span class="token punctuation" >}</span><span class="token punctuation" >,</span><span class="token punctuation" >{</span>
+            type<span class="token punctuation" >:</span> <span class="token string" >'column'</span><span class="token punctuation" >,</span>
+            content<span class="token punctuation" >:</span><span class="token punctuation" >[</span><span class="token punctuation" >{</span>
+                type<span class="token punctuation" >:</span> <span class="token string" >'component'</span><span class="token punctuation" >,</span>
+                componentName<span class="token punctuation" >:</span> <span class="token string" >'testComponent'</span><span class="token punctuation" >,</span>
+                componentState<span class="token punctuation" >:</span> <span class="token punctuation" >{</span> label<span class="token punctuation" >:</span> <span class="token string" >'B'</span> <span class="token punctuation" >}</span>
+            <span class="token punctuation" >}</span><span class="token punctuation" >,</span><span class="token punctuation" >{</span>
+                type<span class="token punctuation" >:</span> <span class="token string" >'component'</span><span class="token punctuation" >,</span>
+                componentName<span class="token punctuation" >:</span> <span class="token string" >'testComponent'</span><span class="token punctuation" >,</span>
+                componentState<span class="token punctuation" >:</span> <span class="token punctuation" >{</span> label<span class="token punctuation" >:</span> <span class="token string" >'C'</span> <span class="token punctuation" >}</span>
+            <span class="token punctuation" >}</span><span class="token punctuation" >]</span>
+        <span class="token punctuation" >}</span><span class="token punctuation" >]</span>
+    <span class="token punctuation" >}</span><span class="token punctuation" >]</span>
+<span class="token punctuation" >}</span><span class="token punctuation" >;</span>
+</code></pre><p>A few things to note about this config:</p><ul>
+<li>Every item (apart from components) can have children, specified in the <code>content</code> array</li>
+<li><code>type</code> can be <code>&#39;row&#39;</code>, <code>&#39;column&#39;</code>, <code>&#39;stack&#39;</code> or <code>&#39;component&#39;</code></li>
+<li><code>componentName</code> specifies which component should be created. More about that further down</li>
+<li><code>componentState</code> can be any serialisable Object and will be passed to the component</li>
+</ul>
+<h3>Instantiating the layout</h3><p>Now it&#39;s time to instantiate the Layout with our config</p><pre><code><span class="token keyword" >var</span> myLayout <span class="token operator" >=</span> <span class="token keyword" >new</span> <span class="token class-name" >GoldenLayout</span><span class="token punctuation" >(</span> config <span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+</code></pre><div class="info">This is not going to do anything just yet! Don&#39;t be disappointed though, the magic happens when we call <code>myLayout.init();</code> later on.</div>
+
+<p>The config argument is required. A DOM element can be provided as optional second argument. If none is specified GoldenLayout takes over the entire page by adding itself to <code>document.body</code></p><h3>Registering Components</h3><p>In our configuration we asked GoldenLayout to create a <code>&#39;testComponent&#39;</code>, now we need to specify what that is. This is done using</p><pre><code>myLayout<span class="token punctuation" >.</span><span class="token function" >registerComponent<span class="token punctuation" >(</span></span> <span class="token string" >'testComponent'</span><span class="token punctuation" >,</span> <span class="token keyword" >function</span><span class="token punctuation" >(</span> container<span class="token punctuation" >,</span> componentState <span class="token punctuation" >)</span><span class="token punctuation" >{</span>
+    container<span class="token punctuation" >.</span><span class="token function" >getElement<span class="token punctuation" >(</span></span><span class="token punctuation" >)</span><span class="token punctuation" >.</span><span class="token function" >html<span class="token punctuation" >(</span></span> <span class="token string" >'&lt;h2>'</span> <span class="token operator" >+</span> componentState<span class="token punctuation" >.</span>label <span class="token operator" >+</span> <span class="token string" >'&lt;/h2>'</span> <span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+<span class="token punctuation" >}</span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+</code></pre><p>This needs a bit of explanation. <code>myLayout.registerComponent</code> takes two arguments: the name of the component and a constructor or factory function. 
+This function is called by GoldenLayout with <code>new</code> - which creates an instance of your component if you&#39;ve provided a constructor - or just executes the function if not.</p><p>The function receives two arguments.</p><ul>
+<li><code>container</code> is an object that allows you to interact with the box that your compontent lives in. It gives you access to the DOM element, emits all sorts of events like <code>resize</code>, <code>hide</code>, <code>close</code> etc. and provides methods like <code>setSize()</code> or <code>setState()</code>. <a href="../docs/Container.html">Read more about container here</a></li>
+<li><code>componentState</code> is what you&#39;ve specified in the configuration, e.g. <code>{ label: &#39;C&#39; }</code></li>
+</ul>
+<p>Your component&#39;s instance or whatever your function returns is stored and can later be accessed from <code>myLayout</code>.</p><h3>Initialise the Layout</h3><p>That&#39;s it. Now all that&#39;s left to start up your layout is calling</p><pre><code>myLayout<span class="token punctuation" >.</span><span class="token function" >init<span class="token punctuation" >(</span></span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+</code></pre><h3>Result</h3><p><p data-height="268" data-theme-id="7376" data-slug-hash="c41f82acbaafcc1a3211c64778a04bbb" data-default-tab="result" class='codepen'>See the Pen <a href='http://codepen.io/wolframhempel/pen/c41f82acbaafcc1a3211c64778a04bbb/'>Tutorial 1</a> by Wolfram Hempel (<a href='http://codepen.io/wolframhempel'>@wolframhempel</a>) on <a href='http://codepen.io'>CodePen</a>.</p></p><script async src="//codepen.io/assets/embed/ei.js"></script>
+				
+				<h3>Comments and Questions</h3>
+				<div id="disqusContainer">
+					<div id="disqus_thread"></div>
+				    <script type="text/javascript">
+				        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+				        var disqus_shortname = 'goldenlayoutcom'; // required: replace example with your forum shortname
+
+				        /* * * DON'T EDIT BELOW THIS LINE * * */
+				        (function() {
+				            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+				            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+				            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+				        })();
+				    </script>
+				    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+				    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+			    
+					
+					
+				</div>
+			</div>
+		</div>
+		<script type="text/javascript" src="../assets/js/docs.js"></script>
+		
+		<div id="footerPush"></div>
+	</div>
+	<div id="footer">
+		<div class="footer-content">
+			<div class="copyright">&copy;<span class="year"></span> deepstreamHub GmbH</div>
+			<script type="text/javascript">
+			$('.year').html( (new Date()).getFullYear() );
+			</script>
+			<ul class="footerItems">
+				<li>
+					<a href="https://github.com/deepstreamIO/golden-layout">Github</a>
+					<a href="https://www.npmjs.com/package/golden-layout">NPM</a>
+					<div>bower/npm: <code>'golden-layout'</code></div>
+				</li>
+				<li>
+					<div>deepstreamHub GmbH</div>
+					<div>Lindenstrasse 20-25</div>
+					<div>10969 Berlin</div>
+				</li>
+				<li>
+					<a href="mailto:info@deepstreamhub.com">info@deepstreamhub.com</a>
+					<a href="https://deepstreamhub.com/">deepstreamHub.com</a><br />
+					<a href="https://twitter.com/wolframhempel">by @wolframhempel</a>
+
+				</li>
+			</ul>
+		</div>
+	</div>
+
+	<script type="text/javascript" src="../assets/js/Modal.js"></script>
+	
+	<script>
+	  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+	  ga('create', 'UA-63583386-5', 'auto');
+	  ga('send', 'pageview');
+
+	</script>
+	
+</body>
+</html>

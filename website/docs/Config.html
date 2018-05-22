@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>GoldenLayout- a multi-window javascript layout manager for webapps</title>
+	
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<meta name="keywords" content="HTML5, JavaScript, Layout Manager, webapp" />
+	<meta name="description" content="GoldenLayout- a multi-window javascript layout manager for webapps" />
+	<meta name="author" content="Wolfram Hempel" />
+	<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+	<link rel="icon" href="/favicon.ico" type="image/x-icon">
+	<link href='https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700' rel='stylesheet' type='text/css'>
+	<link rel="stylesheet" type="text/css" href="../assets/css/screen.css" />
+	
+	<link rel="stylesheet" type="text/css" href="../assets/css/api.css" />
+	<link rel="stylesheet" type="text/css" href="../assets/css/syntaxhighlighter.css" />
+	
+	<script type="text/javascript">
+	document.createElement( 'header' );
+	document.createElement( 'nav' );
+	</script>
+	<script type="text/javascript" src="../assets/js/jquery.js"></script>
+</head>
+<body class="category_docs">
+	<div id="modal" class="loading">
+		<div class="background"></div>
+		<div class="content-wrapper">
+			<div class="head">
+				<div class="close"></div>
+				<span class="title"></span>
+			</div>
+			<div class="content"></div>
+		</div>
+	</div>
+	
+	<div id="outerWrapper">
+		
+
+		
+		<div id="nav" class="standalone">
+			<div class="start-bg"></div>
+			<ul>
+				<li ><a href="..">Start</a></li>
+				<li ><a href="../download">Download</a></li>
+				<li ><a href="../examples">Demos</a></li>
+				<li ><a href="../tutorials">Tutorials</a></li>
+				<li class="active"><a href="../docs">Docs</a></li>
+				<li ><a href="../faq">Faq</a></li>
+			</ul>
+			<iframe src="https://ghbtns.com/github-btn.html?user=deepstreamIO&repo=golden-layout&type=star&count=true&size=large" frameborder="0" scrolling="0" width="160px" height="30px"></iframe>
+
+		</div>
+		
+		<div id="wrapper" class="main">
+			<ul id="subnav">
+	<li class="head first">Configuration</li>
+	<li class="active">
+		<a href="Config.html">Layout Config</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+	</li>
+	<li >
+		<a href="ItemConfig.html">Item Config</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+	</li>
+
+	<li class="head">API</li>
+	<li >
+		<a href="GoldenLayout.html">GoldenLayout</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+		
+	</li>
+	<li >
+		<a href="Item.html">ContentItem</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+		
+	</li>
+	<li >
+		<a href="Container.html">Container</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+		
+	</li>
+	<li >
+		<a href="BrowserWindow.html">BrowserWindow</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+		
+	</li>
+	<li >
+		<a href="Header.html">Header</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+		
+	</li>
+	<li >
+		<a href="Tab.html">Tab</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+		
+	</li>
+	<li >
+		<a href="EventEmitter.html">EventEmitter</a>
+		<div class="isActiveIndicator orangeGradient"></div>
+		
+	</li>
+</ul>
+			<div id="content">
+				<h1>Layout Configuration</h1><pre><code><span class="token keyword" >var</span> layout <span class="token operator" >=</span> <span class="token keyword" >new</span> <span class="token class-name" >GoldenLayout</span><span class="token punctuation" >(</span><span class="token punctuation" >{</span>
+    settings<span class="token punctuation" >:</span><span class="token punctuation" >{</span>
+        hasHeaders<span class="token punctuation" >:</span> <span class="token keyword" >true</span><span class="token punctuation" >,</span>
+        constrainDragToContainer<span class="token punctuation" >:</span> <span class="token keyword" >true</span><span class="token punctuation" >,</span>
+        reorderEnabled<span class="token punctuation" >:</span> <span class="token keyword" >true</span><span class="token punctuation" >,</span>
+        selectionEnabled<span class="token punctuation" >:</span> <span class="token keyword" >false</span><span class="token punctuation" >,</span>
+        popoutWholeStack<span class="token punctuation" >:</span> <span class="token keyword" >false</span><span class="token punctuation" >,</span>
+        blockedPopoutsThrowError<span class="token punctuation" >:</span> <span class="token keyword" >true</span><span class="token punctuation" >,</span>
+        closePopoutsOnUnload<span class="token punctuation" >:</span> <span class="token keyword" >true</span><span class="token punctuation" >,</span>
+        showPopoutIcon<span class="token punctuation" >:</span> <span class="token keyword" >true</span><span class="token punctuation" >,</span>
+        showMaximiseIcon<span class="token punctuation" >:</span> <span class="token keyword" >true</span><span class="token punctuation" >,</span>
+        showCloseIcon<span class="token punctuation" >:</span> <span class="token keyword" >true</span>
+    <span class="token punctuation" >}</span><span class="token punctuation" >,</span>
+    dimensions<span class="token punctuation" >:</span> <span class="token punctuation" >{</span>
+        borderWidth<span class="token punctuation" >:</span> <span class="token number" >5</span><span class="token punctuation" >,</span>
+        minItemHeight<span class="token punctuation" >:</span> <span class="token number" >10</span><span class="token punctuation" >,</span>
+        minItemWidth<span class="token punctuation" >:</span> <span class="token number" >10</span><span class="token punctuation" >,</span>
+        headerHeight<span class="token punctuation" >:</span> <span class="token number" >20</span><span class="token punctuation" >,</span>
+        dragProxyWidth<span class="token punctuation" >:</span> <span class="token number" >300</span><span class="token punctuation" >,</span>
+        dragProxyHeight<span class="token punctuation" >:</span> <span class="token number" >200</span>
+    <span class="token punctuation" >}</span><span class="token punctuation" >,</span>
+    labels<span class="token punctuation" >:</span> <span class="token punctuation" >{</span>
+        close<span class="token punctuation" >:</span> <span class="token string" >'close'</span><span class="token punctuation" >,</span>
+        maximise<span class="token punctuation" >:</span> <span class="token string" >'maximise'</span><span class="token punctuation" >,</span>
+        minimise<span class="token punctuation" >:</span> <span class="token string" >'minimise'</span><span class="token punctuation" >,</span>
+        popout<span class="token punctuation" >:</span> <span class="token string" >'open in new window'</span>
+    <span class="token punctuation" >}</span><span class="token punctuation" >,</span>
+    content<span class="token punctuation" >:</span> <span class="token punctuation" >[</span> <span class="token comment" spellcheck="true">/* see item config */</span> <span class="token punctuation" >]</span>
+<span class="token punctuation" >}</span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+</code></pre><div class="section"><h2><a name="settings">settings</a></h2><table class="args"><thead><tr><th>argument</th><th>type</th><th>optional</th><th>default</th><th>description</th></tr></thead><tbody><tr><td class="argument">hasHeaders</td><td class="type">Boolean</td><td class="optional">true</td><td class="default">true</td><td class="description">Turns headers on or off. If false, the layout will be displayed with splitters only.</td></tr><tr><td class="argument">constrainDragToContainer</td><td class="type">Boolean</td><td class="optional">true</td><td class="default">true</td><td class="description">Constrains the area in which items can be dragged to the layout&#39;s container. Will be set to false automatically when <code>layout.createDragSource()</code> is called.</td></tr><tr><td class="argument">reorderEnabled</td><td class="type">Boolean</td><td class="optional">true</td><td class="default">true</td><td class="description">If true, the user can re-arrange the layout by dragging items by their tabs to the desired location.</td></tr><tr><td class="argument">selectionEnabled</td><td class="type">Boolean</td><td class="optional">true</td><td class="default">false</td><td class="description">If true, the user can select items by clicking on their header. This sets the value of layout.selectedItem to the clicked item, highlights its header and the layout emits a &#39;selectionChanged&#39; event.</td></tr><tr><td class="argument">popoutWholeStack</td><td class="type">Boolean</td><td class="optional">true</td><td class="default">false</td><td class="description">Decides what will be opened in a new window if the user clicks the popout icon. If true the entire stack will be transferred to the new window, if false only the active component will be opened.</td></tr><tr><td class="argument">blockedPopoutsThrowError</td><td class="type">Boolean</td><td class="optional">true</td><td class="default">true</td><td class="description">Specifies if an error is thrown when a popout is blocked by the browser (e.g. by opening it programmatically). If false, the popout call will fail silently.</td></tr><tr><td class="argument">closePopoutsOnUnload</td><td class="type">Boolean</td><td class="optional">true</td><td class="default">true</td><td class="description">Specifies if all popouts should be closed when the page that created them is closed. Popouts don&#39;t have a strong dependency on their parent and can exist on their own, but can be quite annoying to close by hand. In addition, any changes made to popouts won&#39;t be stored after the parent is closed.</td></tr><tr><td class="argument">showPopoutIcon</td><td class="type">Boolean</td><td class="optional">true</td><td class="default">true</td><td class="description">Specifies if the popout icon should be displayed in the header-bar.</td></tr><tr><td class="argument">showMaximiseIcon</td><td class="type">Boolean</td><td class="optional">true</td><td class="default">true</td><td class="description">Specifies if the maximise icon should be displayed in the header-bar.</td></tr><tr><td class="argument">showCloseIcon</td><td class="type">Boolean</td><td class="optional">true</td><td class="default">true</td><td class="description">Specifies if the close icon should be displayed in the header-bar.</td></tr></tbody></table><p>&nbsp;</p></div><div class="section"><h2><a name="dimensions">dimensions</a></h2><table class="args"><thead><tr><th>argument</th><th>type</th><th>optional</th><th>default</th><th>description</th></tr></thead><tbody><tr><td class="argument">borderWidth</td><td class="type">Number</td><td class="optional">true</td><td class="default">5</td><td class="description">The width of the borders between the layout items in pixel. Please note: The actual draggable area is wider than the visible one, making it safe to set this to small values without affecting usability.</td></tr><tr><td class="argument">minItemHeight</td><td class="type">Number</td><td class="optional">true</td><td class="default">10</td><td class="description">The minimum height an item can be resized to (in pixel).</td></tr><tr><td class="argument">minItemWidth</td><td class="type">Number</td><td class="optional">true</td><td class="default">10</td><td class="description">The minimum width an item can be resized to (in pixel).</td></tr><tr><td class="argument">headerHeight</td><td class="type">Number</td><td class="optional">Number</td><td class="default">20</td><td class="description">The height of the header elements in pixel. This can be changed, but your theme&#39;s header css needs to be adjusted accordingly.</td></tr><tr><td class="argument">dragProxyWidth</td><td class="type">Number</td><td class="optional">true</td><td class="default">300</td><td class="description">The width of the element that appears when an item is dragged (in pixel).</td></tr><tr><td class="argument">dragProxyHeight</td><td class="type">Number</td><td class="optional">true</td><td class="default">200</td><td class="description">The height of the element that appears when an item is dragged (in pixel).</td></tr></tbody></table><p>&nbsp;</p></div><div class="section"><h2><a name="labels">labels</a></h2><table class="args"><thead><tr><th>argument</th><th>type</th><th>optional</th><th>default</th><th>description</th></tr></thead><tbody><tr><td class="argument">close</td><td class="type">String</td><td class="optional">true</td><td class="default">&#39;close&#39;</td><td class="description">The tooltip text that appears when hovering over the close icon.</td></tr><tr><td class="argument">maximise</td><td class="type">String</td><td class="optional">true</td><td class="default">&#39;maximise&#39;</td><td class="description">The tooltip text that appears when hovering over the maximise icon.</td></tr><tr><td class="argument">minimise</td><td class="type">String</td><td class="optional">true</td><td class="default">&#39;minimise&#39;</td><td class="description">The tooltip text that appears when hovering over the minimise icon.</td></tr><tr><td class="argument">popout</td><td class="type">String</td><td class="optional">true</td><td class="default">&#39;open in new window&#39;</td><td class="description">The tooltip text that appears when hovering over the popout icon.</td></tr></tbody></table><p></div></p>
+				
+				<h3>Comments and Questions</h3>
+				<div id="disqusContainer">
+					<div id="disqus_thread"></div>
+				    <script type="text/javascript">
+				        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+				        var disqus_shortname = 'goldenlayoutcom'; // required: replace example with your forum shortname
+
+				        /* * * DON'T EDIT BELOW THIS LINE * * */
+				        (function() {
+				            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+				            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+				            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+				        })();
+				    </script>
+				    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+				    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+			    
+					
+					
+				</div>
+			</div>
+		</div>
+		<script type="text/javascript" src="../assets/js/docs.js"></script>
+		
+		<div id="footerPush"></div>
+	</div>
+	<div id="footer">
+		<div class="footer-content">
+			<div class="copyright">&copy;<span class="year"></span> deepstreamHub GmbH</div>
+			<script type="text/javascript">
+			$('.year').html( (new Date()).getFullYear() );
+			</script>
+			<ul class="footerItems">
+				<li>
+					<a href="https://github.com/deepstreamIO/golden-layout">Github</a>
+					<a href="https://www.npmjs.com/package/golden-layout">NPM</a>
+					<div>bower/npm: <code>'golden-layout'</code></div>
+				</li>
+				<li>
+					<div>deepstreamHub GmbH</div>
+					<div>Lindenstrasse 20-25</div>
+					<div>10969 Berlin</div>
+				</li>
+				<li>
+					<a href="mailto:info@deepstreamhub.com">info@deepstreamhub.com</a>
+					<a href="https://deepstreamhub.com/">deepstreamHub.com</a><br />
+					<a href="https://twitter.com/wolframhempel">by @wolframhempel</a>
+
+				</li>
+			</ul>
+		</div>
+	</div>
+
+	<script type="text/javascript" src="../assets/js/Modal.js"></script>
+	
+	<script>
+	  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+	  ga('create', 'UA-63583386-5', 'auto');
+	  ga('send', 'pageview');
+
+	</script>
+	
+</body>
+</html>

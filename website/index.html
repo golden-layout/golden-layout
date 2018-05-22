@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>GoldenLayout- a multi-window javascript layout manager for webapps</title>
+	
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<meta name="keywords" content="HTML5, JavaScript, Layout Manager, webapp" />
+	<meta name="description" content="GoldenLayout- a multi-window javascript layout manager for webapps" />
+	<meta name="author" content="Wolfram Hempel" />
+	<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+	<link rel="icon" href="/favicon.ico" type="image/x-icon">
+	<link href='https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700' rel='stylesheet' type='text/css'>
+	<link rel="stylesheet" type="text/css" href="assets/css/screen.css" />
+	
+	<script type="text/javascript">
+	document.createElement( 'header' );
+	document.createElement( 'nav' );
+	</script>
+	<script type="text/javascript" src="assets/js/jquery.js"></script>
+</head>
+<body class="category_">
+	<div id="modal" class="loading">
+		<div class="background"></div>
+		<div class="content-wrapper">
+			<div class="head">
+				<div class="close"></div>
+				<span class="title"></span>
+			</div>
+			<div class="content"></div>
+		</div>
+	</div>
+	
+	<div id="outerWrapper">
+		
+		<div id="nav" >
+			<div class="start-bg"></div>
+			<ul>
+				<li ><a href=".">Start</a></li>
+				<li ><a href="download">Download</a></li>
+				<li ><a href="examples">Demos</a></li>
+				<li ><a href="tutorials">Tutorials</a></li>
+				<li ><a href="docs">Docs</a></li>
+				<li ><a href="faq">Faq</a></li>
+			</ul>
+			<iframe src="https://ghbtns.com/github-btn.html?user=deepstreamIO&repo=golden-layout&type=star&count=true&size=large" frameborder="0" scrolling="0" width="160px" height="30px"></iframe>
+
+		</div>
+		
+		<div class="content main">
+			<div class="start-bg"></div>
+<div class="startExample">
+	<div id="exampleScreen">
+		<div id="tryMeArrow"></div>
+		<div id="exampleLayoutContainer"></div>
+	</div>
+</div>
+<div id="startPageFeatures">
+	<ul>
+		<li>
+			<div class="bg"></div>
+			<img src="assets/images/features_popouts.png" width="140" height="87" />
+			<small>native</small>
+			<strong>popout windows</strong>
+		</li>
+		<li>
+			<div class="bg"></div>
+			<img src="assets/images/features_themeable.png" width="140" height="87" />
+			<small>completely</small>
+			<strong>themeable</strong>
+		</li>
+		<li class="last">
+			<div class="bg"></div>
+			<img src="assets/images/features_api.png" width="140" height="87" />
+			<small>comprehensive</small>
+			<strong>API</strong>
+		</li>
+		<li>
+			<div class="bg"></div>
+			<img src="assets/images/features_persistence.png" width="140" height="87" />
+			<small>powerful</small>
+			<strong>persistence</strong>
+		</li>
+		<li>
+			<div class="bg"></div>
+			<img src="assets/images/features_browser.png" width="140" height="87" />
+			<small>works in</small>
+			<strong>IE8+, FF &amp; Chrome</strong>
+		</li>
+		<li class="last">
+			<div class="bg"></div>
+			<img src="assets/images/features_creative_commonsr.png" width="140" height="87" />
+			<small>free as in</small>
+			<strong>beer, speech &amp; love</strong>
+		</li>
+	</ul>
+</div>
+
+<div id="getting-started">
+	<a href="tutorials/getting-started.html" class="js">
+		<div></div>
+		<p>get started with <b>Vanilla JS</b></p>
+	</a>
+	<a href="tutorials/getting-started-react.html" class="center react">
+		<div></div>
+		<p>get started with <b>React</b></p>
+	</a>
+	<a href="faq/#angular" class="angular">
+		<div></div>
+		<p>get started with <b>Angular</b></p>
+	</a>
+</div>
+
+<div id="used-by">
+	<div class="center">
+		<div class="col left">
+			<h4>used by</h4>
+			<img src="assets/images/used-by-logos.png" alt="used-by" width="600" height="337" />
+		</div>
+		<div class="col right">
+			<h4>built with GoldenLayout</h4>
+			<div class="video"></div>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+	$('#used-by .video' ).click(function(){
+		$(this).html('<iframe src="https://player.vimeo.com/video/143728632?autoplay=1&title=0&byline=0&portrait=0" width="514" height="331" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>');
+	});
+</script>
+
+<link rel="stylesheet" type="text/css" href="assets/css/startpage.css" />
+<link type="text/css" rel="stylesheet" href="assets/css/goldenlayout-base.css" />
+<link type="text/css" rel="stylesheet" href="assets/css/goldenlayout-dark-theme.css" />
+
+<script type="text/javascript" src="assets/js/goldenlayout.min.js"></script>
+<script type="text/javascript" src="assets/js/highchart_min.js"></script>
+<script type="text/javascript" src="assets/js/startpage_min.js"></script>
+
+
+		</div>
+		
+		<div id="footerPush"></div>
+	</div>
+	<div id="footer">
+		<div class="footer-content">
+			<div class="copyright">&copy;<span class="year"></span> deepstreamHub GmbH</div>
+			<script type="text/javascript">
+			$('.year').html( (new Date()).getFullYear() );
+			</script>
+			<ul class="footerItems">
+				<li>
+					<a href="https://github.com/deepstreamIO/golden-layout">Github</a>
+					<a href="https://www.npmjs.com/package/golden-layout">NPM</a>
+					<div>bower/npm: <code>'golden-layout'</code></div>
+				</li>
+				<li>
+					<div>deepstreamHub GmbH</div>
+					<div>Lindenstrasse 20-25</div>
+					<div>10969 Berlin</div>
+				</li>
+				<li>
+					<a href="mailto:info@deepstreamhub.com">info@deepstreamhub.com</a>
+					<a href="https://deepstreamhub.com/">deepstreamHub.com</a><br />
+					<a href="https://twitter.com/wolframhempel">by @wolframhempel</a>
+
+				</li>
+			</ul>
+		</div>
+	</div>
+
+	<script type="text/javascript" src="assets/js/Modal.js"></script>
+	
+	<script>
+	  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+	  ga('create', 'UA-63583386-5', 'auto');
+	  ga('send', 'pageview');
+
+	</script>
+	
+</body>
+</html>
