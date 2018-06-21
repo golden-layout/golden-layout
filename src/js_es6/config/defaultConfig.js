@@ -9,6 +9,7 @@ const defaultConfig = {
         blockedPopoutsThrowError: true,
         closePopoutsOnUnload: true,
         showPopoutIcon: true,
+        popInOnClose: false,
         showMaximiseIcon: true,
         showCloseIcon: true,
         responsiveMode: 'onload', // Can be onload, always, or none.

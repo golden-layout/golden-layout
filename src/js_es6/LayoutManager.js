@@ -49,7 +49,7 @@ export default class LayoutManager extends EventEmitter {
             errorMsg += 'your paths when using RequireJS/AMD';
             throw new Error(errorMsg);
         }
-        
+
         super();
 
         this.isInitialised = false;
@@ -428,7 +428,7 @@ export default class LayoutManager extends EventEmitter {
      * @param    {[String]} parentId the id of the element this item will be appended to
      *                             when popIn is called
      * @param    {[Number]} indexInParent The position of this item within its parent element
-     
+
      * @returns {BrowserPopout}
      */
     createPopout(configOrContentItem, dimensions, parentId, indexInParent) {
@@ -867,23 +867,24 @@ export default class LayoutManager extends EventEmitter {
      * @returns {void}
      */
     _adjustToWindowMode() {
-        var popInButton = $('<div class="lm_popin" title="' + this.config.labels.popin + '">' +
-            '<div class="lm_icon"></div>' +
-            '<div class="lm_bg"></div>' +
-            '</div>');
-
-        popInButton.click(fnBind(function() {
-            this.emit('popIn');
-        }, this));
-
         document.title = stripTags(this.config.content[0].title);
 
         $('head').append($('body link, body style, template, .gl_keep'));
 
-        this.container = $('body')
-            .html('')
-            .css('visibility', 'visible')
-            .append(popInButton);
+        this.container = $('body').css('visibility', 'visible')
+
+        // Create and append the popIn button only iff config.settings.popInOnClose is not set or set to false
+        if (!this.config.settings.popInOnClose) {
+          var popInButton = $('<div class="lm_popin" title="' + this.config.labels.popin + '">' +
+              '<div class="lm_icon"></div>' +
+              '<div class="lm_bg"></div>' +
+              '</div>');
+
+          popInButton.click(fnBind(function() {
+              this.emit('popIn');
+          }, this));
+          this.container.append(popInButton);
+        }
 
         /*
          * This seems a bit pointless, but actually causes a reflow/re-evaluation getting around

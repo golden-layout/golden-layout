@@ -27,7 +27,7 @@ export default class BrowserPopout extends EventEmitter {
     constructor(config, dimensions, parentId, indexInParent, layoutManager) {
 
         super();
-        
+
         this.isInitialised = false;
 
         this._config = config;
@@ -115,7 +115,11 @@ export default class BrowserPopout extends EventEmitter {
         }
 
         parentItem.addChild(childConfig, this._indexInParent);
-        this.close();
+        if (this._layoutManager.config.settings.popInOnClose) {
+          this._onClose();
+        } else {
+          this.close();
+        }
     }
 
     /**
@@ -166,9 +170,15 @@ export default class BrowserPopout extends EventEmitter {
             }
         }
 
-        $(this._popoutWindow)
+        const $pw = $(this._popoutWindow)
             .on('load', fnBind(this._positionWindow, this))
-            .on('unload beforeunload', fnBind(this._onClose, this));
+
+        if (this._layoutManager.config.settings.popInOnClose) {
+          $pw.on('beforeunload', (ev) => this.popIn());
+        } else {
+          $pw.on('unload beforeunload', fnBind(this._onClose, this));
+        }
+
 
         /**
          * Polling the childwindow to find out if GoldenLayout has been initialised
