@@ -608,14 +608,16 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 
 	_$createRootItemAreas: function() {
 		var areaSize = 50;
-		var sides = { y2: 0, x2: 0, y1: 'y2', x1: 'x2' };
+		var sides = { y2: 'y1', x2: 'x1', y1: 'y2', x1: 'x2' };
+		var rootarea = this.root._$getArea()
 		for( var side in sides ) {
 			var area = this.root._$getArea();
 			area.side = side;
-			if( sides [ side ] )
+			if( sides [ side ][1] == '2' )
 				area[ side ] = area[ sides [ side ] ] - areaSize;
-			else
-				area[ side ] = areaSize;
+			else {
+				area[ side ] = area[ sides [ side ] ] + areaSize;
+			}
 			area.surface = ( area.x2 - area.x1 ) * ( area.y2 - area.y1 );
 			this._itemAreas.push( area );
 		}
