@@ -609,7 +609,6 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	_$createRootItemAreas: function() {
 		var areaSize = 50;
 		var sides = { y2: 'y1', x2: 'x1', y1: 'y2', x1: 'x2' };
-		var rootarea = this.root._$getArea()
 		for( var side in sides ) {
 			var area = this.root._$getArea();
 			area.side = side;
