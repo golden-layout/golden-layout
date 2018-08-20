@@ -1565,6 +1565,12 @@ lm.config.defaultConfig = {
 		tabDropdown: 'additional tabs'
 	}
 };
+
+lm.config.itemDefaultConfig = {
+	isClosable: true,
+	reorderEnabled: true,
+	title: ''
+};
 lm.container.ItemContainer = function( config, parent, layoutManager ) {
 	lm.utils.EventEmitter.call( this );
 
