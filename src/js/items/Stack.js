@@ -3,6 +3,20 @@ lm.items.Stack = function( layoutManager, config, parent ) {
 
 	this.element = $( '<div class="lm_item lm_stack"></div>' );
 	this._activeContentItem = null;
+	var cfg = layoutManager.config;
+	this._header = { // defaults' reconstruction from old configuration style
+		show: cfg.settings.hasHeaders === true && config.hasHeaders !== false,
+		popout: cfg.settings.showPopoutIcon && cfg.labels.popout,
+		maximise: cfg.settings.showMaximiseIcon && cfg.labels.maximise,
+		close: cfg.settings.showCloseIcon && cfg.labels.close,
+		minimise: cfg.labels.minimise,
+	};
+	if( cfg.header ) // load simplified version of header configuration (https://github.com/deepstreamIO/golden-layout/pull/245)
+		lm.utils.copy( this._header, cfg.header );
+	if( config.header ) // load from stack
+		lm.utils.copy( this._header, config.header );
+	if( config.content && config.content[ 0 ] && config.content[ 0 ].header ) // load from component if stack omitted
+		lm.utils.copy( this._header, config.content[ 0 ].header );
 
 	this._dropZones = {};
 	this._dropSegment = null;
@@ -14,11 +28,9 @@ lm.items.Stack = function( layoutManager, config, parent ) {
 	this.childElementContainer = $( '<div class="lm_items"></div>' );
 	this.header = new lm.controls.Header( layoutManager, this );
 
-	if( layoutManager.config.settings.hasHeaders === true ) {
-		this.element.append( this.header.element );
-	}
-
+	this.element.append( this.header.element );
 	this.element.append( this.childElementContainer );
+	this._setupHeaderPosition();
 	this._$validateClosability();
 };
 
@@ -28,8 +40,9 @@ lm.utils.copy( lm.items.Stack.prototype, {
 
 	setSize: function() {
 		var i,
-			contentWidth = this.element.width(),
-			contentHeight = this.element.height() - this.layoutManager.config.dimensions.headerHeight;
+			headerSize = this._header.show ? this.layoutManager.config.dimensions.headerHeight : 0,
+			contentWidth = this.element.width() - (this._sided ? headerSize : 0),
+			contentHeight = this.element.height() - (!this._sided ? headerSize : 0);
 
 		this.childElementContainer.width( contentWidth );
 		this.childElementContainer.height( contentHeight );
@@ -59,7 +72,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 			if( !initialItem ) {
 				throw new Error( 'Configured activeItemIndex out of bounds' );
 			}
-			
+
 			this.setActiveContentItem( initialItem );
 		}
 	},
@@ -77,6 +90,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		this.header.setActiveContentItem( contentItem );
 		contentItem._$show();
 		this.emit( 'activeContentItemChanged', contentItem );
+		this.layoutManager.emit( 'activeContentItemChanged', contentItem );
 		this.emitBubblingEvent( 'stateChanged' );
 	},
 
@@ -99,13 +113,14 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		var index = lm.utils.indexOf( contentItem, this.contentItems );
 		lm.items.AbstractContentItem.prototype.removeChild.call( this, contentItem, keepChild );
 		this.header.removeTab( contentItem );
-		
-		if( this.contentItems.length > 0 ) {
-			this.setActiveContentItem( this.contentItems[ Math.max( index -1 , 0 ) ] );
-		} else {
-			this._activeContentItem = null;
+		if (this.header.activeContentItem === contentItem) {
+			if (this.contentItems.length > 0) {
+				this.setActiveContentItem(this.contentItems[Math.max(index - 1, 0)]);
+			} else {
+				this._activeContentItem = null;
+			}
 		}
-		
+
 		this._$validateClosability();
 		this.emitBubblingEvent( 'stateChanged' );
 	},
@@ -125,9 +140,9 @@ lm.utils.copy( lm.items.Stack.prototype, {
 
 		isClosable = this.header._isClosable();
 
-		for ( i = 0, len = this.contentItems.length; i < len; i++ ) {
-			if (!isClosable) { 
-				break; 
+		for( i = 0, len = this.contentItems.length; i < len; i++ ) {
+			if( !isClosable ) {
+				break;
 			}
 
 			isClosable = this.contentItems[ i ].config.isClosable;
@@ -147,19 +162,19 @@ lm.utils.copy( lm.items.Stack.prototype, {
 	 *
 	 * It was dropped on either the stacks header or the top, right, bottom or left bit of the content area
 	 * (which one of those is stored in this._dropSegment). Now, if the user has dropped on the header the case
-	 * is relatively clear: We add the item to the existing stack... job done (might be good to have 
+	 * is relatively clear: We add the item to the existing stack... job done (might be good to have
 	 * tab reordering at some point, but lets not sweat it right now)
 	 *
 	 * If the item was dropped on the content part things are a bit more complicated. If it was dropped on either the
-	 * top or bottom region we need to create a new column and place the items accordingly. 
-	 * Unless, of course if the stack is already within a column... in which case we want 
-	 * to add the newly created item to the existing column... 
+	 * top or bottom region we need to create a new column and place the items accordingly.
+	 * Unless, of course if the stack is already within a column... in which case we want
+	 * to add the newly created item to the existing column...
 	 * either prepend or append it, depending on wether its top or bottom.
 	 *
 	 * Same thing for rows and left / right drop segments... so in total there are 9 things that can potentially happen
 	 * (left, top, right, bottom) * is child of the right parent (row, column) + header drop
-	 * 
-	 * @param	{lm.item} contentItem
+	 *
+	 * @param    {lm.item} contentItem
 	 *
 	 * @returns {void}
 	 */
@@ -201,7 +216,10 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		 * The content item can be either a component or a stack. If it is a component, wrap it into a stack
 		 */
 		if( contentItem.isComponent ) {
-			stack = this.layoutManager.createContentItem({ type: 'stack' }, this );
+			stack = this.layoutManager.createContentItem( {
+				type: 'stack',
+				header: contentItem.config.header || {}
+			}, this );
 			stack._$init();
 			stack.addChild( contentItem );
 			contentItem = stack;
@@ -217,13 +235,13 @@ lm.utils.copy( lm.items.Stack.prototype, {
 			this.config[ dimension ] *= 0.5;
 			contentItem.config[ dimension ] = this.config[ dimension ];
 			this.parent.callDownwards( 'setSize' );
-		/*
-		 * This handles items that are dropped on top or bottom of a row or left / right of a column. We need
-		 * to create the appropriate contentItem for them to live in
-		 */
+			/*
+			 * This handles items that are dropped on top or bottom of a row or left / right of a column. We need
+			 * to create the appropriate contentItem for them to live in
+			 */
 		} else {
 			type = isVertical ? 'column' : 'row';
-			rowOrColumn = this.layoutManager.createContentItem({ type: type }, this );
+			rowOrColumn = this.layoutManager.createContentItem( { type: type }, this );
 			this.parent.replaceChild( this, rowOrColumn );
 
 			rowOrColumn.addChild( contentItem, insertBefore ? 0 : undefined, true );
@@ -239,8 +257,8 @@ lm.utils.copy( lm.items.Stack.prototype, {
 	 * If the user hovers above the header part of the stack, indicate drop positions for tabs.
 	 * otherwise indicate which segment of the body the dragged item would be dropped on
 	 *
-	 * @param	{Int} x Absolute Screen X
-	 * @param	{Int} y Absolute Screen Y
+	 * @param    {Int} x Absolute Screen X
+	 * @param    {Int} y Absolute Screen Y
 	 *
 	 * @returns {void}
 	 */
@@ -254,12 +272,12 @@ lm.utils.copy( lm.items.Stack.prototype, {
 
 				if( segment === 'header' ) {
 					this._dropSegment = 'header';
-					this._highlightHeaderDropZone( x );
+					this._highlightHeaderDropZone( this._sided ? y : x );
 				} else {
 					this._resetHeaderDropZone();
 					this._highlightBodyDropZone( segment );
 				}
-				
+
 				return;
 			}
 		}
@@ -269,7 +287,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		if( this.element.is( ':visible' ) === false ) {
 			return null;
 		}
-		
+
 		var getArea = lm.items.AbstractContentItem.prototype._$getArea,
 			headerArea = getArea.call( this, this.header.element ),
 			contentArea = getArea.call( this, this.childElementContainer ),
@@ -353,7 +371,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 				y2: contentArea.y1 + contentHeight * 0.5
 			}
 		};
-		
+
 		this._contentAreaDimensions.right = {
 			hoverArea: {
 				x1: contentArea.x1 + contentWidth * 0.75,
@@ -404,12 +422,12 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		if( tabsLength === 0 ) {
 			headerOffset = this.header.element.offset();
 
-			this.layoutManager.dropTargetIndicator.highlightArea({
+			this.layoutManager.dropTargetIndicator.highlightArea( {
 				x1: headerOffset.left,
 				x2: headerOffset.left + 100,
 				y1: headerOffset.top + this.header.element.height() - 20,
 				y2: headerOffset.top + this.header.element.height()
-			});
+			} );
 
 			return;
 		}
@@ -417,9 +435,15 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		for( i = 0; i < tabsLength; i++ ) {
 			tabElement = this.header.tabs[ i ].element;
 			offset = tabElement.offset();
-			tabLeft = offset.left;
-			tabTop = offset.top;
-			tabWidth = tabElement.width();
+			if( this._sided ) {
+				tabLeft = offset.top;
+				tabTop = offset.left;
+				tabWidth = tabElement.height();
+			} else {
+				tabLeft = offset.left;
+				tabTop = offset.top;
+				tabWidth = tabElement.width();
+			}
 
 			if( x > tabLeft && x < tabLeft + tabWidth ) {
 				isAboveTab = true;
@@ -442,18 +466,43 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		}
 
 
+		if( this._sided ) {
+			placeHolderTop = this.layoutManager.tabDropPlaceholder.offset().top;
+			this.layoutManager.dropTargetIndicator.highlightArea( {
+				x1: tabTop,
+				x2: tabTop + tabElement.innerHeight(),
+				y1: placeHolderTop,
+				y2: placeHolderTop + this.layoutManager.tabDropPlaceholder.width()
+			} );
+			return;
+		}
 		placeHolderLeft = this.layoutManager.tabDropPlaceholder.offset().left;
 
-		this.layoutManager.dropTargetIndicator.highlightArea({
+		this.layoutManager.dropTargetIndicator.highlightArea( {
 			x1: placeHolderLeft,
 			x2: placeHolderLeft + this.layoutManager.tabDropPlaceholder.width(),
 			y1: tabTop,
 			y2: tabTop + tabElement.innerHeight()
-		});
+		} );
 	},
 
 	_resetHeaderDropZone: function() {
 		this.layoutManager.tabDropPlaceholder.remove();
+	},
+
+	_setupHeaderPosition: function() {
+		var side = [ 'right', 'left', 'bottom' ].indexOf( this._header.show ) >= 0 && this._header.show;
+		this.header.element.toggle( !!this._header.show );
+		this._side = side;
+		this._sided = [ 'right', 'left' ].indexOf( this._side ) >= 0;
+		this.element.removeClass( 'lm_left lm_right lm_bottom' );
+		if( this._side )
+			this.element.addClass( 'lm_' + this._side );
+		if( this.element.find( '.lm_header' ).length && this.childElementContainer ) {
+			var headerPosition = [ 'right', 'bottom' ].indexOf( this._side ) >= 0 ? 'before' : 'after';
+			this.header.element[ headerPosition ]( this.childElementContainer );
+			this.callDownwards( 'setSize' );
+		}
 	},
 
 	_highlightBodyDropZone: function( segment ) {
@@ -461,4 +510,4 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		this.layoutManager.dropTargetIndicator.highlightArea( highlightArea );
 		this._dropSegment = segment;
 	}
-});
+} );

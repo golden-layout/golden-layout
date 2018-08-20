@@ -1,10 +1,11 @@
 /**
  * Minifies and unminifies configs by replacing frequent keys
- * and values with one letter substitutes
+ * and values with one letter substitutes. Config options must
+ * retain array position/index, add new options at the end.
  *
  * @constructor
  */
-lm.utils.ConfigMinifier = function(){
+lm.utils.ConfigMinifier = function() {
 	this._keys = [
 		'settings',
 		'hasHeaders',
@@ -35,14 +36,17 @@ lm.utils.ConfigMinifier = function(){
 		'openPopouts',
 		'parentId',
 		'activeItemIndex',
-		'reorderEnabled'
-
+		'reorderEnabled',
+		'borderGrabWidth',
 
 
 
 
 		//Maximum 36 entries, do not cross this line!
 	];
+	if( this._keys.length > 36 ) {
+		throw new Error( 'Too many keys in config minifier map' );
+	}
 
 	this._values = [
 		true,
@@ -83,7 +87,7 @@ lm.utils.copy( lm.utils.ConfigMinifier.prototype, {
 	 *
 	 * @returns {Object} the original configuration
 	 */
-	unminifyConfig: function( minifiedConfig ) { 
+	unminifyConfig: function( minifiedConfig ) {
 		var orig = {};
 		this._nextLevel( minifiedConfig, orig, '_max' );
 		return orig;
@@ -94,7 +98,7 @@ lm.utils.copy( lm.utils.ConfigMinifier.prototype, {
 	 *
 	 * @param   {Array|Object} orig
 	 * @param   {Array|Object} min
-	 * @param 	{String} translationFn
+	 * @param    {String} translationFn
 	 *
 	 * @returns {void}
 	 */
@@ -126,10 +130,10 @@ lm.utils.copy( lm.utils.ConfigMinifier.prototype, {
 				to[ minKey ] = from[ key ] instanceof Array ? [] : {};
 				this._nextLevel( from[ key ], to[ minKey ], translationFn );
 
-			/**
-			 * For primitive values (Strings, Numbers, Boolean etc.)
-			 * minify the value
-			 */
+				/**
+				 * For primitive values (Strings, Numbers, Boolean etc.)
+				 * minify the value
+				 */
 			} else {
 				to[ minKey ] = this[ translationFn ]( from[ key ], this._values );
 			}
@@ -154,16 +158,16 @@ lm.utils.copy( lm.utils.ConfigMinifier.prototype, {
 		}
 
 		var index = lm.utils.indexOf( value, dictionary );
-		
+
 		/**
 		 * value not found in the dictionary, return it unmodified
 		 */
 		if( index === -1 ) {
 			return value;
 
-		/**
-		 * value found in dictionary, return its base36 counterpart
-		 */
+			/**
+			 * value found in dictionary, return its base36 counterpart
+			 */
 		} else {
 			return index.toString( 36 );
 		}
@@ -191,4 +195,4 @@ lm.utils.copy( lm.utils.ConfigMinifier.prototype, {
 		 */
 		return value;
 	}
-});
+} );

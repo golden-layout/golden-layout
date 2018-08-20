@@ -12,4 +12,4 @@ lm.utils.copy( lm.controls.HeaderButton.prototype, {
 		this.element.off();
 		this.element.remove();
 	}
-});
+} );

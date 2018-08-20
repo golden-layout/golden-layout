@@ -6,7 +6,6 @@ var watch = require( 'gulp-watch' );
 
 /* global require */
 module.exports = function( grunt ) {
-
 	grunt.registerTask( 'build', require( './build/task' ) );
 
 	var sources = [
@@ -42,7 +41,7 @@ module.exports = function( grunt ) {
 			release: {
 				options: {
 					additionalFiles: [ 'bower.json' ],
-					beforeRelease: [ 'gulp:gl', 'gulp:glmin' ],
+					beforeRelease: [ 'less', 'gulp:gl', 'gulp:glmin' ],
 					tagName: 'v<%= version %>',
 					github: {
 						repo: 'deepstreamIO/golden-layout',
@@ -89,13 +88,29 @@ module.exports = function( grunt ) {
 					singleRun: true,
 					browsers: [ 'PhantomJS' ]
 				}
+			},
+
+			less: {
+				development: {
+					options: {
+						compress: true,
+						optimization: 2,
+						sourceMap: true
+					},
+					files: [ {
+						expand: true,
+						flatten: true,
+						src: "src/less/*.less",
+						ext: ".css",
+						dest: "src/css/"
+					} ]
+				}
 			}
 		}
 	);
 
-	// Load the plugin that provides the "uglify" task.
+	grunt.loadNpmTasks( 'grunt-contrib-less' );
 	grunt.loadNpmTasks( 'grunt-contrib-watch' );
-
 	grunt.loadNpmTasks( 'grunt-release' );
 	grunt.loadNpmTasks( 'grunt-karma' );
 	grunt.loadNpmTasks( 'grunt-gulp' );
@@ -106,6 +121,6 @@ module.exports = function( grunt ) {
 	// travis support
 	grunt.registerTask( 'test', [ 'karma:travis' ] );
 
-    // distribution support
-	grunt.registerTask( 'dist', [ 'build', 'gulp' ] );
+	// distribution support
+	grunt.registerTask( 'dist', [ 'build', 'less', 'gulp' ] );
 };

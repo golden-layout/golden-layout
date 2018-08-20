@@ -1,10 +1,11 @@
 {
   "name": "golden-layout",
-  "version": "1.5.7",
+  "version": "1.5.9",
   "author": "deepstreamHub GmbH",
   "license": "MIT",
   "devDependencies": {
     "grunt": "~0.4.2",
+    "grunt-contrib-less": "^1.4.1",
     "grunt-contrib-watch": "0.5.3",
     "grunt-gulp": "^1.0.1",
     "grunt-karma": "^2.0.0",
@@ -39,7 +40,7 @@
     "jquery": "*"
   },
   "scripts": {
-    "test": "grunt test",
+    "test": "grunt test && npm run tslint",
     "tslint": "tslint \"**/*.ts\" -e \"node_modules/**\" -e \"typings/**\"",
     "prepublish": "typings install",
     "publish": "npm -s run tslint"

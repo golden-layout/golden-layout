@@ -41,10 +41,10 @@ lm.utils.copy( lm.controls.TransitionIndicator.prototype, {
 
 		for( cssProperty in this._fromDimensions ) {
 			currentFrameStyles[ cssProperty ] = this._fromDimensions[ cssProperty ] +
-			( toDimensions[ cssProperty] - this._fromDimensions[ cssProperty ] ) *
-			animationProgress;
+				( toDimensions[ cssProperty ] - this._fromDimensions[ cssProperty ] ) *
+				animationProgress;
 		}
-		
+
 		this._element.css( currentFrameStyles );
 		lm.utils.animFrame( lm.utils.fnBind( this._nextAnimationFrame, this ) );
 	},
@@ -59,4 +59,4 @@ lm.utils.copy( lm.controls.TransitionIndicator.prototype, {
 			height: element.outerHeight()
 		};
 	}
-});
+} );

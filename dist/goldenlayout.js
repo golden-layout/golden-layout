@@ -1,7 +1,7 @@
 (function($){var lm={"config":{},"container":{},"controls":{},"errors":{},"items":{},"utils":{}};
+lm.utils.F = function() {
+};
 
-lm.utils.F = function () {};
-	
 lm.utils.extend = function( subClass, superClass ) {
 	subClass.prototype = lm.utils.createObject( superClass.prototype );
 	subClass.prototype.contructor = subClass;
@@ -64,7 +64,7 @@ lm.utils.copy = function( target, source ) {
 
 /**
  * This is based on Paul Irish's shim, but looks quite odd in comparison. Why?
- * Because 
+ * Because
  * a) it shouldn't affect the global requestAnimationFrame function
  * b) it shouldn't pass on the time that has passed
  *
@@ -72,22 +72,22 @@ lm.utils.copy = function( target, source ) {
  *
  * @returns {void}
  */
-lm.utils.animFrame = function( fn ){
-	return ( window.requestAnimationFrame     ||
+lm.utils.animFrame = function( fn ) {
+	return ( window.requestAnimationFrame ||
 	window.webkitRequestAnimationFrame ||
-	window.mozRequestAnimationFrame    ||
-	function( callback ){
-		window.setTimeout(callback, 1000 / 60);
-	})(function(){
+	window.mozRequestAnimationFrame ||
+	function( callback ) {
+		window.setTimeout( callback, 1000 / 60 );
+	})( function() {
 		fn();
-	});
+	} );
 };
 
 lm.utils.indexOf = function( needle, haystack ) {
 	if( !( haystack instanceof Array ) ) {
 		throw new Error( 'Haystack is not an Array' );
 	}
-	
+
 	if( haystack.indexOf ) {
 		return haystack.indexOf( needle );
 	} else {
@@ -100,13 +100,13 @@ lm.utils.indexOf = function( needle, haystack ) {
 	}
 };
 
-if ( typeof /./ != 'function' && typeof Int8Array != 'object' ) {
-  lm.utils.isFunction = function ( obj ) {
-    return typeof obj == 'function' || false;
-  };
+if( typeof /./ != 'function' && typeof Int8Array != 'object' ) {
+	lm.utils.isFunction = function( obj ) {
+		return typeof obj == 'function' || false;
+	};
 } else {
-	lm.utils.isFunction = function ( obj ) {
-		return toString.call(obj) === '[object Function]';
+	lm.utils.isFunction = function( obj ) {
+		return toString.call( obj ) === '[object Function]';
 	};
 }
 
@@ -116,18 +116,18 @@ lm.utils.fnBind = function( fn, context, boundArgs ) {
 		return Function.prototype.bind.apply( fn, [ context ].concat( boundArgs || [] ) );
 	}
 
-	var bound = function () {
+	var bound = function() {
 
 		// Join the already applied arguments to the now called ones (after converting to an array again).
-		var args = ( boundArgs || [] ).concat(Array.prototype.slice.call(arguments, 0));
+		var args = ( boundArgs || [] ).concat( Array.prototype.slice.call( arguments, 0 ) );
 
 		// If not being called as a constructor
-		if (!(this instanceof bound)){
+		if( !(this instanceof bound) ) {
 			// return the result of the function called bound to target and partially applied.
-			return fn.apply(context, args);
+			return fn.apply( context, args );
 		}
 		// If being called as a constructor, apply the function bound to self.
-		fn.apply(this, args);
+		fn.apply( this, args );
 	};
 	// Attach the prototype of the function to our newly created function.
 	bound.prototype = fn.prototype;
@@ -154,22 +154,22 @@ lm.utils.now = function() {
 
 lm.utils.getUniqueId = function() {
 	return ( Math.random() * 1000000000000000 )
-		.toString(36)
+		.toString( 36 )
 		.replace( '.', '' );
 };
 
 /**
  * A basic XSS filter. It is ultimately up to the
- * implementing developer to make sure their particular 
+ * implementing developer to make sure their particular
  * applications and usecases are save from cross site scripting attacks
  *
  * @param   {String} input
- * @param 	{Boolean} keepTags
+ * @param    {Boolean} keepTags
  *
  * @returns {String} filtered input
  */
 lm.utils.filterXss = function( input, keepTags ) {
-	
+
 	var output = input
 		.replace( /javascript/gi, 'j&#97;vascript' )
 		.replace( /expression/gi, 'expr&#101;ssion' )
@@ -208,62 +208,61 @@ lm.utils.stripTags = function( input ) {
  *
  * @constructor
  */
-lm.utils.EventEmitter = function()
-{
-	this._mSubscriptions = { };
+lm.utils.EventEmitter = function() {
+	this._mSubscriptions = {};
 	this._mSubscriptions[ lm.utils.EventEmitter.ALL_EVENT ] = [];
 
 	/**
 	 * Listen for events
 	 *
 	 * @param   {String} sEvent    The name of the event to listen to
-	 * @param   {Function} fCallback The callback to execute when the event occurs 
+	 * @param   {Function} fCallback The callback to execute when the event occurs
 	 * @param   {[Object]} oContext The value of the this pointer within the callback function
 	 *
 	 * @returns {void}
 	 */
-	this.on = function( sEvent, fCallback, oContext )
-	{
-		if ( !lm.utils.isFunction(fCallback) ) {
+	this.on = function( sEvent, fCallback, oContext ) {
+		if( !lm.utils.isFunction( fCallback ) ) {
 			throw new Error( 'Tried to listen to event ' + sEvent + ' with non-function callback ' + fCallback );
 		}
-		
-		if( !this._mSubscriptions[ sEvent ] )
-		{
+
+		if( !this._mSubscriptions[ sEvent ] ) {
 			this._mSubscriptions[ sEvent ] = [];
 		}
 
-		this._mSubscriptions[ sEvent ].push({ fn: fCallback, ctx: oContext });
+		this._mSubscriptions[ sEvent ].push( { fn: fCallback, ctx: oContext } );
 	};
 
 	/**
 	 * Emit an event and notify listeners
 	 *
 	 * @param   {String} sEvent The name of the event
-	 * @param 	{Mixed}  various additional arguments that will be passed to the listener
+	 * @param    {Mixed}  various additional arguments that will be passed to the listener
 	 *
 	 * @returns {void}
 	 */
-	this.emit = function( sEvent )
-	{
+	this.emit = function( sEvent ) {
 		var i, ctx, args;
 
 		args = Array.prototype.slice.call( arguments, 1 );
-		
-		if( this._mSubscriptions[ sEvent ] ) {
-			for( i = 0; i < this._mSubscriptions[ sEvent ].length; i++ )
-			{
-				ctx = this._mSubscriptions[ sEvent ][ i ].ctx || {};
-				this._mSubscriptions[ sEvent ][ i ].fn.apply( ctx, args );
+
+		var subs = this._mSubscriptions[ sEvent ];
+
+		if( subs ) {
+        	subs = subs.slice();
+			for( i = 0; i < subs.length; i++ ) {
+				ctx = subs[ i ].ctx || {};
+                subs[ i ].fn.apply( ctx, args );
 			}
 		}
-		
+
 		args.unshift( sEvent );
 
-		for( i = 0; i < this._mSubscriptions[ lm.utils.EventEmitter.ALL_EVENT ].length; i++ )
-		{
-			ctx = this._mSubscriptions[ lm.utils.EventEmitter.ALL_EVENT ][ i ].ctx || {};
-			this._mSubscriptions[ lm.utils.EventEmitter.ALL_EVENT ][ i ].fn.apply( ctx, args );
+		var allEventSubs = this._mSubscriptions[ lm.utils.EventEmitter.ALL_EVENT ].slice()
+
+		for( i = 0; i <allEventSubs.length; i++ ) {
+			ctx = allEventSubs[ i ].ctx || {};
+            allEventSubs[ i ].fn.apply( ctx, args );
 		}
 	};
 
@@ -276,29 +275,25 @@ lm.utils.EventEmitter = function()
 	 *
 	 * @returns {void}
 	 */
-	this.unbind = function( sEvent, fCallback, oContext )
-	{
+	this.unbind = function( sEvent, fCallback, oContext ) {
 		if( !this._mSubscriptions[ sEvent ] ) {
 			throw new Error( 'No subscribtions to unsubscribe for event ' + sEvent );
 		}
 
 		var i, bUnbound = false;
 
-		for( i = 0; i < this._mSubscriptions[ sEvent ].length; i++ )
-		{
+		for( i = 0; i < this._mSubscriptions[ sEvent ].length; i++ ) {
 			if
 			(
 				( !fCallback || this._mSubscriptions[ sEvent ][ i ].fn === fCallback ) &&
 				( !oContext || oContext === this._mSubscriptions[ sEvent ][ i ].ctx )
-			)
-			{
+			) {
 				this._mSubscriptions[ sEvent ].splice( i, 1 );
 				bUnbound = true;
 			}
 		}
 
-		if( bUnbound === false )
-		{
+		if( bUnbound === false ) {
 			throw new Error( 'Nothing to unbind for ' + sEvent );
 		}
 	};
@@ -326,23 +321,22 @@ lm.utils.EventEmitter = function()
  * @type {String}
  */
 lm.utils.EventEmitter.ALL_EVENT = '__all';
-lm.utils.DragListener = function(eElement, nButtonCode)
-{
-	lm.utils.EventEmitter.call(this);
+lm.utils.DragListener = function( eElement, nButtonCode ) {
+	lm.utils.EventEmitter.call( this );
 
-	this._eElement = $(eElement);
-	this._oDocument = $(document);
-	this._eBody = $(document.body);
+	this._eElement = $( eElement );
+	this._oDocument = $( document );
+	this._eBody = $( document.body );
 	this._nButtonCode = nButtonCode || 0;
 
 	/**
-	* The delay after which to start the drag in milliseconds
-	*/
+	 * The delay after which to start the drag in milliseconds
+	 */
 	this._nDelay = 200;
 
 	/**
-	* The distance the mouse needs to be moved to qualify as a drag
-	*/
+	 * The distance the mouse needs to be moved to qualify as a drag
+	 */
 	this._nDistance = 10;//TODO - works better with delay only
 
 	this._nX = 0;
@@ -366,19 +360,16 @@ lm.utils.DragListener.timeout = null;
 lm.utils.copy( lm.utils.DragListener.prototype, {
 	destroy: function() {
 		this._eElement.unbind( 'mousedown touchstart', this._fDown );
+        this._oDocument.unbind( 'mouseup touchend', this._fUp );
+        this._eElement = null;
+        this._oDocument = null;
+        this._eBody = null;
 	},
 
-	onMouseDown: function(oEvent)
-	{
-
-		/* allows for input in title (eg inplace title edit) */
-		if($(oEvent.target).is('input')){
-			return;
-		}
-
+	onMouseDown: function( oEvent ) {
 		oEvent.preventDefault();
 
-		if (oEvent.button == 0) {
+		if( oEvent.button == 0 || oEvent.type === "touchstart" ) {
 			var coordinates = this._getCoordinates( oEvent );
 
 			this._nOriginalX = coordinates.x;
@@ -391,40 +382,39 @@ lm.utils.copy( lm.utils.DragListener.prototype, {
 		}
 	},
 
-	onMouseMove: function(oEvent)
-	{
-		if (this._timeout != null) {
+	onMouseMove: function( oEvent ) {
+		if( this._timeout != null ) {
 			oEvent.preventDefault();
 
-			var coordinates = this._getCoordinates(oEvent);
+			var coordinates = this._getCoordinates( oEvent );
 
 			this._nX = coordinates.x - this._nOriginalX;
 			this._nY = coordinates.y - this._nOriginalY;
 
-			if (this._bDragging === false) {
-				if (
-					Math.abs(this._nX) > this._nDistance ||
-					Math.abs(this._nY) > this._nDistance
+			if( this._bDragging === false ) {
+				if(
+					Math.abs( this._nX ) > this._nDistance ||
+					Math.abs( this._nY ) > this._nDistance
 				) {
-					clearTimeout(this._timeout);
+					clearTimeout( this._timeout );
 					this._startDrag();
 				}
 			}
 
-			if (this._bDragging) {
-				this.emit('drag', this._nX, this._nY, oEvent);
+			if( this._bDragging ) {
+				this.emit( 'drag', this._nX, this._nY, oEvent );
 			}
 		}
 	},
 
-	onMouseUp: function(oEvent)
-	{
-		if(this._timeout != null) {
+	onMouseUp: function( oEvent ) {
+		if( this._timeout != null ) {
 			clearTimeout( this._timeout );
 			this._eBody.removeClass( 'lm_dragging' );
 			this._eElement.removeClass( 'lm_dragging' );
 			this._oDocument.find( 'iframe' ).css( 'pointer-events', '' );
 			this._oDocument.unbind( 'mousemove touchmove', this._fMove );
+			this._oDocument.unbind( 'mouseup touchend', this._fUp );
 
 			if( this._bDragging === true ) {
 				this._bDragging = false;
@@ -433,23 +423,22 @@ lm.utils.copy( lm.utils.DragListener.prototype, {
 		}
 	},
 
-	_startDrag: function()
-	{
+	_startDrag: function() {
 		this._bDragging = true;
 		this._eBody.addClass( 'lm_dragging' );
 		this._eElement.addClass( 'lm_dragging' );
 		this._oDocument.find( 'iframe' ).css( 'pointer-events', 'none' );
-		this.emit('dragStart', this._nOriginalX, this._nOriginalY);
+		this.emit( 'dragStart', this._nOriginalX, this._nOriginalY );
 	},
 
 	_getCoordinates: function( event ) {
-		event = event.originalEvent.touches ? event.originalEvent.touches[0] : event;
- 		return {
- 			x: event.pageX,
- 			y: event.pageY
- 		};
+		event = event.originalEvent && event.originalEvent.touches ? event.originalEvent.touches[ 0 ] : event;
+		return {
+			x: event.pageX,
+			y: event.pageY
+		};
 	}
-});
+} );
 /**
  * The main class that will be exposed as GoldenLayout.
  *
@@ -482,10 +471,12 @@ lm.LayoutManager = function( config, container ) {
 	this._creationTimeoutPassed = false;
 	this._subWindowsCreated = false;
 	this._dragSources = [];
+	this._updatingColumnsResponsive = false;
+	this._firstLoad = true;
 
 	this.width = null;
 	this.height = null;
-	this.root =  null;
+	this.root = null;
 	this.openPopouts = [];
 	this.selectedItem = null;
 	this.isSubWindow = false;
@@ -586,7 +577,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 			throw new Error( 'Can\'t create config, layout not yet initialised' );
 		}
 
-		if( root && !( root instanceof lm.items.AbstractContentItem ) ){
+		if( root && !( root instanceof lm.items.AbstractContentItem ) ) {
 			throw new Error( 'Root must be a ContentItem' );
 		}
 
@@ -689,7 +680,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		 * If the document isn't ready yet, wait for it.
 		 */
 		if( document.readyState === 'loading' || document.body === null ) {
-			$(document).ready( lm.utils.fnBind( this.init, this ));
+			$( document ).ready( lm.utils.fnBind( this.init, this ) );
 			return;
 		}
 
@@ -715,6 +706,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		this._create( this.config );
 		this._bindEvents();
 		this.isInitialised = true;
+		this._adjustColumnsResponsive();
 		this.emit( 'initialised' );
 	},
 
@@ -737,13 +729,15 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		}
 
 		if( this.isInitialised === true ) {
-			this.root.callDownwards( 'setSize', [this.width, this.height] );
+			this.root.callDownwards( 'setSize', [ this.width, this.height ] );
 
 			if( this._maximisedItem ) {
 				this._maximisedItem.element.width( this.container.width() );
 				this._maximisedItem.element.height( this.container.height() );
 				this._maximisedItem.callDownwards( 'setSize' );
 			}
+
+			this._adjustColumnsResponsive();
 		}
 	},
 
@@ -767,13 +761,13 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		this.dropTargetIndicator.destroy();
 		this.transitionIndicator.destroy();
 		this.eventHub.destroy();
-		
-		this._dragSources.forEach(function (dragSource) {
+
+		this._dragSources.forEach( function( dragSource ) {
 			dragSource._dragListener.destroy();
 			dragSource._element = null;
 			dragSource._itemConfig = null;
 			dragSource._dragListener = null;
-		});
+		} );
 		this._dragSources = [];
 	},
 
@@ -794,7 +788,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 			throw new lm.errors.ConfigurationError( 'Missing parameter \'type\'', config );
 		}
 
-		if (config.type === 'react-component') {
+		if( config.type === 'react-component' ) {
 			config.type = 'component';
 			config.componentName = 'lm-react-component';
 		}
@@ -812,16 +806,16 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		 */
 		if(
 			// If this is a component
-			config.type === 'component' &&
+		config.type === 'component' &&
 
-			// and it's not already within a stack
-			!( parent instanceof lm.items.Stack ) &&
+		// and it's not already within a stack
+		!( parent instanceof lm.items.Stack ) &&
 
-			// and we have a parent
-			!!parent &&
+		// and we have a parent
+		!!parent &&
 
-			// and it's not the topmost item in a new window
-			!( this.isSubWindow === true && parent instanceof lm.items.Root )
+		// and it's not the topmost item in a new window
+		!( this.isSubWindow === true && parent instanceof lm.items.Root )
 		) {
 			config = {
 				type: 'stack',
@@ -840,9 +834,9 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	 *
 	 * @param   {Object|lm.itemsAbstractContentItem} configOrContentItem
 	 * @param   {[Object]} dimensions A map with width, height, left and top
-	 * @param 	{[String]} parentId the id of the element this item will be appended to
+	 * @param    {[String]} parentId the id of the element this item will be appended to
 	 *                             when popIn is called
-	 * @param 	{[Number]} indexInParent The position of this item within its parent element
+	 * @param    {[Number]} indexInParent The position of this item within its parent element
 
 	 * @returns {lm.controls.BrowserPopout}
 	 */
@@ -889,7 +883,6 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		}
 
 
-
 		if( !dimensions && isItem ) {
 			windowLeft = window.screenX || window.screenLeft;
 			windowTop = window.screenY || window.screenTop;
@@ -918,13 +911,13 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 
 		browserPopout = new lm.controls.BrowserPopout( config, dimensions, parentId, indexInParent, this );
 
-		browserPopout.on( 'initialised', function(){
+		browserPopout.on( 'initialised', function() {
 			self.emit( 'windowOpened', browserPopout );
-		});
+		} );
 
-		browserPopout.on( 'closed', function(){
+		browserPopout.on( 'closed', function() {
 			self._$reconcilePopoutWindows();
-		});
+		} );
 
 		this.openPopouts.push( browserPopout );
 
@@ -944,8 +937,8 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	createDragSource: function( element, itemConfig ) {
 		this.config.settings.constrainDragToContainer = false;
 		var dragSource = new lm.controls.DragSource( $( element ), itemConfig, this );
-		this._dragSources.push(dragSource);
-		
+		this._dragSources.push( dragSource );
+
 		return dragSource;
 	},
 
@@ -956,7 +949,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	 *
 	 * @param   {lm.item.AbstractContentItem} item#
 	 * @param   {[Boolean]} _$silent Wheather to notify the item of its selection
-	 * @event 	selectionChanged
+	 * @event    selectionChanged
 	 *
 	 * @returns {VOID}
 	 */
@@ -984,8 +977,8 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	},
 
 	/*************************
-	* PACKAGE PRIVATE
-	*************************/
+	 * PACKAGE PRIVATE
+	 *************************/
 	_$maximiseItem: function( contentItem ) {
 		if( this._maximisedItem !== null ) {
 			this._$minimiseItem( this._maximisedItem );
@@ -1028,9 +1021,9 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	 * @returns {void}
 	 */
 	_$closeWindow: function() {
-		window.setTimeout(function(){
+		window.setTimeout( function() {
 			window.close();
-		}, 1);
+		}, 1 );
 	},
 
 	_$getArea: function( x, y ) {
@@ -1045,13 +1038,28 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 				y > area.y1 &&
 				y < area.y2 &&
 				smallestSurface > area.surface
-			){
+			) {
 				smallestSurface = area.surface;
 				mathingArea = area;
 			}
 		}
 
 		return mathingArea;
+	},
+
+	_$createRootItemAreas: function() {
+		var areaSize = 50;
+		var sides = { y2: 0, x2: 0, y1: 'y2', x1: 'x2' };
+		for( var side in sides ) {
+			var area = this.root._$getArea();
+			area.side = side;
+			if( sides [ side ] )
+				area[ side ] = area[ sides [ side ] ] - areaSize;
+			else
+				area[ side ] = areaSize;			
+			area.surface = ( area.x2 - area.x1 ) * ( area.y2 - area.y1 );
+			this._itemAreas.push( area );
+		}
 	},
 
 	_$calculateItemAreas: function() {
@@ -1069,6 +1077,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 			this._itemAreas.push( this.root._$getArea() );
 			return;
 		}
+		this._$createRootItemAreas();
 
 		for( i = 0; i < allContentItems.length; i++ ) {
 
@@ -1084,6 +1093,11 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 				this._itemAreas = this._itemAreas.concat( area );
 			} else {
 				this._itemAreas.push( area );
+				var header = {};
+				lm.utils.copy( header, area );
+				lm.utils.copy( header, area.contentItem._contentAreaDimensions.header.highlightArea );
+				header.surface = ( header.x2 - header.x1 ) * ( header.y2 - header.y1 );
+				this._itemAreas.push( header );
 			}
 		}
 	},
@@ -1150,8 +1164,8 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	},
 
 	/***************************
-	* PRIVATE
-	***************************/
+	 * PRIVATE
+	 ***************************/
 	/**
 	 * Returns a flattened array of all content items,
 	 * regardles of level or type
@@ -1187,9 +1201,9 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	 */
 	_bindEvents: function() {
 		if( this._isFullPage ) {
-			$(window).resize( this._resizeFunction );
+			$( window ).resize( this._resizeFunction );
 		}
-		$(window).on( 'unload beforeunload', this._unloadFunction );
+		$( window ).on( 'unload beforeunload', this._unloadFunction );
 	},
 
 	/**
@@ -1201,7 +1215,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	 */
 	_onResize: function() {
 		clearTimeout( this._resizeTimeoutId );
-		this._resizeTimeoutId = setTimeout(lm.utils.fnBind( this.updateSize, this ), 100 );
+		this._resizeTimeoutId = setTimeout( lm.utils.fnBind( this.updateSize, this ), 100 );
 	},
 
 	/**
@@ -1257,22 +1271,22 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 	 */
 	_adjustToWindowMode: function() {
 		var popInButton = $( '<div class="lm_popin" title="' + this.config.labels.popin + '">' +
-				'<div class="lm_icon"></div>' +
-				'<div class="lm_bg"></div>' +
-			'</div>');
+			'<div class="lm_icon"></div>' +
+			'<div class="lm_bg"></div>' +
+			'</div>' );
 
-		popInButton.click(lm.utils.fnBind(function(){
+		popInButton.click( lm.utils.fnBind( function() {
 			this.emit( 'popIn' );
-		}, this));
+		}, this ) );
 
 		document.title = lm.utils.stripTags( this.config.content[ 0 ].title );
 
 		$( 'head' ).append( $( 'body link, body style, template, .gl_keep' ) );
 
 		this.container = $( 'body' )
-				.html( '' )
-				.css( 'visibility', 'visible' )
-				.append( popInButton );
+			.html( '' )
+			.css( 'visibility', 'visible' )
+			.append( popInButton );
 
 		/*
 		 * This seems a bit pointless, but actually causes a reflow/re-evaluation getting around
@@ -1330,12 +1344,12 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		if( container[ 0 ] === document.body ) {
 			this._isFullPage = true;
 
-			$( 'html, body' ).css({
+			$( 'html, body' ).css( {
 				height: '100%',
-				margin:0,
+				margin: 0,
 				padding: 0,
 				overflow: 'hidden'
-			});
+			} );
 		}
 
 		this.container = container;
@@ -1390,17 +1404,125 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 				this.openPopouts[ i ].close();
 			}
 		}
+	},
+
+	/**
+	 * Adjusts the number of columns to be lower to fit the screen and still maintain minItemWidth.
+	 *
+	 * @returns {void}
+	 */
+	_adjustColumnsResponsive: function() {
+
+		// If there is no min width set, or not content items, do nothing.
+		if( !this._useResponsiveLayout() || this._updatingColumnsResponsive || !this.config.dimensions || !this.config.dimensions.minItemWidth || this.root.contentItems.length === 0 || !this.root.contentItems[ 0 ].isRow ) {
+			this._firstLoad = false;
+			return;
+		}
+
+		this._firstLoad = false;
+
+		// If there is only one column, do nothing.
+		var columnCount = this.root.contentItems[ 0 ].contentItems.length;
+		if( columnCount <= 1 ) {
+			return;
+		}
+
+		// If they all still fit, do nothing.
+		var minItemWidth = this.config.dimensions.minItemWidth;
+		var totalMinWidth = columnCount * minItemWidth;
+		if( totalMinWidth <= this.width ) {
+			return;
+		}
+
+		// Prevent updates while it is already happening.
+		this._updatingColumnsResponsive = true;
+
+		// Figure out how many columns to stack, and put them all in the first stack container.
+		var finalColumnCount = Math.max( Math.floor( this.width / minItemWidth ), 1 );
+		var stackColumnCount = columnCount - finalColumnCount;
+
+		var rootContentItem = this.root.contentItems[ 0 ];
+		var firstStackContainer = this._findAllStackContainers()[ 0 ];
+		for( var i = 0; i < stackColumnCount; i++ ) {
+			// Stack from right.
+			var column = rootContentItem.contentItems[ rootContentItem.contentItems.length - 1 ];
+			this._addChildContentItemsToContainer( firstStackContainer, column );
+		}
+
+		this._updatingColumnsResponsive = false;
+	},
+
+	/**
+	 * Determines if responsive layout should be used.
+	 *
+	 * @returns {bool} - True if responsive layout should be used; otherwise false.
+	 */
+	_useResponsiveLayout: function() {
+		return this.config.settings && ( this.config.settings.responsiveMode == 'always' || ( this.config.settings.responsiveMode == 'onload' && this._firstLoad ) );
+	},
+
+	/**
+	 * Adds all children of a node to another container recursively.
+	 * @param {object} container - Container to add child content items to.
+	 * @param {object} node - Node to search for content items.
+	 * @returns {void}
+	 */
+	_addChildContentItemsToContainer: function( container, node ) {
+		if( node.type === 'stack' ) {
+			node.contentItems.forEach( function( item ) {
+				container.addChild( item );
+				node.removeChild( item, true );
+			} );
+		}
+		else {
+			node.contentItems.forEach( lm.utils.fnBind( function( item ) {
+				this._addChildContentItemsToContainer( container, item );
+			}, this ) );
+		}
+	},
+
+	/**
+	 * Finds all the stack containers.
+	 * @returns {array} - The found stack containers.
+	 */
+	_findAllStackContainers: function() {
+		var stackContainers = [];
+		this._findAllStackContainersRecursive( stackContainers, this.root );
+
+		return stackContainers;
+	},
+
+	/**
+	 * Finds all the stack containers.
+	 *
+	 * @param {array} - Set of containers to populate.
+	 * @param {object} - Current node to process.
+	 *
+	 * @returns {void}
+	 */
+	_findAllStackContainersRecursive: function( stackContainers, node ) {
+		node.contentItems.forEach( lm.utils.fnBind( function( item ) {
+			if( item.type == 'stack' ) {
+				stackContainers.push( item );
+			}
+			else if( !item.isComponent ) {
+				this._findAllStackContainersRecursive( stackContainers, item );
+			}
+		}, this ) );
 	}
-});
+} );
 
 /**
  * Expose the Layoutmanager as the single entrypoint using UMD
  */
-(function () {
+(function() {
 	/* global define */
-	if ( typeof define === 'function' && define.amd) {
-		define([ 'jquery' ], function( jquery ){ $ = jquery; return lm.LayoutManager; }); // jshint ignore:line
-	} else if (typeof exports === 'object') {
+	if( typeof define === 'function' && define.amd ) {
+		define( [ 'jquery' ], function( jquery ) {
+			$ = jquery;
+			return lm.LayoutManager;
+		} ); // jshint ignore:line
+	} else if( typeof exports === 'object' ) {
 		module.exports = lm.LayoutManager;
 	} else {
 		window.GoldenLayout = lm.LayoutManager;
@@ -1408,8 +1530,8 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 })();
 
 lm.config.defaultConfig = {
-	openPopouts:[],
-	settings:{
+	openPopouts: [],
+	settings: {
 		hasHeaders: true,
 		constrainDragToContainer: true,
 		reorderEnabled: true,
@@ -1419,10 +1541,15 @@ lm.config.defaultConfig = {
 		closePopoutsOnUnload: true,
 		showPopoutIcon: true,
 		showMaximiseIcon: true,
-		showCloseIcon: true
+		showCloseIcon: true,
+		responsiveMode: 'onload', // Can be onload, always, or none.
+		tabOverlapAllowance: 0, // maximum pixel overlap per tab
+		reorderOnTabMenuClick: true,
+		tabControlOffset: 10
 	},
 	dimensions: {
 		borderWidth: 5,
+		borderGrabWidth: 15,
 		minItemHeight: 10,
 		minItemWidth: 10,
 		headerHeight: 20,
@@ -1434,13 +1561,9 @@ lm.config.defaultConfig = {
 		maximise: 'maximise',
 		minimise: 'minimise',
 		popout: 'open in new window',
-		popin: 'pop in'
+		popin: 'pop in',
+		tabDropdown: 'additional tabs'
 	}
-};
-lm.config.itemDefaultConfig = {
-	isClosable: true,
-	reorderEnabled: true,
-	title: ''
 };
 lm.container.ItemContainer = function( config, parent, layoutManager ) {
 	lm.utils.EventEmitter.call( this );
@@ -1451,14 +1574,14 @@ lm.container.ItemContainer = function( config, parent, layoutManager ) {
 	this.parent = parent;
 	this.layoutManager = layoutManager;
 	this.isHidden = false;
-	
+
 	this._config = config;
-	this._element = $([
+	this._element = $( [
 		'<div class="lm_item_container">',
-			'<div class="lm_content"></div>',
+		'<div class="lm_content"></div>',
 		'</div>'
-	].join( '' ));
-	
+	].join( '' ) );
+
 	this._contentElement = this._element.find( '.lm_content' );
 };
 
@@ -1473,7 +1596,7 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 	getElement: function() {
 		return this._contentElement;
 	},
-	
+
 	/**
 	 * Hide the container. Notifies the containers content first
 	 * and then hides the DOM node. If the container is already hidden
@@ -1486,7 +1609,7 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 		this.isHidden = true;
 		this._element.hide();
 	},
-	
+
 	/**
 	 * Shows a previously hidden container. Notifies the
 	 * containers content first and then shows the DOM element.
@@ -1499,7 +1622,7 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 		this.isHidden = false;
 		this._element.show();
 		// call shown only if the container has a valid size
-		if(this.height != 0 || this.width != 0) {
+		if( this.height != 0 || this.width != 0 ) {
 			this.emit( 'shown' );
 		}
 	},
@@ -1514,7 +1637,7 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 	 * @todo  Rework!!!
 	 * @param {Number} width  The new width in pixel
 	 * @param {Number} height The new height in pixel
-	 * 
+	 *
 	 * @returns {Boolean} resizeSuccesful
 	 */
 	setSize: function( width, height ) {
@@ -1530,7 +1653,7 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 		while( !rowOrColumn.isColumn && !rowOrColumn.isRow ) {
 			rowOrColumnChild = rowOrColumn;
 			rowOrColumn = rowOrColumn.parent;
-			
+
 
 			/**
 			 * No row or column has been found
@@ -1543,15 +1666,15 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 		direction = rowOrColumn.isColumn ? "height" : "width";
 		newSize = direction === "height" ? height : width;
 
-		totalPixel = this[direction] * ( 1 / ( rowOrColumnChild.config[direction] / 100 ) );
+		totalPixel = this[ direction ] * ( 1 / ( rowOrColumnChild.config[ direction ] / 100 ) );
 		percentage = ( newSize / totalPixel ) * 100;
-		delta = ( rowOrColumnChild.config[direction] - percentage ) / rowOrColumn.contentItems.length;
+		delta = ( rowOrColumnChild.config[ direction ] - percentage ) / (rowOrColumn.contentItems.length - 1);
 
 		for( i = 0; i < rowOrColumn.contentItems.length; i++ ) {
 			if( rowOrColumn.contentItems[ i ] === rowOrColumnChild ) {
-				rowOrColumn.contentItems[ i ].config[direction] = percentage;
+				rowOrColumn.contentItems[ i ].config[ direction ] = percentage;
 			} else {
-				rowOrColumn.contentItems[ i ].config[direction] += delta;
+				rowOrColumn.contentItems[ i ].config[ direction ] += delta;
 			}
 		}
 
@@ -1559,7 +1682,7 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 
 		return true;
 	},
-	
+
 	/**
 	 * Closes the container if it is closable. Can be called by
 	 * both the component within at as well as the contentItem containing
@@ -1620,28 +1743,32 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 	 *
 	 * @param {[Int]} width  in px
 	 * @param {[Int]} height in px
-	 * 
+	 *
 	 * @returns {void}
 	 */
 	_$setSize: function( width, height ) {
 		if( width !== this.width || height !== this.height ) {
 			this.width = width;
 			this.height = height;
-			this._contentElement.width( this.width ).height( this.height );
+			var cl = this._contentElement[0];
+			var hdelta = cl.offsetWidth - cl.clientWidth;
+			var vdelta = cl.offsetHeight - cl.clientHeight;
+			this._contentElement.width( this.width-hdelta )
+			     .height( this.height-vdelta );
 			this.emit( 'resize' );
 		}
 	}
-});
+} );
 
 /**
  * Pops a content item out into a new browser window.
  * This is achieved by
  *
- * 	- Creating a new configuration with the content item as root element
- * 	- Serializing and minifying the configuration
- * 	- Opening the current window's URL with the configuration as a GET parameter
- * 	- GoldenLayout when opened in the new window will look for the GET parameter
- * 	  and use it instead of the provided configuration
+ *    - Creating a new configuration with the content item as root element
+ *    - Serializing and minifying the configuration
+ *    - Opening the current window's URL with the configuration as a GET parameter
+ *    - GoldenLayout when opened in the new window will look for the GET parameter
+ *      and use it instead of the provided configuration
  *
  * @param {Object} config GoldenLayout item config
  * @param {Object} dimensions A map with width, height, top and left
@@ -1669,9 +1796,9 @@ lm.utils.copy( lm.controls.BrowserPopout.prototype, {
 		if( this.isInitialised === false ) {
 			throw new Error( 'Can\'t create config, layout not yet initialised' );
 			return;
-		};
+		}
 		return {
-			dimensions:{
+			dimensions: {
 				width: this.getGlInstance().width,
 				height: this.getGlInstance().height,
 				left: this._popoutWindow.screenX || this._popoutWindow.screenLeft,
@@ -1695,23 +1822,24 @@ lm.utils.copy( lm.controls.BrowserPopout.prototype, {
 		if( this.getGlInstance() ) {
 			this.getGlInstance()._$closeWindow();
 		} else {
-			try{
+			try {
 				this.getWindow().close();
-			} catch( e ){}
+			} catch( e ) {
+			}
 		}
 	},
 
 	/**
-	 * Returns the popped out item to its original position. If the original 
+	 * Returns the popped out item to its original position. If the original
 	 * parent isn't available anymore it falls back to the layout's topmost element
 	 */
 	popIn: function() {
-		var childConfig, 
-			parentItem, 
+		var childConfig,
+			parentItem,
 			index = this._indexInParent;
 
 		if( this._parentId ) {
-			
+
 			/*
 			 * The $.extend call seems a bit pointless, but it's crucial to
 			 * copy the config returned by this.getGlInstance().toConfig()
@@ -1723,7 +1851,7 @@ lm.utils.copy( lm.controls.BrowserPopout.prototype, {
 			 */
 			childConfig = $.extend( true, {}, this.getGlInstance().toConfig() ).content[ 0 ];
 			parentItem = this._layoutManager.root.getItemsById( this._parentId )[ 0 ];
-			
+
 			/*
 			 * Fallback if parentItem is not available. Either add it to the topmost
 			 * item or make it the topmost item if the layout is empty
@@ -1753,7 +1881,7 @@ lm.utils.copy( lm.controls.BrowserPopout.prototype, {
 	_createWindow: function() {
 		var checkReadyInterval,
 			url = this._createUrl(),
-			
+
 			/**
 			 * Bogus title to prevent re-usage of existing window with the
 			 * same title. The actual title will be set by the new window's
@@ -1764,7 +1892,7 @@ lm.utils.copy( lm.controls.BrowserPopout.prototype, {
 			/**
 			 * The options as used in the window.open string
 			 */
-			options = this._serializeWindowOptions({
+			options = this._serializeWindowOptions( {
 				width: this._dimensions.width,
 				height: this._dimensions.height,
 				innerWidth: this._dimensions.width,
@@ -1776,7 +1904,7 @@ lm.utils.copy( lm.controls.BrowserPopout.prototype, {
 				resizable: 'yes',
 				scrollbars: 'no',
 				status: 'no'
-			});
+			} );
 
 		this._popoutWindow = window.open( url, title, options );
 
@@ -1800,7 +1928,7 @@ lm.utils.copy( lm.controls.BrowserPopout.prototype, {
 		 * window or raising an event on the window object - both would introduce knowledge
 		 * about the parent to the child window which we'd rather avoid
 		 */
-		checkReadyInterval = setInterval(lm.utils.fnBind(function(){
+		checkReadyInterval = setInterval( lm.utils.fnBind( function() {
 			if( this._popoutWindow.__glInstance && this._popoutWindow.__glInstance.isInitialised ) {
 				this._onInitialised();
 				clearInterval( checkReadyInterval );
@@ -1837,8 +1965,8 @@ lm.utils.copy( lm.controls.BrowserPopout.prototype, {
 			urlParts;
 
 		config = ( new lm.utils.ConfigMinifier() ).minifyConfig( config );
-		
-		try{
+
+		try {
 			localStorage.setItem( storageKey, JSON.stringify( config ) );
 		} catch( e ) {
 			throw new Error( 'Error while writing to localStorage ' + e.toString() );
@@ -1850,7 +1978,7 @@ lm.utils.copy( lm.controls.BrowserPopout.prototype, {
 		if( urlParts.length === 1 ) {
 			return urlParts[ 0 ] + '?gl-window=' + storageKey;
 
-		// URL contains GET-parameters
+			// URL contains GET-parameters
 		} else {
 			return document.location.href + '&gl-window=' + storageKey;
 		}
@@ -1858,10 +1986,10 @@ lm.utils.copy( lm.controls.BrowserPopout.prototype, {
 
 	/**
 	 * Move the newly created window roughly to
-	 * where the component used to be. 
+	 * where the component used to be.
 	 *
 	 * @private
-	 * 
+	 *
 	 * @returns {void}
 	 */
 	_positionWindow: function() {
@@ -1885,13 +2013,13 @@ lm.utils.copy( lm.controls.BrowserPopout.prototype, {
 	 * Invoked 50ms after the window unload event
 	 *
 	 * @private
-	 * 
+	 *
 	 * @returns {void}
 	 */
 	_onClose: function() {
 		setTimeout( lm.utils.fnBind( this.emit, this, [ 'closed' ] ), 50 );
 	}
-});
+} );
 /**
  * This class creates a temporary container
  * for the component whilst it is being dragged
@@ -1902,7 +2030,7 @@ lm.utils.copy( lm.controls.BrowserPopout.prototype, {
  *
  * @param {Number} x              The initial x position
  * @param {Number} y              The initial y position
- * @param {lm.utils.DragListener} dragListener   
+ * @param {lm.utils.DragListener} dragListener
  * @param {lm.LayoutManager} layoutManager
  * @param {lm.item.AbstractContentItem} contentItem
  * @param {lm.item.AbstractContentItem} originalParent
@@ -1923,7 +2051,13 @@ lm.controls.DragProxy = function( x, y, dragListener, layoutManager, contentItem
 	this._dragListener.on( 'dragStop', this._onDrop, this );
 
 	this.element = $( lm.controls.DragProxy._template );
-	this.element.css({ left: x, top: y });
+	if( originalParent && originalParent._side ) {
+		this._sided = originalParent._sided;
+		this.element.addClass( 'lm_' + originalParent._side );
+		if( [ 'right', 'bottom' ].indexOf( originalParent._side ) >= 0 )
+			this.element.find( '.lm_content' ).after( this.element.find( '.lm_header' ) );
+	}
+	this.element.css( { left: x, top: y } );
 	this.element.find( '.lm_tab' ).attr( 'title', lm.utils.stripTags( this._contentItem.config.title ) );
 	this.element.find( '.lm_title' ).html( this._contentItem.config.title );
 	this.childElementContainer = this.element.find( '.lm_content' );
@@ -1948,15 +2082,15 @@ lm.controls.DragProxy = function( x, y, dragListener, layoutManager, contentItem
 };
 
 lm.controls.DragProxy._template = '<div class="lm_dragProxy">' +
-									'<div class="lm_header">' +
-										'<ul class="lm_tabs">' +
-											'<li class="lm_tab lm_active"><i class="lm_left"></i>' +
-											'<span class="lm_title"></span>' +
-											'<i class="lm_right"></i></li>' +
-										'</ul>' +
-									'</div>' +
-									'<div class="lm_content"></div>' +
-								'</div>';
+	'<div class="lm_header">' +
+	'<ul class="lm_tabs">' +
+	'<li class="lm_tab lm_active"><i class="lm_left"></i>' +
+	'<span class="lm_title"></span>' +
+	'<i class="lm_right"></i></li>' +
+	'</ul>' +
+	'</div>' +
+	'<div class="lm_content"></div>' +
+	'</div>';
 
 lm.utils.copy( lm.controls.DragProxy.prototype, {
 
@@ -1975,8 +2109,8 @@ lm.utils.copy( lm.controls.DragProxy.prototype, {
 	 */
 	_onDrag: function( offsetX, offsetY, event ) {
 
-		event = event.originalEvent.touches ? event.originalEvent.touches[0] : event;
-		
+		event = event.originalEvent && event.originalEvent.touches ? event.originalEvent.touches[ 0 ] : event;
+
 		var x = event.pageX,
 			y = event.pageY,
 			isWithinContainer = x > this._minX && x < this._maxX && y > this._minY && y < this._maxY;
@@ -1999,7 +2133,7 @@ lm.utils.copy( lm.controls.DragProxy.prototype, {
 	 * @returns {void}
 	 */
 	_setDropPosition: function( x, y ) {
-		this.element.css({ left: x, top: y });
+		this.element.css( { left: x, top: y } );
 		this._area = this._layoutManager._$getArea( x, y );
 
 		if( this._area !== null ) {
@@ -2023,37 +2157,37 @@ lm.utils.copy( lm.controls.DragProxy.prototype, {
 		 * Valid drop area found
 		 */
 		if( this._area !== null ) {
-			this._area.contentItem._$onDrop( this._contentItem );
+			this._area.contentItem._$onDrop( this._contentItem, this._area );
 
-		/**
-		 * No valid drop area available at present, but one has been found before.
-		 * Use it
-		 */
+			/**
+			 * No valid drop area available at present, but one has been found before.
+			 * Use it
+			 */
 		} else if( this._lastValidArea !== null ) {
-			this._lastValidArea.contentItem._$onDrop( this._contentItem );
+			this._lastValidArea.contentItem._$onDrop( this._contentItem, this._lastValidArea );
 
-		/**
-		 * No valid drop area found during the duration of the drag. Return
-		 * content item to its original position if a original parent is provided.
-		 * (Which is not the case if the drag had been initiated by createDragSource)
-		 */
-		} else if ( this._originalParent ){
+			/**
+			 * No valid drop area found during the duration of the drag. Return
+			 * content item to its original position if a original parent is provided.
+			 * (Which is not the case if the drag had been initiated by createDragSource)
+			 */
+		} else if( this._originalParent ) {
 			this._originalParent.addChild( this._contentItem );
 
-		/**
-		 * The drag didn't ultimately end up with adding the content item to
-		 * any container. In order to ensure clean up happens, destroy the
-		 * content item.
-		 */
+			/**
+			 * The drag didn't ultimately end up with adding the content item to
+			 * any container. In order to ensure clean up happens, destroy the
+			 * content item.
+			 */
 		} else {
 			this._contentItem._$destroy();
 		}
-		
+
 		this.element.remove();
 
 		this._layoutManager.emit( 'itemDropped', this._contentItem );
 	},
-	
+
 	/**
 	 * Removes the item from its original position within the tree
 	 *
@@ -2062,17 +2196,17 @@ lm.utils.copy( lm.controls.DragProxy.prototype, {
 	 * @returns {void}
 	 */
 	_updateTree: function() {
-		
+
 		/**
 		 * parent is null if the drag had been initiated by a external drag source
 		 */
 		if( this._contentItem.parent ) {
 			this._contentItem.parent.removeChild( this._contentItem, true );
 		}
-		
+
 		this._contentItem._$setParent( this );
 	},
-	
+
 	/**
 	 * Updates the Drag Proxie's dimensions
 	 *
@@ -2083,8 +2217,12 @@ lm.utils.copy( lm.controls.DragProxy.prototype, {
 	_setDimensions: function() {
 		var dimensions = this._layoutManager.config.dimensions,
 			width = dimensions.dragProxyWidth,
-			height = dimensions.dragProxyHeight - dimensions.headerHeight;
-	
+			height = dimensions.dragProxyHeight;
+
+		this.element.width( width );
+		this.element.height( height );
+		width -= ( this._sided ? dimensions.headerHeight : 0 );
+		height -= ( !this._sided ? dimensions.headerHeight : 0 );
 		this.childElementContainer.width( width );
 		this.childElementContainer.height( height );
 		this._contentItem.element.width( width );
@@ -2092,7 +2230,7 @@ lm.utils.copy( lm.controls.DragProxy.prototype, {
 		this._contentItem.callDownwards( '_$show' );
 		this._contentItem.callDownwards( 'setSize' );
 	}
-});
+} );
 
 /**
  * Allows for any DOM item to create a component on drag
@@ -2114,7 +2252,7 @@ lm.controls.DragSource = function( element, itemConfig, layoutManager ) {
 };
 
 lm.utils.copy( lm.controls.DragSource.prototype, {
-	
+
 	/**
 	 * Called initially and after every drag
 	 *
@@ -2124,7 +2262,7 @@ lm.utils.copy( lm.controls.DragSource.prototype, {
 		if( this._dragListener !== null ) {
 			this._dragListener.destroy();
 		}
-		
+
 		this._dragListener = new lm.utils.DragListener( this._element );
 		this._dragListener.on( 'dragStart', this._onDragStart, this );
 		this._dragListener.on( 'dragStop', this._createDragListener, this );
@@ -2145,14 +2283,14 @@ lm.utils.copy( lm.controls.DragSource.prototype, {
 		}
 		var contentItem = this._layoutManager._$normalizeContentItem( $.extend( true, {}, itemConfig ) ),
 			dragProxy = new lm.controls.DragProxy( x, y, this._dragListener, this._layoutManager, contentItem, null );
-		
+
 		this._layoutManager.transitionIndicator.transitionElements( this._element, dragProxy.element );
 	}
-});
+} );
 
 lm.controls.DropTargetIndicator = function() {
 	this.element = $( lm.controls.DropTargetIndicator._template );
-	$(document.body).append( this.element );
+	$( document.body ).append( this.element );
 };
 
 lm.controls.DropTargetIndicator._template = '<div class="lm_dropTargetIndicator"><div class="lm_inner"></div></div>';
@@ -2163,22 +2301,22 @@ lm.utils.copy( lm.controls.DropTargetIndicator.prototype, {
 	},
 
 	highlight: function( x1, y1, x2, y2 ) {
-		this.highlightArea({ x1:x1, y1:y1, x2:x2, y2:y2 });
+		this.highlightArea( { x1: x1, y1: y1, x2: x2, y2: y2 } );
 	},
 
 	highlightArea: function( area ) {
-		this.element.css({
+		this.element.css( {
 			left: area.x1,
 			top: area.y1,
 			width: area.x2 - area.x1,
 			height: area.y2 - area.y1
-		}).show();
+		} ).show();
 	},
 
 	hide: function() {
 		this.element.hide();
 	}
-});
+} );
 /**
  * This class represents a header above a Stack ContentItem.
  *
@@ -2195,23 +2333,30 @@ lm.controls.Header = function( layoutManager, parent ) {
 		this.element.addClass( 'lm_selectable' );
 		this.element.on( 'click touchstart', lm.utils.fnBind( this._onHeaderClick, this ) );
 	}
-	
-	this.element.height( layoutManager.config.dimensions.headerHeight );
+
 	this.tabsContainer = this.element.find( '.lm_tabs' );
+	this.tabDropdownContainer = this.element.find( '.lm_tabdropdown_list' );
+	this.tabDropdownContainer.hide();
 	this.controlsContainer = this.element.find( '.lm_controls' );
 	this.parent = parent;
 	this.parent.on( 'resize', this._updateTabSizes, this );
 	this.tabs = [];
 	this.activeContentItem = null;
 	this.closeButton = null;
+	this.tabDropdownButton = null;
+	this.hideAdditionalTabsDropdown = lm.utils.fnBind(this._hideAdditionalTabsDropdown, this);
+	$( document ).mouseup(this.hideAdditionalTabsDropdown);
 
+	this._lastVisibleTabIndex = -1;
+	this._tabControlOffset = this.layoutManager.config.settings.tabControlOffset;
 	this._createControls();
 };
 
 lm.controls.Header._template = [
 	'<div class="lm_header">',
-		'<ul class="lm_tabs"></ul>',
-		'<ul class="lm_controls"></ul>',
+	'<ul class="lm_tabs"></ul>',
+	'<ul class="lm_controls"></ul>',
+	'<ul class="lm_tabdropdown_list"></ul>',
 	'</div>'
 ].join( '' );
 
@@ -2220,8 +2365,8 @@ lm.utils.copy( lm.controls.Header.prototype, {
 	/**
 	 * Creates a new tab and associates it with a contentItem
 	 *
-	 * @param	{lm.item.AbstractContentItem} contentItem
-	 * @param	{Integer} index The position of the tab
+	 * @param    {lm.item.AbstractContentItem} contentItem
+	 * @param    {Integer} index The position of the tab
 	 *
 	 * @returns {void}
 	 */
@@ -2237,23 +2382,23 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		}
 
 		tab = new lm.controls.Tab( this, contentItem );
-		
+
 		if( this.tabs.length === 0 ) {
 			this.tabs.push( tab );
 			this.tabsContainer.append( tab.element );
 			return;
 		}
-	
+
 		if( index === undefined ) {
 			index = this.tabs.length;
 		}
-	
+
 		if( index > 0 ) {
 			this.tabs[ index - 1 ].element.after( tab.element );
 		} else {
 			this.tabs[ 0 ].element.before( tab.element );
 		}
-	
+
 		this.tabs.splice( index, 0, tab );
 		this._updateTabSizes();
 	},
@@ -2261,7 +2406,7 @@ lm.utils.copy( lm.controls.Header.prototype, {
 	/**
 	 * Finds a tab based on the contentItem its associated with and removes it.
 	 *
-	 * @param	{lm.item.AbstractContentItem} contentItem
+	 * @param    {lm.item.AbstractContentItem} contentItem
 	 *
 	 * @returns {void}
 	 */
@@ -2273,17 +2418,17 @@ lm.utils.copy( lm.controls.Header.prototype, {
 				return;
 			}
 		}
-	
+
 		throw new Error( 'contentItem is not controlled by this header' );
 	},
-	
+
 	/**
 	 * The programmatical equivalent of clicking a Tab.
 	 *
 	 * @param {lm.item.AbstractContentItem} contentItem
 	 */
 	setActiveContentItem: function( contentItem ) {
-		var i, isActive;
+		var i, j, isActive, activeTab;
 
 		for( i = 0; i < this.tabs.length; i++ ) {
 			isActive = this.tabs[ i ].contentItem === contentItem;
@@ -2294,8 +2439,41 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			}
 		}
 
+		if (this.layoutManager.config.settings.reorderOnTabMenuClick) {
+			/**
+			 * If the tab selected was in the dropdown, move everything down one to make way for this one to be the first.
+			 * This will make sure the most used tabs stay visible.
+			 */
+			if (this._lastVisibleTabIndex !== -1 && this.parent.config.activeItemIndex > this._lastVisibleTabIndex) {
+				activeTab = this.tabs[this.parent.config.activeItemIndex];
+				for ( j = this.parent.config.activeItemIndex; j > 0; j-- ) {
+					this.tabs[j] = this.tabs[j - 1];
+				}
+				this.tabs[0]                       = activeTab;
+				this.parent.config.activeItemIndex = 0;
+			}
+		}
+
 		this._updateTabSizes();
 		this.parent.emitBubblingEvent( 'stateChanged' );
+	},
+
+	/**
+	 * Programmatically operate with header position.
+	 *
+	 * @param {string} position one of ('top','left','right','bottom') to set or empty to get it.
+	 *
+	 * @returns {string} previous header position
+	 */
+	position: function( position ) {
+		var previous = this.parent._header.show;
+		if( previous && !this.parent._side )
+			previous = 'top';
+		if( position !== undefined && this.parent._header.show != position ) {
+			this.parent._header.show = position;
+			this.parent._setupHeaderPosition();
+		}
+		return previous;
 	},
 
 	/**
@@ -2307,7 +2485,7 @@ lm.utils.copy( lm.controls.Header.prototype, {
 	 * @returns {Boolean} Whether the action was successful
 	 */
 	_$setClosable: function( isClosable ) {
-		if ( this.closeButton && this._isClosable() ) {
+		if( this.closeButton && this._isClosable() ) {
 			this.closeButton.element[ isClosable ? "show" : "hide" ]();
 			return true;
 		}
@@ -2319,19 +2497,28 @@ lm.utils.copy( lm.controls.Header.prototype, {
 	 * Destroys the entire header
 	 *
 	 * @package private
-	 * 
+	 *
 	 * @returns {void}
 	 */
 	_$destroy: function() {
 		this.emit( 'destroy', this );
-	
+
 		for( var i = 0; i < this.tabs.length; i++ ) {
 			this.tabs[ i ]._$destroy();
 		}
-	
+		$( document ).off('mouseup', this.hideAdditionalTabsDropdown);
 		this.element.remove();
 	},
 
+	/**
+	 * get settings from header
+	 *
+	 * @returns {string} when exists
+	 */
+	_getHeaderSetting: function( name ) {
+		if( name in this.parent._header )
+			return this.parent._header[ name ];
+	},
 	/**
 	 * Creates the popout, maximise and close buttons in the header's top right corner
 	 *
@@ -2344,33 +2531,43 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			maximiseLabel,
 			minimiseLabel,
 			maximise,
-			maximiseButton;
+			maximiseButton,
+			tabDropdownLabel,
+			showTabDropdown;
+
+		/**
+		 * Dropdown to show additional tabs.
+		 */
+		showTabDropdown = lm.utils.fnBind( this._showAdditionalTabsDropdown, this );
+		tabDropdownLabel = this.layoutManager.config.labels.tabDropdown;
+		this.tabDropdownButton = new lm.controls.HeaderButton( this, tabDropdownLabel, 'lm_tabdropdown', showTabDropdown );
+		this.tabDropdownButton.element.hide();
 
 		/**
 		 * Popout control to launch component in new window.
 		 */
-		if( this.layoutManager.config.settings.showPopoutIcon ) {
+		if( this._getHeaderSetting( 'popout' ) ) {
 			popout = lm.utils.fnBind( this._onPopoutClick, this );
-			label = this.layoutManager.config.labels.popout;
+			label = this._getHeaderSetting( 'popout' );
 			new lm.controls.HeaderButton( this, label, 'lm_popout', popout );
 		}
 
 		/**
 		 * Maximise control - set the component to the full size of the layout
 		 */
-		if( this.layoutManager.config.settings.showMaximiseIcon ) {
+		if( this._getHeaderSetting( 'maximise' ) ) {
 			maximise = lm.utils.fnBind( this.parent.toggleMaximise, this.parent );
-			maximiseLabel = this.layoutManager.config.labels.maximise;
-			minimiseLabel = this.layoutManager.config.labels.minimise;
+			maximiseLabel = this._getHeaderSetting( 'maximise' );
+			minimiseLabel = this._getHeaderSetting( 'minimise' );
 			maximiseButton = new lm.controls.HeaderButton( this, maximiseLabel, 'lm_maximise', maximise );
-			
-			this.parent.on( 'maximised', function(){
-				maximiseButton.element.attr( 'title', minimiseLabel );
-			});
 
-			this.parent.on( 'minimised', function(){
+			this.parent.on( 'maximised', function() {
+				maximiseButton.element.attr( 'title', minimiseLabel );
+			} );
+
+			this.parent.on( 'minimised', function() {
 				maximiseButton.element.attr( 'title', maximiseLabel );
-			});
+			} );
 		}
 
 		/**
@@ -2378,13 +2575,31 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		 */
 		if( this._isClosable() ) {
 			closeStack = lm.utils.fnBind( this.parent.remove, this.parent );
-			label = this.layoutManager.config.labels.close;
+			label = this._getHeaderSetting( 'close' );
 			this.closeButton = new lm.controls.HeaderButton( this, label, 'lm_close', closeStack );
 		}
 	},
 
 	/**
-	 * Checks whether the header is closable based on the parent config and 
+	 * Shows drop down for additional tabs when there are too many to display.
+	 *
+	 * @returns {void}
+	 */
+	_showAdditionalTabsDropdown: function() {
+		this.tabDropdownContainer.show();
+	},
+
+	/**
+	 * Hides drop down for additional tabs when there are too many to display.
+	 *
+	 * @returns {void}
+	 */
+	_hideAdditionalTabsDropdown: function( e ) {
+		this.tabDropdownContainer.hide();
+	},
+
+	/**
+	 * Checks whether the header is closable based on the parent config and
 	 * the global config.
 	 *
 	 * @returns {Boolean} Whether the header is closable.
@@ -2405,7 +2620,7 @@ lm.utils.copy( lm.controls.Header.prototype, {
 	/**
 	 * Invoked when the header's background is clicked (not it's tabs or controls)
 	 *
-	 * @param	{jQuery DOM event} event
+	 * @param    {jQuery DOM event} event
 	 *
 	 * @returns {void}
 	 */
@@ -2416,55 +2631,111 @@ lm.utils.copy( lm.controls.Header.prototype, {
 	},
 
 	/**
-	 * Shrinks the tabs if the available space is not sufficient
+	 * Pushes the tabs to the tab dropdown if the available space is not sufficient
 	 *
 	 * @returns {void}
 	 */
-	_updateTabSizes: function() {
+	_updateTabSizes: function(showTabMenu) {
 		if( this.tabs.length === 0 ) {
 			return;
 		}
-		
-		var availableWidth = this.element.outerWidth() - this.controlsContainer.outerWidth(),
-			totalTabWidth = 0,
+
+		//Show the menu based on function argument
+		this.tabDropdownButton.element.toggle(showTabMenu === true);
+
+		var size = function( val ) {
+			return val ? 'width' : 'height';
+		};
+		this.element.css( size( !this.parent._sided ), '' );
+		this.element[ size( this.parent._sided ) ]( this.layoutManager.config.dimensions.headerHeight );
+		var availableWidth = this.element.outerWidth() - this.controlsContainer.outerWidth() - this._tabControlOffset,
+			cumulativeTabWidth = 0,
+			visibleTabWidth = 0,
 			tabElement,
 			i,
+			j,
 			marginLeft,
-			gap;
+			overlap = 0,
+			tabWidth,
+			tabOverlapAllowance = this.layoutManager.config.settings.tabOverlapAllowance,
+			tabOverlapAllowanceExceeded = false,
+			activeIndex = (this.activeContentItem ? this.tabs.indexOf(this.activeContentItem.tab) : 0),
+			activeTab = this.tabs[activeIndex];
+		if( this.parent._sided )
+			availableWidth = this.element.outerHeight() - this.controlsContainer.outerHeight() - this._tabControlOffset;
+		this._lastVisibleTabIndex = -1;
 
 		for( i = 0; i < this.tabs.length; i++ ) {
 			tabElement = this.tabs[ i ].element;
 
-			/*
-			 * In order to show every tab's close icon, decrement the z-index from left to right
-			 */
-			tabElement.css( 'z-index', this.tabs.length - i );
-			totalTabWidth += tabElement.outerWidth() + parseInt( tabElement.css( 'margin-right' ), 10 );
-		}
+			//Put the tab in the tabContainer so its true width can be checked
+			this.tabsContainer.append( tabElement );
+			tabWidth = tabElement.outerWidth() + parseInt( tabElement.css( 'margin-right' ), 10 );
 
-		gap = ( totalTabWidth - availableWidth ) / ( this.tabs.length - 1 );
+			cumulativeTabWidth += tabWidth;
 
-		for( i = 0; i < this.tabs.length; i++ ) {
-
-			/*
-			 * The active tab keeps it's original width
-			 */
-			if( !this.tabs[ i ].isActive && gap > 0 ) {
-				marginLeft = '-' + Math.floor( gap )+ 'px';
+			//Include the active tab's width if it isn't already
+			//This is to ensure there is room to show the active tab
+			if (activeIndex <= i) {
+				visibleTabWidth = cumulativeTabWidth;
 			} else {
-				marginLeft = '';
+				visibleTabWidth = cumulativeTabWidth + activeTab.element.outerWidth() + parseInt(activeTab.element.css('margin-right'), 10);
 			}
 
-			this.tabs[ i ].element.css( 'margin-left', marginLeft );
+			// If the tabs won't fit, check the overlap allowance.
+			if( visibleTabWidth > availableWidth ) {
+
+				//Once allowance is exceeded, all remaining tabs go to menu.
+				if (!tabOverlapAllowanceExceeded) {
+
+					//No overlap for first tab or active tab
+					//Overlap spreads among non-active, non-first tabs
+					if (activeIndex > 0 && activeIndex <= i) {
+						overlap = ( visibleTabWidth - availableWidth ) / (i - 1);
+					} else {
+						overlap = ( visibleTabWidth - availableWidth ) / i;
+					}
+
+					//Check overlap against allowance.
+					if (overlap < tabOverlapAllowance) {
+						for ( j = 0; j <= i; j++ ) {
+							marginLeft = (j !== activeIndex && j !== 0) ? '-' + overlap + 'px' : '';
+							this.tabs[j].element.css({'z-index': i - j, 'margin-left': marginLeft});
+						}
+						this._lastVisibleTabIndex = i;
+						this.tabsContainer.append(tabElement);
+					} else {
+						tabOverlapAllowanceExceeded = true;
+					}
+
+				} else if (i === activeIndex) {
+					//Active tab should show even if allowance exceeded. (We left room.)
+					tabElement.css({'z-index': 'auto', 'margin-left': ''});
+					this.tabsContainer.append(tabElement);
+				}
+
+				if (tabOverlapAllowanceExceeded && i !== activeIndex) {
+					if (showTabMenu) {
+						//Tab menu already shown, so we just add to it.
+						tabElement.css({'z-index': 'auto', 'margin-left': ''});
+						this.tabDropdownContainer.append(tabElement);
+					} else {
+						//We now know the tab menu must be shown, so we have to recalculate everything.
+						this._updateTabSizes(true);
+						return;
+					}
+				}
+
+			}
+			else {
+				this._lastVisibleTabIndex = i;
+				tabElement.css({'z-index': 'auto', 'margin-left': ''});
+				this.tabsContainer.append( tabElement );
+			}
 		}
 
-		if( availableWidth < totalTabWidth ) {
-			this.element.css( 'overflow', 'hidden' );
-		} else {
-			this.element.css( 'overflow', 'visible' );
-		}
 	}
-});
+} );
 
 
 lm.controls.HeaderButton = function( header, label, cssClass, action ) {
@@ -2481,10 +2752,11 @@ lm.utils.copy( lm.controls.HeaderButton.prototype, {
 		this.element.off();
 		this.element.remove();
 	}
-});
-lm.controls.Splitter = function( isVertical, size ) {
+} );
+lm.controls.Splitter = function( isVertical, size, grabSize ) {
 	this._isVertical = isVertical;
 	this._size = size;
+	this._grabSize = grabSize < size ? size : grabSize;
 
 	this.element = this._createElement();
 	this._dragListener = new lm.utils.DragListener( this.element );
@@ -2500,13 +2772,28 @@ lm.utils.copy( lm.controls.Splitter.prototype, {
 	},
 
 	_createElement: function() {
-		var element = $( '<div class="lm_splitter"><div class="lm_drag_handle"></div></div>' );
-		element.addClass( 'lm_' + ( this._isVertical ? 'vertical' : 'horizontal' ) );
-		element[ this._isVertical ? 'height' : 'width' ]( this._size );
+		var dragHandle = $( '<div class="lm_drag_handle"></div>' );
+		var element    = $( '<div class="lm_splitter"></div>' );
+		element.append(dragHandle);
+
+		var handleExcessSize = this._grabSize - this._size;
+		var handleExcessPos  = handleExcessSize / 2;
+
+		if( this._isVertical ) {
+			dragHandle.css( 'top', -handleExcessPos );
+			dragHandle.css( 'height', this._size + handleExcessSize );
+			element.addClass( 'lm_vertical' );
+			element[ 'height' ]( this._size );
+		} else {
+			dragHandle.css( 'left', -handleExcessPos );
+			dragHandle.css( 'width', this._size + handleExcessSize );
+			element.addClass( 'lm_horizontal' );
+			element[ 'width' ]( this._size );
+		}
 
 		return element;
 	}
-});
+} );
 
 /**
  * Represents an individual tab within a Stack's header
@@ -2536,6 +2823,7 @@ lm.controls.Tab = function( header, contentItem ) {
 	) {
 		this._dragListener = new lm.utils.DragListener( this.element );
 		this._dragListener.on( 'dragStart', this._onDragStart, this );
+		this.contentItem.on( 'destroy', this._dragListener.destroy, this._dragListener );
 	}
 
 	this._onTabClickFn = lm.utils.fnBind( this._onTabClick, this );
@@ -2545,6 +2833,7 @@ lm.controls.Tab = function( header, contentItem ) {
 
 	if( this.contentItem.config.isClosable ) {
 		this.closeElement.on( 'click touchstart', this._onCloseClickFn );
+		this.closeElement.on('mousedown', this._onCloseMousedown);
 	} else {
 		this.closeElement.remove();
 	}
@@ -2565,10 +2854,10 @@ lm.controls.Tab = function( header, contentItem ) {
  * @type {String}
  */
 lm.controls.Tab._template = '<li class="lm_tab"><i class="lm_left"></i>' +
-							'<span class="lm_title"></span><div class="lm_close_tab"></div>' +
-							'<i class="lm_right"></i></li>';
+	'<span class="lm_title"></span><div class="lm_close_tab"></div>' +
+	'<i class="lm_right"></i></li>';
 
-lm.utils.copy( lm.controls.Tab.prototype,{
+lm.utils.copy( lm.controls.Tab.prototype, {
 
 	/**
 	 * Sets the tab's title to the provided string and sets
@@ -2599,7 +2888,7 @@ lm.utils.copy( lm.controls.Tab.prototype,{
 		if( isActive ) {
 			this.element.addClass( 'lm_active' );
 		} else {
-			this.element.removeClass( 'lm_active');
+			this.element.removeClass( 'lm_active' );
 		}
 	},
 
@@ -2613,6 +2902,7 @@ lm.utils.copy( lm.controls.Tab.prototype,{
 		this.element.off( 'mousedown touchstart', this._onTabClickFn );
 		this.closeElement.off( 'click touchstart', this._onCloseClickFn );
 		if( this._dragListener ) {
+			this.contentItem.off( 'destroy', this._dragListener.destroy, this._dragListener );
 			this._dragListener.off( 'dragStart', this._onDragStart );
 			this._dragListener = null;
 		}
@@ -2657,13 +2947,13 @@ lm.utils.copy( lm.controls.Tab.prototype,{
 	 */
 	_onTabClick: function( event ) {
 		// left mouse button or tap
-		if( event.button === 0 || event.type === 'touchstart') {
+		if( event.button === 0 || event.type === 'touchstart' ) {
 			var activeContentItem = this.header.parent.getActiveContentItem();
-			if (this.contentItem !== activeContentItem) {
+			if( this.contentItem !== activeContentItem ) {
 				this.header.parent.setActiveContentItem( this.contentItem );
 			}
 
-		// middle mouse button
+			// middle mouse button
 		} else if( event.button === 1 && this.contentItem.config.isClosable ) {
 			this._onCloseClick( event );
 		}
@@ -2681,8 +2971,22 @@ lm.utils.copy( lm.controls.Tab.prototype,{
 	_onCloseClick: function( event ) {
 		event.stopPropagation();
 		this.header.parent.removeChild( this.contentItem );
+	},
+
+
+	/**
+	 * Callback to capture tab close button mousedown
+	 * to prevent tab from activating.
+	 *
+	 * @param (jQuery DOM event) event
+	 *
+	 * @private
+	 * @returns {void}
+	 */
+	_onCloseMousedown: function(event) {
+		event.stopPropagation();
 	}
-});
+} );
 
 lm.controls.TransitionIndicator = function() {
 	this._element = $( '<div class="lm_transition_indicator"></div>' );
@@ -2727,10 +3031,10 @@ lm.utils.copy( lm.controls.TransitionIndicator.prototype, {
 
 		for( cssProperty in this._fromDimensions ) {
 			currentFrameStyles[ cssProperty ] = this._fromDimensions[ cssProperty ] +
-			( toDimensions[ cssProperty] - this._fromDimensions[ cssProperty ] ) *
-			animationProgress;
+				( toDimensions[ cssProperty ] - this._fromDimensions[ cssProperty ] ) *
+				animationProgress;
 		}
-		
+
 		this._element.css( currentFrameStyles );
 		lm.utils.animFrame( lm.utils.fnBind( this._nextAnimationFrame, this ) );
 	},
@@ -2745,7 +3049,7 @@ lm.utils.copy( lm.controls.TransitionIndicator.prototype, {
 			height: element.outerHeight()
 		};
 	}
-});
+} );
 lm.errors.ConfigurationError = function( message, node ) {
 	Error.call( this );
 
@@ -2755,7 +3059,6 @@ lm.errors.ConfigurationError = function( message, node ) {
 };
 
 lm.errors.ConfigurationError.prototype = new Error();
-
 
 /**
  * This is the baseclass that all content items inherit from.
@@ -2799,14 +3102,14 @@ lm.items.AbstractContentItem = function( layoutManager, config, parent ) {
 	this._throttledEvents = [ 'stateChanged' ];
 
 	this.on( lm.utils.EventEmitter.ALL_EVENT, this._propagateEvent, this );
-	
+
 	if( config.content ) {
 		this._createContentItems( config );
 	}
 };
 
 lm.utils.copy( lm.items.AbstractContentItem.prototype, {
-	
+
 	/**
 	 * Set the size of the component and its children, called recursively
 	 *
@@ -2849,7 +3152,7 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 	 * @returns {void}
 	 */
 	removeChild: function( contentItem, keepChild ) {
-		
+
 		/*
 		 * Get the position of the item that's to be removed within all content items this node contains
 		 */
@@ -2868,7 +3171,7 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 		if( keepChild !== true ) {
 			this.contentItems[ index ]._$destroy();
 		}
-		
+
 		/**
 		 * Remove the content item from this nodes array of children
 		 */
@@ -2885,9 +3188,9 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 		if( this.contentItems.length > 0 ) {
 			this.callDownwards( 'setSize' );
 
-		/**
-		 * If this was the last content item, remove this node as well
-		 */
+			/**
+			 * If this was the last content item, remove this node as well
+			 */
 		} else if( !(this instanceof lm.items.Root) && this.config.isClosable === true ) {
 			this.parent.removeChild( this );
 		}
@@ -2902,7 +3205,7 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 	 * @param {[Int]} index If omitted item will be appended
 	 */
 	addChild: function( contentItem, index ) {
-		if ( index === undefined ) {
+		if( index === undefined ) {
 			index = this.contentItems.length;
 		}
 
@@ -2914,7 +3217,7 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 
 		this.config.content.splice( index, 0, contentItem.config );
 		contentItem.parent = this;
-		
+
 		if( contentItem.parent.isInitialised === true && contentItem.isInitialised === false ) {
 			contentItem._$init();
 		}
@@ -2949,7 +3252,7 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 			oldChild.parent = null;
 			oldChild._$destroy();
 		}
-		
+
 		/*
 		 * Wire the new contentItem into the tree
 		 */
@@ -2959,7 +3262,7 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 		/*
 		 * Update tab reference
 		 */
-		if ( this.isStack ) {
+		if( this.isStack ) {
 			this.header.tabs[ index ].contentItem = newChild;
 		}
 
@@ -2972,7 +3275,7 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 	},
 
 	/**
-	 * Convenience method. 
+	 * Convenience method.
 	 * Shorthand for this.parent.removeChild( this )
 	 *
 	 * @returns {void}
@@ -2982,7 +3285,7 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 	},
 
 	/**
-	 * Removes the component from the layout and creates a new 
+	 * Removes the component from the layout and creates a new
 	 * browser window with the component and its children inside
 	 *
 	 * @returns {lm.controls.BrowserPopout}
@@ -2998,12 +3301,8 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 	 *
 	 * @returns {void}
 	 */
-	toggleMaximise: function(e) {
-		if(!e){
-			/* TODO FIXME: https://gist.github.com/mvberg/13ea870bb4528940c5f489ee955894ec */
-			return console.warn('FIXME: trying to toggleMaximise on undefined object');
-		}
-		e.preventDefault();
+	toggleMaximise: function( e ) {
+		e && e.preventDefault();
 		if( this.isMaximised === true ) {
 			this.layoutManager._$minimiseItem( this );
 		} else {
@@ -3040,7 +3339,7 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 
 	/**
 	 * Set this component's title
-	 * 
+	 *
 	 * @public
 	 * @param {String} title
 	 *
@@ -3106,7 +3405,7 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 		if( !this.hasId( id ) ) {
 			throw new Error( 'Id not found' );
 		}
-		
+
 		if( typeof this.config.id === 'string' ) {
 			delete this.config.id;
 		} else if( this.config.id instanceof Array ) {
@@ -3116,13 +3415,13 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 	},
 
 	/****************************************
-	* SELECTOR
-	****************************************/
+	 * SELECTOR
+	 ****************************************/
 	getItemsByFilter: function( filter ) {
 		var result = [],
 			next = function( contentItem ) {
 				for( var i = 0; i < contentItem.contentItems.length; i++ ) {
-					
+
 					if( filter( contentItem.contentItems[ i ] ) === true ) {
 						result.push( contentItem.contentItems[ i ] );
 					}
@@ -3136,13 +3435,13 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 	},
 
 	getItemsById: function( id ) {
-		return this.getItemsByFilter( function( item ){
+		return this.getItemsByFilter( function( item ) {
 			if( item.config.id instanceof Array ) {
 				return lm.utils.indexOf( id, item.config.id ) !== -1;
 			} else {
 				return item.config.id === id;
 			}
-		});
+		} );
 	},
 
 	getItemsByType: function( type ) {
@@ -3162,12 +3461,12 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 	},
 
 	/****************************************
-	* PACKAGE PRIVATE
-	****************************************/
+	 * PACKAGE PRIVATE
+	 ****************************************/
 	_$getItemsByProperty: function( key, value ) {
-		return this.getItemsByFilter( function( item ){
+		return this.getItemsByFilter( function( item ) {
 			return item[ key ] === value;
-		});
+		} );
 	},
 
 	_$setParent: function( parent ) {
@@ -3207,7 +3506,7 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 			}
 		}
 	},
-	
+
 	/**
 	 * Destroys this item ands its children
 	 *
@@ -3252,11 +3551,11 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 	 * The tree of content items is created in two steps: First all content items are instantiated,
 	 * then init is called recursively from top to bottem. This is the basic init function,
 	 * it can be used, extended or overwritten by the content items
-	 * 
+	 *
 	 * Its behaviour depends on the content item
 	 *
 	 * @package private
-	 * 
+	 *
 	 * @returns {void}
 	 */
 	_$init: function() {
@@ -3313,13 +3612,13 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 	 * @returns {configuration item node} extended config
 	 */
 	_extendItemNode: function( config ) {
-		
+
 		for( var key in lm.config.itemDefaultConfig ) {
 			if( config[ key ] === undefined ) {
 				config[ key ] = lm.config.itemDefaultConfig[ key ];
 			}
 		}
-		
+
 		return config;
 	},
 
@@ -3327,8 +3626,8 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 	 * Called for every event on the item tree. Decides whether the event is a bubbling
 	 * event and propagates it to its parent
 	 *
-	 * @param	{String} name the name of the event
-	 * @param   {lm.utils.BubblingEvent} event 
+	 * @param    {String} name the name of the event
+	 * @param   {lm.utils.BubblingEvent} event
 	 *
 	 * @returns {void}
 	 */
@@ -3336,7 +3635,7 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 		if( event instanceof lm.utils.BubblingEvent &&
 			event.isPropagationStopped === false &&
 			this.isInitialised === true ) {
-			
+
 			/**
 			 * In some cases (e.g. if an element is created from a DragSource) it
 			 * doesn't have a parent and is not below root. If that's the case
@@ -3370,7 +3669,7 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 				lm.utils.animFrame( lm.utils.fnBind( this._propagateEventToLayoutManager, this, [ name, event ] ) );
 			}
 		}
-		
+
 	},
 
 	/**
@@ -3385,7 +3684,7 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 		this._pendingEventPropagations[ name ] = false;
 		this.layoutManager.emit( name, event );
 	}
-});
+} );
 
 /**
  * @param {[type]} layoutManager [description]
@@ -3407,7 +3706,7 @@ lm.items.Component = function( layoutManager, config, parent ) {
 
 	this.isComponent = true;
 	this.container = new lm.container.ItemContainer( this.config, this, layoutManager );
-	this.instance = new ComponentConstructor( this.container, componentConfig  );
+	this.instance = new ComponentConstructor( this.container, componentConfig );
 	this.element = this.container._element;
 };
 
@@ -3421,6 +3720,7 @@ lm.utils.copy( lm.items.Component.prototype, {
 
 	setSize: function() {
 		if( this.element.is( ':visible' ) ) {
+			// Do not update size of hidden components to prevent unwanted reflows
 			this.container._$setSize( this.element.width(), this.element.height() );
 		}
 	},
@@ -3439,7 +3739,7 @@ lm.utils.copy( lm.items.Component.prototype, {
 		this.container.show();
 		lm.items.AbstractContentItem.prototype._$show.call( this );
 	},
-	
+
 	_$shown: function() {
 		this.container.shown();
 		lm.items.AbstractContentItem.prototype._$shown.call( this );
@@ -3458,7 +3758,7 @@ lm.utils.copy( lm.items.Component.prototype, {
 	_$getArea: function() {
 		return null;
 	}
-});
+} );
 
 lm.items.Root = function( layoutManager, config, containerElement ) {
 	lm.items.AbstractContentItem.call( this, layoutManager, config, null );
@@ -3481,12 +3781,12 @@ lm.utils.copy( lm.items.Root.prototype, {
 		contentItem = this.layoutManager._$normalizeContentItem( contentItem, this );
 		this.childElementContainer.append( contentItem.element );
 		lm.items.AbstractContentItem.prototype.addChild.call( this, contentItem );
-		
+
 		this.callDownwards( 'setSize' );
 		this.emitBubblingEvent( 'stateChanged' );
 	},
 
-	setSize: function(width, height) {
+	setSize: function( width, height ) {
 		width = (typeof width === 'undefined') ? this._containerElement.width() : width;
 		height = (typeof height === 'undefined') ? this._containerElement.height() : height;
 
@@ -3501,19 +3801,49 @@ lm.utils.copy( lm.items.Root.prototype, {
 			this.contentItems[ 0 ].element.height( height );
 		}
 	},
+	_$highlightDropZone: function( x, y, area ) {
+		this.layoutManager.tabDropPlaceholder.remove();
+		lm.items.AbstractContentItem.prototype._$highlightDropZone.apply( this, arguments );
+	},
 
-	_$onDrop: function( contentItem ) {
+	_$onDrop: function( contentItem, area ) {
 		var stack;
 
-		if( contentItem.isComponent === true ) {
-			stack = this.layoutManager.createContentItem( {type: 'stack' }, this );
+		if( contentItem.isComponent ) {
+			stack = this.layoutManager.createContentItem( {
+				type: 'stack',
+				header: contentItem.config.header || {}
+			}, this );
+			stack._$init();
 			stack.addChild( contentItem );
-			this.addChild( stack );
-		} else {
+			contentItem = stack;
+		}
+
+		if( !this.contentItems.length ) {
 			this.addChild( contentItem );
+		} else {
+			var type = area.side[ 0 ] == 'x' ? 'row' : 'column';
+			var dimension = area.side[ 0 ] == 'x' ? 'width' : 'height';
+			var insertBefore = area.side[ 1 ] == '2';
+			var column = this.contentItems[ 0 ];
+			if( !column instanceof lm.items.RowOrColumn || column.type != type ) {
+				var rowOrColumn = this.layoutManager.createContentItem( { type: type }, this );
+				this.replaceChild( column, rowOrColumn );
+				rowOrColumn.addChild( contentItem, insertBefore ? 0 : undefined, true );
+				rowOrColumn.addChild( column, insertBefore ? undefined : 0, true );
+				column.config[ dimension ] = 50;
+				contentItem.config[ dimension ] = 50;
+				rowOrColumn.callDownwards( 'setSize' );
+			} else {
+				var sibbling = column.contentItems[ insertBefore ? 0 : column.contentItems.length - 1 ]
+				column.addChild( contentItem, insertBefore ? 0 : undefined, true );
+				sibbling.config[ dimension ] *= 0.5;
+				contentItem.config[ dimension ] = sibbling.config[ dimension ];
+				column.callDownwards( 'setSize' );
+			}
 		}
 	}
-});
+} );
 
 
 
@@ -3522,10 +3852,11 @@ lm.items.RowOrColumn = function( isColumn, layoutManager, config, parent ) {
 
 	this.isRow = !isColumn;
 	this.isColumn = isColumn;
-	
+
 	this.element = $( '<div class="lm_item lm_' + ( isColumn ? 'column' : 'row' ) + '"></div>' );
 	this.childElementContainer = this.element;
 	this._splitterSize = layoutManager.config.dimensions.borderWidth;
+	this._splitterGrabSize = layoutManager.config.dimensions.borderGrabWidth;
 	this._isColumn = isColumn;
 	this._dimension = isColumn ? 'height' : 'width';
 	this._splitter = [];
@@ -3537,7 +3868,7 @@ lm.items.RowOrColumn = function( isColumn, layoutManager, config, parent ) {
 lm.utils.extend( lm.items.RowOrColumn, lm.items.AbstractContentItem );
 
 lm.utils.copy( lm.items.RowOrColumn.prototype, {
-	
+
 	/**
 	 * Add a new contentItem to the Row or Column
 	 *
@@ -3551,18 +3882,18 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	 * @returns {void}
 	 */
 	addChild: function( contentItem, index, _$suspendResize ) {
-	
+
 		var newItemSize, itemSize, i, splitterElement;
-	
+
 		contentItem = this.layoutManager._$normalizeContentItem( contentItem, this );
 
 		if( index === undefined ) {
 			index = this.contentItems.length;
 		}
-	
+
 		if( this.contentItems.length > 0 ) {
 			splitterElement = this._createSplitter( Math.max( 0, index - 1 ) ).element;
-	
+
 			if( index > 0 ) {
 				this.contentItems[ index - 1 ].element.after( splitterElement );
 				splitterElement.after( contentItem.element );
@@ -3573,16 +3904,16 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 		} else {
 			this.childElementContainer.append( contentItem.element );
 		}
-		
+
 		lm.items.AbstractContentItem.prototype.addChild.call( this, contentItem, index );
-	
+
 		newItemSize = ( 1 / this.contentItems.length ) * 100;
-		
+
 		if( _$suspendResize === true ) {
 			this.emitBubblingEvent( 'stateChanged' );
 			return;
 		}
-		
+
 		for( i = 0; i < this.contentItems.length; i++ ) {
 			if( this.contentItems[ i ] === contentItem ) {
 				contentItem.config[ this._dimension ] = newItemSize;
@@ -3591,7 +3922,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 				this.contentItems[ i ].config[ this._dimension ] = itemSize;
 			}
 		}
-		
+
 		this.callDownwards( 'setSize' );
 		this.emitBubblingEvent( 'stateChanged' );
 	},
@@ -3614,7 +3945,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 		if( index === -1 ) {
 			throw new Error( 'Can\'t remove child. ContentItem is not child of this Row or Column' );
 		}
-		
+
 		/**
 		 * Remove the splitter before the item or after if the item happens
 		 * to be the first in the row/column
@@ -3623,7 +3954,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 			this._splitter[ splitterIndex ]._$destroy();
 			this._splitter.splice( splitterIndex, 1 );
 		}
-		
+
 		/**
 		 * Allocate the space that the removed item occupied to the remaining items
 		 */
@@ -3632,7 +3963,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 				this.contentItems[ i ].config[ this._dimension ] += removedItemSize / ( this.contentItems.length - 1 );
 			}
 		}
-	
+
 		lm.items.AbstractContentItem.prototype.removeChild.call( this, contentItem, keepChild );
 
 		if( this.contentItems.length === 1 && this.config.isClosable === true ) {
@@ -3644,7 +3975,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 			this.emitBubblingEvent( 'stateChanged' );
 		}
 	},
-	
+
 	/**
 	 * Replaces a child of this Row or Column with another contentItem
 	 *
@@ -3660,7 +3991,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 		this.callDownwards( 'setSize' );
 		this.emitBubblingEvent( 'stateChanged' );
 	},
-	
+
 	/**
 	 * Called whenever the dimensions of this item or one of its parents change
 	 *
@@ -3674,7 +4005,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 		this.emitBubblingEvent( 'stateChanged' );
 		this.emit( 'resize' );
 	},
-	
+
 	/**
 	 * Invoked recursively by the layout manager. AbstractContentItem.init appends
 	 * the contentItem's DOM elements to the container, RowOrColumn init adds splitters
@@ -3688,95 +4019,111 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 		if( this.isInitialised === true ) return;
 
 		var i;
-	
+
 		lm.items.AbstractContentItem.prototype._$init.call( this );
-		
+
 		for( i = 0; i < this.contentItems.length - 1; i++ ) {
 			this.contentItems[ i ].element.after( this._createSplitter( i ).element );
 		}
 	},
-	
+
 	/**
 	 * Turns the relative sizes calculated by _calculateRelativeSizes into
 	 * absolute pixel values and applies them to the children's DOM elements
 	 *
 	 * Assigns additional pixels to counteract Math.floor
-	 * 
+	 *
 	 * @private
 	 * @returns {void}
 	 */
 	_setAbsoluteSizes: function() {
 		var i,
-			totalSplitterSize = ( this.contentItems.length - 1 ) * this._splitterSize,
+			sizeData = this._calculateAbsoluteSizes();
+
+		for( i = 0; i < this.contentItems.length; i++ ) {
+			if( sizeData.additionalPixel - i > 0 ) {
+				sizeData.itemSizes[ i ]++;
+			}
+
+			if( this._isColumn ) {
+				this.contentItems[ i ].element.width( sizeData.totalWidth );
+				this.contentItems[ i ].element.height( sizeData.itemSizes[ i ] );
+			} else {
+				this.contentItems[ i ].element.width( sizeData.itemSizes[ i ] );
+				this.contentItems[ i ].element.height( sizeData.totalHeight );
+			}
+		}
+	},
+
+	/**
+	 * Calculates the absolute sizes of all of the children of this Item.
+	 * @returns {object} - Set with absolute sizes and additional pixels.
+	 */
+	_calculateAbsoluteSizes: function() {
+		var i,
+			totalSplitterSize = (this.contentItems.length - 1) * this._splitterSize,
 			totalWidth = this.element.width(),
 			totalHeight = this.element.height(),
 			totalAssigned = 0,
 			additionalPixel,
 			itemSize,
 			itemSizes = [];
-	
+
 		if( this._isColumn ) {
 			totalHeight -= totalSplitterSize;
 		} else {
 			totalWidth -= totalSplitterSize;
 		}
-	
+
 		for( i = 0; i < this.contentItems.length; i++ ) {
 			if( this._isColumn ) {
 				itemSize = Math.floor( totalHeight * ( this.contentItems[ i ].config.height / 100 ) );
 			} else {
-				itemSize = Math.floor( totalWidth * ( this.contentItems[ i ].config.width / 100 ) );
+				itemSize = Math.floor( totalWidth * (this.contentItems[ i ].config.width / 100) );
 			}
 
 			totalAssigned += itemSize;
 			itemSizes.push( itemSize );
 		}
 
-		additionalPixel = Math.floor( ( this._isColumn ? totalHeight : totalWidth ) - totalAssigned );
+		additionalPixel = Math.floor( (this._isColumn ? totalHeight : totalWidth) - totalAssigned );
 
-		for( i = 0; i < this.contentItems.length; i++ ) {
-			if( additionalPixel - i > 0 ) {
-				itemSizes[ i ]++;
-			}
-
-			if( this._isColumn ) {
-				this.contentItems[ i ].element.width( totalWidth );
-				this.contentItems[ i ].element.height( itemSizes[ i ] );
-			} else {
-				this.contentItems[ i ].element.width( itemSizes[ i ] );
-				this.contentItems[ i ].element.height( totalHeight );
-			}
-		}
+		return {
+			itemSizes: itemSizes,
+			additionalPixel: additionalPixel,
+			totalWidth: totalWidth,
+			totalHeight: totalHeight
+		};
 	},
-	
+
 	/**
 	 * Calculates the relative sizes of all children of this Item. The logic
 	 * is as follows:
-	 * 
+	 *
 	 * - Add up the total size of all items that have a configured size
 	 *
 	 * - If the total == 100 (check for floating point errors)
-	 *		Excellent, job done
-	 * 
-	 * - If the total is > 100, 
-	 *		set the size of items without set dimensions to 1/3 and add this to the total
-	 *		set the size off all items so that the total is hundred relative to their original size 
+	 *        Excellent, job done
+	 *
+	 * - If the total is > 100,
+	 *        set the size of items without set dimensions to 1/3 and add this to the total
+	 *        set the size off all items so that the total is hundred relative to their original size
 	 *
 	 * - If the total is < 100
-	 *		If there are items without set dimensions, distribute the remainder to 100 evenly between them
-	 *		If there are no items without set dimensions, increase all items sizes relative to
-	 *		their original size so that they add up to 100
+	 *        If there are items without set dimensions, distribute the remainder to 100 evenly between them
+	 *        If there are no items without set dimensions, increase all items sizes relative to
+	 *        their original size so that they add up to 100
 	 *
 	 * @private
 	 * @returns {void}
 	 */
 	_calculateRelativeSizes: function() {
-		
+
 		var i,
 			total = 0,
 			itemsWithoutSetDimension = [],
 			dimension = this._isColumn ? 'height' : 'width';
-	
+
 		for( i = 0; i < this.contentItems.length; i++ ) {
 			if( this.contentItems[ i ].config[ dimension ] !== undefined ) {
 				total += this.contentItems[ i ].config[ dimension ];
@@ -3784,14 +4131,15 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 				itemsWithoutSetDimension.push( this.contentItems[ i ] );
 			}
 		}
-	
+
 		/**
 		 * Everything adds up to hundred, all good :-)
 		 */
 		if( Math.round( total ) === 100 ) {
+			this._respectMinItemWidth();
 			return;
 		}
-	
+
 		/**
 		 * Allocate the remaining size to the items without a set dimension
 		 */
@@ -3799,9 +4147,10 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 			for( i = 0; i < itemsWithoutSetDimension.length; i++ ) {
 				itemsWithoutSetDimension[ i ].config[ dimension ] = ( 100 - total ) / itemsWithoutSetDimension.length;
 			}
+			this._respectMinItemWidth();
 			return;
 		}
-	
+
 		/**
 		 * If the total is > 100, but there are also items without a set dimension left, assing 50
 		 * as their dimension and add it to the total
@@ -3814,15 +4163,97 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 				total += 50;
 			}
 		}
-	
+
 		/**
 		 * Set every items size relative to 100 relative to its size to total
 		 */
 		for( i = 0; i < this.contentItems.length; i++ ) {
 			this.contentItems[ i ].config[ dimension ] = ( this.contentItems[ i ].config[ dimension ] / total ) * 100;
 		}
+
+		this._respectMinItemWidth();
 	},
-	
+
+	/**
+	 * Adjusts the column widths to respect the dimensions minItemWidth if set.
+	 * @returns {}
+	 */
+	_respectMinItemWidth: function() {
+		var minItemWidth = this.layoutManager.config.dimensions ? (this.layoutManager.config.dimensions.minItemWidth || 0) : 0,
+			sizeData = null,
+			entriesOverMin = [],
+			totalOverMin = 0,
+			totalUnderMin = 0,
+			remainingWidth = 0,
+			itemSize = 0,
+			contentItem = null,
+			reducePercent,
+			reducedWidth,
+			allEntries = [],
+			entry;
+
+		if( this._isColumn || !minItemWidth || this.contentItems.length <= 1 ) {
+			return;
+		}
+
+		sizeData = this._calculateAbsoluteSizes();
+
+		/**
+		 * Figure out how much we are under the min item size total and how much room we have to use.
+		 */
+		for( var i = 0; i < this.contentItems.length; i++ ) {
+
+			contentItem = this.contentItems[ i ];
+			itemSize = sizeData.itemSizes[ i ];
+
+			if( itemSize < minItemWidth ) {
+				totalUnderMin += minItemWidth - itemSize;
+				entry = { width: minItemWidth };
+
+			}
+			else {
+				totalOverMin += itemSize - minItemWidth;
+				entry = { width: itemSize };
+				entriesOverMin.push( entry );
+			}
+
+			allEntries.push( entry );
+		}
+
+		/**
+		 * If there is nothing under min, or there is not enough over to make up the difference, do nothing.
+		 */
+		if( totalUnderMin === 0 || totalUnderMin > totalOverMin ) {
+			return;
+		}
+
+		/**
+		 * Evenly reduce all columns that are over the min item width to make up the difference.
+		 */
+		reducePercent = totalUnderMin / totalOverMin;
+		remainingWidth = totalUnderMin;
+		for( i = 0; i < entriesOverMin.length; i++ ) {
+			entry = entriesOverMin[ i ];
+			reducedWidth = Math.round( ( entry.width - minItemWidth ) * reducePercent );
+			remainingWidth -= reducedWidth;
+			entry.width -= reducedWidth;
+		}
+
+		/**
+		 * Take anything remaining from the last item.
+		 */
+		if( remainingWidth !== 0 ) {
+			allEntries[ allEntries.length - 1 ].width -= remainingWidth;
+		}
+
+		/**
+		 * Set every items size relative to 100 relative to its size to total
+		 */
+		for( i = 0; i < this.contentItems.length; i++ ) {
+			this.contentItems[ i ].config.width = (allEntries[ i ].width / sizeData.totalWidth) * 100;
+		}
+	},
+
 	/**
 	 * Instantiates a new lm.controls.Splitter, binds events to it and adds
 	 * it to the array of splitters at the position specified as the index argument
@@ -3835,14 +4266,14 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	 */
 	_createSplitter: function( index ) {
 		var splitter;
-		splitter = new lm.controls.Splitter( this._isColumn, this._splitterSize );
+		splitter = new lm.controls.Splitter( this._isColumn, this._splitterSize, this._splitterGrabSize );
 		splitter.on( 'drag', lm.utils.fnBind( this._onSplitterDrag, this, [ splitter ] ), this );
 		splitter.on( 'dragStop', lm.utils.fnBind( this._onSplitterDragStop, this, [ splitter ] ), this );
 		splitter.on( 'dragStart', lm.utils.fnBind( this._onSplitterDragStart, this, [ splitter ] ), this );
 		this._splitter.splice( index, 0, splitter );
 		return splitter;
 	},
-	
+
 	/**
 	 * Locates the instance of lm.controls.Splitter in the array of
 	 * registered splitters and returns a map containing the contentItem
@@ -3855,7 +4286,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	 */
 	_getItemsForSplitter: function( splitter ) {
 		var index = lm.utils.indexOf( splitter, this._splitter );
-		
+
 		return {
 			before: this.contentItems[ index ],
 			after: this.contentItems[ index + 1 ]
@@ -3867,17 +4298,17 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	 * @param item
 	 * @private
 	 */
-	_getMinimumDimensions: function (arr) {
+	_getMinimumDimensions: function( arr ) {
 		var minWidth = 0, minHeight = 0;
 
-		for (var i = 0; i < arr.length; ++i) {
-			minWidth = Math.max(arr[i].minWidth || 0, minWidth);
-			minHeight = Math.max(arr[i].minHeight || 0, minHeight);
+		for( var i = 0; i < arr.length; ++i ) {
+			minWidth = Math.max( arr[ i ].minWidth || 0, minWidth );
+			minHeight = Math.max( arr[ i ].minHeight || 0, minHeight );
 		}
 
 		return { horizontal: minWidth, vertical: minHeight };
 	},
-	
+
 	/**
 	 * Invoked when a splitter's dragListener fires dragStart. Calculates the splitters
 	 * movement area once (so that it doesn't need calculating on every mousemove event)
@@ -3890,17 +4321,17 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 		var items = this._getItemsForSplitter( splitter ),
 			minSize = this.layoutManager.config.dimensions[ this._isColumn ? 'minItemHeight' : 'minItemWidth' ];
 
-		var beforeMinDim = this._getMinimumDimensions(items.before.config.content);
+		var beforeMinDim = this._getMinimumDimensions( items.before.config.content );
 		var beforeMinSize = this._isColumn ? beforeMinDim.vertical : beforeMinDim.horizontal;
 
-		var afterMinDim = this._getMinimumDimensions(items.after.config.content);
+		var afterMinDim = this._getMinimumDimensions( items.after.config.content );
 		var afterMinSize = this._isColumn ? afterMinDim.vertical : afterMinDim.horizontal;
 
 		this._splitterPosition = 0;
 		this._splitterMinPosition = -1 * ( items.before.element[ this._dimension ]() - (beforeMinSize || minSize) );
 		this._splitterMaxPosition = items.after.element[ this._dimension ]() - (afterMinSize || minSize);
 	},
-	
+
 	/**
 	 * Invoked when a splitter's DragListener fires drag. Updates the splitters DOM position,
 	 * but not the sizes of the elements the splitter controls in order to minimize resize events
@@ -3913,13 +4344,13 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	 */
 	_onSplitterDrag: function( splitter, offsetX, offsetY ) {
 		var offset = this._isColumn ? offsetY : offsetX;
-	
+
 		if( offset > this._splitterMinPosition && offset < this._splitterMaxPosition ) {
 			this._splitterPosition = offset;
 			splitter.element.css( this._isColumn ? 'top' : 'left', offset );
 		}
 	},
-	
+
 	/**
 	 * Invoked when a splitter's DragListener fires dragStop. Resets the splitters DOM position,
 	 * and applies the new sizes to the elements before and after the splitter and their children
@@ -3936,23 +4367,38 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 			sizeAfter = items.after.element[ this._dimension ](),
 			splitterPositionInRange = ( this._splitterPosition + sizeBefore ) / ( sizeBefore + sizeAfter ),
 			totalRelativeSize = items.before.config[ this._dimension ] + items.after.config[ this._dimension ];
-	
+
 		items.before.config[ this._dimension ] = splitterPositionInRange * totalRelativeSize;
 		items.after.config[ this._dimension ] = ( 1 - splitterPositionInRange ) * totalRelativeSize;
-	
-		splitter.element.css({
+
+		splitter.element.css( {
 			'top': 0,
 			'left': 0
-		});
-		
+		} );
+
 		lm.utils.animFrame( lm.utils.fnBind( this.callDownwards, this, [ 'setSize' ] ) );
 	}
-});
+} );
+
 lm.items.Stack = function( layoutManager, config, parent ) {
 	lm.items.AbstractContentItem.call( this, layoutManager, config, parent );
 
 	this.element = $( '<div class="lm_item lm_stack"></div>' );
 	this._activeContentItem = null;
+	var cfg = layoutManager.config;
+	this._header = { // defaults' reconstruction from old configuration style
+		show: cfg.settings.hasHeaders === true && config.hasHeaders !== false,
+		popout: cfg.settings.showPopoutIcon && cfg.labels.popout,
+		maximise: cfg.settings.showMaximiseIcon && cfg.labels.maximise,
+		close: cfg.settings.showCloseIcon && cfg.labels.close,
+		minimise: cfg.labels.minimise,
+	};
+	if( cfg.header ) // load simplified version of header configuration (https://github.com/deepstreamIO/golden-layout/pull/245)
+		lm.utils.copy( this._header, cfg.header );
+	if( config.header ) // load from stack
+		lm.utils.copy( this._header, config.header );
+	if( config.content && config.content[ 0 ] && config.content[ 0 ].header ) // load from component if stack omitted
+		lm.utils.copy( this._header, config.content[ 0 ].header );
 
 	this._dropZones = {};
 	this._dropSegment = null;
@@ -3964,11 +4410,9 @@ lm.items.Stack = function( layoutManager, config, parent ) {
 	this.childElementContainer = $( '<div class="lm_items"></div>' );
 	this.header = new lm.controls.Header( layoutManager, this );
 
-	if( layoutManager.config.settings.hasHeaders === true ) {
-		this.element.append( this.header.element );
-	}
-
+	this.element.append( this.header.element );
 	this.element.append( this.childElementContainer );
+	this._setupHeaderPosition();
 	this._$validateClosability();
 };
 
@@ -3978,8 +4422,9 @@ lm.utils.copy( lm.items.Stack.prototype, {
 
 	setSize: function() {
 		var i,
-			contentWidth = this.element.width(),
-			contentHeight = this.element.height() - this.layoutManager.config.dimensions.headerHeight;
+			headerSize = this._header.show ? this.layoutManager.config.dimensions.headerHeight : 0,
+			contentWidth = this.element.width() - (this._sided ? headerSize : 0),
+			contentHeight = this.element.height() - (!this._sided ? headerSize : 0);
 
 		this.childElementContainer.width( contentWidth );
 		this.childElementContainer.height( contentHeight );
@@ -4009,7 +4454,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 			if( !initialItem ) {
 				throw new Error( 'Configured activeItemIndex out of bounds' );
 			}
-			
+
 			this.setActiveContentItem( initialItem );
 		}
 	},
@@ -4027,6 +4472,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		this.header.setActiveContentItem( contentItem );
 		contentItem._$show();
 		this.emit( 'activeContentItemChanged', contentItem );
+		this.layoutManager.emit( 'activeContentItemChanged', contentItem );
 		this.emitBubblingEvent( 'stateChanged' );
 	},
 
@@ -4049,13 +4495,14 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		var index = lm.utils.indexOf( contentItem, this.contentItems );
 		lm.items.AbstractContentItem.prototype.removeChild.call( this, contentItem, keepChild );
 		this.header.removeTab( contentItem );
-		
-		if( this.contentItems.length > 0 ) {
-			this.setActiveContentItem( this.contentItems[ Math.max( index -1 , 0 ) ] );
-		} else {
-			this._activeContentItem = null;
+		if (this.header.activeContentItem === contentItem) {
+			if (this.contentItems.length > 0) {
+				this.setActiveContentItem(this.contentItems[Math.max(index - 1, 0)]);
+			} else {
+				this._activeContentItem = null;
+			}
 		}
-		
+
 		this._$validateClosability();
 		this.emitBubblingEvent( 'stateChanged' );
 	},
@@ -4075,9 +4522,9 @@ lm.utils.copy( lm.items.Stack.prototype, {
 
 		isClosable = this.header._isClosable();
 
-		for ( i = 0, len = this.contentItems.length; i < len; i++ ) {
-			if (!isClosable) { 
-				break; 
+		for( i = 0, len = this.contentItems.length; i < len; i++ ) {
+			if( !isClosable ) {
+				break;
 			}
 
 			isClosable = this.contentItems[ i ].config.isClosable;
@@ -4097,19 +4544,19 @@ lm.utils.copy( lm.items.Stack.prototype, {
 	 *
 	 * It was dropped on either the stacks header or the top, right, bottom or left bit of the content area
 	 * (which one of those is stored in this._dropSegment). Now, if the user has dropped on the header the case
-	 * is relatively clear: We add the item to the existing stack... job done (might be good to have 
+	 * is relatively clear: We add the item to the existing stack... job done (might be good to have
 	 * tab reordering at some point, but lets not sweat it right now)
 	 *
 	 * If the item was dropped on the content part things are a bit more complicated. If it was dropped on either the
-	 * top or bottom region we need to create a new column and place the items accordingly. 
-	 * Unless, of course if the stack is already within a column... in which case we want 
-	 * to add the newly created item to the existing column... 
+	 * top or bottom region we need to create a new column and place the items accordingly.
+	 * Unless, of course if the stack is already within a column... in which case we want
+	 * to add the newly created item to the existing column...
 	 * either prepend or append it, depending on wether its top or bottom.
 	 *
 	 * Same thing for rows and left / right drop segments... so in total there are 9 things that can potentially happen
 	 * (left, top, right, bottom) * is child of the right parent (row, column) + header drop
-	 * 
-	 * @param	{lm.item} contentItem
+	 *
+	 * @param    {lm.item} contentItem
 	 *
 	 * @returns {void}
 	 */
@@ -4151,7 +4598,10 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		 * The content item can be either a component or a stack. If it is a component, wrap it into a stack
 		 */
 		if( contentItem.isComponent ) {
-			stack = this.layoutManager.createContentItem({ type: 'stack' }, this );
+			stack = this.layoutManager.createContentItem( {
+				type: 'stack',
+				header: contentItem.config.header || {}
+			}, this );
 			stack._$init();
 			stack.addChild( contentItem );
 			contentItem = stack;
@@ -4167,13 +4617,13 @@ lm.utils.copy( lm.items.Stack.prototype, {
 			this.config[ dimension ] *= 0.5;
 			contentItem.config[ dimension ] = this.config[ dimension ];
 			this.parent.callDownwards( 'setSize' );
-		/*
-		 * This handles items that are dropped on top or bottom of a row or left / right of a column. We need
-		 * to create the appropriate contentItem for them to live in
-		 */
+			/*
+			 * This handles items that are dropped on top or bottom of a row or left / right of a column. We need
+			 * to create the appropriate contentItem for them to live in
+			 */
 		} else {
 			type = isVertical ? 'column' : 'row';
-			rowOrColumn = this.layoutManager.createContentItem({ type: type }, this );
+			rowOrColumn = this.layoutManager.createContentItem( { type: type }, this );
 			this.parent.replaceChild( this, rowOrColumn );
 
 			rowOrColumn.addChild( contentItem, insertBefore ? 0 : undefined, true );
@@ -4189,8 +4639,8 @@ lm.utils.copy( lm.items.Stack.prototype, {
 	 * If the user hovers above the header part of the stack, indicate drop positions for tabs.
 	 * otherwise indicate which segment of the body the dragged item would be dropped on
 	 *
-	 * @param	{Int} x Absolute Screen X
-	 * @param	{Int} y Absolute Screen Y
+	 * @param    {Int} x Absolute Screen X
+	 * @param    {Int} y Absolute Screen Y
 	 *
 	 * @returns {void}
 	 */
@@ -4204,12 +4654,12 @@ lm.utils.copy( lm.items.Stack.prototype, {
 
 				if( segment === 'header' ) {
 					this._dropSegment = 'header';
-					this._highlightHeaderDropZone( x );
+					this._highlightHeaderDropZone( this._sided ? y : x );
 				} else {
 					this._resetHeaderDropZone();
 					this._highlightBodyDropZone( segment );
 				}
-				
+
 				return;
 			}
 		}
@@ -4219,7 +4669,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		if( this.element.is( ':visible' ) === false ) {
 			return null;
 		}
-		
+
 		var getArea = lm.items.AbstractContentItem.prototype._$getArea,
 			headerArea = getArea.call( this, this.header.element ),
 			contentArea = getArea.call( this, this.childElementContainer ),
@@ -4303,7 +4753,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 				y2: contentArea.y1 + contentHeight * 0.5
 			}
 		};
-		
+
 		this._contentAreaDimensions.right = {
 			hoverArea: {
 				x1: contentArea.x1 + contentWidth * 0.75,
@@ -4354,12 +4804,12 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		if( tabsLength === 0 ) {
 			headerOffset = this.header.element.offset();
 
-			this.layoutManager.dropTargetIndicator.highlightArea({
+			this.layoutManager.dropTargetIndicator.highlightArea( {
 				x1: headerOffset.left,
 				x2: headerOffset.left + 100,
 				y1: headerOffset.top + this.header.element.height() - 20,
 				y2: headerOffset.top + this.header.element.height()
-			});
+			} );
 
 			return;
 		}
@@ -4367,9 +4817,15 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		for( i = 0; i < tabsLength; i++ ) {
 			tabElement = this.header.tabs[ i ].element;
 			offset = tabElement.offset();
-			tabLeft = offset.left;
-			tabTop = offset.top;
-			tabWidth = tabElement.width();
+			if( this._sided ) {
+				tabLeft = offset.top;
+				tabTop = offset.left;
+				tabWidth = tabElement.height();
+			} else {
+				tabLeft = offset.left;
+				tabTop = offset.top;
+				tabWidth = tabElement.width();
+			}
 
 			if( x > tabLeft && x < tabLeft + tabWidth ) {
 				isAboveTab = true;
@@ -4392,18 +4848,43 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		}
 
 
+		if( this._sided ) {
+			placeHolderTop = this.layoutManager.tabDropPlaceholder.offset().top;
+			this.layoutManager.dropTargetIndicator.highlightArea( {
+				x1: tabTop,
+				x2: tabTop + tabElement.innerHeight(),
+				y1: placeHolderTop,
+				y2: placeHolderTop + this.layoutManager.tabDropPlaceholder.width()
+			} );
+			return;
+		}
 		placeHolderLeft = this.layoutManager.tabDropPlaceholder.offset().left;
 
-		this.layoutManager.dropTargetIndicator.highlightArea({
+		this.layoutManager.dropTargetIndicator.highlightArea( {
 			x1: placeHolderLeft,
 			x2: placeHolderLeft + this.layoutManager.tabDropPlaceholder.width(),
 			y1: tabTop,
 			y2: tabTop + tabElement.innerHeight()
-		});
+		} );
 	},
 
 	_resetHeaderDropZone: function() {
 		this.layoutManager.tabDropPlaceholder.remove();
+	},
+
+	_setupHeaderPosition: function() {
+		var side = [ 'right', 'left', 'bottom' ].indexOf( this._header.show ) >= 0 && this._header.show;
+		this.header.element.toggle( !!this._header.show );
+		this._side = side;
+		this._sided = [ 'right', 'left' ].indexOf( this._side ) >= 0;
+		this.element.removeClass( 'lm_left lm_right lm_bottom' );
+		if( this._side )
+			this.element.addClass( 'lm_' + this._side );
+		if( this.element.find( '.lm_header' ).length && this.childElementContainer ) {
+			var headerPosition = [ 'right', 'bottom' ].indexOf( this._side ) >= 0 ? 'before' : 'after';
+			this.header.element[ headerPosition ]( this.childElementContainer );
+			this.callDownwards( 'setSize' );
+		}
 	},
 
 	_highlightBodyDropZone: function( segment ) {
@@ -4411,7 +4892,7 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		this.layoutManager.dropTargetIndicator.highlightArea( highlightArea );
 		this._dropSegment = segment;
 	}
-});
+} );
 
 lm.utils.BubblingEvent = function( name, origin ) {
 	this.name = name;
@@ -4424,11 +4905,12 @@ lm.utils.BubblingEvent.prototype.stopPropagation = function() {
 };
 /**
  * Minifies and unminifies configs by replacing frequent keys
- * and values with one letter substitutes
+ * and values with one letter substitutes. Config options must
+ * retain array position/index, add new options at the end.
  *
  * @constructor
  */
-lm.utils.ConfigMinifier = function(){
+lm.utils.ConfigMinifier = function() {
 	this._keys = [
 		'settings',
 		'hasHeaders',
@@ -4459,14 +4941,17 @@ lm.utils.ConfigMinifier = function(){
 		'openPopouts',
 		'parentId',
 		'activeItemIndex',
-		'reorderEnabled'
-
+		'reorderEnabled',
+		'borderGrabWidth',
 
 
 
 
 		//Maximum 36 entries, do not cross this line!
 	];
+	if( this._keys.length > 36 ) {
+		throw new Error( 'Too many keys in config minifier map' );
+	}
 
 	this._values = [
 		true,
@@ -4507,7 +4992,7 @@ lm.utils.copy( lm.utils.ConfigMinifier.prototype, {
 	 *
 	 * @returns {Object} the original configuration
 	 */
-	unminifyConfig: function( minifiedConfig ) { 
+	unminifyConfig: function( minifiedConfig ) {
 		var orig = {};
 		this._nextLevel( minifiedConfig, orig, '_max' );
 		return orig;
@@ -4518,7 +5003,7 @@ lm.utils.copy( lm.utils.ConfigMinifier.prototype, {
 	 *
 	 * @param   {Array|Object} orig
 	 * @param   {Array|Object} min
-	 * @param 	{String} translationFn
+	 * @param    {String} translationFn
 	 *
 	 * @returns {void}
 	 */
@@ -4550,10 +5035,10 @@ lm.utils.copy( lm.utils.ConfigMinifier.prototype, {
 				to[ minKey ] = from[ key ] instanceof Array ? [] : {};
 				this._nextLevel( from[ key ], to[ minKey ], translationFn );
 
-			/**
-			 * For primitive values (Strings, Numbers, Boolean etc.)
-			 * minify the value
-			 */
+				/**
+				 * For primitive values (Strings, Numbers, Boolean etc.)
+				 * minify the value
+				 */
 			} else {
 				to[ minKey ] = this[ translationFn ]( from[ key ], this._values );
 			}
@@ -4578,16 +5063,16 @@ lm.utils.copy( lm.utils.ConfigMinifier.prototype, {
 		}
 
 		var index = lm.utils.indexOf( value, dictionary );
-		
+
 		/**
 		 * value not found in the dictionary, return it unmodified
 		 */
 		if( index === -1 ) {
 			return value;
 
-		/**
-		 * value found in dictionary, return its base36 counterpart
-		 */
+			/**
+			 * value found in dictionary, return its base36 counterpart
+			 */
 		} else {
 			return index.toString( 36 );
 		}
@@ -4615,7 +5100,7 @@ lm.utils.copy( lm.utils.ConfigMinifier.prototype, {
 		 */
 		return value;
 	}
-});
+} );
 
 /**
  * An EventEmitter singleton that propagates events
@@ -4629,7 +5114,7 @@ lm.utils.copy( lm.utils.ConfigMinifier.prototype, {
  * - Propagate events from children to the other children (but not the emitting one) and the parent
  *
  * @constructor
- * 
+ *
  * @param {lm.LayoutManager} layoutManager
  */
 lm.utils.EventHub = function( layoutManager ) {
@@ -4639,7 +5124,7 @@ lm.utils.EventHub = function( layoutManager ) {
 	this._childEventSource = null;
 	this.on( lm.utils.EventEmitter.ALL_EVENT, lm.utils.fnBind( this._onEventFromThis, this ) );
 	this._boundOnEventFromChild = lm.utils.fnBind( this._onEventFromChild, this );
-	$(window).on( 'gl_child_event', this._boundOnEventFromChild );
+	$( window ).on( 'gl_child_event', this._boundOnEventFromChild );
 };
 
 /**
@@ -4648,7 +5133,7 @@ lm.utils.EventHub = function( layoutManager ) {
  * @private
  *
  * @param {Mixed}
- * 
+ *
  * @returns {void}
  */
 lm.utils.EventHub.prototype._onEventFromThis = function() {
@@ -4700,11 +5185,11 @@ lm.utils.EventHub.prototype._onEventFromChild = function( event ) {
  */
 lm.utils.EventHub.prototype._propagateToParent = function( args ) {
 	var event,
-		eventName = 'gl_child_event'; 
+		eventName = 'gl_child_event';
 
-	if (document.createEvent) {
+	if( document.createEvent ) {
 		event = window.opener.document.createEvent( 'HTMLEvents' );
-		event.initEvent( eventName, true, true);
+		event.initEvent( eventName, true, true );
 	} else {
 		event = window.opener.document.createEventObject();
 		event.eventType = eventName;
@@ -4714,8 +5199,8 @@ lm.utils.EventHub.prototype._propagateToParent = function( args ) {
 	event.__glArgs = args;
 	event.__gl = this._layoutManager;
 
-	if (document.createEvent) {
-		window.opener.dispatchEvent(event);
+	if( document.createEvent ) {
+		window.opener.dispatchEvent( event );
 	} else {
 		window.opener.fireEvent( 'on' + event.eventType, event );
 	}
@@ -4750,7 +5235,7 @@ lm.utils.EventHub.prototype._propagateToChildren = function( args ) {
  */
 
 lm.utils.EventHub.prototype.destroy = function() {
-	$(window).off( 'gl_child_event', this._boundOnEventFromChild );
+	$( window ).off( 'gl_child_event', this._boundOnEventFromChild );
 };
 /**
  * A specialised GoldenLayout component that binds GoldenLayout container
@@ -4783,8 +5268,9 @@ lm.utils.copy( lm.utils.ReactComponentHandler.prototype, {
 	 * @returns {void}
 	 */
 	_render: function() {
-		this._reactComponent = ReactDOM.render( this._getReactComponent(), this._container.getElement()[ 0 ]);
-		this._originalComponentWillUpdate = this._reactComponent.componentWillUpdate || function(){};
+		this._reactComponent = ReactDOM.render( this._getReactComponent(), this._container.getElement()[ 0 ] );
+		this._originalComponentWillUpdate = this._reactComponent.componentWillUpdate || function() {
+			};
 		this._reactComponent.componentWillUpdate = this._onUpdate.bind( this );
 		if( this._container.getState() ) {
 			this._reactComponent.setState( this._container.getState() );
@@ -4798,7 +5284,7 @@ lm.utils.copy( lm.utils.ReactComponentHandler.prototype, {
 	 * @returns {void}
 	 */
 	_destroy: function() {
-		ReactDOM.unmountComponentAtNode( this._container.getElement()[ 0 ]);
+		ReactDOM.unmountComponentAtNode( this._container.getElement()[ 0 ] );
 		this._container.off( 'open', this._render, this );
 		this._container.off( 'destroy', this._destroy, this );
 	},
@@ -4853,4 +5339,4 @@ lm.utils.copy( lm.utils.ReactComponentHandler.prototype, {
 		var props = $.extend( defaultProps, this._container._config.props );
 		return React.createElement( this._reactClass, props );
 	}
-});})(window.$);
+} );})(window.$);

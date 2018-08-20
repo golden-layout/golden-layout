@@ -1,20 +1,19 @@
-lm.utils.DragListener = function(eElement, nButtonCode)
-{
-	lm.utils.EventEmitter.call(this);
+lm.utils.DragListener = function( eElement, nButtonCode ) {
+	lm.utils.EventEmitter.call( this );
 
-	this._eElement = $(eElement);
-	this._oDocument = $(document);
-	this._eBody = $(document.body);
+	this._eElement = $( eElement );
+	this._oDocument = $( document );
+	this._eBody = $( document.body );
 	this._nButtonCode = nButtonCode || 0;
 
 	/**
-	* The delay after which to start the drag in milliseconds
-	*/
+	 * The delay after which to start the drag in milliseconds
+	 */
 	this._nDelay = 200;
 
 	/**
-	* The distance the mouse needs to be moved to qualify as a drag
-	*/
+	 * The distance the mouse needs to be moved to qualify as a drag
+	 */
 	this._nDistance = 10;//TODO - works better with delay only
 
 	this._nX = 0;
@@ -38,19 +37,16 @@ lm.utils.DragListener.timeout = null;
 lm.utils.copy( lm.utils.DragListener.prototype, {
 	destroy: function() {
 		this._eElement.unbind( 'mousedown touchstart', this._fDown );
+        this._oDocument.unbind( 'mouseup touchend', this._fUp );
+        this._eElement = null;
+        this._oDocument = null;
+        this._eBody = null;
 	},
 
-	onMouseDown: function(oEvent)
-	{
-
-		/* allows for input in title (eg inplace title edit) */
-		if($(oEvent.target).is('input')){
-			return;
-		}
-
+	onMouseDown: function( oEvent ) {
 		oEvent.preventDefault();
 
-		if (oEvent.button == 0) {
+		if( oEvent.button == 0 || oEvent.type === "touchstart" ) {
 			var coordinates = this._getCoordinates( oEvent );
 
 			this._nOriginalX = coordinates.x;
@@ -63,40 +59,39 @@ lm.utils.copy( lm.utils.DragListener.prototype, {
 		}
 	},
 
-	onMouseMove: function(oEvent)
-	{
-		if (this._timeout != null) {
+	onMouseMove: function( oEvent ) {
+		if( this._timeout != null ) {
 			oEvent.preventDefault();
 
-			var coordinates = this._getCoordinates(oEvent);
+			var coordinates = this._getCoordinates( oEvent );
 
 			this._nX = coordinates.x - this._nOriginalX;
 			this._nY = coordinates.y - this._nOriginalY;
 
-			if (this._bDragging === false) {
-				if (
-					Math.abs(this._nX) > this._nDistance ||
-					Math.abs(this._nY) > this._nDistance
+			if( this._bDragging === false ) {
+				if(
+					Math.abs( this._nX ) > this._nDistance ||
+					Math.abs( this._nY ) > this._nDistance
 				) {
-					clearTimeout(this._timeout);
+					clearTimeout( this._timeout );
 					this._startDrag();
 				}
 			}
 
-			if (this._bDragging) {
-				this.emit('drag', this._nX, this._nY, oEvent);
+			if( this._bDragging ) {
+				this.emit( 'drag', this._nX, this._nY, oEvent );
 			}
 		}
 	},
 
-	onMouseUp: function(oEvent)
-	{
-		if(this._timeout != null) {
+	onMouseUp: function( oEvent ) {
+		if( this._timeout != null ) {
 			clearTimeout( this._timeout );
 			this._eBody.removeClass( 'lm_dragging' );
 			this._eElement.removeClass( 'lm_dragging' );
 			this._oDocument.find( 'iframe' ).css( 'pointer-events', '' );
 			this._oDocument.unbind( 'mousemove touchmove', this._fMove );
+			this._oDocument.unbind( 'mouseup touchend', this._fUp );
 
 			if( this._bDragging === true ) {
 				this._bDragging = false;
@@ -105,20 +100,19 @@ lm.utils.copy( lm.utils.DragListener.prototype, {
 		}
 	},
 
-	_startDrag: function()
-	{
+	_startDrag: function() {
 		this._bDragging = true;
 		this._eBody.addClass( 'lm_dragging' );
 		this._eElement.addClass( 'lm_dragging' );
 		this._oDocument.find( 'iframe' ).css( 'pointer-events', 'none' );
-		this.emit('dragStart', this._nOriginalX, this._nOriginalY);
+		this.emit( 'dragStart', this._nOriginalX, this._nOriginalY );
 	},
 
 	_getCoordinates: function( event ) {
-		event = event.originalEvent.touches ? event.originalEvent.touches[0] : event;
- 		return {
- 			x: event.pageX,
- 			y: event.pageY
- 		};
+		event = event.originalEvent && event.originalEvent.touches ? event.originalEvent.touches[ 0 ] : event;
+		return {
+			x: event.pageX,
+			y: event.pageY
+		};
 	}
-});
+} );

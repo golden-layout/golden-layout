@@ -6,6 +6,7 @@ h2{
 
 .lm_content{
   text-align: center;
+	color: white;
 }
 
 body {
@@ -13,4 +14,30 @@ body {
     width: 100%;
     position: absolute;
     transition: all 0.5s ease;
+}
+
+#menuContainer {
+  list-style: none;
+  margin: 10px;
+  padding: 0;
+}
+
+#menuContainer:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+#menuContainer li {
+  float: left;
+  margin-right: 10px;
+}
+
+#menuContainer li a {
+  background-color: black;
+  color: white;
+  padding: 5px;
+  text-decoration: none;
+  font-family: Arial, sans-serif;
+  font-size: 12px;
 }
