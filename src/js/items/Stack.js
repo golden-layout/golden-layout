@@ -119,6 +119,8 @@ lm.utils.copy( lm.items.Stack.prototype, {
 			} else {
 				this._activeContentItem = null;
 			}
+		} else {
+			this.header.updateActiveIndex();
 		}
 
 		this._$validateClosability();

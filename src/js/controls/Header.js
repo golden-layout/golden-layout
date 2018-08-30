@@ -103,6 +103,21 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		throw new Error( 'contentItem is not controlled by this header' );
 	},
 
+    /**
+	 * Update stack config after not active tab was deleted
+	 *
+	 * @returns {void}
+     */
+    updateActiveIndex: function() {
+        for( var i = 0; i < this.tabs.length; i++ ) {
+            if( this.tabs[ i ].isActive === true && this.parent.config.activeItemIndex !== i ) {
+                this.parent.config.activeItemIndex = i;
+
+                return;
+            }
+        }
+    },
+
 	/**
 	 * The programmatical equivalent of clicking a Tab.
 	 *
