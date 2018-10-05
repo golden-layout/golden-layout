@@ -543,6 +543,7 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 			this._$minimiseItem( this._maximisedItem );
 		}
 		this._maximisedItem = contentItem;
+		contentItem.on( 'beforeItemDestroyed', this._$cleanupBeforeMaximisedItemDestroyed, this );
 		this._maximisedItem.addId( '__glMaximised' );
 		contentItem.element.addClass( 'lm_maximised' );
 		contentItem.element.after( this._maximisePlaceholder );
@@ -561,8 +562,16 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		this._maximisePlaceholder.remove();
 		contentItem.parent.callDownwards( 'setSize' );
 		this._maximisedItem = null;
+		contentItem.off( 'beforeItemDestroyed', this._$cleanupBeforeMaximisedItemDestroyed, this );
 		contentItem.emit( 'minimised' );
 		this.emit( 'stateChanged' );
+	},
+
+	_$cleanupBeforeMaximisedItemDestroyed: function( contentItem ) {
+		if (this._maximisedItem === event.origin) {
+			this._maximisedItem.off( 'beforeItemDestroyed', this._$cleanupBeforeMaximisedItemDestroyed, this );
+			this._maximisedItem = null;
+		}
 	},
 
 	/**
