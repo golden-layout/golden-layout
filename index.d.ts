@@ -107,7 +107,7 @@ declare module 'golden-layout' {
          * @param itemConfiguration An item configuration (can be an entire tree of items)
          * @param parent A parent item
          */
-        createContentItem(itemConfiguration?: GoldenLayout.ItemConfigType, parent?: GoldenLayout.ContentItem): void;
+        createContentItem(itemConfiguration?: GoldenLayout.ItemConfigType, parent?: GoldenLayout.ContentItem): GoldenLayout.ContentItem;
 
         /**
          * Creates a new popout window with configOrContentItem as contents at the position specified in dimensions
