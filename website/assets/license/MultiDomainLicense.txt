@@ -1,0 +1,63 @@
+PLEASE READ CAREFULLY BEFORE USING THIS PRODUCT: This license agreement (hereinafter, the “License”) is a binding legal agreement between (a) you (either in your capacity as an individual or as a single entity) and (b) Hoxton One Ltd. (hereinafter, “GoldenLayout”) that governs your use of the GoldenLayout JavaScript Layout Management software, together with any electronic documentation that may be provided therewith (collectively, “the Software”) through the Software. Other software provided by third parties and used with the Software may be subject to a separate license agreement.
+
+BY INSTALLING OR OTHERWISE USING THE SOFTWARE YOU AGREE TO BE BOUND BY THE TERMS OF THIS LICENSE. IF YOU DO NOT ACCEPT THESE LICENSE TERMS, YOUR SOLE REMEDY IS TO REQUEST A REFUND AS SPECIFIED ON THE GOLDEN LAYOUT WEBSITE, LOCATED ON THE INTERNET AT http://golden-layout.com.
+
+YOU HEREBY AGREE, BOTH ON YOUR OWN BEHALF AND AS AN AUTHORIZED REPRESENTATIVE OF ANY ORGANIZATION FOR WHICH YOU ARE USING THE SOFTWARE (hereinafter, the “EMPLOYER”), THAT YOU AND THE EMPLOYER WILL USE THE SOFTWARE ONLY IN ACCORDANCE WITH AND SUBJECT TO THE FOLLOWING TERMS:
+
+1. GRANT OF LICENSE
+
+GoldenLayout grants you the following non-exclusive rights provided you agree to and comply with all terms and conditions of this License and upon your full payment of the applicable fees: a personal, nonexclusive, nontransferable license to install and use the Software on Internet Websites developed, maintained or owned by you or your company. This License is effective until terminated as provided herein. You may terminate this License by destroying the Software and any copies of the Software in your possession. This License will terminate automatically upon any violation of its terms by you or by the Employer, as determined by GoldenLayout in its sole discretion.
+
+2. UPGRADES
+
+The rights granted to you in this License may entitle you to certain upgraded versions of the Software, as GoldenLayout continues to develop and improve the Software. Subject to any further agreements between you and GoldenLayout, this License shall entitle you to minor version upgrades of the Software for the length of your subscription. For the purpose of this License, “Minor Version Upgrades” shall mean any change to the Software that causes the version number to change in a minor way. (For example, 3.33 to 3.34.) Whether an upgrade is a Minor Version Upgrade or another kind of upgrade shall be determined by GoldenLayout in its sole discretion.
+
+3. ADDITIONAL SOFTWARE
+
+This License applies only to the Software and updates or supplements to the Software provided by GoldenLayout. Depending on how you choose to deploy the Software, you may need to acquire licenses to other, third-party software. GoldenLayout shall not be liable or otherwise responsible for your failure to obtain such licenses.
+
+4. TRANSFER
+
+The Software may only be transferred to another party in the event that you are entering into this agreement on behalf of the Employer, and the Employer or the Employer’s parent entity is acquired. Any transfer must include all component parts, media, printed materials and this License. You may not rent, lease or lend the Software or use the Software for “timeshare” use. You may not sublicense, assign or transfer the license or Software except as expressly provided in this License.
+
+5. PROPRIETARY RIGHTS
+
+All intellectual property rights in the Software are owned by GoldenLayout or its suppliers, as applicable, and are protected by law, including but not limited to Great British copyright, trade secret, and trademark law, as well as other applicable laws and international treaty provisions. The structure, organization and code of the Software are valuable trade secrets and confidential information of GoldenLayout and its suppliers. You shall not remove any product identification, copyright notices or proprietary restrictions from the Software.
+
+6. LICENSE RESTRICTIONS
+
+You agree that you may not and shall not and that if applicable, the Employer may not and shall not (a) modify or create derivative works based upon the Software; (b) decompile, disassemble, or reverse engineer the Software in whole or in part; (c) defeat, disable, or circumvent any protection mechanism related to the Software; (d) use the Software or any parts of it to develop a product directly competing with the Software.
+
+Nothing contained herein shall be construed, expressly or implicitly, as transferring any right, license or title to you other than those explicitly granted under this License. Unauthorized copying of the Software or failure to comply with the restrictions herein, as determined by GoldenLayout in its sole discretion will result in automatic termination of this License and will constitute immediate, irreparable harm to GoldenLayout for which monetary damages would be an inadequate remedy, in which case injunctive relief will be an appropriate remedy for such breach.
+
+7. TERM
+
+This License is effective unless terminated or rejected. This License will also terminate upon conditions set forth elsewhere in this License or if you fail to comply with any term or condition of this License, as determined by GoldenLayout in its sole discretion.
+
+8. CONSENT TO USE OF DATA
+
+You agree that GoldenLayout and its affiliates or suppliers may collect and use technical information you provide in relation to support services related to the Software. GoldenLayout and its suppliers agree not to use this information in a form that personally identifies you except to the extent necessary to provide such services.
+
+9. DISCLAIMER OF WARRANTIES
+
+You acknowledge that the Software is offered on an “AS-IS,” “AS-AVAILABLE” basis and GoldenLayout does not warrant that the functions contained in the Software will meet your requirements or that the operation of the Software will be uninterrupted or error free. Computer software is inherently subject to bugs and potential incompatibility with other computer software and hardware exists and cannot reasonably be eliminated. You should not use the Software for any applications in which failure could cause any significant damage or injury to persons or tangible or intangible property.
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, GoldenLayout AND ITS SUPPLIERS PROVIDE THE SOFTWARE PRODUCT “AS IS” AND WITH ALL FAULTS, AND HEREBY DISCLAIM ALL OTHER WARRANTIES AND CONDITIONS, EITHER EXPRESS, IMPLIED, OR STATUTORY, INCLUDING, BUT NOT LIMITED TO, WARRANTIES OF TITLE AND NON-INFRINGEMENT, ANY IMPLIED WARRANTIES, DUTIES OR CONDITIONS OF MERCHANTABILITY, OF FITNESS FOR A PARTICULAR PURPOSE, AND OF LACK OF VIRUSES ALL WITH REGARD TO THE SOFTWARE PRODUCT. NO ORAL OR WRITTEN INFORMATION OR ADVICE GIVEN BY GoldenLayout OR AN GoldenLayout AUTHORIZED REPRESENTATIVE SHALL CREATE A WARRANTY.
+
+Some jurisdictions do not allow exclusion of implied warranties or limitations on the duration of implied warranties, so the above disclaimer may not apply to you in its entirety. IN NO EVENT DOES GoldenLayout PROVIDE ANY WARRANTY OR REPRESENTATIONS WITH RESPECT TO ANY THIRD PARTY HARDWARE OR SOFTWARE WITH WHICH THE SOFTWARE IS DESIGNED TO BE USED, AND GoldenLayout DISCLAIMS ALL LIABILITY WITH RESPECT TO ANY FAILURES THEREOF.
+
+10. LIMITATION OF LIABILITY
+
+Notwithstanding any damages that you might incur, the entire liability of GoldenLayout and any of its suppliers under any provision of this License and your exclusive remedy for all of the foregoing shall be limited to the greater of the amount actually paid by you for the Software or GBP 399.00. TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL GoldenLayout OR ITS SUPPLIERS BE LIABLE FOR ANY SPECIAL, INCIDENTAL, INDIRECT, OR CONSEQUENTIAL DAMAGES WHATSOEVER (INCLUDING, BUT NOT LIMITED TO, DAMAGES FOR LOSS OF PROFITS, FOR LOSS OF DATA OR OTHER INFORMATION, FOR BUSINESS INTERRUPTION, FOR PERSONAL INJURY, FOR LOSS OF PRIVACY ARISING OUT OF OR IN ANY WAY RELATED TO THE USE OF OR INABILITY TO USE THE SOFTWARE PRODUCT, OR OTHERWISE IN CONNECTION WITH ANY PROVISION OF THIS LICENSE), EVEN IF GoldenLayout OR ANY SUPPLIER HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES AND EVEN IF THE REMEDY FAILS OF ITS ESSENTIAL PURPOSE. Some jurisdictions do not allow the exclusion or limitation of incidental or consequential damages, so the above limitation or exclusion may not apply to you.
+
+11. CAPACITY AND AUTHORITY TO CONTRACT
+
+You represent that you are of the legal age of majority in your jurisdiction of residence and, if applicable, you are duly authorized by the Employer to enter into this contract.
+
+12. APPLICABLE LAW AND SEVERABILITY
+
+This License shall be governed by the laws of the United Kingdom without regard to the provisions regarding conflicts of law. You agree that this License shall not be governed by the United Nations Convention on Contracts for the International Sale of Goods, the application of which is expressly excluded. You irrevocably submit to the jurisdiction of the state courts sitting in, and any action or proceeding arising out of this License will be heard and determined in such court. If for any reason a court of competent jurisdiction finds any provision, or portion thereof, to be unenforceable, such provision will be interpreted in order to give effect to such provision to the maximum extent permitted by law, and the remainder of this License will continue in full force and effect.
+
+13. ENTIRE AGREEMENT
+
+This License (including any addendum or amendment to this License or as included with the Software) contains the entire agreement between you and GoldenLayout relating to the Software, and the License supersedes all prior or contemporaneous oral or written communications, proposals and representations with respect to the Software or any other subject matter covered by this License. To the extent the terms of any GoldenLayout policies or programs for support services conflict with the terms of this License, the terms of this License shall control.

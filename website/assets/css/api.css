@@ -1,0 +1,330 @@
+body{
+	background: #fff;
+}
+
+nav{
+	background: #fff;
+}
+
+/***********************
+* STRUCTURE
+***********************/
+#wrapper{
+	padding-top: 60px;
+	width: 980px;
+	margin: 0 auto;
+	overflow: hidden;
+}
+
+#wrapper > #subnav{
+	width: 500px;
+	margin-left: -340px;
+	float: left;
+	padding: 0;
+	margin-top: 18px;
+	position: fixed;
+	overflow-x: visible;
+	overflow-y: auto;
+}
+
+#wrapper > #content{
+	margin-left: 190px;
+	width: 700px;
+	float: left;
+}
+
+
+/***********************
+* SUBNAV
+***********************/
+#wrapper > #subnav li{
+	margin-bottom: 10px;
+	text-align: right;
+	border-right: 3px solid transparent;
+	padding-right: 10px;
+	position: relative;
+	clear:both;
+}
+
+#wrapper > #subnav *{
+	font: 14px/16px Roboto, sans-serif;
+}
+
+#wrapper > #subnav li.head{
+	color: #888;
+	margin-top: 30px;
+	padding-right: 0;
+	margin-right: 10px;
+	width: 140px;
+	float: right;
+}
+
+#wrapper > #subnav li.head.first{
+	margin-top: 0;
+}
+
+#wrapper > #subnav li.active a{
+	color: #6B0E79;
+	font-weight: 500;
+}
+
+#wrapper > #subnav li a:hover{
+	color: #6B0E79;
+}
+
+#wrapper > #subnav li a{
+	color: #202020;
+	text-decoration: none;
+}
+
+#wrapper > #subnav li .overview li{
+	margin: 0;
+	padding: 0;
+	border: none;
+}
+
+#wrapper > #subnav li .overview li a{
+	font-size: 11px;
+	color: #666;
+	display: block;
+	padding: 3px 0;
+}
+
+#wrapper > #subnav li .overview li a:hover{
+	color: #0da4d3;
+}
+
+#wrapper > #subnav li .overview li a.active{
+	color: #ef7d17;
+}
+
+#content a:target{
+	color: #ef7d17;
+}
+
+#content .target{
+	border: 1px solid #ef7d17;
+}
+
+#content .target h2 a{
+	color: #ef7d17;
+}
+
+/***********************
+* DOCS INDEX
+***********************/
+#docsIndex{
+	background: #fff;
+	padding: 20px;
+	box-shadow: 0 0 2px rgba(0,0,0,0.3);
+}
+
+#docsIndex ul{
+	overflow: hidden;
+	padding: 0;
+}
+
+#docsIndex li{
+	float: left;
+	margin: 10px 20px;
+	width: 290px;
+	padding: 0 !important;
+	list-style-type: none !important;
+}
+
+#docsIndex li a{
+	display: block;
+	padding: 10px;
+	text-decoration: none;
+	color: #333;
+	cursor: pointer;
+	box-shadow: 0px 0px 5px 1px rgba(0,0,0,0.1);
+	transition: box-shadow 400ms ease;
+}
+
+#docsIndex li a:hover{
+	box-shadow: 0px 0px 5px 1px rgba(0,0,0,0.3);
+}
+
+#docsIndex li a h5{
+	margin: 0 0 3px !important;
+	padding-bottom: 2px;
+}
+/***********************
+* CONTENT
+***********************/
+#wrapper > #content{
+	margin-bottom: 10px;
+}
+
+#wrapper > #content *{
+	font: 14px/16px Roboto, sans-serif;
+}
+
+#wrapper > #content .section{
+	background: #fff;
+	margin-bottom: 20px;
+	padding: 20px;
+	box-shadow: 0 0 2px rgba(0,0,0,0.3);
+}
+
+#wrapper > #content h2,
+#wrapper > #content table.args *,
+#wrapper > #content p{
+	color: #202020;
+}
+
+#wrapper > #content p{
+	margin: 7px 0;
+}
+
+#wrapper > #content h2{
+	font-size: 20px;
+	margin-top: 50px;
+	font-weight: normal;
+	padding-bottom: 5px;
+}
+
+
+#wrapper > #content h2:first-child{
+	margin-top: 0;
+}
+
+#wrapper > #content h4{
+	margin-top: 20px;
+	padding-bottom: 2px;
+	border-bottom: 1px solid #ccc;
+	margin-bottom: 10px;
+	font-weight:bold;
+}
+
+#wrapper > #content h5{
+	margin-top: 20px;
+	margin-bottom: 5px;
+	font-weight:bold;
+}
+
+#wrapper > #content table.args{
+	text-align: left;
+	width: 100%;
+	vertical-align: top;
+}
+
+#wrapper > #content table.args th{
+	font-weight: normal;
+	color: #888;
+	width: 14%;
+}
+
+#wrapper > #content table.args td{
+	border-bottom: 1px dashed #ccc;
+	padding-bottom: 5px;
+	vertical-align: top;
+}
+
+#wrapper > #content table.args tr:last-child td{
+	border: none;
+}
+
+#wrapper > #content table.args .description{
+	width: 44%;
+}
+
+#wrapper > #content pre{
+    margin: 10px 0;
+    display: block;
+    overflow-x: auto;
+    padding: 10px;
+    background: #fafafa;
+    color: #222;
+    border: 1px solid #ddd;
+}
+
+#wrapper > #content pre *{
+	font-family: Consolas, Monaco, 'Andale Mono', monospace;
+}
+
+#wrapper > #content h1{
+	font-size: 14px;
+	padding-bottom: 3px;
+	margin-bottom: 10px;
+	font-weight: normal;
+}
+#wrapper > #content h3{
+	font-size: 14px;
+	margin-top: 30px;
+	font-weight: normal;
+	padding-bottom: 5px;
+}
+
+#wrapper > #content ul, #wrapper > #content ul li{
+	list-style-type: disc;
+}
+
+ #wrapper > #content ul li{
+ 	padding-top: 5px;
+ 	padding-bottom: 5px;
+ }
+
+ #wrapper > #content code{
+ 	color: #f92672;
+ }
+
+#wrapper > #content pre code{
+	color: #333;
+}
+
+#wrapper > #content div.info{
+	border-left: 2px solid #00509a;
+	color:#00509a;
+	background:#c9e5ff;
+	padding: 5px;
+	font-weight: bold;
+}
+
+#wrapper > #content img.centered{
+	margin: 5px auto;
+	display: block;
+}
+
+.category_tutorials #wrapper > #content {
+	background: #fff;
+	padding: 10px;
+}
+/** category_tutorials **/
+
+#categoryList, #categoryList li{
+	margin: 0;
+	padding: 0;
+	list-style-type: none;
+}
+
+#categoryList, #categoryList li{
+	overflow: hidden;
+}
+
+#categoryList li img{
+	display: block;
+	float: left;
+	margin-right: 10px;
+}
+
+#categoryList li a{
+	display: block;
+	overflow: hidden;
+	cursor: pointer;
+}
+
+#categoryList li a:hover{
+	background: #eee;
+}
+
+#categoryList li .right{
+	float: left;
+	width: 500px;
+}
+
+#wrapper #content #categoryList li h3{
+	margin: 0 0 5px;
+	border: none;
+}

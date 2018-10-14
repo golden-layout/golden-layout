@@ -148,12 +148,9 @@ lm.utils.copy( lm.controls.Tab.prototype, {
 	_onTabClick: function( event ) {
 		// left mouse button or tap
 		if( event.button === 0 || event.type === 'touchstart' ) {
-			var activeContentItem = this.header.parent.getActiveContentItem();
-			if( this.contentItem !== activeContentItem ) {
-				this.header.parent.setActiveContentItem( this.contentItem );
-			}
-
-			// middle mouse button
+			this.header.parent.setActiveContentItem( this.contentItem );
+			
+		// middle mouse button
 		} else if( event.button === 1 && this.contentItem.config.isClosable ) {
 			this._onCloseClick( event );
 		}

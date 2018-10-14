@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>GoldenLayout- a multi-window javascript layout manager for webapps</title>
+	
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<meta name="keywords" content="HTML5, JavaScript, Layout Manager, webapp" />
+	<meta name="description" content="GoldenLayout- a multi-window javascript layout manager for webapps" />
+	<meta name="author" content="Wolfram Hempel" />
+	<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+	<link rel="icon" href="/favicon.ico" type="image/x-icon">
+	<link href='https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700' rel='stylesheet' type='text/css'>
+	<link rel="stylesheet" type="text/css" href="../assets/css/screen.css" />
+	
+	<link rel="stylesheet" type="text/css" href="../assets/css/api.css" />
+	<link rel="stylesheet" type="text/css" href="../assets/css/syntaxhighlighter.css" />
+	
+	<script type="text/javascript">
+	document.createElement( 'header' );
+	document.createElement( 'nav' );
+	</script>
+	<script type="text/javascript" src="../assets/js/jquery.js"></script>
+</head>
+<body class="category_tutorials">
+	<div id="modal" class="loading">
+		<div class="background"></div>
+		<div class="content-wrapper">
+			<div class="head">
+				<div class="close"></div>
+				<span class="title"></span>
+			</div>
+			<div class="content"></div>
+		</div>
+	</div>
+	
+	<div id="outerWrapper">
+		
+
+		
+		<div id="nav" class="standalone">
+			<div class="start-bg"></div>
+			<ul>
+				<li ><a href="..">Start</a></li>
+				<li ><a href="../download">Download</a></li>
+				<li ><a href="../examples">Demos</a></li>
+				<li class="active"><a href="../tutorials">Tutorials</a></li>
+				<li ><a href="../docs">Docs</a></li>
+				<li ><a href="../faq">Faq</a></li>
+			</ul>
+			<iframe src="https://ghbtns.com/github-btn.html?user=deepstreamIO&repo=golden-layout&type=star&count=true&size=large" frameborder="0" scrolling="0" width="160px" height="30px"></iframe>
+
+		</div>
+		
+		<div id="wrapper" class="main">
+			<ul id="subnav">
+	<li class="head first">GoldenLayout</li>
+	<li >
+		<a href="getting-started.html">Getting Started</a>
+	</li>
+	<li >
+		<a href="getting-started-react.html">Getting Started ReactJS</a>
+	</li>
+	<li >
+		<a href="saving-state.html">Saving State</a>
+	</li>
+	<li >
+		<a href="dynamically-adding-components.html">Adding Items</a>
+	</li>
+	<li >
+		<a href="adding-controls-to-header.html">Header Controls</a>
+	</li>
+	<li class="active">
+		<a href="working-with-popouts.html">Popouts</a>
+	</li>
+	<li >
+		<a href="extending-tabs.html">Extending Tabs</a>
+	</li>
+
+	<li class="head">Usage with...</li>
+	<li >
+		<a href="requirejs.html">RequireJS</a>
+	</li>
+	<li >
+		<a href="angular-simple.html">Angular (simple)</a>
+	</li>
+	<li >
+		<a href="angular-complex.html">Angular (complex)</a>
+	</li>
+	<li >
+		<a href="highcharts.html">HighCharts</a>
+	</li>
+	<li >
+		<a href="slickgrid.html">SlickGrid</a>
+	</li>
+</ul>
+			<div id="content">
+				<h1>Using popout windows</h1><p>Almost every office program, graphic suite or text editor supports multi window setups – which makes perfect sense, seeing that it helps a lot with utilising desktop space or using parts of an app as standalone widgets.</p><h5>So how come web-apps so rarely do this?</h5><p>Opening new windows from a web-page was traditionally used for aggressive advertisement – until browser-vendors started introducing all sorts of constrains and security features. This makes it now very hard for advertisers to annoy you with popup-ads, but even harder for web-apps to use them.</p><h5>How can GoldenLayout make any difference with that?</h5><p>GoldenLayout deals with the cross browser quirks and vendor limitations around popouts – and there are many. But more importantly, GoldenLayout allows to use popouts in a way that mitigates most security concerns: by loading the same URL in every window and passing instructions about what to create as GET-parameter. This fulfils the same-origin policy and keeps programatical communication between windows to a minimum.</p><h5>So, all good? Can I just use popouts free from care?</h5><p>Unfortunately: no. GoldenLayout makes it easy to create production ready apps with multi window support, all the way back to IE 8, but there are a few things you as a developer still needs to consider.</p><h3>Communication between windows</h3><p>JavaScript&#39;s global namespace is on a per-window basis. So if your component is in a new window it won&#39;t be able to easily access objects in the old one.</p><p>Fortunately GoldenLayout comes with a cross-window eventHub that facilitate communication in a simple and reliable way.</p><pre><code><span class="token comment" spellcheck="true">//window A
+</span>myLayout<span class="token punctuation" >.</span>eventHub<span class="token punctuation" >.</span><span class="token function" >emit<span class="token punctuation" >(</span></span> <span class="token string" >'sayHi'</span><span class="token punctuation" >,</span> <span class="token punctuation" >{</span> name<span class="token punctuation" >:</span> <span class="token string" >'Joe'</span> <span class="token punctuation" >}</span> <span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+<span class="token comment" spellcheck="true">
+//window B
+</span>myLayout<span class="token punctuation" >.</span>eventHub<span class="token punctuation" >.</span><span class="token function" >on<span class="token punctuation" >(</span></span> <span class="token string" >'sayHi'</span><span class="token punctuation" >,</span> <span class="token keyword" >function</span><span class="token punctuation" >(</span> user <span class="token punctuation" >)</span><span class="token punctuation" >{</span>
+    <span class="token function" >alert<span class="token punctuation" >(</span></span> <span class="token string" >'Hi '</span> <span class="token operator" >+</span> user<span class="token punctuation" >.</span>name <span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+<span class="token punctuation" >}</span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+</code></pre><h3>Keeping the state up to date</h3><p>GoldenLayout doesn&#39;t copy your current component to the new window, but rather creates an entirely new one with the same state. It is therefor important to store everything you want to persist as part of the state-object, either by calling <code>container.setState( state )</code> or <code>container.extendState( state )</code>.</p><h3>Keeping elements in the body</h3><p>When opening a new window, GoldenLayout loads the current page, but removes the body&#39;s inner HTML. This might sound a bit radical, but works brilliantly in practice. There might however be some things within your page&#39;s body that you&#39;d like to keep. GoldenLayout moves <code>style</code>, <code>link</code> and <code>template</code> tags automatically to the <code>&lt;head&gt;</code>, for everything else, just add a class <code>gl_keep</code> to your element, e.g..</p><pre><code><span class="token operator" >&lt;</span>body<span class="token operator" >></span>
+    <span class="token punctuation" >.</span><span class="token punctuation" >.</span><span class="token punctuation" >.</span>
+   <span class="token comment" spellcheck="true"> // Template in a script tag that you want to use in a new window
+</span>    <span class="token operator" >&lt;</span>script type<span class="token operator" >=</span><span class="token string" >"text/html"</span> <span class="token keyword" >class</span><span class="token operator" >=</span><span class="token string" >"gl_keep"</span><span class="token operator" >></span>
+        <span class="token operator" >&lt;</span>div<span class="token operator" >></span><span class="token punctuation" >{</span><span class="token punctuation" >{</span>someTemplate<span class="token punctuation" >}</span><span class="token punctuation" >}</span><span class="token operator" >&lt;</span><span class="token operator" >/</span>div<span class="token operator" >></span>
+    <span class="token operator" >&lt;</span><span class="token operator" >/</span>script<span class="token operator" >></span>
+<span class="token operator" >&lt;</span><span class="token operator" >/</span>body<span class="token operator" >></span>
+</code></pre><h3>Blocked programmatic popouts</h3><p>Most browsers only allow popouts to open as a direct consequence of a click (or some other user input). If the popout however is openend programmatically, it will most likely be blocked and the browser will show a warning like these:</p><p><img src="../assets/images/popup_blocked_chrome.png" alt="Popup blocked Warning in Chrome"/></p><p><img src="../assets/images/popup_blocked_ff.png" alt="Popup blocked Warning in Firefox"/></p><p><img src="../assets/images/popup_blocked_ie.png" alt="Popup blocked Warning in Internet Explorer"/></p><p>This might happen when you load a layout with open windows from a serialised state as well as when calling myItem.popout(). Here&#39;s how to deal with it:</p><pre><code><span class="token keyword" >try</span><span class="token punctuation" >{</span>
+    myLayout<span class="token punctuation" >.</span><span class="token function" >init<span class="token punctuation" >(</span></span><span class="token punctuation" >)</span><span class="token punctuation" >;</span>
+<span class="token punctuation" >}</span> <span class="token keyword" >catch</span><span class="token punctuation" >(</span> e <span class="token punctuation" >)</span> <span class="token punctuation" >{</span>
+    <span class="token keyword" >if</span><span class="token punctuation" >(</span> e<span class="token punctuation" >.</span>type <span class="token operator" >===</span> <span class="token string" >'popoutBlocked'</span> <span class="token punctuation" >)</span> <span class="token punctuation" >{</span>
+        <span class="token comment" spellcheck="true">/*
+         * Ask the user to allow popouts for your domain, 
+         * then call myLayout.init(); again.
+         * Same for myItem.popout();
+         */</span>
+    <span class="token punctuation" >}</span>
+<span class="token punctuation" >}</span>
+</code></pre><p>Once the user has allowed popouts for your domain he&#39;ll never be asked again.</p><h3>Location Bar</h3><p><img src="../assets/images/popout_location_bar.png" alt="location bar" /></p><p>Your pop-up will display a location bar - which helps to avoid phishing attacks (opening something that looks like your bank login etc.) but takes up space for your web-app. Unfortunately this is a security feature and can&#39;t be turned off (even though there&#39;s a locationbar:&#39;no&#39; option when opening the window, but it will just be ignored).</p>
+				
+				<h3>Comments and Questions</h3>
+				<div id="disqusContainer">
+					<div id="disqus_thread"></div>
+				    <script type="text/javascript">
+				        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+				        var disqus_shortname = 'goldenlayoutcom'; // required: replace example with your forum shortname
+
+				        /* * * DON'T EDIT BELOW THIS LINE * * */
+				        (function() {
+				            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+				            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+				            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+				        })();
+				    </script>
+				    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+				    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+			    
+					
+					
+				</div>
+			</div>
+		</div>
+		<script type="text/javascript" src="../assets/js/docs.js"></script>
+		
+		<div id="footerPush"></div>
+	</div>
+	<div id="footer">
+		<div class="footer-content">
+			<div class="copyright">&copy;<span class="year"></span> deepstreamHub GmbH</div>
+			<script type="text/javascript">
+			$('.year').html( (new Date()).getFullYear() );
+			</script>
+			<ul class="footerItems">
+				<li>
+					<a href="https://github.com/deepstreamIO/golden-layout">Github</a>
+					<a href="https://www.npmjs.com/package/golden-layout">NPM</a>
+					<div>bower/npm: <code>'golden-layout'</code></div>
+				</li>
+				<li>
+					<div>deepstreamHub GmbH</div>
+					<div>Lindenstrasse 20-25</div>
+					<div>10969 Berlin</div>
+				</li>
+				<li>
+					<a href="mailto:info@deepstreamhub.com">info@deepstreamhub.com</a>
+					<a href="https://deepstreamhub.com/">deepstreamHub.com</a><br />
+					<a href="https://twitter.com/wolframhempel">by @wolframhempel</a>
+
+				</li>
+			</ul>
+		</div>
+	</div>
+
+	<script type="text/javascript" src="../assets/js/Modal.js"></script>
+	
+	<script>
+	  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+	  ga('create', 'UA-63583386-5', 'auto');
+	  ga('send', 'pageview');
+
+	</script>
+	
+</body>
+</html>

@@ -1,66 +1,137 @@
 {
   "name": "golden-layout",
   "version": "1.5.9",
-  "author": "deepstreamHub GmbH",
-  "license": "MIT",
-  "devDependencies": {
-    "grunt": "~0.4.2",
-    "grunt-contrib-less": "^1.4.1",
-    "grunt-contrib-watch": "0.5.3",
-    "grunt-gulp": "^1.0.1",
-    "grunt-karma": "^2.0.0",
-    "grunt-release": "0.13.*",
-    "gulp": "^3.9.1",
-    "gulp-concat": "^2.6.0",
-    "gulp-continuous-concat": "^0.1.1",
-    "gulp-insert": "^0.5.0",
-    "gulp-uglify": "^1.5.3",
-    "gulp-watch": "^4.3.5",
-    "handlebars": "2.0.0-alpha.2",
-    "karma": "0.13.*",
-    "karma-chrome-launcher": "~0.1.4",
-    "karma-coverage": "0.2.4",
-    "karma-firefox-launcher": "^1.0.0",
-    "karma-ie-launcher": "~0.1.5",
-    "karma-jasmine": "~0.1.5",
-    "karma-phantomjs-launcher": "^1.0.2",
-    "tslint": "^3.7.3",
-    "tslint-config-typings": "^0.2.2",
-    "typescript": "^1.8.9",
-    "typings": "^0.7.12",
-    "walker": "1.0.6"
-  },
   "description": "A multi-screen javascript Layout manager \r https://golden-layout.com",
-  "main": "./dist/goldenlayout.js",
+  "keywords": [
+    "docker",
+    "javascript",
+    "layout",
+    "layout manager",
+    "popouts"
+  ],
+  "homepage": "https://github.com/deepstreamIO/golden-layout",
+  "bugs": {
+    "url": "https://github.com/deepstreamIO/golden-layout/issues"
+  },
+  "license": "MIT",
+  "author": "deepstreamHub GmbH",
+  "main": "webpack.config.dev.babel.js",
   "typings": "./index.d.ts",
   "directories": {
     "test": "test"
   },
-  "dependencies": {
-    "jquery": "*"
-  },
   "scripts": {
-    "test": "grunt test && npm run tslint",
-    "tslint": "tslint \"**/*.ts\" -e \"node_modules/**\" -e \"typings/**\"",
-    "prepublish": "typings install",
-    "publish": "npm -s run tslint"
+    "build": "npm run clean && cross-env STYLES=scss JQUERY=true webpack --progress --env.build --config webpack.config.dev.babel.js",
+    "build_es6j": "npm run clean && cross-env STYLES=scss ES6=true JQUERY=true webpack --progress --env.build --config webpack.config.dev.babel.js",
+    "build_es6j_watch": "npm run clean && cross-env STYLES=scss ES6=true JQUERY=true webpack --progress --env.build --env.build_watch --config webpack.config.dev.babel.js",
+    "build_es6z": "npm run clean && cross-env STYLES=scss ES6=true ZEPTO=true webpack --progress --env.build --config webpack.config.dev.babel.js",
+    "build_es6z_watch": "npm run clean && cross-env STYLES=scss ES6=true ZEPTO=true webpack --progress --env.build --env.build_watch --config webpack.config.dev.babel.js",
+    "clean": "npm-run-all clean:*",
+    "clean:dist": "del-cli dist",
+    "postinstall": "del-cli node_modules/**/*.info",
+    "lint:autofix": "stylelint src/scss/**/*.scss --fix && eslint src/js --fix",
+    "lint_es6:autofix": "stylelint src/scss/**/*.scss --fix && eslint src/js_es6 --fix",
+    "prestart": "npm-run-all --parallel clean",
+    "start": "npm run clean && cross-env STYLES=scss JQUERY=true webpack --progress --env.dev --config webpack.config.dev.babel.js",
+    "start_es6j": "npm run clean && cross-env STYLES=scss ES6=true JQUERY=true webpack --progress --env.dev --config webpack.config.dev.babel.js",
+    "start_es6z": "npm run clean && cross-env STYLES=scss ES6=true ZEPTO=true webpack --progress --env.dev --config webpack.config.dev.babel.js",
+    "test": "cross-env ES6=true JQUERY=true karma start",
+    "coverage": "ES6=true JQUERY=true karma start --single-run --no-auto-watch --coverage=true || echo done"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/deepstreamIO/golden-layout.git"
+  "dependencies": {
+    "imports-loader": "^0.8.0",
+    "jquery": "^3.3.1",
+    "zepto": "^1.2.0"
   },
-  "keywords": [
-    "layout manager",
-    "javascript",
-    "docker",
-    "layout",
-    "popouts"
-  ],
-  "bugs": {
-    "url": "https://github.com/deepstreamIO/golden-layout/issues"
+  "devDependencies": {
+    "autoprefixer": "^7.0.1",
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.22.1",
+    "babel-eslint": "^8.2.1",
+    "babel-loader": "^7.0.0",
+    "babel-minify-webpack-plugin": "^0.2.0",
+    "babel-plugin-transform-class-properties": "^6.24.1",
+    "babel-plugin-transform-runtime": "^6.22.0",
+    "babel-preset-env": "^1.6.0",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-stage-2": "^6.24.1",
+    "babel-runtime": "^6.22.0",
+    "browser-sync": "^2.18.8",
+    "browser-sync-webpack-plugin": "^1.1.4",
+    "chalk": "^2.3.2",
+    "concat-files": "^0.1.1",
+    "copy-webpack-plugin": "^4.5.1",
+    "cross-env": "^5.1.5",
+    "css-loader": "^0.28.0",
+    "del-cli": "^1.0.0",
+    "eslint": "^4.1.1",
+    "eslint-config-airbnb": "^16.1.0",
+    "eslint-loader": "^1.6.1",
+    "eslint-plugin-import": "^2.2.0",
+    "eslint-plugin-jsx-a11y": "^6.0.2",
+    "eslint-plugin-react": "^7.3.0",
+    "esprima": "^4.0.0",
+    "exports-loader": "^0.6.3",
+    "extract-text-webpack-plugin": "^3.0.2",
+    "file-loader": "^1.1.6",
+    "html-loader": "^0.5.0",
+    "html-webpack-plugin": "^2.28.0",
+    "ignore-loader": "^0.1.2",
+    "image-webpack-loader": "^4.0.0",
+    "istanbul-instrumenter-loader": "^2.0.0",
+    "jasmine": "^2.5.3",
+    "jasmine-core": "^2.5.2",
+    "karma": "^1.5.0",
+    "karma-chrome-launcher": "^2.0.0",
+    "karma-coverage": "^1.1.1",
+    "karma-jasmine": "^1.1.0",
+    "karma-jasmine-html-reporter": "^0.2.2",
+    "karma-sourcemap-loader": "^0.3.7",
+    "karma-webpack": "^2.0.2",
+    "less": "^3.0.1",
+    "less-loader": "^4.1.0",
+    "loader-utils": "^1.1.0",
+    "lodash": "^4.17.5",
+    "node-sass": "^4.5.2",
+    "npm-run-all": "^4.0.1",
+    "postcss-cssnext": "^3.0.2",
+    "postcss-extend": "^1.0.5",
+    "postcss-import": "^11.0.0",
+    "postcss-loader": "^2.0.5",
+    "postcss-reporter": "^5.0.0",
+    "pug-html-loader": "^1.1.0",
+    "sass-loader": "^6.0.0",
+    "script-loader": "^0.7.2",
+    "style-loader": "^0.20.1",
+    "stylelint": "^8.0.0",
+    "stylelint-config-standard": "^18.0.0",
+    "stylelint-scss": "^2.0.1",
+    "stylelint-webpack-plugin": "^0.10.1",
+    "url-loader": "^0.6.2",
+    "walker": "^1.0.7",
+    "webpack": "^3.0.0",
+    "webpack-dev-server": "^2.3.0"
   },
-  "homepage": "https://github.com/deepstreamIO/golden-layout",
-  "npmName": "golden-layout",
+  "optionalDependencies": {
+    "react": "14 || 15 || 16",
+    "react-dom": "14 || 15 || 16"
+  },
+  "engines": {
+    "node": ">=6.9.0"
+  },
+  "jspm": {
+    "main": "dist/goldenlayout",
+    "format": "global",
+    "registry": "jspm",
+    "dependencies": {
+      "jquery": "^2.1.0"
+    },
+    "shim": {
+      "dist/goldenlayout": [
+        "jquery"
+      ]
+    }
+  },
   "npmFileMap": [
     {
       "basePath": "/dist/",
@@ -84,17 +155,5 @@
       ]
     }
   ],
-  "jspm": {
-    "main": "dist/goldenlayout",
-    "format": "global",
-    "registry": "jspm",
-    "dependencies": {
-      "jquery": "^2.1.0"
-    },
-    "shim": {
-      "dist/goldenlayout": [
-        "jquery"
-      ]
-    }
-  }
+  "npmName": "golden-layout"
 }

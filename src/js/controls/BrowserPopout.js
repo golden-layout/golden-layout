@@ -33,7 +33,6 @@ lm.utils.copy( lm.controls.BrowserPopout.prototype, {
 	toConfig: function() {
 		if( this.isInitialised === false ) {
 			throw new Error( 'Can\'t create config, layout not yet initialised' );
-			return;
 		}
 		return {
 			dimensions: {
@@ -63,6 +62,7 @@ lm.utils.copy( lm.controls.BrowserPopout.prototype, {
 			try {
 				this.getWindow().close();
 			} catch( e ) {
+				//
 			}
 		}
 	},

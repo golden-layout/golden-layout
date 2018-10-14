@@ -1,0 +1,367 @@
+/*
+IMPORTANT:
+In order to preserve the uniform grid appearance, all cell styles need to have padding, margin and border sizes.
+No built-in (selected, editable, highlight, flashing, invalid, loading, :focus) or user-specified CSS
+classes should alter those!
+*/
+
+.slick-header.ui-state-default, .slick-headerrow.ui-state-default {
+  width: 100%;
+  overflow: hidden;
+  border-left: 0px;
+}
+
+.slick-header-columns, .slick-headerrow-columns {
+  position: relative;
+  white-space: nowrap;
+  cursor: default;
+  overflow: hidden;
+}
+
+.slick-header-column.ui-state-default {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  -o-text-overflow: ellipsis;
+  text-overflow: ellipsis;
+  height: 16px;
+  line-height: 16px;
+  margin: 0;
+  padding: 4px;
+  border-right: 1px solid silver;
+  border-left: 0px;
+  border-top: 0px;
+  border-bottom: 0px;
+  float: left;
+}
+
+.slick-headerrow-column.ui-state-default {
+  padding: 4px;
+}
+
+.slick-header-column-sorted {
+  font-style: italic;
+}
+
+.slick-sort-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 5px;
+  margin-left: 4px;
+  margin-top: 6px;
+  float: left;
+}
+
+.slick-sort-indicator-desc {
+  background: url(images/sort-desc.gif);
+}
+
+.slick-sort-indicator-asc {
+  background: url(images/sort-asc.gif);
+}
+
+.slick-resizable-handle {
+  position: absolute;
+  font-size: 0.1px;
+  display: block;
+  cursor: col-resize;
+  width: 4px;
+  right: 0px;
+  top: 0;
+  height: 100%;
+}
+
+.slick-sortable-placeholder {
+  background: silver;
+}
+
+.grid-canvas {
+  position: relative;
+  outline: 0;
+}
+
+.slick-row.ui-widget-content, .slick-row.ui-state-active {
+  position: absolute;
+  border: 0px;
+  width: 100%;
+}
+
+.slick-cell, .slick-headerrow-column {
+  position: absolute;
+  border: 1px solid transparent;
+  border-right: 1px dotted silver;
+  border-bottom-color: silver;
+  overflow: hidden;
+  -o-text-overflow: ellipsis;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  z-index: 1;
+  padding: 1px 2px 2px 1px;
+  margin: 0;
+  white-space: nowrap;
+  cursor: default;
+}
+
+.slick-group {
+}
+
+.slick-group-toggle {
+  display: inline-block;
+}
+
+.slick-cell.highlighted {
+  background: lightskyblue;
+  background: rgba(0, 0, 255, 0.2);
+  -webkit-transition: all 0.5s;
+  -moz-transition: all 0.5s;
+  -o-transition: all 0.5s;
+  transition: all 0.5s;
+}
+
+.slick-cell.flashing {
+  border: 1px solid red !important;
+}
+
+.slick-cell.editable {
+  z-index: 11;
+  overflow: visible;
+  background: white;
+  border-color: black;
+  border-style: solid;
+}
+
+.slick-cell:focus {
+  outline: none;
+}
+
+.slick-reorder-proxy {
+  display: inline-block;
+  background: blue;
+  opacity: 0.15;
+  filter: alpha(opacity = 15);
+  cursor: move;
+}
+
+.slick-reorder-guide {
+  display: inline-block;
+  height: 2px;
+  background: blue;
+  opacity: 0.7;
+  filter: alpha(opacity = 70);
+}
+
+.slick-selection {
+  z-index: 10;
+  position: absolute;
+  border: 2px dashed black;
+}
+
+.ui-widget *{
+  color: #555;
+  font: 8pt/20px Arial, sans-serif;
+}
+
+.slick-header-column{
+  background: #222;
+  border-right: 1px solid #333 !important;
+}
+
+.slick-header-column *{
+  font-weight: bold;
+  color: #666;
+}
+
+.slick-cell{
+  background: #222;
+  border-right: 1px solid #2a2a2a;
+  border-bottom-color: transparent;
+}
+
+.slick-row.even .slick-cell{
+  background: #242424;
+}
+
+.ui-widget ::-webkit-scrollbar {
+    width: 16px;
+}
+ 
+/* Track */
+.ui-widget ::-webkit-scrollbar-track {
+    background: #222;
+    box-shadow: inset 2px 2px 2px rgba( 0, 0, 0, 0.2 );
+}
+ 
+/* Handle */
+.ui-widget ::-webkit-scrollbar-thumb {
+    background: #2a2a2a; 
+}
+.ui-widget ::-webkit-scrollbar-thumb:window-inactive {
+    background: #111; 
+}
+
+.fibonacci-spiral{
+  position: relative;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-image: url(../images/fibonacci-spiral.svg);
+}
+
+.gl-text{
+  position: relative;
+}
+
+.gl-text > div{
+    margin: 0 auto;
+}
+.gl-text h1,
+.gl-text h3{
+  color: #fff;
+  font-family: 'Roboto', sans-serif;
+}
+
+.gl-text h1{
+  font-weight: 100;
+  margin: 35px 0 0 30px;
+  font-size: 40px;
+}
+
+.gl-text h3{
+  font-weight: 100;
+  margin: 10px 0 0 30px;
+  font-size: 20px;
+  color: #ccc;
+}
+
+body .lm_tab.lm_active{
+  color: #aaa;
+}
+
+body .lm_header .lm_tab.lm_active .lm_close_tab{
+  opacity: 0.7;
+  filter: alpha(opacity=70);
+}
+
+
+#getting-started{
+  padding: 120px 0;
+  overflow: hidden;
+  position: relative;
+  width: 1200px;
+  margin: 0 auto;
+}
+
+#getting-started a{
+    width: 28%;
+    height: 100px;
+    float: left;
+    color: #fff;
+    overflow: hidden;
+    cursor: pointer;
+    background-color: rgba(255,255,255,0.1);
+    font-size: 24px;
+    font-weight: 100;
+    display: block;
+    transition: all 500ms ease;
+}
+
+#getting-started a:hover{
+  background-color: rgba(255,255,255,0.2);
+}
+
+#getting-started a:hover div{
+  opacity: 0.8;
+}
+
+#getting-started a p{
+  padding: 20px;
+  float: left;
+}
+
+#getting-started a p b{
+  font-weight: 300;
+  display: block;
+}
+
+#getting-started a.center{
+  margin: 0 8%;
+}
+
+#getting-started a div{
+    width: 92px;
+    height: 100%;
+    float: left;
+    background-size: contain;
+    transition: all 500ms ease;
+    opacity: 0.55;
+    background-repeat: no-repeat;
+}
+
+#getting-started a.js div{
+  background-image: url(../images/getting-started-js.png);
+}
+
+#getting-started a.react div{
+  background-image: url(../images/getting-started-react.png);
+}
+
+#getting-started a.angular{
+  background: none;
+  border: 1px dashed rgba(255,255,255,0.5);
+  box-sizing: border-box;
+  color: rgba(255,255,255,0.5);
+}
+#getting-started a.angular div{
+
+  background-image: url(../images/getting-started-angular.png);
+}
+
+#used-by{
+  position: relative;
+  background: #fff;
+  padding: 26px 0;
+  box-shadow: 0 0 16px 0px rgba( 0, 0, 0, 0.4);
+}
+
+#used-by .center{
+  width: 1200px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+#used-by .center > *{
+  float: left;
+  width: 600px;
+  padding: 0;
+}
+
+#used-by h4{
+    color: #999;
+    font-weight: 300;
+    margin: 10px 0;
+    font-size: 12px;
+    text-align: center;
+}
+
+#used-by .video{
+  width: 514px;
+  height: 331px;
+  border: 1px solid #ccc;
+  background: url(../images/merchant-video-placeholder.png);
+  margin: 0 auto 20px;
+  cursor: pointer;
+  transition: all 500ms ease;
+}
+
+#used-by .video:hover{
+  border-color: #999;
+  box-shadow: 3px 3px 3px rgba(0,0,0,0.1);
+}
+
+#footer{
+  position: relative;
+}

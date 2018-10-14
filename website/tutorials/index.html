@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>GoldenLayout- a multi-window javascript layout manager for webapps</title>
+	
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<meta name="keywords" content="HTML5, JavaScript, Layout Manager, webapp" />
+	<meta name="description" content="GoldenLayout- a multi-window javascript layout manager for webapps" />
+	<meta name="author" content="Wolfram Hempel" />
+	<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+	<link rel="icon" href="/favicon.ico" type="image/x-icon">
+	<link href='https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700' rel='stylesheet' type='text/css'>
+	<link rel="stylesheet" type="text/css" href="../assets/css/screen.css" />
+	
+	<link rel="stylesheet" type="text/css" href="../assets/css/api.css" />
+	<link rel="stylesheet" type="text/css" href="../assets/css/syntaxhighlighter.css" />
+	
+	<script type="text/javascript">
+	document.createElement( 'header' );
+	document.createElement( 'nav' );
+	</script>
+	<script type="text/javascript" src="../assets/js/jquery.js"></script>
+</head>
+<body class="category_tutorials">
+	<div id="modal" class="loading">
+		<div class="background"></div>
+		<div class="content-wrapper">
+			<div class="head">
+				<div class="close"></div>
+				<span class="title"></span>
+			</div>
+			<div class="content"></div>
+		</div>
+	</div>
+	
+	<div id="outerWrapper">
+		
+
+		
+		<div id="nav" class="standalone">
+			<div class="start-bg"></div>
+			<ul>
+				<li ><a href="..">Start</a></li>
+				<li ><a href="../download">Download</a></li>
+				<li ><a href="../examples">Demos</a></li>
+				<li class="active"><a href="../tutorials">Tutorials</a></li>
+				<li ><a href="../docs">Docs</a></li>
+				<li ><a href="../faq">Faq</a></li>
+			</ul>
+			<iframe src="https://ghbtns.com/github-btn.html?user=deepstreamIO&repo=golden-layout&type=star&count=true&size=large" frameborder="0" scrolling="0" width="160px" height="30px"></iframe>
+
+		</div>
+		
+		<div id="wrapper" class="main">
+			<ul id="subnav">
+	<li class="head first">GoldenLayout</li>
+	<li >
+		<a href="getting-started.html">Getting Started</a>
+	</li>
+	<li >
+		<a href="getting-started-react.html">Getting Started ReactJS</a>
+	</li>
+	<li >
+		<a href="saving-state.html">Saving State</a>
+	</li>
+	<li >
+		<a href="dynamically-adding-components.html">Adding Items</a>
+	</li>
+	<li >
+		<a href="adding-controls-to-header.html">Header Controls</a>
+	</li>
+	<li >
+		<a href="working-with-popouts.html">Popouts</a>
+	</li>
+	<li >
+		<a href="extending-tabs.html">Extending Tabs</a>
+	</li>
+
+	<li class="head">Usage with...</li>
+	<li >
+		<a href="requirejs.html">RequireJS</a>
+	</li>
+	<li >
+		<a href="angular-simple.html">Angular (simple)</a>
+	</li>
+	<li >
+		<a href="angular-complex.html">Angular (complex)</a>
+	</li>
+	<li >
+		<a href="highcharts.html">HighCharts</a>
+	</li>
+	<li >
+		<a href="slickgrid.html">SlickGrid</a>
+	</li>
+</ul>
+			<div id="content">
+				<h1>Tutorials</h1>
+
+<ul id="categoryList">
+	<li>
+		<a href="getting-started.html">
+			<img src="../assets/images/tutorial_getting_started.png" width="162" height="100" />
+			<div class="right">
+				<h3>Getting started</h3>
+				<p>Familiarise yourself with the basic concepts and building blocks of GoldenLayout.</p>
+			</div>
+		</a>
+	</li>	
+	<li>
+		<a href="getting-started-react.html">
+			<img src="../assets/images/tutorial_getting_started_with_react.png" width="162" height="100" />
+			<div class="right">
+				<h3>Getting started with react</h3>
+				<p>Learn how to use GoldenLayout with ReactJS</p>
+			</div>
+		</a>
+	</li>	
+	<li>
+		<a href="saving-state.html">
+			<img src="../assets/images/tutorial_saving_state.png" width="162" height="100" />
+			<div class="right">
+				<h3>Saving State</h3>
+				<p>Learn how to persist and load Layout and Component state</p>
+			</div>
+		</a>
+	</li>
+	<li>
+		<a href="dynamically-adding-components.html">
+			<img src="../assets/images/tutorial_adding_items.png" width="162" height="100" />
+			<div class="right">
+				<h3>Dynamically adding items to layouts</h3>
+				<p>Learn about the various ways of adding new items to an existing layout at runtime.</p>
+			</div>
+		</a>
+	</li>
+	<li>
+		<a href="adding-controls-to-header.html">
+			<img src="../assets/images/tutorial_adding_header_control.png" width="162" height="100" />
+			<div class="right">
+				<h3>Adding new controls to the header</h3>
+				<p>Learn how to add a color selector to every component's header and persist its changes</p>
+			</div>
+		</a>
+	</li>
+	<li>
+		<a href="working-with-popouts.html">
+			<img src="../assets/images/tutorial_popouts.png" width="162" height="100" />
+			<div class="right">
+				<h3>Working with popouts</h3>
+				<p>Learn what to watch out for when using popouts</p>
+			</div>
+		</a>
+	</li>
+	<li>
+		<a href="extending-tabs.html">
+			<img src="../assets/images/tutorial_extending_tabs.png" width="162" height="100" />
+			<div class="right">
+				<h3>Extending Tabs</h3>
+				<p>Learn how to add custom functionality to tabs</p>
+			</div>
+		</a>
+	</li>
+	<li>
+		<a href="requirejs.html">
+			<img src="../assets/images/tutorial_requirejs.png" width="162" height="100" />
+			<div class="right">
+				<h3>Using GoldenLayout with RequireJS</h3>
+				<p>Learn how to use GoldenLayout with RequireJS and how to inject its dependency</p>
+			</div>
+		</a>
+	</li>
+	<li>
+		<a href="angular-simple.html">
+			<img src="../assets/images/tutorial_angular.png" width="162" height="100" />
+			<div class="right">
+				<h3>Simple usage with Angular</h3>
+				<p>Using GoldenLayout as a simple layout manager for your Angular app</p>
+			</div>
+		</a>
+	</li>
+	<li>
+		<a href="angular-complex.html">
+			<img src="../assets/images/tutorial_angular.png" width="162" height="100" />
+			<div class="right">
+				<h3>Multi-Module Angular Apps in GoldenLayout</h3>
+				<p>This tutorial addresses some common challenges when building complex Angular apps with GoldenLayout</p>
+			</div>
+		</a>
+	</li>
+	<li>
+		<a href="highcharts.html">
+			<img src="../assets/images/tutorial_highcharts.png" width="162" height="100" />
+			<div class="right">
+				<h3>Using GoldenLayout with HighCharts and Yahoo Finance</h3>
+				<p>Learn how to create a HighCharts chart showing historic stock prices from Yahoo Finance in GoldenLayout</p>
+			</div>
+		</a>
+	</li>
+	<li>
+		<a href="slickgrid.html">
+			<img src="../assets/images/tutorial_slickgrid.png" width="162" height="100" />
+			<div class="right">
+				<h3>Using GoldenLayout with SlickGrid</h3>
+				<p>Learn how to build a component that manages the interaction between SlickGrid and GoldenLayout</p>
+			</div>
+		</a>
+	</li>
+</ul>
+				
+				<h3>Comments and Questions</h3>
+				<div id="disqusContainer">
+					<div id="disqus_thread"></div>
+				    <script type="text/javascript">
+				        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+				        var disqus_shortname = 'goldenlayoutcom'; // required: replace example with your forum shortname
+
+				        /* * * DON'T EDIT BELOW THIS LINE * * */
+				        (function() {
+				            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+				            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+				            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+				        })();
+				    </script>
+				    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+				    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+			    
+					
+					
+				</div>
+			</div>
+		</div>
+		<script type="text/javascript" src="../assets/js/docs.js"></script>
+		
+		<div id="footerPush"></div>
+	</div>
+	<div id="footer">
+		<div class="footer-content">
+			<div class="copyright">&copy;<span class="year"></span> deepstreamHub GmbH</div>
+			<script type="text/javascript">
+			$('.year').html( (new Date()).getFullYear() );
+			</script>
+			<ul class="footerItems">
+				<li>
+					<a href="https://github.com/deepstreamIO/golden-layout">Github</a>
+					<a href="https://www.npmjs.com/package/golden-layout">NPM</a>
+					<div>bower/npm: <code>'golden-layout'</code></div>
+				</li>
+				<li>
+					<div>deepstreamHub GmbH</div>
+					<div>Lindenstrasse 20-25</div>
+					<div>10969 Berlin</div>
+				</li>
+				<li>
+					<a href="mailto:info@deepstreamhub.com">info@deepstreamhub.com</a>
+					<a href="https://deepstreamhub.com/">deepstreamHub.com</a><br />
+					<a href="https://twitter.com/wolframhempel">by @wolframhempel</a>
+
+				</li>
+			</ul>
+		</div>
+	</div>
+
+	<script type="text/javascript" src="../assets/js/Modal.js"></script>
+	
+	<script>
+	  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+	  ga('create', 'UA-63583386-5', 'auto');
+	  ga('send', 'pageview');
+
+	</script>
+	
+</body>
+</html>
