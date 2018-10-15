@@ -9,13 +9,6 @@ lm.container.ItemContainer = function( config, parent, layoutManager ) {
 	this.isHidden = false;
 
 	this._config = config;
-	this._element = $( [
-		'<div class="lm_item_container">',
-		'<div class="lm_content"></div>',
-		'</div>'
-	].join( '' ) );
-
-	this._contentElement = this._element.find( '.lm_content' );
 };
 
 lm.utils.copy( lm.container.ItemContainer.prototype, {
@@ -41,6 +34,7 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 		this.emit( 'hide' );
 		this.isHidden = true;
 		this._element.hide();
+		this._contentElement.hide();
 	},
 
 	/**
@@ -54,6 +48,7 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 		this.emit( 'show' );
 		this.isHidden = false;
 		this._element.show();
+		this._contentElement.show();
 		// call shown only if the container has a valid size
 		if( this.height != 0 || this.width != 0 ) {
 			this.emit( 'shown' );
@@ -187,5 +182,6 @@ lm.utils.copy( lm.container.ItemContainer.prototype, {
 			     .outerHeight( height );
 			this.emit( 'resize' );
 		}
+		this._contentElement.offset(this._element.offset());
 	}
 } );

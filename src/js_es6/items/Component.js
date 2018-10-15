@@ -27,6 +27,17 @@ export default class Component extends AbstractContentItem {
         this.isComponent = true;
         this.container = new ItemContainer(this.config, this, layoutManager);
         this.instance = new ComponentConstructor(this.container, componentConfig);
+	this.container._element = $( [
+		'<div class="lm_item_container">',
+		this.container._contentElement1 ? ''
+			: '<div class="lm_content"></div>',
+		'</div>'
+	].join( '' ) );
+
+	if (this.container._contentElement1)
+		this.container._contentElement = $(this.container._contentElement1);
+	else
+		this.container._contentElement = this._element.find( '.lm_content' );
         this.element = this.container._element;
     }
 
