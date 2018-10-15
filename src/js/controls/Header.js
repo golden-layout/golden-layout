@@ -248,7 +248,7 @@ lm.utils.copy( lm.controls.Header.prototype, {
 
 		if( this.parent._header && this.parent._header.dock ) {
 			var button = lm.utils.fnBind( this.parent.dock, this.parent );
-			var label = this._getHeaderSetting( 'dock' );
+			label = this._getHeaderSetting( 'dock' );
 			this.dockButton = new lm.controls.HeaderButton( this, label, 'lm_dock', button );
 		}
 
