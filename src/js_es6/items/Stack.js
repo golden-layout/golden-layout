@@ -106,19 +106,19 @@ export default class Stack extends AbstractContentItem {
     }
 
     setActiveContentItem(contentItem) {
-        if (this._activeContentItem === contentItem) return;
-
         if (indexOf(contentItem, this.contentItems) === -1) {
             throw new Error('contentItem is not a child of this stack');
         }
 
-        if (this._activeContentItem !== null) {
-            this._activeContentItem._$hide();
-        }
+        if (this._activeContentItem !== contentItem) {
+            if (this._activeContentItem !== null) {
+                this._activeContentItem._$hide();
+            }
 
-        this._activeContentItem = contentItem;
-        this.header.setActiveContentItem(contentItem);
-        contentItem._$show();
+            this._activeContentItem = contentItem;
+            this.header.setActiveContentItem(contentItem);
+            contentItem._$show();
+        }
         this.emit('activeContentItemChanged', contentItem);
         this.layoutManager.emit('activeContentItemChanged', contentItem);
         this.emitBubblingEvent('stateChanged');
