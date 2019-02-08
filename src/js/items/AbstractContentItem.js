@@ -108,6 +108,7 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 		 */
 		if( keepChild !== true ) {
 			this.contentItems[ index ]._$destroy();
+			this.contentItems[ index ].callDownwards('_$destroy', [], true, true);
 		}
 
 		/**
@@ -452,7 +453,6 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 	 */
 	_$destroy: function() {
 		this.emitBubblingEvent( 'beforeItemDestroyed' );
-		this.callDownwards( '_$destroy', [], true, true );
 		this.element.remove();
 		this.emitBubblingEvent( 'itemDestroyed' );
 	},
