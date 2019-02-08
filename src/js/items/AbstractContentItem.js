@@ -104,7 +104,8 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 		}
 
 		/**
-		 * Call ._$destroy on the content item. This also calls ._$destroy on all its children
+		 * Call ._$destroy on the content item. 
+		 * Then use 'callDownwards' to destroy any children
 		 */
 		if( keepChild !== true ) {
 			this.contentItems[ index ]._$destroy();
