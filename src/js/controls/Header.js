@@ -157,6 +157,7 @@ lm.utils.copy( lm.controls.Header.prototype, {
 			previous = 'top';
 		if( position !== undefined && this.parent._header.show != position ) {
 			this.parent._header.show = position;
+            this.parent.config.header ? this.parent.config.header.show = position : this.parent.config.header = { show:position };
 			this.parent._setupHeaderPosition();
 		}
 		return previous;
