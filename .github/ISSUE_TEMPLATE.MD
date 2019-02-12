@@ -1,6 +1,7 @@
 <!-- 
-Please not that bugs are dealt with higher priority, other issues will be dealt with whenever possible.
-For Feature requests, please delete everything below this line 
+Please note that bugs are dealt with higher priority, other issues will be dealt with whenever possible.
+For feature requests, please delete everything below this line
+For bugs, please check that your bug has not been reported and this is not a duplicate
 -->
 
 **Current behavior**
@@ -12,4 +13,4 @@ For Feature requests, please delete everything below this line
 **Codepen example:**
 <!-- Link to a codepen example that demonstrates your issue.
 You can fork the following as a template
-http://codepen.io/wolframhempel/pen/6fb265dbf110900619f00ed3f2c258ba -->
+https://codepen.io/ButchMonkey/pen/GzGZey -->
