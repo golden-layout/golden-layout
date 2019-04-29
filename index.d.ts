@@ -490,7 +490,7 @@ declare module 'golden-layout' {
              * @param contentItem The contentItem that should be removed
              * @param keepChild If true the item won't be destroyed. (Use cautiosly, if the item isn't destroyed it's up to you to destroy it later). Default: false.
              */
-            removeChild(contentItem: Config, keepChild?: boolean): void;
+            removeChild(contentItem: ContentItem, keepChild?: boolean): void;
 
             /**
              * The contentItem that should be removed
