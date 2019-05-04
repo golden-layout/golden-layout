@@ -136,6 +136,11 @@ lm.utils.copy( lm.items.Stack.prototype, {
 			} else {
 				this._activeContentItem = null;
 			}
+		} else if (this.config.activeItemIndex >= this.contentItems.length) {
+			if (this.contentItems.length > 0) {
+				var activeIndex = lm.utils.indexOf( this.getActiveContentItem(), this.contentItems );
+				this.config.activeItemIndex = Math.max(activeIndex, 0);
+			}
 		}
 
 		this._$validateClosability();
