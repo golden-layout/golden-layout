@@ -417,6 +417,7 @@ declare module 'golden-layout' {
              */
             contentItems: ContentItem[];
 
+            container: Container;
             /**
              * The item that is this item's parent (or null if the item is root)
              */
