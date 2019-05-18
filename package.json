@@ -28,7 +28,6 @@
     "build_es6z_watch": "npm run clean && cross-env STYLES=scss ES6=true ZEPTO=true webpack --progress --env.build --env.build_watch --config webpack.config.dev.babel.js",
     "clean": "npm-run-all clean:*",
     "clean:dist": "del-cli dist",
-    "postinstall": "del-cli node_modules/**/*.info",
     "lint:autofix": "stylelint src/scss/**/*.scss --fix && eslint src/js --fix",
     "lint_es6:autofix": "stylelint src/scss/**/*.scss --fix && eslint src/js_es6 --fix",
     "prestart": "npm-run-all --parallel clean",
