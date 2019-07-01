@@ -741,8 +741,8 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		}
 
 		if( this.openPopouts.length !== openPopouts.length ) {
-			this.emit( 'stateChanged' );
 			this.openPopouts = openPopouts;
+			this.emit( 'stateChanged' );
 		}
 
 	},
