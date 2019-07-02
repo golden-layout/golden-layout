@@ -89,6 +89,10 @@ lm.utils.copy( lm.items.Stack.prototype, {
 
 			this.setActiveContentItem( initialItem );
 		}
+		this._$validateClosability();		
+		if( this.parent instanceof lm.items.RowOrColumn ) {
+			this.parent._validateDocking();
+		}
 	},
 
 	setActiveContentItem: function( contentItem ) {
