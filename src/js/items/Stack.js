@@ -95,6 +95,15 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		}
 	},
 
+	updateActiveContentItem: function( contentItem ) {
+		if( lm.utils.indexOf( contentItem, this.contentItems ) === -1 ) {
+			throw new Error( 'contentItem is not a child of this stack' );
+		}
+
+		this._activeContentItem = contentItem;
+
+	},
+
 	setActiveContentItem: function( contentItem ) {
 		if (this._activeContentItem === contentItem) return;
 		if( lm.utils.indexOf( contentItem, this.contentItems ) === -1 ) {

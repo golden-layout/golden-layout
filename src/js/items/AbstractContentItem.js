@@ -211,6 +211,11 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 			newChild._$init();
 		}
 
+		// Update the activeContentItem if equal to the oldChild without making a call to setActiveContentItem, which attempts to hide the current activeContentItem
+		if(this._activeContentItem === oldChild) {
+			this.updateActiveContentItem(newChild);
+		}
+
 		this.callDownwards( 'setSize' );
 	},
 
