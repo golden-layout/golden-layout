@@ -10,7 +10,7 @@
   "license": "MIT",
   "dependencies": {
     "walker": "1.0.6",
-    "handlebars": "2.0.0-alpha.2",
+    "handlebars": "4.5.3",
     "karma": "0.12.16"
   },
   "devDependencies": {
