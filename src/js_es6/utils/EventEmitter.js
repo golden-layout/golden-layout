@@ -3,6 +3,20 @@ import {
 } from '../utils/utils'
 
 /**
+ * The name of the event that's triggered for every other event
+ *
+ * usage
+ *
+ * myEmitter.on( EventEmitter.ALL_EVENT, function( eventName, argsArray ){
+ *  //do stuff
+ * });
+ *
+ * @type {String}
+ */
+export const ALL_EVENT = '__all'
+
+
+/**
  * A generic and very fast EventEmitter
  * implementation. On top of emitting the
  * actual event it emits an
@@ -14,21 +28,8 @@ import {
  *
  * @constructor
  */
-
-export const ALL_EVENT = '__all'
-
 export default class EventEmitter {
-    /**
-     * The name of the event that's triggered for every other event
-     *
-     * usage
-     *
-     * myEmitter.on( EventEmitter.ALL_EVENT, function( eventName, argsArray ){
-     *  //do stuff
-     * });
-     *
-     * @type {String}
-     */
+
     constructor() {
         this._mSubscriptions = {};
         this._mSubscriptions[ALL_EVENT] = [];
