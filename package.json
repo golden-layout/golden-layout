@@ -109,7 +109,7 @@
     "url-loader": "^0.6.2",
     "walker": "^1.0.7",
     "webpack": "^3.0.0",
-    "webpack-dev-server": "^2.3.0"
+    "webpack-dev-server": "^3.10.3"
   },
   "optionalDependencies": {
     "react": "14 || 15 || 16",
