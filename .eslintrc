@@ -11,9 +11,6 @@
   "parserOptions": {
     "sourceType": "module"
   },
-  "globals": {
-      "lm": 1
-  },  
   "rules": {
     "strict": 0,
     "no-undef": "off",
