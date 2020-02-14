@@ -103,6 +103,10 @@ export default class Stack extends AbstractContentItem {
 
             this.setActiveContentItem(initialItem);
         }
+        this._$validateClosability();		
+		if (this.parent instanceof RowOrColumn) {
+			this.parent._validateDocking();
+		}
     }
 
     setActiveContentItem(contentItem) {
@@ -161,7 +165,12 @@ export default class Stack extends AbstractContentItem {
             } else {
                 this._activeContentItem = null;
             }
-        }
+        } else if (this.config.activeItemIndex >= this.contentItems.length) {
+			if (this.contentItems.length > 0) {
+				var activeIndex = indexOf(this.getActiveContentItem(), this.contentItems);
+				this.config.activeItemIndex = Math.max(activeIndex, 0);
+			}
+		}
 
         this._$validateClosability();
         if (this.parent instanceof RowOrColumn)

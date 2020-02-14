@@ -30,7 +30,7 @@ export { default as EventEmitter } from 'js/utils/EventEmitter'
 export { default as EventHub } from 'js/utils/EventHub'
 export { default as ReactComponentHandler } from 'js/utils/ReactComponentHandler'
 
-if(env.ZEPTO && env.ES6){
+if(env.ZEPTO){
   require('script-loader!../node_modules/zepto/dist/zepto.js');
   require('../lib/zepto-extras.js');
 }

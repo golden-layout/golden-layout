@@ -1,24 +1,15 @@
 import 'less/test.less'
 import 'less/goldenlayout-base.less'
 import 'less/goldenlayout-dark-theme.less'
-// import {beforeMethod, Metadata} from 'aspect.js';
 
-
-console.log('compling from ES6:', env.ES6) // variable comes from environment (check package.json)
 console.log('ZEPTO active: ', env.ZEPTO)
 console.log('JQUERY active: ', env.JQUERY)
 
 export var GoldenLayout = function trick_preprocessor_and_webpack_hmr (a) {
-  if(env.ES6){
     return require('js/LayoutManager').default // if ES6 exists 'js/' is alias for 'js_es6/'
-  } else {
-    // makes webpack sense that the files (in ./js & subdirs) have changed and restart the build process via concat()
-    () => require('./js/' + a).default
-    return null
-  }
 }()
 
-if(env.ZEPTO && env.ES6){
+if(env.ZEPTO){
   require('script-loader!../node_modules/zepto/dist/zepto.js');
   require('../lib/zepto-extras.js');
 }
@@ -36,7 +27,7 @@ if(env.ZEPTO && env.ES6){
 //   }
 // }
 
-window.addEventListener('load', () => {
+$(() => {
 
 
     // $(document).on('mousemove touchmove', (e) => {

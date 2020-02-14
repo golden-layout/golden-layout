@@ -3,7 +3,16 @@ import Tab from '../controls/Tab'
 import HeaderButton from '../controls/HeaderButton'
 import {
     fnBind
-} from '../utils/utils'
+} from '../utils/utils';
+
+
+const _template = [
+        '<div class="lm_header">',
+        '<ul class="lm_tabs"></ul>',
+        '<ul class="lm_controls"></ul>',
+        '<ul class="lm_tabdropdown_list"></ul>',
+        '</div>'
+    ].join('');
 
 /**
  * This class represents a header above a Stack ContentItem.
@@ -11,16 +20,7 @@ import {
  * @param {lm.LayoutManager} layoutManager
  * @param {AbstractContentItem} parent
  */
-const _template = [
-        '<div class="lm_header">',
-        '<ul class="lm_tabs"></ul>',
-        '<ul class="lm_controls"></ul>',
-        '<ul class="lm_tabdropdown_list"></ul>',
-        '</div>'
-    ].join('')
-
 export default class Header extends EventEmitter {
-
 
     constructor(layoutManager, parent) {
 
@@ -197,6 +197,7 @@ export default class Header extends EventEmitter {
             previous = 'top';
         if (position !== undefined && this.parent._header.show != position) {
             this.parent._header.show = position;
+            this.parent.config.header ? this.parent.config.header.show = position : this.parent.config.header = { show: position };
             this.parent._setupHeaderPosition();
         }
         return previous;

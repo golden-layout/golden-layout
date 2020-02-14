@@ -14,8 +14,6 @@ import {
  *
  * @constructor
  */
-
-
 export default class DragSource {
     constructor(element, itemConfig, layoutManager) {
         this._element = element;
@@ -26,16 +24,22 @@ export default class DragSource {
         this._createDragListener();
     }
 
-
+	/**
+	 * Disposes of the drag listeners so the drag source is not usable any more.
+	 *
+	 * @returns {void}
+	 */
+	destroy() {
+		this._removeDragListener();
+    }
+    
     /**
      * Called initially and after every drag
      *
      * @returns {void}
      */
     _createDragListener() {
-        if (this._dragListener !== null) {
-            this._dragListener.destroy();
-        }
+        this._removeDragListener();
 
         this._dragListener = new DragListener(this._element);
         this._dragListener.on('dragStart', this._onDragStart, this);
@@ -60,4 +64,15 @@ export default class DragSource {
 
         this._layoutManager.transitionIndicator.transitionElements(this._element, dragProxy.element);
     }
+
+    /**
+	 * Called after every drag and when the drag source is being disposed of.
+	 *
+	 * @returns {void}
+	 */
+	_removeDragListener() {
+		if( this._dragListener !== null ) {
+			this._dragListener.destroy();
+		}
+	}
 }
