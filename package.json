@@ -1,30 +1,31 @@
 {
   "name": "golden-layout",
-  "version": "1.5.9",
+  "version": "2.0.0-alpha.0",
   "description": "A multi-screen javascript Layout manager \r https://golden-layout.com",
   "keywords": [
-    "docker",
+    "docking",
     "javascript",
     "layout",
     "layout manager",
     "popouts"
   ],
-  "homepage": "https://github.com/deepstreamIO/golden-layout",
+  "homepage": "https://github.com/golden-layout/golden-layout",
   "bugs": {
-    "url": "https://github.com/deepstreamIO/golden-layout/issues"
+    "url": "https://github.com/golden-layout/golden-layout/issues"
   },
   "license": "MIT",
   "author": "deepstreamHub GmbH",
-  "main": "dist/js/goldenlayout.js",
+  "main": "dist/umd/golden-layout.js",
+  "module": "dist/esm/index.js",
+  "es2015": "dist/es2015/index.js",
   "typings": "./index.d.ts",
-  "directories": {
-    "test": "test"
-  },
   "scripts": {
-    "build": "npm run clean && cross-env JQUERY=true webpack --progress --env.build --config webpack.config.dev.babel.js",
-    "build_watch": "npm run clean && cross-env JQUERY=true webpack --progress --env.build --env.build_watch --config webpack.config.dev.babel.js",
-    "build_es6z": "npm run clean && cross-env ZEPTO=true webpack --progress --env.build --config webpack.config.dev.babel.js",
-    "build_es6z_watch": "npm run clean && cross-env ES6=true ZEPTO=true webpack --progress --env.build --env.build_watch --config webpack.config.dev.babel.js",
+    "build:styles": "exit 0",
+    "build:umd-dev": "webpack --mode development --config ./webpack/umd.webpack.config.js",
+    "build:umd": "webpack --mode production --config ./webpack/umd.webpack.config.js",
+    "build:module": "babel --config-file ./webpack/esm.babel.config.json src --out-dir dist/esm",
+    "build:es2015": "babel --config-file ./webpack/es2015.babel.config.json src --out-dir dist/es2015",
+    "build": "npm run clean && npm-run-all --parallel build:*",
     "clean": "npm-run-all clean:*",
     "clean:dist": "del-cli dist",
     "lint:autofix": "eslint src/js_es6 --fix",
@@ -40,29 +41,19 @@
     "zepto": "^1.2.0"
   },
   "devDependencies": {
+    "@babel/cli": "^7.8.4",
+    "@babel/core": "^7.8.4",
+    "@babel/preset-env": "^7.8.4",
     "autoprefixer": "^7.0.1",
-    "babel-cli": "^6.26.0",
-    "babel-core": "^6.22.1",
-    "babel-eslint": "^8.2.1",
-    "babel-loader": "^7.0.0",
-    "babel-minify-webpack-plugin": "^0.2.0",
-    "babel-plugin-transform-class-properties": "^6.24.1",
-    "babel-plugin-transform-runtime": "^6.22.0",
-    "babel-preset-env": "^1.6.0",
-    "babel-preset-es2015": "^6.24.1",
-    "babel-preset-stage-2": "^6.24.1",
-    "babel-runtime": "^6.22.0",
-    "browser-sync": "^2.18.8",
-    "browser-sync-webpack-plugin": "^1.1.4",
+    "babel-loader": "^8.0.6",
     "concat-files": "^0.1.1",
     "cross-env": "^5.1.5",
-    "css-loader": "^0.28.0",
+    "css-loader": "^3.4.2",
     "del-cli": "^1.0.0",
     "eslint": "^4.1.1",
     "eslint-plugin-import": "^2.2.0",
     "eslint-plugin-jsx-a11y": "^6.0.2",
     "eslint-plugin-react": "^7.3.0",
-    "extract-text-webpack-plugin": "^3.0.2",
     "file-loader": "^1.1.6",
     "html-loader": "^0.5.0",
     "html-webpack-plugin": "^2.28.0",
@@ -77,8 +68,9 @@
     "karma-sourcemap-loader": "^0.3.7",
     "karma-webpack": "^2.0.2",
     "less": "^3.0.1",
-    "less-loader": "^4.1.0",
+    "less-loader": "^5.0.0",
     "lodash": "^4.17.5",
+    "mini-css-extract-plugin": "^0.9.0",
     "npm-run-all": "^4.0.1",
     "postcss-cssnext": "^3.0.2",
     "postcss-extend": "^1.0.5",
@@ -88,51 +80,16 @@
     "script-loader": "^0.7.2",
     "style-loader": "^0.20.1",
     "url-loader": "^0.6.2",
-    "webpack": "^3.0.0",
+    "webpack": "^4.41.6",
+    "webpack-cli": "^3.3.11",
     "webpack-dev-server": "^2.3.0"
   },
   "optionalDependencies": {
     "react": "14 || 15 || 16",
     "react-dom": "14 || 15 || 16"
   },
-  "engines": {
-    "node": ">=6.9.0"
-  },
-  "jspm": {
-    "main": "dist/goldenlayout",
-    "format": "global",
-    "registry": "jspm",
-    "dependencies": {
-      "jquery": "^2.1.0"
-    },
-    "shim": {
-      "dist/goldenlayout": [
-        "jquery"
-      ]
-    }
-  },
-  "npmFileMap": [
-    {
-      "basePath": "/dist/",
-      "files": [
-        "goldenlayout.js",
-        "goldenlayout.min.js"
-      ]
-    },
-    {
-      "basePath": "/src/css/",
-      "files": [
-        "goldenlayout.base.css",
-        "goldenlayout-dark-theme.css",
-        "goldenlayout-light-theme.css"
-      ]
-    },
-    {
-      "basePath": "/",
-      "files": [
-        "typings.json"
-      ]
-    }
-  ],
-  "npmName": "golden-layout"
+  "browserslist": [
+    "defaults",
+    "not op_mini all"
+  ]
 }
