@@ -15,10 +15,7 @@ const extractStyles = new ExtractTextPlugin({
 });
 
 var basePath = path.resolve(__dirname);
-var jsPath = path.join(
-    basePath,
-    path.join("src", "js_es6"),
-);
+var jsPath = path.join(basePath, "src", "js_es6");
 
 const postcssProcessors = [
     postcssImport,
@@ -26,8 +23,6 @@ const postcssProcessors = [
     postcssNext,
     postcssReporter({ clearReportedMessages: true })
 ];
-
-const scssProcessors = [postcssReporter({ clearReportedMessages: true })];
 
 module.exports = env => {
     return {
