@@ -81,7 +81,7 @@
     .lm_close_tab {
       width: 11px;
       height: 11px;
-      background-image: data-uri('../img/lm_close_black.png');
+      background-image: data-uri('../../img/lm_close_black.png');
       background-position: center center;
       background-repeat: no-repeat;
       top: 4px;
@@ -113,16 +113,16 @@
       &.lm_active {
         box-shadow: 2px -2px 2px -2px fade(@color1,20%);
       }
-    }  
+    }
   }
-  
+
   &.lm_bottom {
     .lm_header .lm_tab {
       &.lm_active {
         box-shadow: 2px 2px 2px -2px fade(@color1,20%);
       }
     }
-  } 
+  }
 }
 
 // If Pane Header (container of Tabs for each pane) is selected (used only if addition of new Contents is made "by selection" and not "by drag")
@@ -163,22 +163,22 @@
 
   // Icon to PopOut Pane, so move it to a different Browser Window
   .lm_popout {
-    background-image: data-uri('../img/lm_popout_black.png');
+    background-image: data-uri('../../img/lm_popout_black.png');
   }
 
   // Icon to Maximize Pane, so it will fill the entire GoldenLayout Container
   .lm_maximise {
-    background-image: data-uri('../img/lm_maximise_black.png');
+    background-image: data-uri('../../img/lm_maximise_black.png');
   }
 
   // Icon to Close Pane and so remove it from GoldenLayout Container
   .lm_close {
-    background-image: data-uri('../img/lm_close_black.png');
+    background-image: data-uri('../../img/lm_close_black.png');
   }
 
   // Icon to toggle Pane Docking at mouse hover
   .lm_dock {
-    background-image: data-uri('../img/lm_docked_black.png');
+    background-image: data-uri('../../img/lm_docked_black.png');
     transform:rotate(-45deg);
     transition:transform 300ms;
   }
@@ -206,7 +206,7 @@
   // Pane controls are different in Maximized Mode, especially the old Icon "Maximise" that now has a different meaning, so "Minimize" (even if CSS Class did not change)
   .lm_controls {
     .lm_maximise {
-      background-image: data-uri('../img/lm_minimize_black.png');
+      background-image: data-uri('../../img/lm_minimize_black.png');
     }
   }
 }
@@ -228,7 +228,7 @@
 
   // Icon to Restore original position in Golden Layout Container
   .lm_icon {
-    background-image: data-uri('../img/lm_popin_black.png');
+    background-image: data-uri('../../img/lm_popin_black.png');
     background-position: center center;
     background-repeat: no-repeat;
     opacity: 0.7;
