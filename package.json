@@ -20,7 +20,7 @@
   "es2015": "dist/es2015/index.js",
   "typings": "./index.d.ts",
   "scripts": {
-    "build:styles": "exit 0",
+    "build:styles": "node ./scripts/css.js",
     "build:umd-dev": "webpack --mode development --config ./webpack/umd.webpack.config.js",
     "build:umd": "webpack --mode production --config ./webpack/umd.webpack.config.js",
     "build:module": "babel --config-file ./webpack/esm.babel.config.json src --out-dir dist/esm",
