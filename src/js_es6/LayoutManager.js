@@ -153,6 +153,62 @@ export default class LayoutManager extends EventEmitter {
         this._components[name] = constructor;
     }
 
+     /**
+     * Register an unknown component with the layout manager. If a configuration node
+     * of unknown type is reached it will look up the provided unknown component
+     * and create that component instead
+     *
+     *  {
+     *    type: "component",
+     *    componentName: "EquityNewsFeed",
+     *    componentState: { "feedTopic": "us-bluechips" }
+     *  }
+     *
+     * @public
+     * @param   {Function} constructor
+     *
+     * @returns {void}
+     */
+    registerUnknownComponent(constructor) {
+        if (typeof constructor !== 'function') {
+            throw new Error('Please register a constructor function');
+        }
+
+        if (this._unknownComponent !== undefined) {
+            throw new Error('An unknown component is already registered');
+        }
+
+        this._unknownComponent = constructor;
+    }   
+
+     /**
+     * Register an unknown react component with the layout manager. If a configuration node
+     * of unknown type that is react is reached it will look up the provided unknown component
+     * and create that component instead
+     *
+     *  {
+     *    type: "component",
+     *    componentName: "EquityNewsFeed",
+     *    componentState: { "feedTopic": "us-bluechips" }
+     *  }
+     *
+     * @public
+     * @param   {Function} constructor
+     *
+     * @returns {void}
+     */
+    registerUnknownReactComponent(constructor) {
+        if (typeof constructor !== 'function') {
+            throw new Error('Please register a constructor function');
+        }
+
+        if (this._unknownReactComponent !== undefined) {
+            throw new Error('An unknown react component is already registered');
+        }
+
+        this._unknownReactComponent = constructor;
+    }   
+
     /**
      * Creates a layout configuration object based on the the current state
      *
@@ -227,7 +283,8 @@ export default class LayoutManager extends EventEmitter {
     }
 
     /**
-     * Returns a previously registered component
+     * Returns a previously registered component.  If no component is found to be registered 
+     * and an unknown component has been registered, that will be used instead.
      *
      * @public
      * @param   {String} name The name used
@@ -235,11 +292,28 @@ export default class LayoutManager extends EventEmitter {
      * @returns {Function}
      */
     getComponent(name) {
-        if (this._components[name] === undefined) {
+        if (this._components[name] === undefined && this._unknownComponent === undefined) {
             throw new ConfigurationError('Unknown component "' + name + '"');
         }
 
-        return this._components[name];
+        return this._components[name] || this._unknownComponent;
+    }
+
+    /**
+     * Returns a previously registered react component.  If no component is found to be registered 
+     * and an unknown react component has been registered, that will be used instead.
+     *
+     * @public
+     * @param   {String} name The name used
+     *
+     * @returns {Function}
+     */
+    getReactComponent(name) {
+        if (this._components[name] === undefined && this._unknownReactComponent === undefined) {
+            throw new ConfigurationError('Unknown react component "' + name + '"');
+        }
+
+        return this._components[name] || this._unknownReactComponent;
     }
 
     /**

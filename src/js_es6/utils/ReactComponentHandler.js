@@ -93,7 +93,7 @@ export default class ReactComponentHandler {
             throw new Error('No react component name. type: react-component needs a field `component`');
         }
 
-        reactClass = this._container.layoutManager.getComponent(componentName);
+        reactClass = this._container.layoutManager.getReactComponent(componentName);
 
         if (!reactClass) {
             throw new Error('React component "' + componentName + '" not found. ' +
