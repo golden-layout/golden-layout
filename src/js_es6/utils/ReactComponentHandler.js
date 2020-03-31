@@ -36,7 +36,7 @@ export default class ReactComponentHandler {
     }
 
     /**
-     * Fired by react when the component is created.
+     * Fired by react when the component is created.  Also fired upon destruction (where component is null).
      * <p>
      * Note: This callback is used instead of the return from `ReactDOM.render` because
      *	   of https://github.com/facebook/react/issues/10309.
@@ -47,11 +47,13 @@ export default class ReactComponentHandler {
      * @returns {void}
      */
     _gotReactComponent(component) {
-        this._reactComponent = component;
-        this._originalComponentWillUpdate = this._reactComponent.componentWillUpdate || function() {};
-        this._reactComponent.componentWillUpdate = this._onUpdate.bind( this );
-        if( this._container.getState() ) {
-            this._reactComponent.setState( this._container.getState() );
+        if (component !== null) {
+            this._reactComponent = component;
+            this._originalComponentWillUpdate = this._reactComponent.componentWillUpdate || function() {};
+            this._reactComponent.componentWillUpdate = this._onUpdate.bind( this );
+            if( this._container.getState() ) {
+                this._reactComponent.setState( this._container.getState() );
+            }
         }
     }
     
@@ -93,7 +95,7 @@ export default class ReactComponentHandler {
             throw new Error('No react component name. type: react-component needs a field `component`');
         }
 
-        reactClass = this._container.layoutManager.getComponent(componentName);
+        reactClass = this._container.layoutManager.getComponent(this._container._config);
 
         if (!reactClass) {
             throw new Error('React component "' + componentName + '" not found. ' +

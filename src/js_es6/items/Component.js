@@ -1,6 +1,6 @@
 import AbstractContentItem from '../items/AbstractContentItem'
 import ItemContainer from '../container/ItemContainer'
-
+import ReactComponentHandler from '../utils/ReactComponentHandler'
 
 /**
  * @param {[type]} layoutManager [description]
@@ -14,7 +14,7 @@ export default class Component extends AbstractContentItem {
 
         super(layoutManager, config, parent);
 
-        var ComponentConstructor = layoutManager.getComponent(this.config.componentName),
+        var ComponentConstructor = layoutManager.isReactConfig(config) ? ReactComponentHandler : layoutManager.getComponent(config),
             componentConfig = $.extend(true, {}, this.config.componentState || {});
 
         componentConfig.componentName = this.config.componentName;
