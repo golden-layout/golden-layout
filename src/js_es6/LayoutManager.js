@@ -1,5 +1,4 @@
 import EventEmitter from './utils/EventEmitter'
-import ReactComponentHandler from './utils/ReactComponentHandler'
 import ConfigMinifier from './utils/ConfigMinifier'
 import EventHub from './utils/EventHub'
 
@@ -28,6 +27,8 @@ import {
     getQueryStringParam
 } from './utils/utils'
 
+export const REACT_COMPONENT_ID = 'lm-react-component'
+
 /**
  * The main class that will be exposed as GoldenLayout.
  *
@@ -55,9 +56,7 @@ export default class LayoutManager extends EventEmitter {
         this.isInitialised = false;
         this._isFullPage = false;
         this._resizeTimeoutId = null;
-        this._components = {
-            'lm-react-component': ReactComponentHandler
-        };
+        this._components = {};
         this._itemAreas = [];
         this._resizeFunction = fnBind(this._onResize, this);
         this._unloadFunction = fnBind(this._onUnload, this);
@@ -154,6 +153,29 @@ export default class LayoutManager extends EventEmitter {
     }
 
     /**
+     * Register a component function with the layout manager. This function should
+     * return a constructor for a component based on a config.  If undefined is returned, 
+     * and no component has been registered under that name using registerComponent, an 
+     * error will be thrown.
+     *
+     * @public
+     * @param   {Function} callback
+     *
+     * @returns {void}
+     */
+    registerComponentFunction(callback) {
+        if (typeof callback !== 'function') {
+            throw new Error('Please register a callback function');
+        }
+
+        if (this._componentFunction !== undefined) {
+            console.warn('Multiple component functions are being registered.  Only the final registered function will be used.')
+        }
+
+        this._componentFunction = callback;
+    }
+
+    /**
      * Creates a layout configuration object based on the the current state
      *
      * @public
@@ -227,19 +249,26 @@ export default class LayoutManager extends EventEmitter {
     }
 
     /**
-     * Returns a previously registered component
+     * Returns a previously registered component.  Attempts to utilize registered 
+     * component by name first, then falls back to the component function.  If either
+     * lack a response for what the component should be, it throws an error.
      *
      * @public
-     * @param   {String} name The name used
-     *
+     * @param {Object} config - The item config
+     * 
      * @returns {Function}
      */
-    getComponent(name) {
-        if (this._components[name] === undefined) {
+    getComponent(config) {
+        const name = this.getComponentNameFromConfig(config)
+        let componentToUse = this._components[name]
+        if (this._componentFunction !== undefined) {
+            componentToUse = componentToUse || this._componentFunction({config})
+        }
+        if (componentToUse === undefined) {
             throw new ConfigurationError('Unknown component "' + name + '"');
         }
 
-        return this._components[name];
+        return componentToUse;
     }
 
     /**
@@ -363,6 +392,36 @@ export default class LayoutManager extends EventEmitter {
     }
 
     /**
+     * Returns whether or not the config corresponds to a react component or a normal component.
+     * 
+     * At some point the type is mutated, but the componentName should then correspond to the
+     * REACT_COMPONENT_ID.
+     * 
+     * @param {Object} config ItemConfig
+     * 
+     * @returns {Boolean}
+     */
+
+    isReactConfig(config) {
+        return config.type === 'react-component' || config.componentName === REACT_COMPONENT_ID
+    }
+
+    /**
+     * Returns the name of the component for the config, taking into account whether it's a react component or not.
+     * 
+     * @param {Object} config ItemConfig
+     * 
+     * @returns {String}
+     */
+
+    getComponentNameFromConfig(config) {
+        if (this.isReactConfig(config)) {
+            return config.component
+        }
+        return config.componentName
+    }
+
+    /**
      * Recursively creates new item tree structures based on a provided
      * ItemConfiguration object
      *
@@ -379,9 +438,9 @@ export default class LayoutManager extends EventEmitter {
             throw new ConfigurationError('Missing parameter \'type\'', config);
         }
 
-        if (config.type === 'react-component') {
+        if (this.isReactConfig(config)) {
             config.type = 'component';
-            config.componentName = 'lm-react-component';
+            config.componentName = REACT_COMPONENT_ID;
         }
 
         if (!this._typeToItem[config.type]) {
@@ -862,13 +921,13 @@ export default class LayoutManager extends EventEmitter {
 
         config = $.extend(true, {}, defaultConfig, config);
 
-        var nextNode = function(node) {
+        var nextNode = (node) => {
             for (var key in node) {
                 if (key !== 'props' && typeof node[key] === 'object') {
                     nextNode(node[key]);
-                } else if (key === 'type' && node[key] === 'react-component') {
+                } else if (key === 'type' && this.isReactConfig(node)) {
                     node.type = 'component';
-                    node.componentName = 'lm-react-component';
+                    node.componentName = REACT_COMPONENT_ID;
                 }
             }
         }
