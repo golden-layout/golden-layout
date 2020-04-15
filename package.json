@@ -35,7 +35,6 @@
     "coverage": "JQUERY=true karma start --single-run --no-auto-watch --coverage=true || echo done"
   },
   "dependencies": {
-    "imports-loader": "^0.8.0",
     "jquery": "^3.5.0",
     "zepto": "^1.2.0"
   },
@@ -45,7 +44,6 @@
     "@babel/preset-env": "^7.9.5",
     "autoprefixer": "^9.7.6",
     "babel-loader": "^8.1.0",
-    "concat-files": "^0.1.1",
     "cross-env": "^7.0.2",
     "css-loader": "^3.5.2",
     "del-cli": "^3.0.0",
@@ -54,9 +52,7 @@
     "eslint-plugin-jsx-a11y": "^6.0.2",
     "eslint-plugin-react": "^7.19.0",
     "file-loader": "^6.0.0",
-    "html-loader": "^1.1.0",
     "html-webpack-plugin": "^4.2.0",
-    "image-webpack-loader": "^6.0.0",
     "jasmine": "^3.5.0",
     "jasmine-core": "^3.5.0",
     "karma": "^5.0.1",
@@ -68,13 +64,9 @@
     "karma-webpack": "^4.0.2",
     "less": "^3.0.1",
     "less-loader": "^5.0.0",
-    "lodash": "^4.17.5",
-    "mini-css-extract-plugin": "^0.9.0",
     "npm-run-all": "^4.0.1",
     "postcss": "^7.0.27",
-    "script-loader": "^0.7.2",
     "style-loader": "^1.1.3",
-    "url-loader": "^4.1.0",
     "webpack": "^4.42.1",
     "webpack-cli": "^3.3.11",
     "webpack-dev-server": "^3.10.3"
