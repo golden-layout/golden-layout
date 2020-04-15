@@ -1,4 +1,5 @@
 import EventEmitter from '../utils/EventEmitter'
+import $ from 'jquery'
 
 export default class ItemContainer extends EventEmitter {
     constructor(config, parent, layoutManager) {

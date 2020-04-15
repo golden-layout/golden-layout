@@ -6,7 +6,7 @@ import {
     animFrame,
     indexOf
 } from '../utils/utils'
-
+import $ from 'jquery'
 
 
 

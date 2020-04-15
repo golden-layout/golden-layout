@@ -3,7 +3,7 @@ import {
     fnBind, 
     getTouchEvent
 } from '../utils/utils'
-
+import $ from 'jquery'
 
 export default class DragListener extends EventEmitter {
     constructor(eElement, nButtonCode) {

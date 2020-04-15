@@ -1,6 +1,6 @@
 import AbstractContentItem from '../items/AbstractContentItem'
 import RowOrColumn from '../items/RowOrColumn'
-
+import $ from 'jquery'
 
 
 export default class Root extends AbstractContentItem {

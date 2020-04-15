@@ -3,6 +3,7 @@ import {
     stripTags,
     getTouchEvent
 } from '../utils/utils';
+import $ from 'jquery';
 
 const _template = '<div class="lm_dragProxy">' +
     '<div class="lm_header">' +

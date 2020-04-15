@@ -8,10 +8,6 @@ module.exports = {
     entry: [
         "./demo/app.js"
     ],
-    externals: {
-        jQuery: "jquery",
-        Zepto: "zepto"
-    },
 
     output: {
         filename: '[name].js',
@@ -20,7 +16,7 @@ module.exports = {
 
     resolve: {
         alias: {
-            "jz": process.env.ZEPTO ? "zepto" : "jquery"
+            "jquery": process.env.ZEPTO ? "zepto" : "jquery"
         },
     },
 

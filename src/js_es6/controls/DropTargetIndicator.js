@@ -1,3 +1,5 @@
+import $ from 'jquery'
+
 const _template = '<div class="lm_dropTargetIndicator"><div class="lm_inner"></div></div>'
 
 

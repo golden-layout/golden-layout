@@ -27,6 +27,8 @@ import {
     getQueryStringParam
 } from './utils/utils'
 
+import $ from 'jquery'
+
 export const REACT_COMPONENT_ID = 'lm-react-component'
 
 /**
@@ -42,15 +44,7 @@ export const REACT_COMPONENT_ID = 'lm-react-component'
 
 
 export default class LayoutManager extends EventEmitter {
-    constructor(config, container) {
-
-        if (!$) {
-            var errorMsg = 'jQuery is missing as dependency for GoldenLayout. ';
-            errorMsg += 'Please either expose $ on GoldenLayout\'s scope (e.g. window) or add "jquery" to ';
-            errorMsg += 'your paths when using RequireJS/AMD';
-            throw new Error(errorMsg);
-        }
-        
+    constructor(config, container) {        
         super();
 
         this.isInitialised = false;

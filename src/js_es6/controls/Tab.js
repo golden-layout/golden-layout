@@ -4,7 +4,7 @@ import {
     fnBind,
     stripTags
 } from '../utils/utils'
-
+import $ from 'jquery'
 
 /**
  * Represents an individual tab within a Stack's header

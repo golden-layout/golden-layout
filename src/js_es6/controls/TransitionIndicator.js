@@ -3,7 +3,7 @@ import {
     animFrame,
     fnBind
 } from '../utils/utils'
-
+import $ from 'jquery'
 
 
 export default class TransitionIndicator {

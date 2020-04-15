@@ -3,6 +3,7 @@ import DragProxy from '../controls/DragProxy'
 import {
     isFunction
 } from '../utils/utils'
+import $ from 'jquery'
 
 /**
  * Allows for any DOM item to create a component on drag

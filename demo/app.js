@@ -5,10 +5,7 @@ import '../src/less/themes/goldenlayout-dark-theme.less'
 console.log('ZEPTO active: ', env.ZEPTO)
 console.log('JQUERY active: ', env.JQUERY)
 
-import jz from "jz";
-
-window.$ = jz;
-
+import $ from 'jquery'
 import GoldenLayout from "../src/index"
 
 // class LoggerAspect {
@@ -32,7 +29,7 @@ $(() => {
     //
     // set layout type
     //
-    var layout = 'standard'
+    var layout = 'responsive'
 
     //
     // init

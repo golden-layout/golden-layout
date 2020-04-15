@@ -1,7 +1,7 @@
 import AbstractContentItem from '../items/AbstractContentItem'
 import ItemContainer from '../container/ItemContainer'
 import ReactComponentHandler from '../utils/ReactComponentHandler'
-
+import $ from 'jquery'
 /**
  * @param {[type]} layoutManager [description]
  * @param {[type]} config      [description]
