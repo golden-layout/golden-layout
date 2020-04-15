@@ -19,38 +19,30 @@ Please note that this project is currently undergoing a larger maintenance and r
 * Reponsive design
 
 
-## Installation
+## Installation / Usage
 
-- src/js/      -> Prototype-based official source untouched (REQUIRES loading JQuery externally)
-- src/js_es6/  -> source converted to ES6 modules, with bugfixes, full touch support (BUNDLES JQuery or Zepto)
+**IMPORTANT: This section refers to the unreleased 2.0 version of golden-layout, so keep this in mind and use the v1.5.9 tag for current works.**
 
-When you build either types, the library will be in `dist/js/goldenlayout.js`.
+golden-layout is shipped via npm, so to use it, run `npm i -S golden-layout`. 
+If you are using webpack or another module bundler, you may wish to install it as dev-dep instead. 
+We are shipping an UMD version, an ES5 + ES-Module version and an ES2015+ES-Module version of the library within the package.
+Modern bundlers such as webpack should pick up the ES2015 version and transpile the code according to your applications configuration.
 
-For ES6 GoldenLayout is the default export, while all other components have named exports (details in `js_es6/index.js`)
+## Demo App
 
-To make the environment ready, clone, cd to project dir, and run: 
+We have a demo application embedded within this repository, to run it, run:
 
-`npm i`
+```sh
+git clone github.com/golden-layout/golden-layout
+cd golden-layout
+npm ci # (or npm i, if you use an old npm version)
+npm run start-jquery
+# the app is served at localhost:3000 and uses hot-reload, so you can hack right away within the library and the application.
+```
 
-Then to start/build each tree run the following:
+## Development
 
-###### Prototype-based
+Internally, we are using webpack and babel to have a build process. 
+To get started, follow the steps described in demo-app. 
+You can get a complete build by running `npm run build`, which will compile all versions of the app into the `dist` folder.
 
-start: `npm run start`
-
-build: `npm run build`
-
-
-
-###### ES6-based / JQuery
-
-start: `npm run start_es6j`
-
-build: `npm run build_es6j`
-
-
-###### ES6-based / Zepto
-
-start: `npm run start_es6z`
-
-build: `npm run build_es6z`
