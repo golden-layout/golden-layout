@@ -1,12 +1,26 @@
-# [Golden Layout](https://golden-layout.com/)  [![NPM version](https://badge.fury.io/js/golden-layout.svg)](http://badge.fury.io/js/golden-layout) [![Build Status](https://travis-ci.org/deepstreamIO/golden-layout.svg?branch=master)](https://travis-ci.org/deepstreamIO/golden-layout)
+# Golden Layout
 
-![Screenshot](https://cloud.githubusercontent.com/assets/512416/4584449/e6c154a0-4ffa-11e4-81a8-a7e5f8689dc5.PNG)
+[![NPM version](https://img.shields.io/npm/v/golden-layout)](https://www.npmjs.com/package/golden-layout) [![License](https://img.shields.io/github/license/golden-layout/golden-layout)](https://img.shields.io/github/license/golden-layout/golden-layout)
 
-# [https://golden-layout.com/](https://golden-layout.com/)
+<!-- [![NPM version](https://badge.fury.io/js/golden-layout.svg)](http://badge.fury.io/js/golden-layout) [![Build Status](https://travis-ci.org/deepstreamIO/golden-layout.svg?branch=master)](https://travis-ci.org/deepstreamIO/golden-layout) -->
+
+<!-- ![Screenshot](https://cloud.githubusercontent.com/assets/512416/4584449/e6c154a0-4ffa-11e4-81a8-a7e5f8689dc5.PNG) -->
+
+Please note that this project is currently undergoing a larger maintenance and refactoring, we're targeting a 2.0 release somewhere in H1 2020.
+
+## Features
+
+* Full touch support
+* Native popup windows
+* Completely themeable
+* Comprehensive API
+* Powerful persistence
+* Works in IE8+, Firefox, Chrome
+* Reponsive design
+
 
 ## Installation
 
-This fork uses Webpack and features a double tree:
 - src/js/      -> Prototype-based official source untouched (REQUIRES loading JQuery externally)
 - src/js_es6/  -> source converted to ES6 modules, with bugfixes, full touch support (BUNDLES JQuery or Zepto)
 
@@ -40,26 +54,3 @@ build: `npm run build_es6j`
 start: `npm run start_es6z`
 
 build: `npm run build_es6z`
-
-
-
-## Features
-
-* Full touch support
-* Native popup windows
-* Completely themeable
-* Comprehensive API
-* Powerful persistence
-* Works in IE8+, Firefox, Chrome
-* Reponsive design
-
-
-## Dependencies
-
-* JQuery or Zepto
-
-
-## [Examples](https://golden-layout.com/examples/)
-
-## License
-MIT
