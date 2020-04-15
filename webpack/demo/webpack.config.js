@@ -1,8 +1,7 @@
-const webpack = require("webpack")
-const path = require("path")
-const _ = require("lodash")
-const HtmlWebpackPlugin = require('html-webpack-plugin')
-var basePath = path.resolve(__dirname);
+const webpack = require("webpack");
+const path = require("path");
+const _ = require("lodash");
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
     entry: [
