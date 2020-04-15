@@ -12,7 +12,7 @@ const ensureFolder = (dir) => {
 // This builds a single less file and writes a single output file
 // Must be called for every .less file in src folder.
 const buildFile = async (filePath) => {
-    const outputPath = filePath.replace(".less", ".css").replace("src", "dist")
+    const outputPath = filePath.replace("less", "css").replace("src", "dist").replace(".less", ".css")
     const lessFile = fs.readFileSync(filePath, "utf8")
     const lessOutput = await less.render(lessFile)
     fs.writeFileSync(outputPath, lessOutput.css)
@@ -20,8 +20,8 @@ const buildFile = async (filePath) => {
 
 // We do not have mkdir -p without an extra dependency.
 ensureFolder("./dist")
-ensureFolder("./dist/less")
-ensureFolder("./dist/less/themes")
+ensureFolder("./dist/css")
+ensureFolder("./dist/css/themes")
 
 // Build base.less file
 buildFile("./src/less/goldenlayout-base.less")
