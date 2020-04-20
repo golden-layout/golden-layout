@@ -4,6 +4,7 @@ import {
     fnBind,
     getUniqueId,
 } from '../utils/utils'
+import $ from 'jquery'
 
 /**
  * Pops a content item out into a new browser window.

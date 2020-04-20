@@ -5,7 +5,7 @@ import {
 import {
     fnBind
 } from '../utils/utils'
-
+import $ from 'jquery'
 
 /**
  * An EventEmitter singleton that propagates events

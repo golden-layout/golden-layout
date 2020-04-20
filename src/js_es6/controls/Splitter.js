@@ -1,6 +1,5 @@
 import DragListener from '../utils/DragListener'
-
-
+import $ from 'jquery'
 
 export default class Splitter {
     constructor(isVertical, size, grabSize) {

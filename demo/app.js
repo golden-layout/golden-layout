@@ -1,20 +1,12 @@
-import 'less/test.less'
-import 'less/goldenlayout-base.less'
-import 'less/goldenlayout-dark-theme.less'
+import './test.less'
+import '../src/less/goldenlayout-base.less'
+import '../src/less/themes/goldenlayout-dark-theme.less'
 
 console.log('ZEPTO active: ', env.ZEPTO)
 console.log('JQUERY active: ', env.JQUERY)
 
-export var GoldenLayout = function trick_preprocessor_and_webpack_hmr (a) {
-    return require('js/LayoutManager').default // if ES6 exists 'js/' is alias for 'js_es6/'
-}()
-
-if(env.ZEPTO){
-  require('script-loader!../node_modules/zepto/dist/zepto.js');
-  require('../lib/zepto-extras.js');
-}
-
-
+import $ from 'jquery'
+import GoldenLayout from "../src/index"
 
 // class LoggerAspect {
 //   @beforeMethod({
@@ -34,12 +26,12 @@ $(() => {
     //   console.log('intercepted event, e:', e.target)
     // });
 
-    // 
+    //
     // set layout type
-    // 
-    var layout = 'standard'
+    //
+    var layout = 'responsive'
 
-    // 
+    //
     // init
     //
     var config

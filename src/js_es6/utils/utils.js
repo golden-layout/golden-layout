@@ -1,3 +1,5 @@
+import $ from 'jquery'
+
 export function F() {}
 
 export function getTouchEvent(event){

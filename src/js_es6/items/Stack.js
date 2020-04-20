@@ -7,7 +7,7 @@ import {
     copy,
     indexOf
 } from '../utils/utils'
-
+import $ from 'jquery';
 
 
 export default class Stack extends AbstractContentItem {

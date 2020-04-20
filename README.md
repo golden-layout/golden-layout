@@ -1,47 +1,12 @@
-# [Golden Layout](https://golden-layout.com/)  [![NPM version](https://badge.fury.io/js/golden-layout.svg)](http://badge.fury.io/js/golden-layout) [![Build Status](https://travis-ci.org/deepstreamIO/golden-layout.svg?branch=master)](https://travis-ci.org/deepstreamIO/golden-layout)
+# Golden Layout
 
-![Screenshot](https://cloud.githubusercontent.com/assets/512416/4584449/e6c154a0-4ffa-11e4-81a8-a7e5f8689dc5.PNG)
+[![NPM version](https://img.shields.io/npm/v/golden-layout)](https://www.npmjs.com/package/golden-layout) [![License](https://img.shields.io/github/license/golden-layout/golden-layout)](https://img.shields.io/github/license/golden-layout/golden-layout)
 
-# [https://golden-layout.com/](https://golden-layout.com/)
+<!-- [![NPM version](https://badge.fury.io/js/golden-layout.svg)](http://badge.fury.io/js/golden-layout) [![Build Status](https://travis-ci.org/deepstreamIO/golden-layout.svg?branch=master)](https://travis-ci.org/deepstreamIO/golden-layout) -->
 
-## Installation
+<!-- ![Screenshot](https://cloud.githubusercontent.com/assets/512416/4584449/e6c154a0-4ffa-11e4-81a8-a7e5f8689dc5.PNG) -->
 
-This fork uses Webpack and features a double tree:
-- src/js/      -> Prototype-based official source untouched (REQUIRES loading JQuery externally)
-- src/js_es6/  -> source converted to ES6 modules, with bugfixes, full touch support (BUNDLES JQuery or Zepto)
-
-When you build either types, the library will be in `dist/js/goldenlayout.js`.
-
-For ES6 GoldenLayout is the default export, while all other components have named exports (details in `js_es6/index.js`)
-
-To make the environment ready, clone, cd to project dir, and run: 
-
-`npm i`
-
-Then to start/build each tree run the following:
-
-###### Prototype-based
-
-start: `npm run start`
-
-build: `npm run build`
-
-
-
-###### ES6-based / JQuery
-
-start: `npm run start_es6j`
-
-build: `npm run build_es6j`
-
-
-###### ES6-based / Zepto
-
-start: `npm run start_es6z`
-
-build: `npm run build_es6z`
-
-
+Please note that this project is currently undergoing a larger maintenance and refactoring, we're targeting a 2.0 release somewhere in H1 2020.
 
 ## Features
 
@@ -54,12 +19,30 @@ build: `npm run build_es6z`
 * Reponsive design
 
 
-## Dependencies
+## Installation / Usage
 
-* JQuery or Zepto
+**IMPORTANT: This section refers to the unreleased 2.0 version of golden-layout, so keep this in mind and use the v1.5.9 tag for current works.**
 
+golden-layout is shipped via npm, so to use it, run `npm i -S golden-layout`. 
+If you are using webpack or another module bundler, you may wish to install it as dev-dep instead. 
+We are shipping an UMD version, an ES5 + ES-Module version and an ES2015+ES-Module version of the library within the package.
+Modern bundlers such as webpack should pick up the ES2015 version and transpile the code according to your applications configuration.
 
-## [Examples](https://golden-layout.com/examples/)
+## Demo App
 
-## License
-MIT
+We have a demo application embedded within this repository, to run it, run:
+
+```sh
+git clone github.com/golden-layout/golden-layout
+cd golden-layout
+npm ci # (or npm i, if you use an old npm version)
+npm run start-jquery
+# the app is served at localhost:3000 and uses hot-reload, so you can hack right away within the library and the application.
+```
+
+## Development
+
+Internally, we are using webpack and babel to have a build process. 
+To get started, follow the steps described in demo-app. 
+You can get a complete build by running `npm run build`, which will compile all versions of the app into the `dist` folder.
+

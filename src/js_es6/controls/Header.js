@@ -4,7 +4,7 @@ import HeaderButton from '../controls/HeaderButton'
 import {
     fnBind
 } from '../utils/utils';
-
+import $ from 'jquery';
 
 const _template = [
         '<div class="lm_header">',

@@ -1,4 +1,4 @@
-
+import $ from 'jquery';
 
 export default class HeaderButton {
     constructor(header, label, cssClass, action) {
