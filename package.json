@@ -32,6 +32,7 @@
     "start-jquery": "cross-env JQUERY=true webpack-dev-server --env.dev --config ./webpack/demo/webpack.config.js",
     "start-zepto": "cross-env ZEPTO=true webpack-dev-server --env.dev --config ./webpack/demo/webpack.config.js",
     "test": "cross-env JQUERY=true karma start",
+    "prepare": "npm run build",
     "coverage": "JQUERY=true karma start --single-run --no-auto-watch --coverage=true || echo done"
   },
   "dependencies": {
