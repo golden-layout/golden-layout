@@ -1,31 +1,25 @@
-import $ from 'jquery'
+import $ from 'jquery';
 
-export function F() {}
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+export function F(): void {}
 
-export function getTouchEvent(event){
-    if($.zepto){
-        return event.touches ? event.targetTouches[0] : event;
-    } else {
-        return event.originalEvent && event.originalEvent.touches ? event.originalEvent.touches[0] : event;
-    }
-}
+// export function extend(subClass, superClass) {
+//     subClass.prototype = createObject(superClass.prototype);
+//     subClass.prototype.contructor = subClass;
+// }
 
-export function extend(subClass, superClass) {
-    subClass.prototype = createObject(superClass.prototype);
-    subClass.prototype.contructor = subClass;
-}
+// export function createObject(prototype) {
+//     if (typeof Object.create === 'function') {
+//         return Object.create(prototype);
+//     } else {
+//         F.prototype = prototype;
+//         return new F();
+//     }
+// }
 
-export function createObject(prototype) {
-    if (typeof Object.create === 'function') {
-        return Object.create(prototype);
-    } else {
-        F.prototype = prototype;
-        return new F();
-    }
-}
-
-export function objectKeys(object) {
-    var keys, key;
+export function objectKeys(object: Record<string, unknown>): string[] {
+    let keys: string[];
+    let key: string;
 
     if (typeof Object.keys === 'function') {
         return Object.keys(object);
@@ -38,24 +32,23 @@ export function objectKeys(object) {
     }
 }
 
-export function getHashValue(key) {
-    var matches = location.hash.match(new RegExp(key + '=([^&]*)'));
+export function getHashValue(key: string): string | null {
+    const matches = location.hash.match(new RegExp(key + '=([^&]*)'));
     return matches ? matches[1] : null;
 }
 
-export function getQueryStringParam(param) {
+export function getQueryStringParam(param: string): string | null {
     if (window.location.hash) {
         return getHashValue(param);
     } else if (!window.location.search) {
         return null;
     }
 
-    var keyValuePairs = window.location.search.substr(1).split('&'),
-        params = {},
-        pair,
-        i;
+    const keyValuePairs = window.location.search.substr(1).split('&');
+    const params = {};
+    let pair: string[];
 
-    for (i = 0; i < keyValuePairs.length; i++) {
+    for (let i = 0; i < keyValuePairs.length; i++) {
         pair = keyValuePairs[i].split('=');
         params[pair[0]] = pair[1];
     }
@@ -63,8 +56,8 @@ export function getQueryStringParam(param) {
     return params[param] || null;
 }
 
-export function copy(target, source) {
-    for (var key in source) {
+export function copy(target: Record<string, unknown>, source: Record<string, unknown>): Record<string, unknown> {
+    for (const key in source) {
         target[key] = source[key];
     }
     return target;
@@ -109,23 +102,23 @@ export function indexOf(needle, haystack) {
 }
 
 
-export var isFunction = (typeof /./ != 'function' && typeof Int8Array != 'object') ? 
-    function isFunction(obj) {
+export const isFunction = (typeof /./ != 'function' && typeof Int8Array != 'object') ? 
+    function isFunction(obj: unknown) {
         return typeof obj == 'function' || false;
-    } : function isFunction(obj) {
+    } : function isFunction(obj: unknown) {
         return toString.call(obj) === '[object Function]';
     }
 
-export function fnBind(fn, context, boundArgs) {
+export function fnBind(fn, context: unknown, boundArgs: [...unknown[]] | undefined): unknown {
 
     if (Function.prototype.bind !== undefined) {
-        return Function.prototype.bind.apply(fn, [context].concat(boundArgs || []));
+        return Function.prototype.bind.apply(fn, [context].concat(boundArgs ?? []));
     }
 
-    var bound = function() {
+    const bound = function(this: unknown, ...argsRest: unknown[]) {
 
         // Join the already applied arguments to the now called ones (after converting to an array again).
-        var args = (boundArgs || []).concat(Array.prototype.slice.call(arguments, 0));
+        const args = (boundArgs || []).concat(Array.prototype.slice.call(argsRest, 0));
 
         // If not being called as a constructor
         if (!(this instanceof bound)) {
@@ -150,7 +143,7 @@ export function removeFromArray(item, array) {
     array.splice(index, 1);
 }
 
-export function now() {
+export function now(): number {
     if (typeof Date.now === 'function') {
         return Date.now();
     } else {
@@ -158,7 +151,7 @@ export function now() {
     }
 }
 
-export function getUniqueId() {
+export function getUniqueId(): string {
     return (Math.random() * 1000000000000000)
         .toString(36)
         .replace('.', '');
@@ -174,9 +167,9 @@ export function getUniqueId() {
  *
  * @returns {String} filtered input
  */
-export function filterXss(input, keepTags) {
+export function filterXss(input: string, keepTags: boolean): string {
 
-    var output = input
+    const output = input
         .replace(/javascript/gi, 'j&#97;vascript')
         .replace(/expression/gi, 'expr&#101;ssion')
         .replace(/onload/gi, 'onlo&#97;d')
@@ -199,6 +192,6 @@ export function filterXss(input, keepTags) {
  *
  * @returns {String} input without tags
  */
-export function stripTags(input) {
+export function stripTags(input: string): string {
     return $.trim(input.replace(/(<([^>]+)>)/ig, ''));
 }

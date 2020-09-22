@@ -1,7 +1,7 @@
 
 
 export default class ConfigurationError extends Error {
-    constructor(message, node) {
+    constructor(message: string, public node: Config) {
         super();
 
         this.name = 'Configuration Error';

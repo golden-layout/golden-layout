@@ -1,7 +1,8 @@
-import AbstractContentItem from '../items/AbstractContentItem'
-import ItemContainer from '../container/ItemContainer'
-import ReactComponentHandler from '../utils/ReactComponentHandler'
-import $ from 'jquery'
+import $ from 'jquery';
+import ItemContainer from '../container/ItemContainer';
+import AbstractContentItem from '../items/AbstractContentItem';
+import LayoutManager from '../LayoutManager';
+import ReactComponentHandler from '../utils/ReactComponentHandler';
 /**
  * @param {[type]} layoutManager [description]
  * @param {[type]} config      [description]
@@ -10,7 +11,7 @@ import $ from 'jquery'
 
 
 export default class Component extends AbstractContentItem {
-    constructor(layoutManager, config, parent) {
+    constructor(layoutManager: LayoutManager, config, parent) {
 
         super(layoutManager, config, parent);
 

@@ -1,10 +1,12 @@
 import AbstractContentItem from '../items/AbstractContentItem'
 import RowOrColumn from '../items/RowOrColumn'
 import $ from 'jquery'
+import LayoutManager from '../LayoutManager';
+import { Config } from '../config/config';
 
 
 export default class Root extends AbstractContentItem {
-    constructor(layoutManager, config, containerElement) {
+    constructor(layoutManager: LayoutManager, config: Config, containerElement) {
       
         super(layoutManager, config, null);
 

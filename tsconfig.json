@@ -1,7 +1,50 @@
 {
+  "compileOnSave": false,
   "compilerOptions": {
-    "module": "commonjs",
-    "moduleResolution": "node"
+      "target": "es2016",
+      "module": "es2020",
+      "downlevelIteration": true,
+      "resolveJsonModule": true,
+      "importHelpers": true,
+      "strict": true,
+      "strictNullChecks": true,
+      "noImplicitAny": true,
+      "noImplicitThis": true,
+      "strictBindCallApply": true,
+      "alwaysStrict": true,
+      "noImplicitReturns": true,
+      "strictFunctionTypes": true,
+      "noFallthroughCasesInSwitch": true,
+      "forceConsistentCasingInFileNames": true,
+      "strictPropertyInitialization": false,
+      "noUnusedLocals": false,
+      "allowSyntheticDefaultImports": true,
+      "baseUrl": "./",
+      "outDir": "./dist/out-tsc",
+      "sourceMap": true,
+      "declaration": true,
+      "moduleResolution": "node",
+      "emitDecoratorMetadata": true,
+      "experimentalDecorators": true,
+      "typeRoots": [
+          "node_modules/@types",
+          "node_definitions"
+      ],
+      "lib": [
+          "es2018",
+          "dom"
+      ]
+      // "traceResolution": true, // can use this to debug paths below
+      //// the following entries allow you to link in revgrid without copying dist to Motif.
+      // "paths": {
+      //     "@angular/*": [
+      //         "./node_modules/@angular/*"
+      //     ],
+      //     "revgrid": [
+      //         "../../../RevGrid/ng/dist/revgrid"
+      //     ]
+      // }
+      //// revgrid entries end
   },
   "exclude": [
     "node_modules",

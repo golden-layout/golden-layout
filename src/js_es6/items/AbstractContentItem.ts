@@ -13,6 +13,9 @@ import {
     animFrame,
     indexOf
 } from '../utils/utils'
+import LayoutManager from '../LayoutManager'
+import { Config } from '../config/config'
+import { ContentItem } from './content-item'
 
 /**
  * This is the baseclass that all content items inherit from.
@@ -37,8 +40,22 @@ import {
  */
 
 
-export default class AbstractContentItem extends EventEmitter {
-    constructor(layoutManager, config, parent) {
+export default abstract class AbstractContentItem extends EventEmitter {
+    config;
+    type;
+    contentItems: ContentItem[];
+    parent;
+    isInitialised;
+    isMaximised;
+    isRoot: boolean
+    isRow: boolean
+    isColumn: boolean
+    isStack: boolean
+    isComponent: boolean
+    private _pendingEventPropagations: Record<string, unknown>;
+    private _throttledEvents: string[];
+
+    constructor(readonly layoutManager: LayoutManager, config: Config, parent: unknown) {
 
         super();
 
@@ -55,7 +72,6 @@ export default class AbstractContentItem extends EventEmitter {
         this.isStack = false;
         this.isComponent = false;
 
-        this.layoutManager = layoutManager;
         this._pendingEventPropagations = {};
         this._throttledEvents = ['stateChanged'];
 
@@ -68,13 +84,8 @@ export default class AbstractContentItem extends EventEmitter {
 
     /**
      * Set the size of the component and its children, called recursively
-     *
-     * @abstract
-     * @returns void
      */
-    setSize() {
-        throw new Error('Abstract Method');
-    }
+    abstract setSize(): void;
 
     /**
      * Calls a method recursively downwards on the tree
@@ -83,16 +94,14 @@ export default class AbstractContentItem extends EventEmitter {
      * @param   {[Array]}functionArguments optional arguments that are passed to every function
      * @param   {[bool]} bottomUp          Call methods from bottom to top, defaults to false
      * @param   {[bool]} skipSelf          Don't invoke the method on the class that calls it, defaults to false
-     *
-     * @returns {void}
      */
-    callDownwards(functionName, functionArguments, bottomUp, skipSelf) {
-        var i;
+    callDownwards(functionName: string, functionArguments: unknown[] | undefined, bottomUp: boolean, skipSelf: boolean): void {
 
         if (bottomUp !== true && skipSelf !== true) {
+            this[functionName](...(functionArguments ?? []));
             this[functionName].apply(this, functionArguments || []);
         }
-        for (i = 0; i < this.contentItems.length; i++) {
+        for (let i = 0; i < this.contentItems.length; i++) {
             this.contentItems[i].callDownwards(functionName, functionArguments, bottomUp);
         }
         if (bottomUp === true && skipSelf !== true) {
@@ -186,7 +195,7 @@ export default class AbstractContentItem extends EventEmitter {
      * @param {AbstractContentItem} contentItem
      * @param {[Int]} index If omitted item will be appended
      */
-    addChild(contentItem, index) {
+    addChild(contentItem: AbstractContentItem, index: number): void {
         if (index === undefined) {
             index = this.contentItems.length;
         }

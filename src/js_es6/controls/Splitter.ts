@@ -2,10 +2,12 @@ import DragListener from '../utils/DragListener'
 import $ from 'jquery'
 
 export default class Splitter {
-    constructor(isVertical, size, grabSize) {
-        this._isVertical = isVertical;
-        this._size = size;
-        this._grabSize = grabSize < size ? size : grabSize;
+    private _grabSize;
+
+    element;
+
+    constructor(private _isVertical: boolean, private _size: number, grabSize: number) {
+        this._grabSize = grabSize < this._size ? this._size : grabSize;
 
         this.element = this._createElement();
         this._dragListener = new DragListener(this.element);
@@ -19,7 +21,7 @@ export default class Splitter {
         this.element.remove();
     }
 
-    _createElement() {
+    _createElement(): HTMLElement {
         var dragHandle = $('<div class="lm_drag_handle"></div>');
         var element = $('<div class="lm_splitter"></div>');
         element.append(dragHandle);

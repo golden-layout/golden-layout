@@ -1,33 +1,30 @@
-import EventEmitter from './utils/EventEmitter'
-import ConfigMinifier from './utils/ConfigMinifier'
-import EventHub from './utils/EventHub'
-
-import Root from './items/Root'
-import RowOrColumn from './items/RowOrColumn'
-import Stack from './items/Stack'
-import Component from './items/Component'
-import AbstractContentItem from './items/AbstractContentItem'
-
+import { Container } from 'golden-layout'
+import $ from 'jquery'
+import { Config } from './config/config'
+import defaultConfig from './config/defaultConfig'
 import BrowserPopout from './controls/BrowserPopout'
 import DragSource from './controls/DragSource'
 import DropTargetIndicator from './controls/DropTargetIndicator'
 import TransitionIndicator from './controls/TransitionIndicator'
-
 import ConfigurationError from './errors/ConfigurationError'
-import defaultConfig from './config/defaultConfig'
-
+import AbstractContentItem from './items/AbstractContentItem'
+import Component from './items/Component'
+import Root from './items/Root'
+import RowOrColumn from './items/RowOrColumn'
+import Stack from './items/Stack'
+import ConfigMinifier from './utils/ConfigMinifier'
+import EventEmitter from './utils/EventEmitter'
+import EventHub from './utils/EventHub'
 import {
-    fnBind,
-    objectKeys,
     copy,
+    fnBind,
+    getQueryStringParam,
     getUniqueId,
     indexOf,
     isFunction,
-    stripTags,
-    getQueryStringParam
+    objectKeys,
+    stripTags
 } from './utils/utils'
-
-import $ from 'jquery'
 
 export const REACT_COMPONENT_ID = 'lm-react-component'
 
@@ -44,7 +41,36 @@ export const REACT_COMPONENT_ID = 'lm-react-component'
 
 
 export default class LayoutManager extends EventEmitter {
-    constructor(config, container) {        
+    private _isFullPage;
+    private _resizeTimeoutId: NodeJS.Timeout | null;
+    private _components: { [x: string]: any };
+    private _itemAreas: {}[];
+    private _resizeFunction: string | boolean | JQuery.EventHandlerBase<Window & typeof globalThis, JQuery.ResizeEvent<Window & typeof globalThis, null, Window & typeof globalThis, Window & typeof globalThis>> | undefined;
+    private _unloadFunction: string | boolean | JQuery.EventHandlerBase<Window & typeof globalThis, JQuery.TriggeredEvent<Window & typeof globalThis, undefined, Window & typeof globalThis, Window & typeof globalThis>> | undefined;
+    private _maximisedItem;
+    private _maximisePlaceholder: JQuery<HTMLElement>;
+    private _creationTimeoutPassed: boolean;
+    private _subWindowsCreated: boolean;
+    private _dragSources: DragSource[];
+    private _updatingColumnsResponsive: boolean;
+    private _firstLoad: boolean;
+
+    isInitialised: boolean; 
+
+    width: number | null;
+    height: null;
+    root: Root | null;
+    openPopouts: any[];
+    selectedItem: { deselect: () => void } | null;
+    isSubWindow: boolean;
+    eventHub: EventHub;
+    config: Config;
+    container: Container | JQuery<any>;
+    dropTargetIndicator: DropTargetIndicator | null;
+    transitionIndicator: TransitionIndicator | null;
+    tabDropPlaceholder: JQuery<HTMLElement>;
+
+    constructor(config: Config, container: Container) {        
         super();
 
         this.isInitialised = false;
@@ -69,18 +95,18 @@ export default class LayoutManager extends EventEmitter {
         this.selectedItem = null;
         this.isSubWindow = false;
         this.eventHub = new EventHub(this);
-        this.config = this._createConfig(config);
+        this.config = this.createConfig(config);
         this.container = container;
         this.dropTargetIndicator = null;
         this.transitionIndicator = null;
         this.tabDropPlaceholder = $('<div class="lm_drop_tab_placeholder"></div>');
 
-        if (this.isSubWindow === true) {
-            $('body').css('visibility', 'hidden');
-        }
+        // if (this.isSubWindow === true) {
+        //     $('body').css('visibility', 'hidden');
+        // }
 
         this._typeToItem = {
-            'column': fnBind(RowOrColumn, this, [true]),
+            'column': () => this.RowOrColumn(), this, [true]),
             'row': fnBind(RowOrColumn, this, [false]),
             'stack': Stack,
             'component': Component
@@ -91,31 +117,18 @@ export default class LayoutManager extends EventEmitter {
      * Takes a GoldenLayout configuration object and
      * replaces its keys and values recursively with
      * one letter codes
-     *
-     * @static
-     * @public
-     * @param   {Object} config A GoldenLayout config object
-     *
-     * @returns {Object} minified config
      */
-    minifyConfig(config) {
+    minifyConfig(config: Config): Config {
         return (new ConfigMinifier()).minifyConfig(config);
     }
 
     /**
      * Takes a configuration Object that was previously minified
      * using minifyConfig and returns its original version
-     *
-     * @static
-     * @public
-     * @param   {Object} minifiedConfig
-     *
-     * @returns {Object} the original configuration
      */
-    unminifyConfig(config) {
+    unminifyConfig(config: Config): Config {
         return (new ConfigMinifier()).unminifyConfig(config);
     }
-
 
     /**
      * Register a component with the layout manager. If a configuration node
@@ -277,7 +290,7 @@ export default class LayoutManager extends EventEmitter {
      *
      * @returns {void}
      */
-    init() {
+    init(): void {
 
         /**
          * Create the popout windows straight away. If popouts are blocked
@@ -294,7 +307,7 @@ export default class LayoutManager extends EventEmitter {
          * If the document isn't ready yet, wait for it.
          */
         if (document.readyState === 'loading' || document.body === null) {
-            $(document).ready(fnBind(this.init, this));
+            $(document).ready(() => this.init());
             return;
         }
 
@@ -304,7 +317,7 @@ export default class LayoutManager extends EventEmitter {
          * with GoldenLayout
          */
         if (this.isSubWindow === true && this._creationTimeoutPassed === false) {
-            setTimeout(fnBind(this.init, this), 7);
+            setTimeout(() => this.init, 7);
             this._creationTimeoutPassed = true;
             return;
         }
@@ -897,28 +910,27 @@ export default class LayoutManager extends EventEmitter {
      * Extends the default config with the user specific settings and applies
      * derivations. Please note that there's a separate method (AbstractContentItem._extendItemNode)
      * that deals with the extension of item configs
-     *
-     * @param   {Object} config
-     * @static
-     * @returns {Object} config
      */
-    _createConfig(config) {
-        var windowConfigKey = getQueryStringParam('gl-window');
+    private createConfig(config: Config): Config {
+        const windowConfigKey = getQueryStringParam('gl-window');
 
         if (windowConfigKey) {
             this.isSubWindow = true;
-            config = localStorage.getItem(windowConfigKey);
-            config = JSON.parse(config);
-            config = (new ConfigMinifier()).unminifyConfig(config);
+            const windowConfigStr = localStorage.getItem(windowConfigKey);
+            if (windowConfigStr === null) {
+                throw new Error('Null gl-window Config');
+            }
+            const minifiedWindowConfig = JSON.parse(windowConfigStr);
+            config = (new ConfigMinifier()).unminifyConfig(minifiedWindowConfig);
             localStorage.removeItem(windowConfigKey);
         }
 
         config = $.extend(true, {}, defaultConfig, config);
 
-        var nextNode = (node) => {
+        var nextNode = (node: Config) => {
             for (var key in node) {
                 if (key !== 'props' && typeof node[key] === 'object') {
-                    nextNode(node[key]);
+                    nextNode(node[key] as Config);
                 } else if (key === 'type' && this.isReactConfig(node)) {
                     node.type = 'component';
                     node.componentName = REACT_COMPONENT_ID;
@@ -928,8 +940,12 @@ export default class LayoutManager extends EventEmitter {
 
         nextNode(config);
 
-        if (config.settings.hasHeaders === false) {
-            config.dimensions.headerHeight = 0;
+        if (config.settings !== undefined && config.settings.hasHeaders === false) {
+            if (config.dimensions === undefined) {
+                throw new Error('Undefined config dimensions');
+            } else {
+                config.dimensions.headerHeight = 0;
+            }
         }
 
         return config;

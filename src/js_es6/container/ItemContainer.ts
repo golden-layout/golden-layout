@@ -1,19 +1,25 @@
-import EventEmitter from '../utils/EventEmitter'
-import $ from 'jquery'
+import $ from 'jquery';
+import EventEmitter from '../utils/EventEmitter';
 
 export default class ItemContainer extends EventEmitter {
-    constructor(config, parent, layoutManager) {
+    width: number | null;
+    height: number | null;
+    title;
+    isHidden;
+    _element: JQuery<HTMLElement>;
+    _contentElement: JQuery<HTMLElement>;
+
+    constructor(private _config, public parent, public layoutManager) {
 
         super();
 
         this.width = null;
         this.height = null;
-        this.title = config.componentName;
+        this.title = this._config.componentName;
         this.parent = parent;
         this.layoutManager = layoutManager;
         this.isHidden = false;
 
-        this._config = config;
         this._element = $([
             '<div class="lm_item_container">',
             '<div class="lm_content"></div>',
@@ -30,7 +36,7 @@ export default class ItemContainer extends EventEmitter {
      *
      * @returns {DOM element}
      */
-    getElement() {
+    getElement(): JQuery<HTMLElement> {
         return this._contentElement;
     }
 
@@ -42,7 +48,7 @@ export default class ItemContainer extends EventEmitter {
      *
      * @returns {void}
      */
-    hide() {
+    hide(): void {
         this.emit('hide');
         this.isHidden = true;
         this._element.hide();
@@ -56,7 +62,7 @@ export default class ItemContainer extends EventEmitter {
      *
      * @returns {void}
      */
-    show() {
+    show(): void {
         this.emit('show');
         this.isHidden = false;
         this._element.show();
@@ -80,7 +86,7 @@ export default class ItemContainer extends EventEmitter {
      *
      * @returns {Boolean} resizeSuccesful
      */
-    setSize(width, height) {
+    setSize(width: number, height: number): boolean {
         var rowOrColumn = this.parent,
             rowOrColumnChild = this,
             totalPixel,
@@ -103,8 +109,8 @@ export default class ItemContainer extends EventEmitter {
             }
         }
 
-        direction = rowOrColumn.isColumn ? "height" : "width";
-        newSize = direction === "height" ? height : width;
+        direction = rowOrColumn.isColumn ? 'height' : 'width';
+        newSize = direction === 'height' ? height : width;
 
         totalPixel = this[direction] * (1 / (rowOrColumnChild.config[direction] / 100));
         percentage = (newSize / totalPixel) * 100;
@@ -131,7 +137,7 @@ export default class ItemContainer extends EventEmitter {
      *
      * @returns {void}
      */
-    close() {
+    close(): void {
         if (this._config.isClosable) {
             this.emit('close');
             this.parent.close();
@@ -144,7 +150,7 @@ export default class ItemContainer extends EventEmitter {
      *
      * @returns {Object} state
      */
-    getState() {
+    getState(): object {
         return this._config.componentState;
     }
 
@@ -156,7 +162,7 @@ export default class ItemContainer extends EventEmitter {
      *
      * @returns {void}
      */
-    extendState(state) {
+    extendState(state: object): void {
         this.setState($.extend(true, this.getState(), state));
     }
 
@@ -166,7 +172,7 @@ export default class ItemContainer extends EventEmitter {
      *
      * @param {serialisable} state
      */
-    setState(state) {
+    setState(state: any) {
         this._config.componentState = state;
         this.parent.emitBubblingEvent('stateChanged');
     }
@@ -177,7 +183,7 @@ export default class ItemContainer extends EventEmitter {
      *
      * @param {String} title
      */
-    setTitle(title) {
+    setTitle(title: string) {
         this.parent.setTitle(title);
     }
 
@@ -192,7 +198,7 @@ export default class ItemContainer extends EventEmitter {
      *
      * @returns {void}
      */
-    _$setSize(width, height) {
+    _$setSize(width: [Int], height: [Int]): void {
         if (width !== this.width || height !== this.height) {
             this.width = width;
             this.height = height;

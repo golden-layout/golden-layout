@@ -1,11 +1,10 @@
-import EventEmitter from '../utils/EventEmitter'
-import { 
-  ALL_EVENT
-} from '../utils/EventEmitter'
+import $ from 'jquery';
+import EventEmitter, {
+    ALL_EVENT
+} from '../utils/EventEmitter';
 import {
     fnBind
-} from '../utils/utils'
-import $ from 'jquery'
+} from '../utils/utils';
 
 /**
  * An EventEmitter singleton that propagates events
@@ -66,7 +65,7 @@ export default class EventHub extends EventEmitter {
      *
      * @returns {void}
      */
-    _$onEventFromParent(args) {
+    _$onEventFromParent(...args: unknown[]): void {
         this._dontPropagateToParent = args[0];
         this.emit.apply(this, args);
     }

@@ -403,7 +403,7 @@ declare module 'golden-layout' {
             props?: any;
         }
 
-        export interface Config {
+        export interface Config extends Record<string, unknown> {
             settings?: Settings;
             dimensions?: Dimensions;
             labels?: Labels;
