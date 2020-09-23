@@ -1,9 +1,10 @@
-import DragListener from '../utils/DragListener'
-import DragProxy from '../controls/DragProxy'
+import { ItemConfig } from 'golden-layout';
+import { DragProxy } from '../controls/DragProxy';
+import { LayoutManager } from '../LayoutManager';
+import { DragListener } from '../utils/DragListener';
 import {
     isFunction
-} from '../utils/utils'
-import $ from 'jquery'
+} from '../utils/utils';
 
 /**
  * Allows for any DOM item to create a component on drag
@@ -15,14 +16,11 @@ import $ from 'jquery'
  *
  * @constructor
  */
-export default class DragSource {
-    constructor(element, itemConfig, layoutManager) {
-        this._element = element;
-        this._itemConfig = itemConfig;
-        this._layoutManager = layoutManager;
+export class DragSource {
+    constructor(private _element: HTMLElement, private _itemConfig: ItemConfig, private _layoutManager: LayoutManager) {
         this._dragListener = null;
 
-        this._createDragListener();
+        this.createDragListener();
     }
 
 	/**
@@ -39,12 +37,12 @@ export default class DragSource {
      *
      * @returns {void}
      */
-    _createDragListener() {
+    private createDragListener() {
         this._removeDragListener();
 
         this._dragListener = new DragListener(this._element);
         this._dragListener.on('dragStart', this._onDragStart, this);
-        this._dragListener.on('dragStop', this._createDragListener, this);
+        this._dragListener.on('dragStop', this.createDragListener, this);
     }
 
     /**

@@ -1,7 +1,5 @@
-const itemDefaultConfig = {
+export const itemDefaultConfig: Record<string, unknown> = {
     isClosable: true,
     reorderEnabled: true,
     title: ''
 }
-
-export default itemDefaultConfig

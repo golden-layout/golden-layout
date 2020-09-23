@@ -1,10 +1,12 @@
-import EventEmitter from '../utils/EventEmitter'
-import Tab from '../controls/Tab'
-import HeaderButton from '../controls/HeaderButton'
+import $ from 'jquery';
+import { HeaderButton } from '../controls/HeaderButton';
+import { Tab } from '../controls/Tab';
+import { Stack } from '../items/Stack';
+import { LayoutManager } from '../LayoutManager';
+import { EventEmitter } from '../utils/EventEmitter';
 import {
     fnBind
 } from '../utils/utils';
-import $ from 'jquery';
 
 const _template = [
         '<div class="lm_header">',
@@ -20,9 +22,9 @@ const _template = [
  * @param {lm.LayoutManager} layoutManager
  * @param {AbstractContentItem} parent
  */
-export default class Header extends EventEmitter {
+export class Header extends EventEmitter {
 
-    constructor(layoutManager, parent) {
+    constructor(public layoutManager: LayoutManager, private parent: Stack) {
 
         super();
         

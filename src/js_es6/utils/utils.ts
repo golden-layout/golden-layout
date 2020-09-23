@@ -56,6 +56,22 @@ export function getQueryStringParam(param: string): string | null {
     return params[param] || null;
 }
 
+export function createTemplateHtmlElement(templateText: string, selector: string): HTMLElement {
+    const template = document.createElement('template')
+    // modify the template's content
+    // template.content.append(document.createElement('div'))
+    // add it to the document so it is parsed and ready to be used
+    document.head.append(template)
+    const parsedDocument = new DOMParser().parseFromString(templateText, 'text/html')
+    const node = parsedDocument.querySelector(selector);
+    if (node === null) {
+        throw new Error('Drag Proxy Template error: First node is not div')
+    } else {
+        template.content.append(node);
+        return node as HTMLElement;
+    }
+}
+
 export function copy(target: Record<string, unknown>, source: Record<string, unknown>): Record<string, unknown> {
     for (const key in source) {
         target[key] = source[key];
@@ -133,8 +149,8 @@ export function fnBind(fn, context: unknown, boundArgs: [...unknown[]] | undefin
     return bound;
 }
 
-export function removeFromArray(item, array) {
-    var index = indexOf(item, array);
+export function removeFromArray<T>(item: T, array: T[]): void {
+    const index = array.indexOf(item);
 
     if (index === -1) {
         throw new Error('Can\'t remove item from array. Item is not in the array');

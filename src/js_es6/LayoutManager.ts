@@ -1,20 +1,19 @@
 import { Container } from 'golden-layout'
-import $ from 'jquery'
 import { Config } from './config/config'
-import defaultConfig from './config/defaultConfig'
+import { defaultConfig } from './config/defaultConfig'
 import BrowserPopout from './controls/BrowserPopout'
 import DragSource from './controls/DragSource'
 import DropTargetIndicator from './controls/DropTargetIndicator'
 import TransitionIndicator from './controls/TransitionIndicator'
-import ConfigurationError from './errors/ConfigurationError'
-import AbstractContentItem from './items/AbstractContentItem'
-import Component from './items/Component'
-import Root from './items/Root'
-import RowOrColumn from './items/RowOrColumn'
-import Stack from './items/Stack'
-import ConfigMinifier from './utils/ConfigMinifier'
-import EventEmitter from './utils/EventEmitter'
-import EventHub from './utils/EventHub'
+import { ConfigurationError } from './errors/ConfigurationError'
+import { AbstractContentItem } from './items/AbstractContentItem'
+import { Component } from './items/Component'
+import { Root } from './items/Root'
+import { RowOrColumn } from './items/RowOrColumn'
+import { Stack } from './items/Stack'
+import { ConfigMinifier } from './utils/ConfigMinifier'
+import { EventEmitter } from './utils/EventEmitter'
+import { EventHub } from './utils/EventHub'
 import {
     copy,
     fnBind,
@@ -40,7 +39,7 @@ export const REACT_COMPONENT_ID = 'lm-react-component'
  */
 
 
-export default class LayoutManager extends EventEmitter {
+export class LayoutManager extends EventEmitter {
     private _isFullPage;
     private _resizeTimeoutId: NodeJS.Timeout | null;
     private _components: { [x: string]: any };
@@ -65,7 +64,7 @@ export default class LayoutManager extends EventEmitter {
     isSubWindow: boolean;
     eventHub: EventHub;
     config: Config;
-    container: Container | JQuery<any>;
+    container: Container;
     dropTargetIndicator: DropTargetIndicator | null;
     transitionIndicator: TransitionIndicator | null;
     tabDropPlaceholder: JQuery<HTMLElement>;
@@ -188,8 +187,8 @@ export default class LayoutManager extends EventEmitter {
      * @public
      * @returns {Object} GoldenLayout configuration
      */
-    toConfig(root) {
-        var config, next, i;
+    toConfig(root: Root | undefined | null) {
+        var next, i;
 
         if (this.isInitialised === false) {
             throw new Error('Can\'t create config, layout not yet initialised');
@@ -202,7 +201,7 @@ export default class LayoutManager extends EventEmitter {
         /*
          * settings & labels
          */
-        config = {
+        const config: Config = {
             settings: copy({}, this.config.settings),
             dimensions: copy({}, this.config.dimensions),
             labels: copy({}, this.config.labels)
@@ -213,9 +212,7 @@ export default class LayoutManager extends EventEmitter {
          */
         config.content = [];
         next = function(configNode, item) {
-            var key, i;
-
-            for (key in item.config) {
+            for (const key in item.config) {
                 if (key !== 'content') {
                     configNode[key] = item.config[key];
                 }
@@ -224,7 +221,7 @@ export default class LayoutManager extends EventEmitter {
             if (item.contentItems.length) {
                 configNode.content = [];
 
-                for (i = 0; i < item.contentItems.length; i++) {
+                for (let i = 0; i < item.contentItems.length; i++) {
                     configNode.content[i] = {};
                     next(configNode.content[i], item.contentItems[i]);
                 }
@@ -265,7 +262,7 @@ export default class LayoutManager extends EventEmitter {
      * 
      * @returns {Function}
      */
-    getComponent(config) {
+    getComponent(config: Config) {
         const name = this.getComponentNameFromConfig(config)
         let componentToUse = this._components[name]
         if (this._componentFunction !== undefined) {
@@ -330,7 +327,7 @@ export default class LayoutManager extends EventEmitter {
         this.dropTargetIndicator = new DropTargetIndicator(this.container);
         this.transitionIndicator = new TransitionIndicator();
         this.updateSize();
-        this._create(this.config);
+        this.create(this.config);
         this._bindEvents();
         this.isInitialised = true;
         this._adjustColumnsResponsive();
@@ -1048,11 +1045,9 @@ export default class LayoutManager extends EventEmitter {
     /**
      * Kicks of the initial, recursive creation chain
      *
-     * @param   {Object} config GoldenLayout Config
-     *
-     * @returns {void}
+     * @param   config GoldenLayout Config
      */
-    _create(config) {
+    private create(config: Config) {
         var errorMsg;
 
         if (!(config.content instanceof Array)) {

@@ -1,21 +1,18 @@
-import EventEmitter from '../utils/EventEmitter'
-import { 
-  ALL_EVENT
-} from '../utils/EventEmitter'
-
-import BubblingEvent from '../utils/BubblingEvent'
-import Root from './Root'
-import ConfigurationError from '../errors/ConfigurationError'
-import itemDefaultConfig from '../config/ItemDefaultConfig'
-
+import { Config } from '../config/config'
+import { itemDefaultConfig } from '../config/ItemDefaultConfig'
+import { ConfigurationError } from '../errors/ConfigurationError'
+import { LayoutManager } from '../LayoutManager'
+import { BubblingEvent } from '../utils/BubblingEvent'
+import { EventEmitter } from '../utils/EventEmitter'
+import { getJQueryOffset, getJQueryWidthAndHeight } from '../utils/jquery-legacy'
 import {
-    fnBind,
-    animFrame,
+    animFrame, fnBind,
+
     indexOf
 } from '../utils/utils'
-import LayoutManager from '../LayoutManager'
-import { Config } from '../config/config'
-import { ContentItem } from './content-item'
+import { Root } from './Root'
+
+
 
 /**
  * This is the baseclass that all content items inherit from.
@@ -40,10 +37,10 @@ import { ContentItem } from './content-item'
  */
 
 
-export default abstract class AbstractContentItem extends EventEmitter {
+export abstract class AbstractContentItem extends EventEmitter {
     config;
     type;
-    contentItems: ContentItem[];
+    contentItems: AbstractContentItem[];
     parent;
     isInitialised;
     isMaximised;
@@ -55,11 +52,13 @@ export default abstract class AbstractContentItem extends EventEmitter {
     private _pendingEventPropagations: Record<string, unknown>;
     private _throttledEvents: string[];
 
-    constructor(readonly layoutManager: LayoutManager, config: Config, parent: unknown) {
+    element: HTMLElement;
+
+    constructor(readonly layoutManager: LayoutManager, config: Config, parent: AbstractContentItem | null) {
 
         super();
 
-        this.config = this._extendItemNode(config);
+        this.config = this.extendItemNode(config);
         this.type = config.type;
         this.contentItems = [];
         this.parent = parent;
@@ -75,10 +74,10 @@ export default abstract class AbstractContentItem extends EventEmitter {
         this._pendingEventPropagations = {};
         this._throttledEvents = ['stateChanged'];
 
-        this.on(ALL_EVENT, this._propagateEvent, this);
+        this.on(EventEmitter.ALL_EVENT, (name, event) => this.propagateEvent(name as string, event as BubblingEvent));
 
         if (config.content) {
-            this._createContentItems(config);
+            this.createContentItems(config);
         }
     }
 
@@ -195,7 +194,7 @@ export default abstract class AbstractContentItem extends EventEmitter {
      * @param {AbstractContentItem} contentItem
      * @param {[Int]} index If omitted item will be appended
      */
-    addChild(contentItem: AbstractContentItem, index: number): void {
+    addChild(contentItem: AbstractContentItem, index?: number): void {
         if (index === undefined) {
             index = this.contentItems.length;
         }
@@ -223,12 +222,12 @@ export default abstract class AbstractContentItem extends EventEmitter {
      *
      * @returns {void}
      */
-    replaceChild(oldChild, newChild, _$destroyOldChild) {
+    replaceChild(oldChild: AbstractContentItem, newChild: AbstractContentItem, _$destroyOldChild = false): void {
 
         newChild = this.layoutManager._$normalizeContentItem(newChild);
 
-        var index = indexOf(oldChild, this.contentItems),
-            parentNode = oldChild.element[0].parentNode;
+        const index = indexOf(oldChild, this.contentItems);
+        const parentNode = oldChild.element[0].parentNode;
 
         if (index === -1) {
             throw new Error('Can\'t replace child. oldChild is not child of this');
@@ -503,7 +502,7 @@ export default abstract class AbstractContentItem extends EventEmitter {
      *
      * @returns {void}
      */
-    _$destroy() {
+    _$destroy(): void {
         this.emitBubblingEvent('beforeItemDestroyed');
         this.element.remove();
         this.emitBubblingEvent('itemDestroyed');
@@ -520,19 +519,18 @@ export default abstract class AbstractContentItem extends EventEmitter {
      *		contentItem: contentItem
      * }
      */
-    _$getArea(element) {
+    _$getArea(element: HTMLElement): AbstractContentItem.Area {
         element = element || this.element;
 
-        var offset = element.offset(),
-            width = element.width(),
-            height = element.height();
+        const offset = getJQueryOffset(element);
+        const widthAndHeight = getJQueryWidthAndHeight(element);
 
         return {
             x1: offset.left,
             y1: offset.top,
-            x2: offset.left + width,
-            y2: offset.top + height,
-            surface: width * height,
+            x2: offset.left + widthAndHeight.width,
+            y2: offset.top + widthAndHeight.height,
+            surface: widthAndHeight.width * widthAndHeight.height,
             contentItem: this
         };
     }
@@ -548,11 +546,10 @@ export default abstract class AbstractContentItem extends EventEmitter {
      *
      * @returns {void}
      */
-    _$init() {
-        var i;
+    _$init(): void {
         this.setSize();
 
-        for (i = 0; i < this.contentItems.length; i++) {
+        for (let i = 0; i < this.contentItems.length; i++) {
             this.childElementContainer.append(this.contentItems[i].element);
         }
 
@@ -568,9 +565,15 @@ export default abstract class AbstractContentItem extends EventEmitter {
      *
      * @returns {void}
      */
-    emitBubblingEvent(name) {
-        var event = new BubblingEvent(name, this);
+    emitBubblingEvent(name: string): void {
+        const event = new BubblingEvent(name, this);
         this.emit(name, event);
+    }
+
+    protected initContentItems(): void {
+        for (let i = 0; i < this.contentItems.length; i++) {
+            this.contentItems[i]._$init();
+        }
     }
 
     /**
@@ -581,15 +584,13 @@ export default abstract class AbstractContentItem extends EventEmitter {
      *
      * @returns {void}
      */
-    _createContentItems(config) {
-        var oContentItem, i;
-
+    private createContentItems(config: Config) {
         if (!(config.content instanceof Array)) {
             throw new ConfigurationError('content must be an Array', config);
         }
 
-        for (i = 0; i < config.content.length; i++) {
-            oContentItem = this.layoutManager.createContentItem(config.content[i], this);
+        for (let i = 0; i < config.content.length; i++) {
+            const oContentItem = this.layoutManager.createContentItem(config.content[i], this);
             this.contentItems.push(oContentItem);
         }
     }
@@ -601,9 +602,9 @@ export default abstract class AbstractContentItem extends EventEmitter {
      *
      * @returns {configuration item node} extended config
      */
-    _extendItemNode(config) {
+    private extendItemNode(config: Config) {
 
-        for (var key in itemDefaultConfig) {
+        for (const key in itemDefaultConfig) {
             if (config[key] === undefined) {
                 config[key] = itemDefaultConfig[key];
             }
@@ -616,12 +617,10 @@ export default abstract class AbstractContentItem extends EventEmitter {
      * Called for every event on the item tree. Decides whether the event is a bubbling
      * event and propagates it to its parent
      *
-     * @param    {String} name the name of the event
-     * @param   {BubblingEvent} event
-     *
-     * @returns {void}
+     * @param    name the name of the event
+     * @param   event
      */
-    _propagateEvent(name, event) {
+    private propagateEvent(name: string, event: unknown) {
         if (event instanceof BubblingEvent &&
             event.isPropagationStopped === false &&
             this.isInitialised === true) {
@@ -633,9 +632,9 @@ export default abstract class AbstractContentItem extends EventEmitter {
              * to the layoutManager
              */
             if (this.isRoot === false && this.parent) {
-                this.parent.emit.apply(this.parent, Array.prototype.slice.call(arguments, 0));
+                this.parent.emit(name, event);
             } else {
-                this._scheduleEventPropagationToLayoutManager(name, event);
+                this.scheduleEventPropagationToLayoutManager(name, event);
             }
         }
     }
@@ -646,17 +645,14 @@ export default abstract class AbstractContentItem extends EventEmitter {
      * only string-based, batched and sanitized to make them more usable
      *
      * @param {String} name the name of the event
-     *
-     * @private
-     * @returns {void}
      */
-    _scheduleEventPropagationToLayoutManager(name, event) {
+    private scheduleEventPropagationToLayoutManager(name: string, event: BubblingEvent) {
         if (indexOf(name, this._throttledEvents) === -1) {
             this.layoutManager.emit(name, event.origin);
         } else {
             if (this._pendingEventPropagations[name] !== true) {
                 this._pendingEventPropagations[name] = true;
-                animFrame(fnBind(this._propagateEventToLayoutManager, this, [name, event]));
+                animFrame(fnBind(this.propagateEventToLayoutManager, this, [name, event]));
             }
         }
 
@@ -665,13 +661,21 @@ export default abstract class AbstractContentItem extends EventEmitter {
     /**
      * Callback for events scheduled by _scheduleEventPropagationToLayoutManager
      *
-     * @param {String} name the name of the event
-     *
-     * @private
-     * @returns {void}
+     * @param name the name of the event
      */
-    _propagateEventToLayoutManager(name, event) {
+    private propagateEventToLayoutManager(name: string, event: BubblingEvent) {
         this._pendingEventPropagations[name] = false;
         this.layoutManager.emit(name, event);
     }
+}
+
+export namespace AbstractContentItem {
+    export interface Area {
+        x1: number;
+        x2: number;
+        y1: number;
+        y2: number;
+        surface: number;
+        contentItem: AbstractContentItem;
+   }
 }

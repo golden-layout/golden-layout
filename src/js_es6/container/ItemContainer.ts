@@ -1,23 +1,23 @@
-import $ from 'jquery';
-import EventEmitter from '../utils/EventEmitter';
+import { Config } from '../config/config';
+import { RowOrColumn } from '../items/RowOrColumn';
+import { LayoutManager } from '../LayoutManager';
+import { EventEmitter } from '../utils/EventEmitter';
 
-export default class ItemContainer extends EventEmitter {
+export class ItemContainer extends EventEmitter {
     width: number | null;
     height: number | null;
-    title;
+    readonly title;
     isHidden;
-    _element: JQuery<HTMLElement>;
-    _contentElement: JQuery<HTMLElement>;
+    _element: HTMLElement;
+    _contentElement: HTMLElement;
 
-    constructor(private _config, public parent, public layoutManager) {
+    constructor(private readonly _config: Config, public readonly parent: RowOrColumn, public readonly layoutManager: LayoutManager) {
 
         super();
 
         this.width = null;
         this.height = null;
         this.title = this._config.componentName;
-        this.parent = parent;
-        this.layoutManager = layoutManager;
         this.isHidden = false;
 
         this._element = $([
@@ -36,7 +36,7 @@ export default class ItemContainer extends EventEmitter {
      *
      * @returns {DOM element}
      */
-    getElement(): JQuery<HTMLElement> {
+    getElement(): HTMLElement {
         return this._contentElement;
     }
 
@@ -51,7 +51,7 @@ export default class ItemContainer extends EventEmitter {
     hide(): void {
         this.emit('hide');
         this.isHidden = true;
-        this._element.hide();
+        this._element.style.display = 'none';
     }
 
 
@@ -65,7 +65,7 @@ export default class ItemContainer extends EventEmitter {
     show(): void {
         this.emit('show');
         this.isHidden = false;
-        this._element.show();
+        this._element.style.display = '';
         // call shown only if the container has a valid size
         if (this.height != 0 || this.width != 0) {
             this.emit('shown');
@@ -87,7 +87,7 @@ export default class ItemContainer extends EventEmitter {
      * @returns {Boolean} resizeSuccesful
      */
     setSize(width: number, height: number): boolean {
-        var rowOrColumn = this.parent,
+        const rowOrColumn = this.parent,
             rowOrColumnChild = this,
             totalPixel,
             percentage,

@@ -1,31 +1,34 @@
-import AbstractContentItem from '../items/AbstractContentItem'
-import RowOrColumn from '../items/RowOrColumn'
-import $ from 'jquery'
-import LayoutManager from '../LayoutManager';
 import { Config } from '../config/config';
+import { AbstractContentItem } from '../items/AbstractContentItem';
+import { RowOrColumn } from '../items/RowOrColumn';
+import { LayoutManager } from '../LayoutManager';
+import { createTemplateHtmlElement } from '../utils/utils';
 
+export class Root extends AbstractContentItem {
+    readonly element;
+    readonly childElementContainer;
+    private _containerElement: HTMLElement;
 
-export default class Root extends AbstractContentItem {
-    constructor(layoutManager: LayoutManager, config: Config, containerElement) {
+    constructor(layoutManager: LayoutManager, config: Config, containerElement: HTMLElement) {
       
         super(layoutManager, config, null);
 
         this.isRoot = true;
         this.type = 'root';
-        this.element = $('<div class="lm_goldenlayout lm_item lm_root"></div>');
+        this.element = createTemplateHtmlElement('<div class="lm_goldenlayout lm_item lm_root"></div>', 'div');
         this.childElementContainer = this.element;
         this._containerElement = containerElement;
         this._containerElement.append(this.element);
     }
 
-    addChild(contentItem) {
+    addChild(contentItem: AbstractContentItem, index?: number): void {
         if (this.contentItems.length > 0) {
             throw new Error('Root node can only have a single child');
         }
 
         contentItem = this.layoutManager._$normalizeContentItem(contentItem, this);
         this.childElementContainer.append(contentItem.element);
-        AbstractContentItem.prototype.addChild.call(this, contentItem);
+        super.addChild(contentItem, index);
 
         this.callDownwards('setSize');
         this.emitBubblingEvent('stateChanged');
@@ -47,9 +50,9 @@ export default class Root extends AbstractContentItem {
         }
     }
 
-    _$highlightDropZone(x, y, area) {
+    _$highlightDropZone(x, y, area): void {
         this.layoutManager.tabDropPlaceholder.remove();
-        AbstractContentItem.prototype._$highlightDropZone.apply(this, arguments);
+        super._$highlightDropZone(x, y, area);
     }
 
     _$onDrop(contentItem, area) {

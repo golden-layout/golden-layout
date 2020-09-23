@@ -1,22 +1,23 @@
-import $ from 'jquery';
-import ItemContainer from '../container/ItemContainer';
-import AbstractContentItem from '../items/AbstractContentItem';
-import LayoutManager from '../LayoutManager';
-import ReactComponentHandler from '../utils/ReactComponentHandler';
+import { Config } from '../config/config';
+import { ItemContainer } from '../container/ItemContainer';
+import { AbstractContentItem } from '../items/AbstractContentItem';
+import { LayoutManager } from '../LayoutManager';
+import { ReactComponentHandler } from '../utils/ReactComponentHandler';
 /**
  * @param {[type]} layoutManager [description]
  * @param {[type]} config      [description]
  * @param {[type]} parent        [description]
  */
 
-
-export default class Component extends AbstractContentItem {
-    constructor(layoutManager: LayoutManager, config, parent) {
+export class Component extends AbstractContentItem {
+    container: ItemContainer;
+    instance: Component;
+    constructor(layoutManager: LayoutManager, config: Config, public parent: AbstractContentItem) {
 
         super(layoutManager, config, parent);
 
-        var ComponentConstructor = layoutManager.isReactConfig(config) ? ReactComponentHandler : layoutManager.getComponent(config),
-            componentConfig = $.extend(true, {}, this.config.componentState || {});
+        const componentConstructor: Component.Constructor = layoutManager.isReactConfig(config) ? ReactComponentHandler : layoutManager.getComponent(config);
+        const componentConfig = $.extend(true, {}, this.config.componentState ?? {});
 
         componentConfig.componentName = this.config.componentName;
         this.componentName = this.config.componentName;
@@ -27,11 +28,11 @@ export default class Component extends AbstractContentItem {
 
         this.isComponent = true;
         this.container = new ItemContainer(this.config, this, layoutManager);
-        this.instance = new ComponentConstructor(this.container, componentConfig);
+        this.instance = new componentConstructor(this.container, componentConfig);
         this.element = this.container._element;
     }
 
-    close() {
+    close(): void {
         this.parent.removeChild(this);
     }
 
@@ -42,24 +43,25 @@ export default class Component extends AbstractContentItem {
         }
     }
 
-    _$init() {
-        AbstractContentItem.prototype._$init.call(this);
+    _$init(): void {
+        super._$init();
         this.container.emit('open');
+        this.initContentItems();
     }
 
-    _$hide() {
+    _$hide(): void {
         this.container.hide();
-        AbstractContentItem.prototype._$hide.call(this);
+        super._$hide();
     }
 
     _$show() {
         this.container.show();
-        AbstractContentItem.prototype._$show.call(this);
+        super._$show();
     }
 
     _$shown() {
         this.container.shown();
-        AbstractContentItem.prototype._$shown.call(this);
+        // AbstractContentItem.prototype._$shown.call(this);
     }
 
     _$destroy() {
@@ -75,4 +77,8 @@ export default class Component extends AbstractContentItem {
     _$getArea() {
         return null;
     }
+}
+
+export namespace Component {
+    export type Constructor = new() => Component;
 }

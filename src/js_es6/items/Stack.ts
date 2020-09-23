@@ -1,9 +1,9 @@
 import { Config } from 'golden-layout';
 import $ from 'jquery';
 import Header from '../controls/Header';
-import AbstractContentItem from '../items/AbstractContentItem';
-import RowOrColumn from '../items/RowOrColumn';
-import LayoutManager from '../LayoutManager';
+import { AbstractContentItem } from '../items/AbstractContentItem';
+import { RowOrColumn } from '../items/RowOrColumn';
+import { LayoutManager } from '../LayoutManager';
 import {
     copy, fnBind,
 
@@ -12,8 +12,13 @@ import {
 
 
 
-export default class Stack extends AbstractContentItem {
-    constructor(layoutManager: LayoutManager, config: Config, parent) {
+export class Stack extends AbstractContentItem {
+    private _side: Stack.Side;
+    private _header: Header; // config header
+
+    header: Header;
+
+    constructor(layoutManager: LayoutManager, config: Config, parent: AbstractContentItem) {
         super(layoutManager, config, parent)
 
         this.element = $('<div class="lm_item lm_stack"></div>');
@@ -85,19 +90,17 @@ export default class Stack extends AbstractContentItem {
     }
 
     _$init() {
-        var i, initialItem;
-
         if (this.isInitialised === true) return;
 
-        AbstractContentItem.prototype._$init.call(this);
+        super._$init();
 
-        for (i = 0; i < this.contentItems.length; i++) {
+        for (let i = 0; i < this.contentItems.length; i++) {
             this.header.createTab(this.contentItems[i]);
             this.contentItems[i]._$hide();
         }
 
         if (this.contentItems.length > 0) {
-            initialItem = this.contentItems[this.config.activeItemIndex || 0];
+            const initialItem = this.contentItems[this.config.activeItemIndex || 0];
 
             if (!initialItem) {
                 throw new Error('Configured activeItemIndex out of bounds');
@@ -108,7 +111,9 @@ export default class Stack extends AbstractContentItem {
         this._$validateClosability();		
 		if (this.parent instanceof RowOrColumn) {
 			this.parent._validateDocking();
-		}
+        }
+        
+        this.initContentItems();
     }
 
     setActiveContentItem(contentItem) {
@@ -146,7 +151,7 @@ export default class Stack extends AbstractContentItem {
             index -= 1
         }        
         contentItem = this.layoutManager._$normalizeContentItem(contentItem, this);
-        AbstractContentItem.prototype.addChild.call(this, contentItem, index);
+        super.addChild(contentItem, index);
         this.childElementContainer.append(contentItem.element);
         this.header.createTab(contentItem, index);
         this.setActiveContentItem(contentItem);
@@ -159,7 +164,7 @@ export default class Stack extends AbstractContentItem {
 
     removeChild(contentItem, keepChild) {
         var index = indexOf(contentItem, this.contentItems);
-        AbstractContentItem.prototype.removeChild.call(this, contentItem, keepChild);
+        super.removeChild(contentItem, keepChild);
         this.header.removeTab(contentItem);
         if (this.header.activeContentItem === contentItem) {
             if (this.contentItems.length > 0) {
@@ -188,7 +193,7 @@ export default class Stack extends AbstractContentItem {
         } else {
             this.header.hideTab(contentItem);
             contentItem._$hide && contentItem._$hide()
-            AbstractContentItem.prototype.undisplayChild.call(this, contentItem);
+            super.undisplayChild(contentItem);
             if (this.parent instanceof RowOrColumn)
                 this.parent._validateDocking();
         }
@@ -374,11 +379,11 @@ export default class Stack extends AbstractContentItem {
             return null;
         }
 
-        var getArea = AbstractContentItem.prototype._$getArea,
-            headerArea = getArea.call(this, this.header.element),
-            contentArea = getArea.call(this, this.childElementContainer),
-            contentWidth = contentArea.x2 - contentArea.x1,
-            contentHeight = contentArea.y2 - contentArea.y1;
+        const getArea = super._$getArea;
+        const headerArea = getArea.call(this, this.header.element),
+        const contentArea = getArea.call(this, this.childElementContainer),
+        const contentWidth = contentArea.x2 - contentArea.x1,
+        const contentHeight = contentArea.y2 - contentArea.y1;
 
         this._contentAreaDimensions = {
             header: {
@@ -579,11 +584,11 @@ export default class Stack extends AbstractContentItem {
     toggleMaximise(e) {
         if (!this.isMaximised)
             this.dock(false);
-        AbstractContentItem.prototype.toggleMaximise.call(this, e);
+        super.toggleMaximise(e);
     }
 
     _setupHeaderPosition() {
-        var side = ['right', 'left', 'bottom'].indexOf(this._header.show) >= 0 && this._header.show;
+        const side = ['right', 'left', 'bottom'].indexOf(this._header.show) >= 0 && this._header.show;
         this.header.element.toggle(!!this._header.show);
         this._side = side;
         this._sided = ['right', 'left'].indexOf(this._side) >= 0;
@@ -601,5 +606,13 @@ export default class Stack extends AbstractContentItem {
         var highlightArea = this._contentAreaDimensions[segment].highlightArea;
         this.layoutManager.dropTargetIndicator.highlightArea(highlightArea);
         this._dropSegment = segment;
+    }
+}
+
+export namespace Stack {
+    export const enum Side {
+        'right',
+        'left',
+        'bottom',
     }
 }

@@ -1,7 +1,6 @@
 import $ from 'jquery';
-import EventEmitter, {
-    ALL_EVENT
-} from '../utils/EventEmitter';
+import { LayoutManager } from '../LayoutManager';
+import { EventEmitter } from '../utils/EventEmitter';
 import {
     fnBind
 } from '../utils/utils';
@@ -23,12 +22,11 @@ import {
  */
 
 
-export default class EventHub extends EventEmitter {
-    constructor(layoutManager) {
+export class EventHub extends EventEmitter {
+    constructor(private _layoutManager: LayoutManager) {
         
         super();
 
-        this._layoutManager = layoutManager;
         this._dontPropagateToParent = null;
         this._childEventSource = null;
         this.on(ALL_EVENT, fnBind(this._onEventFromThis, this));
@@ -45,7 +43,7 @@ export default class EventHub extends EventEmitter {
      *
      * @returns {void}
      */
-    _onEventFromThis() {
+    private _onEventFromThis() {
         var args = Array.prototype.slice.call(arguments);
 
         if (this._layoutManager.isSubWindow && args[0] !== this._dontPropagateToParent) {
@@ -78,7 +76,7 @@ export default class EventHub extends EventEmitter {
      *
      * @returns {void}
      */
-    _onEventFromChild(event) {
+    private _onEventFromChild(event) {
         this._childEventSource = event.originalEvent.__gl;
         this.emit.apply(this, event.originalEvent.__glArgs);
     }
@@ -92,7 +90,7 @@ export default class EventHub extends EventEmitter {
      *
      * @returns {void}
      */
-    _propagateToParent(args) {
+    private _propagateToParent(args) {
         var event,
             eventName = 'gl_child_event';
 
@@ -123,11 +121,10 @@ export default class EventHub extends EventEmitter {
      *
      * @returns {void}
      */
-    _propagateToChildren(args) {
-        var childGl, i;
+    private _propagateToChildren(args) {
 
-        for (i = 0; i < this._layoutManager.openPopouts.length; i++) {
-            childGl = this._layoutManager.openPopouts[i].getGlInstance();
+        for (let i = 0; i < this._layoutManager.openPopouts.length; i++) {
+            const childGl = this._layoutManager.openPopouts[i].getGlInstance();
 
             if (childGl && childGl !== this._childEventSource) {
                 childGl.eventHub._$onEventFromParent(args);

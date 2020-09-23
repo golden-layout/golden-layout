@@ -1,4 +1,3 @@
-import $ from 'jquery'
 /**
  * A specialised GoldenLayout component that binds GoldenLayout container
  * lifecycle events to react components
@@ -10,7 +9,7 @@ import $ from 'jquery'
  */
 
 
-export default class ReactComponentHandler {
+export class ReactComponentHandler {
     constructor(container, state) {
         this._reactComponent = null;
         this._originalComponentWillUpdate = null;

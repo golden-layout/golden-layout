@@ -1,4 +1,4 @@
-const defaultConfig = {
+export const defaultConfig = {
     openPopouts: [],
     settings: {
         hasHeaders: true,
@@ -34,5 +34,3 @@ const defaultConfig = {
         tabDropdown: 'additional tabs'
     }
 }
-
-export default defaultConfig

@@ -1,9 +1,11 @@
-import EventEmitter from '../utils/EventEmitter'
+import { ContentItem } from '../items/content-item';
+import { LayoutManager } from '../LayoutManager';
+import { DragListener } from '../utils/DragListener';
+import { EventEmitter } from '../utils/EventEmitter';
 import {
-    stripTags,
-    getTouchEvent
+    createTemplateHtmlElement,
+    stripTags
 } from '../utils/utils';
-import $ from 'jquery';
 
 const _template = '<div class="lm_dragProxy">' +
     '<div class="lm_header">' +
@@ -31,25 +33,31 @@ const _template = '<div class="lm_dragProxy">' +
  * @param {AbstractContentItem} contentItem
  * @param {AbstractContentItem} originalParent
  */
-export default class DragProxy extends EventEmitter {
+export class DragProxy extends EventEmitter {
+    private _area: null;
+    private _lastValidArea: null;
+    private _minX: number;
+    private _minY: number;
+    private _maxX: number;
+    private _maxY: number;
+    element: HTMLElement;
 
-    constructor(x, y, dragListener, layoutManager, contentItem, originalParent) {
+    constructor(x: number, y: number,
+        private readonly _dragListener: DragListener,
+        private readonly _layoutManager: LayoutManager,
+        private readonly _contentItem: ContentItem,
+        private readonly _originalParent: HTMLElement) {
 
         super();
-
-        this._dragListener = dragListener;
-        this._layoutManager = layoutManager;
-        this._contentItem = contentItem;
-        this._originalParent = originalParent;
 
         this._area = null;
         this._lastValidArea = null;
 
-        this._dragListener.on('drag', this._onDrag, this);
-        this._dragListener.on('dragStop', this._onDrop, this);
+        this._dragListener.on('drag', (offsetX, offsetY, event) => this.onDrag(offsetX, offsetY, event));
+        this._dragListener.on('dragStop', () => this.onDrop());
 
-        this.element = $(_template);
-        if (originalParent && originalParent._side) {
+        this.element = createTemplateHtmlElement(_template, 'div');
+        if (this._originalParent !== undefined && originalParent._side) {
             this._sided = originalParent._sided;
             this.element.addClass('lm_' + originalParent._side);
             if (['right', 'bottom'].indexOf(originalParent._side) >= 0)
@@ -91,18 +99,15 @@ export default class DragProxy extends EventEmitter {
      * @param   {Number} offsetY The difference from the original y position in px
      * @param   {jQuery DOM event} event
      *
-     * @private
-     *
      * @returns {void}
      */
-    _onDrag(offsetX, offsetY, event) {
-        event = getTouchEvent(event)
+    private onDrag(offsetX: number, offsetY: number, event: EventEmitter.DragEvent) {
 
-        var x = event.pageX,
-            y = event.pageY,
-            isWithinContainer = x > this._minX && x < this._maxX && y > this._minY && y < this._maxY;
+        const x = event.pageX;
+        const y = event.pageY;
+        const isWithinContainer = x > this._minX && x < this._maxX && y > this._minY && y < this._maxY;
 
-        if (!isWithinContainer && this._layoutManager.config.settings.constrainDragToContainer === true) {
+        if (!isWithinContainer && this._layoutManager.config.settings?.constrainDragToContainer === true) {
             return;
         }
 
@@ -140,7 +145,7 @@ export default class DragProxy extends EventEmitter {
      *
      * @returns {void}
      */
-    _onDrop() {
+    onDrop() {
         this._updateTree()
         this._layoutManager.dropTargetIndicator.hide();
 

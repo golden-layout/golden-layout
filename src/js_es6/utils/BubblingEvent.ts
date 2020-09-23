@@ -1,6 +1,6 @@
-import EventEmitter from './EventEmitter';
+import { EventEmitter } from './EventEmitter';
 
-export default class BubblingEvent {
+export class BubblingEvent {
     name: string;
     isPropagationStopped: boolean;
     origin: EventEmitter;

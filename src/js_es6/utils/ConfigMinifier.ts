@@ -9,7 +9,7 @@ import { Config } from 'golden-layout';
  */
 
 
-export default class ConfigMinifier {
+export class ConfigMinifier {
     _keys: readonly string[];
     _values: readonly (boolean | string)[];
 

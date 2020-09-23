@@ -1,30 +1,30 @@
-import AbstractContentItem from '../items/AbstractContentItem'
-import Stack from '../items/Stack'
+import $ from 'jquery'
+import { Config } from '../config/config'
 import Splitter from '../controls/Splitter'
+import { AbstractContentItem } from '../items/AbstractContentItem'
+import { Stack } from '../items/Stack'
+import { LayoutManager } from '../LayoutManager'
 import {
-    fnBind,
-    animFrame,
+    animFrame, fnBind,
+
     indexOf
 } from '../utils/utils'
-import $ from 'jquery'
-import LayoutManager from '../LayoutManager'
-import { Config } from '../config/config'
 
 
 
-export default class RowOrColumn extends AbstractContentItem {
-    element: JQuery<HTMLElement>;
+export class RowOrColumn extends AbstractContentItem {
+    element: HTMLElement;
     childElementContainer: any;
-    _splitterSize: number | undefined;
-    _splitterGrabSize: any;
-    _isColumn: boolean;
-    _dimension: string;
-    _splitter: never[];
-    _splitterPosition: null;
-    _splitterMinPosition: null;
-    _splitterMaxPosition: null;
+    private _splitterSize: number | undefined;
+    private _splitterGrabSize: any;
+    private _isColumn: boolean;
+    private _dimension: string;
+    private _splitter: never[];
+    private _splitterPosition: number | null;
+    private _splitterMinPosition: number | null;
+    private _splitterMaxPosition: number | null;
 
-    constructor(isColumn: boolean, layoutManager: LayoutManager, config: Config, parent: unknown) {
+    constructor(isColumn: boolean, layoutManager: LayoutManager, config: Config, parent: AbstractContentItem) {
       
         super(layoutManager, config, parent);
 
@@ -151,7 +151,7 @@ export default class RowOrColumn extends AbstractContentItem {
         }
 
         if(this.contentItems.length === 1){
-            AbstractContentItem.prototype.undisplayChild.call(this, contentItem);
+            super.undisplayChild(contentItem);
         }
 
         this.callDownwards('setSize');
@@ -202,7 +202,7 @@ export default class RowOrColumn extends AbstractContentItem {
             }
         }
 
-        AbstractContentItem.prototype.removeChild.call(this, contentItem, keepChild);
+        super.removeChild(contentItem, keepChild);
 
         if (this.contentItems.length === 1 && this.config.isClosable === true) {
             childItem = this.contentItems[0];
@@ -226,7 +226,7 @@ export default class RowOrColumn extends AbstractContentItem {
      */
     replaceChild(oldChild, newChild) {
         var size = oldChild.config[this._dimension];
-        AbstractContentItem.prototype.replaceChild.call(this, oldChild, newChild);
+        super.replaceChild(oldChild, newChild);
         newChild.config[this._dimension] = size;
         this.callDownwards('setSize');
         this.emitBubblingEvent('stateChanged');
@@ -341,7 +341,7 @@ export default class RowOrColumn extends AbstractContentItem {
     _$init(): void {
         if (this.isInitialised === true) return;
 
-        AbstractContentItem.prototype._$init.call(this);
+        super._$init();
 
         for (let i = 0; i < this.contentItems.length - 1; i++) {
             this.contentItems[i].element.after(this._createSplitter(i).element);
@@ -350,6 +350,8 @@ export default class RowOrColumn extends AbstractContentItem {
             if (this.contentItems[i]._header && this.contentItems[i]._header.docked)
                 this.dock(this.contentItems[i], true, true);
         }
+
+        this.initContentItems();
     }
 
     /**

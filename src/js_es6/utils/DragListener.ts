@@ -1,6 +1,6 @@
-import EventEmitter from '../utils/EventEmitter';
+import { EventEmitter } from './EventEmitter';
 
-export default class DragListener extends EventEmitter {
+export class DragListener extends EventEmitter {
     private _timeout: NodeJS.Timeout | undefined;
     private _oDocument: Document;
     private _eBody: HTMLElement;
@@ -63,10 +63,12 @@ export default class DragListener extends EventEmitter {
         oEvent.preventDefault();
 
         const coordinates = this.getTouchCoordinates(oEvent);
-        this.processMouseDownTouchStart(coordinates);
+        if (coordinates !== undefined) {
+            this.processMouseDownTouchStart(coordinates);
+        }
     }
 
-    private processMouseDownTouchStart(coordinates: MouseTouchCoordinates) {
+    private processMouseDownTouchStart(coordinates: DragProxy.MouseTouchCoordinates) {
         this._nOriginalX = coordinates.x;
         this._nOriginalY = coordinates.y;
 
@@ -92,11 +94,19 @@ export default class DragListener extends EventEmitter {
             oEvent.preventDefault();
 
             const coordinates = this.getTouchCoordinates(oEvent);
-            this.processMouseMoveTouchMove(coordinates, oEvent);
+            if (coordinates !== undefined) {
+                const mouseTouchEvent: EventEmitter.DragEvent = {
+                    mouseEvent: undefined,
+                    touchEvent: oEvent,
+                    pageX: coordinates.x,
+                    pageY: coordinates.y,
+                }
+                this.processMouseMoveTouchMove(coordinates, mouseTouchEvent);
+            }
         }
     }
 
-    private processMouseMoveTouchMove(coordinates: MouseTouchCoordinates, uiEvent: UIEvent) {
+    private processMouseMoveTouchMove(coordinates: DragProxy.MouseTouchCoordinates, mouseTouchEvent: EventEmitter.DragEvent) {
         this._nX = coordinates.x - this._nOriginalX;
         this._nY = coordinates.y - this._nOriginalY;
 
@@ -113,7 +123,7 @@ export default class DragListener extends EventEmitter {
         }
 
         if (this._bDragging) {
-            this.emit('drag', this._nX, this._nY, uiEvent);
+            this.emit('drag', this._nX, this._nY, mouseTouchEvent);
         }
     }
 
@@ -152,7 +162,7 @@ export default class DragListener extends EventEmitter {
     }
 
     private getMouseCoordinates(event: MouseEvent) {
-        const result: MouseTouchCoordinates = {
+        const result: DragProxy.MouseTouchCoordinates = {
             x: event.pageX,
             y: event.pageY
         };
@@ -160,16 +170,23 @@ export default class DragListener extends EventEmitter {
     }
 
     private getTouchCoordinates(event: TouchEvent) {
-        const targetTouch = event.targetTouches[0]
-        const result: MouseTouchCoordinates = {
-            x: targetTouch.pageX,
-            y: targetTouch.pageY
-        };
-        return result;
+        const targetTouches = event.targetTouches;
+        if (targetTouches.length === 0) {
+            return undefined;
+        } else {
+            const targetTouch = event.targetTouches[0]
+            const result: DragProxy.MouseTouchCoordinates = {
+                x: targetTouch.pageX,
+                y: targetTouch.pageY
+            };
+            return result;
+        }
     }
 }
 
-export interface MouseTouchCoordinates {
-    x: number,
-    y: number,
+export namespace DragProxy {
+    export interface MouseTouchCoordinates {
+        x: number,
+        y: number,
+    }
 }
