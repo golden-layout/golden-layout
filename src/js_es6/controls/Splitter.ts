@@ -1,44 +1,46 @@
-import DragListener from '../utils/DragListener'
-import $ from 'jquery'
+import { DragListener } from '../utils/DragListener';
+import { EventEmitter } from '../utils/EventEmitter';
+import { createTemplateHtmlElement, numberToPixels } from '../utils/utils';
 
-export default class Splitter {
+export class Splitter {
     private _grabSize;
+    private _dragListener;
 
     element;
 
     constructor(private _isVertical: boolean, private _size: number, grabSize: number) {
         this._grabSize = grabSize < this._size ? this._size : grabSize;
 
-        this.element = this._createElement();
+        this.element = this.createElement();
         this._dragListener = new DragListener(this.element);
     }
 
-    on(event, callback, context) {
-        this._dragListener.on(event, callback, context);
+    onUnknown(eventName: string, callback: EventEmitter.UnknownCallback): void {
+        this._dragListener.onUnknown(eventName, callback);
     }
 
-    _$destroy() {
+    _$destroy(): void {
         this.element.remove();
     }
 
-    _createElement(): HTMLElement {
-        var dragHandle = $('<div class="lm_drag_handle"></div>');
-        var element = $('<div class="lm_splitter"></div>');
-        element.append(dragHandle);
+    private createElement(): HTMLElement {
+        const dragHandle = createTemplateHtmlElement('<div class="lm_drag_handle"></div>', 'div');
+        const element = createTemplateHtmlElement('<div class="lm_splitter"></div>', 'div');
+        element.appendChild(dragHandle);
 
-        var handleExcessSize = this._grabSize - this._size;
-        var handleExcessPos = handleExcessSize / 2;
+        const handleExcessSize = this._grabSize - this._size;
+        const handleExcessPos = handleExcessSize / 2;
 
         if (this._isVertical) {
-            dragHandle.css('top', -handleExcessPos);
-            dragHandle.css('height', this._size + handleExcessSize);
-            element.addClass('lm_vertical');
-            element['height'](this._size);
+            dragHandle.style.top = numberToPixels(-handleExcessPos);
+            dragHandle.style.height = numberToPixels(this._size + handleExcessSize);
+            element.classList.add('lm_vertical');
+            element.style.height = numberToPixels(this._size);
         } else {
-            dragHandle.css('left', -handleExcessPos);
-            dragHandle.css('width', this._size + handleExcessSize);
-            element.addClass('lm_horizontal');
-            element['width'](this._size);
+            dragHandle.style.left = numberToPixels(-handleExcessPos);
+            dragHandle.style.width = numberToPixels(this._size + handleExcessSize);
+            element.classList.add('lm_horizontal');
+            element.style.width = numberToPixels(this._size);
         }
 
         return element;

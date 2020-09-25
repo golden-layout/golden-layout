@@ -1,3 +1,4 @@
+
 export interface JQueryOffset {
     top: number;
     left: number;    

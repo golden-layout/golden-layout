@@ -12,8 +12,15 @@ export class DragListener extends EventEmitter {
     private _nOriginalY: number;
     private _bDragging: boolean;
 
-    constructor(private _eElement: HTMLElement) {
+    private _mouseDownEventListener = (ev: MouseEvent) => this.onMouseDown(ev);
+    private _mouseMoveEventListener = (ev: MouseEvent) => this.onMouseMove(ev);
+    private _mouseUpEventListener = (ev: MouseEvent) => this.onMouseUp(ev);
 
+    private _touchStartEventListener = (ev: TouchEvent) => this.onTouchStart(ev);
+    private _touchMoveEventListener = (ev: TouchEvent) => this.onTouchMove(ev);
+    private _touchEndEventListener = (ev: TouchEvent) => this.onTouchEnd(ev);
+
+    constructor(private _eElement: HTMLElement) {
         super();
 
         this._timeout = undefined;
@@ -39,15 +46,15 @@ export class DragListener extends EventEmitter {
 
         this._bDragging = false;
 
-        this._eElement.addEventListener('mousedown', (ev) => this.onMouseDown(ev));
-        this._eElement.addEventListener('touchstart', (ev) => this.onTouchStart(ev));
+        this._eElement.addEventListener('mousedown', this._mouseUpEventListener);
+        this._eElement.addEventListener('touchstart', this._touchStartEventListener);
     }
 
     destroy(): void {
-        this._eElement.removeEventListener('mousedown', (ev) => this.onMouseDown(ev));
-        this._eElement.removeEventListener('touchstart', (ev) => this.onTouchStart(ev));
-        this._oDocument.removeEventListener('mouseup', (ev) => this.onMouseUp(ev));
-        this._oDocument.removeEventListener('touchend', (ev) => this.onTouchEnd(ev));
+        this._eElement.removeEventListener('mousedown', this._mouseDownEventListener);
+        this._eElement.removeEventListener('touchstart', this._touchStartEventListener);
+        this._oDocument.removeEventListener('mouseup', this._mouseUpEventListener);
+        this._oDocument.removeEventListener('touchend', this._touchEndEventListener);
     }
 
     private onMouseDown(oEvent: MouseEvent) {
@@ -72,10 +79,10 @@ export class DragListener extends EventEmitter {
         this._nOriginalX = coordinates.x;
         this._nOriginalY = coordinates.y;
 
-        this._oDocument.addEventListener('mousemove', (ev) => this.onMouseMove(ev));
-        this._oDocument.addEventListener('touchmove', (ev) => this.onTouchMove(ev));
-        this._eElement.addEventListener('mouseup', (ev) => this.onMouseUp(ev));
-        this._eElement.addEventListener('touchend', (ev) => this.onTouchEnd(ev));
+        this._oDocument.addEventListener('mousemove', this._mouseMoveEventListener);
+        this._oDocument.addEventListener('touchmove', this._touchMoveEventListener);
+        this._eElement.addEventListener('mouseup', this._mouseUpEventListener);
+        this._eElement.addEventListener('touchend', this._touchEndEventListener);
 
         this._timeout = setTimeout(() => this.startDrag(), this._nDelay);
     }
@@ -85,7 +92,13 @@ export class DragListener extends EventEmitter {
             oEvent.preventDefault();
 
             const coordinates = this.getMouseCoordinates(oEvent);
-            this.processMouseMoveTouchMove(coordinates, oEvent);
+            const dragEvent: EventEmitter.DragEvent = {
+                mouseEvent: oEvent,
+                touchEvent: undefined,
+                pageX: coordinates.x,
+                pageY: coordinates.y,
+            }
+            this.processDragMove(dragEvent);
         }
     }
 
@@ -95,20 +108,20 @@ export class DragListener extends EventEmitter {
 
             const coordinates = this.getTouchCoordinates(oEvent);
             if (coordinates !== undefined) {
-                const mouseTouchEvent: EventEmitter.DragEvent = {
+                const dragEvent: EventEmitter.DragEvent = {
                     mouseEvent: undefined,
                     touchEvent: oEvent,
                     pageX: coordinates.x,
                     pageY: coordinates.y,
                 }
-                this.processMouseMoveTouchMove(coordinates, mouseTouchEvent);
+                this.processDragMove(dragEvent);
             }
         }
     }
 
-    private processMouseMoveTouchMove(coordinates: DragProxy.MouseTouchCoordinates, mouseTouchEvent: EventEmitter.DragEvent) {
-        this._nX = coordinates.x - this._nOriginalX;
-        this._nY = coordinates.y - this._nOriginalY;
+    private processDragMove(dragEvent: EventEmitter.DragEvent) {
+        this._nX = dragEvent.pageX - this._nOriginalX;
+        this._nY = dragEvent.pageY - this._nOriginalY;
 
         if (this._bDragging === false) {
             if (
@@ -123,32 +136,53 @@ export class DragListener extends EventEmitter {
         }
 
         if (this._bDragging) {
-            this.emit('drag', this._nX, this._nY, mouseTouchEvent);
+            this.emit('drag', this._nX, this._nY, dragEvent);
         }
     }
 
     private onMouseUp(oEvent: MouseEvent) {
-        this.processMouseUpTouchEnd(oEvent);
+        const coordinates = this.getMouseCoordinates(oEvent);
+        const dragEvent: EventEmitter.DragEvent = {
+            mouseEvent: oEvent,
+            touchEvent: undefined,
+            pageX: coordinates.x,
+            pageY: coordinates.y,
+        }
+        this.processDragStop(dragEvent);
     }
 
     private onTouchEnd(oEvent: TouchEvent): void {
-        this.processMouseUpTouchEnd(oEvent);
+        let coordinates = this.getTouchCoordinates(oEvent);
+        if (coordinates === undefined) {
+            // not sure what else to do here
+            coordinates = {
+                x: this._nOriginalX,
+                y: this._nOriginalY,
+            };
+        }
+        const dragEvent: EventEmitter.DragEvent = {
+            mouseEvent: undefined,
+            touchEvent: oEvent,
+            pageX: coordinates.x,
+            pageY: coordinates.y,
+        }
+        this.processDragStop(dragEvent);
     }
 
-    private processMouseUpTouchEnd(uiEvent: UIEvent) {
+    private processDragStop(dragEvent: EventEmitter.DragEvent) {
         if (this._timeout != null) {
             clearTimeout(this._timeout);
             this._eBody.classList.remove('lm_dragging');
             this._eElement.classList.remove('lm_dragging');
             this._oDocument.querySelector('iframe')?.style.setProperty('pointer-events', '');
-            this._eElement.removeEventListener('mousemove', (ev) => this.onMouseMove(ev));
-            this._eElement.removeEventListener('touchmove', (ev) => this.onTouchMove(ev));
-            this._oDocument.removeEventListener('mouseup', (ev) => this.onMouseUp(ev));
-            this._oDocument.removeEventListener('touchend', (ev) => this.onTouchEnd(ev));
+            this._eElement.removeEventListener('mousemove', this._mouseMoveEventListener);
+            this._eElement.removeEventListener('touchmove', this._touchMoveEventListener);
+            this._oDocument.removeEventListener('mouseup', this._mouseUpEventListener);
+            this._oDocument.removeEventListener('touchend', this._touchEndEventListener);
     
             if (this._bDragging === true) {
                 this._bDragging = false;
-                this.emit('dragStop', uiEvent, this._nOriginalX + this._nX);
+                this.emit('dragStop', dragEvent);
             }
         }
     }

@@ -1,11 +1,10 @@
-import $ from 'jquery'
-import { Config } from '../config/config'
-import Splitter from '../controls/Splitter'
+import { ItemConfig } from '../config/config'
+import { Splitter } from '../controls/Splitter'
 import { AbstractContentItem } from '../items/AbstractContentItem'
 import { Stack } from '../items/Stack'
 import { LayoutManager } from '../LayoutManager'
 import {
-    animFrame, fnBind,
+    animFrame, createTemplateHtmlElement, fnBind,
 
     indexOf
 } from '../utils/utils'
@@ -19,19 +18,19 @@ export class RowOrColumn extends AbstractContentItem {
     private _splitterGrabSize: any;
     private _isColumn: boolean;
     private _dimension: string;
-    private _splitter: never[];
+    private _splitter: Splitter[];
     private _splitterPosition: number | null;
     private _splitterMinPosition: number | null;
     private _splitterMaxPosition: number | null;
 
-    constructor(isColumn: boolean, layoutManager: LayoutManager, config: Config, parent: AbstractContentItem) {
+    constructor(isColumn: boolean, layoutManager: LayoutManager, config: ItemConfig, parent: AbstractContentItem) {
       
         super(layoutManager, config, parent);
 
         this.isRow = !isColumn;
         this.isColumn = isColumn;
 
-        this.element = $('<div class="lm_item lm_' + (isColumn ? 'column' : 'row') + '"></div>');
+        this.element = createTemplateHtmlElement('<div class="lm_item lm_' + (isColumn ? 'column' : 'row') + '"></div>', 'div');
         this.childElementContainer = this.element;
         this._splitterSize = layoutManager.config?.dimensions?.borderWidth;
         this._splitterGrabSize = layoutManager.config?.dimensions?.borderGrabWidth;
@@ -255,7 +254,7 @@ export class RowOrColumn extends AbstractContentItem {
      *
      * @returns {void}
      */
-    dock(contentItem, mode, collapsed) {
+    dock(contentItem: AbstractContentItem, mode?: boolean, collapsed?: boolean) {
         if (this.contentItems.length === 1)
             throw new Error('Can\'t dock child when it single');
 

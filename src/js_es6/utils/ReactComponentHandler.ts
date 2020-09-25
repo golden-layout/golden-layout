@@ -8,9 +8,11 @@
  * @param {Object} state state is not required for react components
  */
 
+import { ItemContainer } from '../container/ItemContainer';
+
 
 export class ReactComponentHandler {
-    constructor(container, state) {
+    constructor(container: ItemContainer, state: unknown) {
         this._reactComponent = null;
         this._originalComponentWillUpdate = null;
         this._container = container;

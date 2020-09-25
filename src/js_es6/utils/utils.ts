@@ -1,5 +1,11 @@
 import $ from 'jquery';
 
+export type JsonValue = string | number | boolean | Json | JsonValueArray;
+export interface Json {
+    [name: string]: JsonValue;
+}
+export type JsonValueArray = Array<JsonValue>
+
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 export function F(): void {}
 
@@ -72,11 +78,76 @@ export function createTemplateHtmlElement(templateText: string, selector: string
     }
 }
 
+export function numberToPixels(value: number): string {
+    return value.toString(10) + 'px';
+}
+
 export function copy(target: Record<string, unknown>, source: Record<string, unknown>): Record<string, unknown> {
     for (const key in source) {
         target[key] = source[key];
     }
     return target;
+}
+
+// replacement for JQuery $.extend(true, target, ...objs)
+export function multiDeepExtend(target: Record<string, unknown>, ...objs: Record<string, unknown>[]): Record<string, unknown> {
+    for (const obj of objs) {
+        target = deepExtend(target, obj);
+    }
+
+    return target;
+}
+
+export function deepExtend(target: Record<string, unknown>, obj: Record<string, unknown> | undefined): Record<string, unknown> {
+    if (obj !== undefined) {
+        for (const key in obj) {
+            if (obj.hasOwnProperty(key)) {
+                const value = obj[key];
+                const existingTarget = target[key];
+                target[key] = deepExtendValue(existingTarget, value);
+            }
+        }
+    }
+
+    return target;
+}
+
+function deepExtendValue(existingTarget: unknown, value: unknown) {
+    if (typeof value !== 'object') {
+        return value;
+    } else {
+        if (value instanceof Array) {
+            const length = value.length;
+            const targetArray = new Array<unknown>(length);
+            for (let i = 0; i < length; i++) {
+                const element = value[i];
+                targetArray[i] = deepExtend({}, element);
+            }
+            return targetArray;
+        } else {
+            if (value === null) {
+                return null;
+            } else {
+                const valueObj = value as Record<string, unknown>;
+                if (existingTarget === undefined) {
+                    return deepExtend({}, valueObj); // overwrite
+                } else {
+                    if (typeof existingTarget !== "object") {
+                        return deepExtend({}, valueObj); // overwrite
+                    } else {
+                        if (existingTarget instanceof Array) {
+                            return deepExtend({}, valueObj); // overwrite
+                        } else {
+                            if (existingTarget !== null) {
+                                const existingTargetObj = existingTarget as Record<string, unknown>;
+                                return deepExtend(existingTargetObj, valueObj); // merge
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 /**

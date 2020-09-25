@@ -1,6 +1,5 @@
-import { Config } from 'golden-layout';
-import $ from 'jquery';
-import Header from '../controls/Header';
+import { Config } from '../config/config';
+import { Header } from '../controls/Header';
 import { AbstractContentItem } from '../items/AbstractContentItem';
 import { RowOrColumn } from '../items/RowOrColumn';
 import { LayoutManager } from '../LayoutManager';
@@ -14,7 +13,9 @@ import {
 
 export class Stack extends AbstractContentItem {
     private _side: Stack.Side;
+    private _sided: boolean;
     private _header: Header; // config header
+    private _activeContentItem: AbstractContentItem;
 
     header: Header;
 
@@ -58,7 +59,7 @@ export class Stack extends AbstractContentItem {
         this._$validateClosability();
     }
 
-    dock(mode) {
+    dock(mode: boolean): void {
         if (this._header.dock)
             if (this.parent instanceof RowOrColumn)
                 this.parent.dock(this, mode);
@@ -116,7 +117,7 @@ export class Stack extends AbstractContentItem {
         this.initContentItems();
     }
 
-    setActiveContentItem(contentItem) {
+    setActiveContentItem(contentItem: AbstractContentItem): void {
         if (this._activeContentItem === contentItem) return;
 
         if (indexOf(contentItem, this.contentItems) === -1) {
@@ -135,7 +136,7 @@ export class Stack extends AbstractContentItem {
         this.emitBubblingEvent('stateChanged');
     }
 
-    getActiveContentItem() {
+    getActiveContentItem(): AbstractContentItem {
         return this.header.activeContentItem;
     }
 
@@ -227,7 +228,7 @@ export class Stack extends AbstractContentItem {
     }
 
     _$destroy() {
-        AbstractContentItem.prototype._$destroy.call(this);
+        super._$destroy();
         this.header._$destroy();
         this.element.off('mouseenter mouseleave');
     }

@@ -2,9 +2,6 @@ import { ItemConfig } from 'golden-layout';
 import { DragProxy } from '../controls/DragProxy';
 import { LayoutManager } from '../LayoutManager';
 import { DragListener } from '../utils/DragListener';
-import {
-    isFunction
-} from '../utils/utils';
 
 /**
  * Allows for any DOM item to create a component on drag
@@ -17,6 +14,7 @@ import {
  * @constructor
  */
 export class DragSource {
+    private _dragListener: DragListener | null;
     constructor(private _element: HTMLElement, private _itemConfig: ItemConfig, private _layoutManager: LayoutManager) {
         this._dragListener = null;
 
@@ -29,20 +27,18 @@ export class DragSource {
 	 * @returns {void}
 	 */
 	destroy() {
-		this._removeDragListener();
+		this.removeDragListener();
     }
     
     /**
      * Called initially and after every drag
-     *
-     * @returns {void}
      */
     private createDragListener() {
-        this._removeDragListener();
+        this.removeDragListener();
 
         this._dragListener = new DragListener(this._element);
-        this._dragListener.on('dragStart', this._onDragStart, this);
-        this._dragListener.on('dragStop', this.createDragListener, this);
+        this._dragListener.on('dragStart', this.onDragStart);
+        this._dragListener.on('dragStop', this.createDragListener);
     }
 
     /**
@@ -50,27 +46,24 @@ export class DragSource {
      *
      * @param   {int} x the x position of the mouse on dragStart
      * @param   {int} y the x position of the mouse on dragStart
-     *
-     * @returns {void}
      */
-    _onDragStart(x, y) {
-        var itemConfig = this._itemConfig;
-        if (isFunction(itemConfig)) {
-            itemConfig = itemConfig();
-        }
-        var contentItem = this._layoutManager._$normalizeContentItem($.extend(true, {}, itemConfig)),
-            dragProxy = new DragProxy(x, y, this._dragListener, this._layoutManager, contentItem, null);
+    private onDragStart(x: number, y: number) {
+        const itemConfig = this._itemConfig;
+        // if (isFunction(itemConfig)) {
+        //     itemConfig = itemConfig();
+        // }
+        const
+        const contentItem = this._layoutManager._$normalizeContentItem($.extend(true, {}, itemConfig));
+        const dragProxy = new DragProxy(x, y, this._dragListener, this._layoutManager, contentItem, null);
 
         this._layoutManager.transitionIndicator.transitionElements(this._element, dragProxy.element);
     }
 
     /**
 	 * Called after every drag and when the drag source is being disposed of.
-	 *
-	 * @returns {void}
 	 */
-	_removeDragListener() {
-		if( this._dragListener !== null ) {
+	private removeDragListener() {
+		if (this._dragListener !== null ) {
 			this._dragListener.destroy();
 		}
 	}

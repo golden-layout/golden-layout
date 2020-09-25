@@ -1,17 +1,19 @@
-import { Config } from '../config/config';
+import { ComponentConfig } from '../config/config';
+import { AbstractContentItem } from '../items/AbstractContentItem';
 import { RowOrColumn } from '../items/RowOrColumn';
 import { LayoutManager } from '../LayoutManager';
 import { EventEmitter } from '../utils/EventEmitter';
+import { createTemplateHtmlElement, deepExtend } from '../utils/utils';
 
 export class ItemContainer extends EventEmitter {
     width: number | null;
     height: number | null;
     readonly title;
     isHidden;
-    _element: HTMLElement;
-    _contentElement: HTMLElement;
+    readonly element;
+    private readonly _contentElement;
 
-    constructor(private readonly _config: Config, public readonly parent: RowOrColumn, public readonly layoutManager: LayoutManager) {
+    constructor(private readonly _config: ComponentConfig, public readonly parent: RowOrColumn, public readonly layoutManager: LayoutManager) {
 
         super();
 
@@ -20,15 +22,18 @@ export class ItemContainer extends EventEmitter {
         this.title = this._config.componentName;
         this.isHidden = false;
 
-        this._element = $([
-            '<div class="lm_item_container">',
-            '<div class="lm_content"></div>',
-            '</div>'
-        ].join(''));
+        this.element = createTemplateHtmlElement(
+            '<div class="lm_item_container"> ' +
+            '  <div class="lm_content"></div>' +
+            '</div>', 'div');
 
-        this._contentElement = this._element.find('.lm_content');
+        const contentElement = this.element.querySelector('.lm_content') as HTMLElement;
+        if (contentElement === null) {
+            throw new Error('ItemContainer.constructor: contentElement not found')
+        } else {
+            this._contentElement = contentElement;
+        }
     }
-
 
     /**
      * Get the inner DOM element the container's content
@@ -51,7 +56,7 @@ export class ItemContainer extends EventEmitter {
     hide(): void {
         this.emit('hide');
         this.isHidden = true;
-        this._element.style.display = 'none';
+        this.element.style.display = 'none';
     }
 
 
@@ -65,7 +70,7 @@ export class ItemContainer extends EventEmitter {
     show(): void {
         this.emit('show');
         this.isHidden = false;
-        this._element.style.display = '';
+        this.element.style.display = '';
         // call shown only if the container has a valid size
         if (this.height != 0 || this.width != 0) {
             this.emit('shown');
@@ -87,19 +92,13 @@ export class ItemContainer extends EventEmitter {
      * @returns {Boolean} resizeSuccesful
      */
     setSize(width: number, height: number): boolean {
-        const rowOrColumn = this.parent,
-            rowOrColumnChild = this,
-            totalPixel,
-            percentage,
-            direction,
-            newSize,
-            delta,
-            i;
+        let rowOrColumn = this.parent;
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        let rowOrColumnChild: AbstractContentItem = this;
 
         while (!rowOrColumn.isColumn && !rowOrColumn.isRow) {
             rowOrColumnChild = rowOrColumn;
             rowOrColumn = rowOrColumn.parent;
-
 
             /**
              * No row or column has been found
@@ -109,14 +108,14 @@ export class ItemContainer extends EventEmitter {
             }
         }
 
-        direction = rowOrColumn.isColumn ? 'height' : 'width';
-        newSize = direction === 'height' ? height : width;
+        const direction = rowOrColumn.isColumn ? 'height' : 'width';
+        const newSize = direction === 'height' ? height : width;
 
-        totalPixel = this[direction] * (1 / (rowOrColumnChild.config[direction] / 100));
-        percentage = (newSize / totalPixel) * 100;
-        delta = (rowOrColumnChild.config[direction] - percentage) / (rowOrColumn.contentItems.length - 1);
+        const totalPixel = this[direction] * (1 / (rowOrColumnChild.config[direction] / 100));
+        const percentage = (newSize / totalPixel) * 100;
+        const delta = (rowOrColumnChild.config[direction] - percentage) / (rowOrColumn.contentItems.length - 1);
 
-        for (i = 0; i < rowOrColumn.contentItems.length; i++) {
+        for (let i = 0; i < rowOrColumn.contentItems.length; i++) {
             if (rowOrColumn.contentItems[i] === rowOrColumnChild) {
                 rowOrColumn.contentItems[i].config[direction] = percentage;
             } else {
@@ -150,7 +149,7 @@ export class ItemContainer extends EventEmitter {
      *
      * @returns {Object} state
      */
-    getState(): object {
+    getState(): Record<string, unknown> {
         return this._config.componentState;
     }
 
@@ -162,8 +161,9 @@ export class ItemContainer extends EventEmitter {
      *
      * @returns {void}
      */
-    extendState(state: object): void {
-        this.setState($.extend(true, this.getState(), state));
+    extendState(state: Record<string, unknown>): void {
+        const extendedState = deepExtend(this.getState(), state);
+        this.setState(extendedState);
     }
 
 
@@ -172,7 +172,7 @@ export class ItemContainer extends EventEmitter {
      *
      * @param {serialisable} state
      */
-    setState(state: any) {
+    setState(state: Record<string, unknown>): void {
         this._config.componentState = state;
         this.parent.emitBubblingEvent('stateChanged');
     }

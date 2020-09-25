@@ -7,7 +7,7 @@ import {
     fnBind,
     stripTags
 } from '../utils/utils';
-import Header from './Header';
+import { Header } from './Header';
 
 /**
  * Represents an individual tab within a Stack's header
@@ -23,11 +23,17 @@ const _template = '<li class="lm_tab"><i class="lm_left"></i>' +
         '<i class="lm_right"></i></li>'
 
 export class Tab {
+    private _layoutManager: LayoutManager;
+
+    private _tabMouseDownEventListener = (ev: MouseEvent) => this.onTabMouseDown(ev);
+    private _tabTouchStartEventListener = (ev: TouchEvent) => this.onTabTouchStart(ev);
+    private _closeClickEventListener = (ev: MouseEvent) => this.onCloseClick(ev);
+    private _closeTouchStartEventListener = (ev: TouchEvent) => this.onCloseTouchStart(ev);
+
     element: HTMLElement;
     titleElement: HTMLElement;
     closeElement: HTMLElement;
     isActive: boolean;
-    private _layoutManager: LayoutManager;
 
     constructor(public header: Header, public contentItem: AbstractContentItem) {
         this.contentItem = contentItem;
@@ -65,7 +71,7 @@ export class Tab {
             this.contentItem.on('destroy', this._dragListener.destroy, this._dragListener);
         }
 
-        this._onTabClickFn = fnBind(this.onTabClick, this);
+        this._onTabClickFn = fnBind(this.onTabMouseDown, this);
         this._onCloseClickFn = fnBind(this.onCloseClick, this);
 
         this.element.on('mousedown touchstart', this._onTabClickFn);
@@ -123,15 +129,12 @@ export class Tab {
 
     /**
      * Destroys the tab
-     *
-     * @private
-     * @returns {void}
      */
-    _$destroy() {
-        this.element.removeEventListener('mousedown', (event) => this.onTabClick(event));
-        this.element.removeEventListener('touchstart', (event) => this.onTabTouch(event));
-        this.closeElement.removeEventListener('click', (event) => this.onCloseClick(event));
-        this.closeElement.removeEventListener('touchstart', (event) => this.onCloseTouch(event));
+    _$destroy(): void {
+        this.element.removeEventListener('mousedown', this._tabMouseDownEventListener);
+        this.element.removeEventListener('touchstart', this._tabTouchStartEventListener);
+        this.closeElement.removeEventListener('click', this._closeClickEventListener);
+        this.closeElement.removeEventListener('touchstart', this._closeTouchStartEventListener);
         if (this._dragListener) {
             this.contentItem.off('destroy', this._dragListener.destroy, this._dragListener);
             this._dragListener.off('dragStart', this._onDragStart);
@@ -173,7 +176,7 @@ export class Tab {
      * @private
      * @returns {void}
      */
-    private onTabClick(event: MouseEvent) {
+    private onTabMouseDown(event: MouseEvent) {
         // left mouse button
         if (event.button === 0) {
             this.header.parent.setActiveContentItem( this.contentItem );
@@ -184,7 +187,7 @@ export class Tab {
         }
     }
 
-    private onTabTouch(event: TouchEvent) {
+    private onTabTouchStart(event: TouchEvent) {
         this.header.parent.setActiveContentItem( this.contentItem );
     }
 
@@ -201,7 +204,7 @@ export class Tab {
         }
     }
 
-    private onCloseTouch(event: TouchEvent) {
+    private onCloseTouchStart(event: TouchEvent) {
         event.stopPropagation();
         if (!this.header._canDestroy) {
             return;

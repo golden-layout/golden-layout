@@ -1,10 +1,13 @@
-import EventEmitter from '../utils/EventEmitter'
-import ConfigMinifier from '../utils/ConfigMinifier'
+import $ from 'jquery';
+import { Config, ExtendibleConfig, PopoutConfig } from '../config/config';
+import { LayoutManager } from '../LayoutManager';
+import { ConfigMinifier } from '../utils/ConfigMinifier';
+import { EventEmitter } from '../utils/EventEmitter';
 import {
+    deepExtend,
     fnBind,
-    getUniqueId,
-} from '../utils/utils'
-import $ from 'jquery'
+    getUniqueId
+} from '../utils/utils';
 
 /**
  * Pops a content item out into a new browser window.
@@ -24,46 +27,69 @@ import $ from 'jquery'
  */
 
 
-export default class BrowserPopout extends EventEmitter {
-    constructor(config, dimensions, parentId, indexInParent, layoutManager) {
+export class BrowserPopout extends EventEmitter {
+    private _popoutWindow: Window | null;
+    private _isInitialised;
+    private _id: string | null;
 
+    constructor(private _config: PopoutConfig,
+        private _dimensions: PopoutConfig.Dimensions,
+        private _parentId: string, 
+        private _indexInParent: number,
+        private _layoutManager: LayoutManager
+    ) {
         super();
         
-        this.isInitialised = false;
+        this._isInitialised = false;
 
-        this._config = config;
-        this._dimensions = dimensions;
-        this._parentId = parentId;
-        this._indexInParent = indexInParent;
-        this._layoutManager = layoutManager;
         this._popoutWindow = null;
         this._id = null;
         this._createWindow();
     }
 
-    toConfig() {
-        if (this.isInitialised === false) {
+    toConfig(): PopoutConfig {
+        if (this._isInitialised === false) {
             throw new Error('Can\'t create config, layout not yet initialised');
         }
-        return {
+        let left: number | null;
+        let top: number | null;
+        if (this._popoutWindow === null) {
+            left = null;
+            top = null;
+        } else {
+            left = this._popoutWindow.screenX ?? this._popoutWindow.screenLeft;
+            top = this._popoutWindow.screenY ?? this._popoutWindow.screenTop;
+        }
+
+        const config: PopoutConfig = {
             dimensions: {
                 width: this.getGlInstance().width,
                 height: this.getGlInstance().height,
-                left: this._popoutWindow.screenX || this._popoutWindow.screenLeft,
-                top: this._popoutWindow.screenY || this._popoutWindow.screenTop
+                left,
+                top,
             },
             content: this.getGlInstance().toConfig().content,
             parentId: this._parentId,
             indexInParent: this._indexInParent
         };
+
+        return config;
     }
 
-    getGlInstance() {
-        return this._popoutWindow.__glInstance;
+    getGlInstance(): LayoutManager {
+        if (this._popoutWindow === null) {
+            throw new Error('BrowserPopout.getGlInstance: _popoutWindow is null');
+        } else {
+            return this._popoutWindow.__glInstance;
+        }
     }
 
     getWindow() {
-        return this._popoutWindow;
+        if (this._popoutWindow === null) {
+            throw new Error('BrowserPopout.getGlInstance: _popoutWindow is null');
+        } else {
+            return this._popoutWindow;
+        }
     }
 
     close() {
@@ -83,9 +109,9 @@ export default class BrowserPopout extends EventEmitter {
      * parent isn't available anymore it falls back to the layout's topmost element
      */
     popIn() {
-        var childConfig,
-            parentItem,
-            index = this._indexInParent;
+        let copiedChildConfig: Config;
+        let parentItem: 
+        let index = this._indexInParent;
 
         if (this._parentId) {
 
@@ -98,24 +124,36 @@ export default class BrowserPopout extends EventEmitter {
              *
              * The callee (server [not server application]) is not available and disappeared
              */
-            childConfig = $.extend(true, {}, this.getGlInstance().toConfig()).content[0];
-            parentItem = this._layoutManager.root.getItemsById(this._parentId)[0];
-
-            /*
-             * Fallback if parentItem is not available. Either add it to the topmost
-             * item or make it the topmost item if the layout is empty
-             */
-            if (!parentItem) {
-                if (this._layoutManager.root.contentItems.length > 0) {
-                    parentItem = this._layoutManager.root.contentItems[0];
+            const glInstanceConfig = this.getGlInstance().toConfig() as ExtendibleConfig;
+            const copiedGlInstanceConfig = deepExtend({}, glInstanceConfig) as Config;
+            const copiedContent = copiedGlInstanceConfig.content;
+            if (copiedContent === undefined || copiedContent.length === 0) {
+                throw new Error('BrowserPopout.popIn: child config not available');
+            } else {
+                copiedChildConfig = copiedContent[0];
+                const root = this._layoutManager.root;
+                if (root === null) {
+                    throw new Error('BrowserPopout.popIn: LayoutManager root not available');
                 } else {
-                    parentItem = this._layoutManager.root;
+                    parentItem = root.getItemsById(this._parentId)[0];
+
+                    /*
+                    * Fallback if parentItem is not available. Either add it to the topmost
+                    * item or make it the topmost item if the layout is empty
+                    */
+                    if (!parentItem) {
+                        if (root.contentItems.length > 0) {
+                            parentItem = root.contentItems[0];
+                        } else {
+                            parentItem = root;
+                        }
+                        index = 0;
+                    }
                 }
-                index = 0;
             }
         }
 
-        parentItem.addChild(childConfig, this._indexInParent);
+        parentItem.addChild(copiedChildConfig, this._indexInParent);
         this.close();
     }
 
@@ -256,7 +294,7 @@ export default class BrowserPopout extends EventEmitter {
      * @returns {void}
      */
     _onInitialised() {
-        this.isInitialised = true;
+        this._isInitialised = true;
         this.getGlInstance().on('popIn', this.popIn, this);
         this.emit('initialised');
     }

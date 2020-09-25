@@ -1,4 +1,4 @@
-import { Config } from '../config/config'
+import { ItemConfig } from '../config/config'
 import { itemDefaultConfig } from '../config/ItemDefaultConfig'
 import { ConfigurationError } from '../errors/ConfigurationError'
 import { LayoutManager } from '../LayoutManager'
@@ -38,6 +38,9 @@ import { Root } from './Root'
 
 
 export abstract class AbstractContentItem extends EventEmitter {
+    private _pendingEventPropagations: Record<string, unknown>;
+    private _throttledEvents: string[];
+
     config;
     type;
     contentItems: AbstractContentItem[];
@@ -49,12 +52,10 @@ export abstract class AbstractContentItem extends EventEmitter {
     isColumn: boolean
     isStack: boolean
     isComponent: boolean
-    private _pendingEventPropagations: Record<string, unknown>;
-    private _throttledEvents: string[];
 
     element: HTMLElement;
 
-    constructor(readonly layoutManager: LayoutManager, config: Config, parent: AbstractContentItem | null) {
+    constructor(readonly layoutManager: LayoutManager, config: ItemConfig, parent: AbstractContentItem | null) {
 
         super();
 
@@ -115,11 +116,11 @@ export abstract class AbstractContentItem extends EventEmitter {
      *
      * @returns {void}
      */
-    removeChild(contentItem, keepChild) {
+    removeChild(contentItem: AbstractContentItem, keepChild = false): void {
         /*
          * Get the position of the item that's to be removed within all content items this node contains
          */
-        var index = indexOf(contentItem, this.contentItems);
+        const index = this.contentItems.indexOf(contentItem);
 
         /*
          * Make sure the content item to be removed is actually a child of this item
@@ -191,10 +192,12 @@ export abstract class AbstractContentItem extends EventEmitter {
      * The responsibility for the actual DOM manipulations lies
      * with the concrete item
      *
-     * @param {AbstractContentItem} contentItem
-     * @param {[Int]} index If omitted item will be appended
+     * @param contentItem
+     * @param index If omitted item will be appended
+     * @param suspendResize Used by descendent implementations
      */
-    addChild(contentItem: AbstractContentItem, index?: number): void {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    addChild(contentItem: AbstractContentItem, index?: number, suspendResize?: boolean): void {
         if (index === undefined) {
             index = this.contentItems.length;
         }
@@ -349,7 +352,7 @@ export abstract class AbstractContentItem extends EventEmitter {
      *
      * @returns {Boolean} isPresent
      */
-    hasId(id) {
+    hasId(id: string): boolean {
         if (!this.config.id) {
             return false;
         } else if (typeof this.config.id === 'string') {
@@ -386,12 +389,9 @@ export abstract class AbstractContentItem extends EventEmitter {
      * Removes an existing id. Throws an error
      * if the id is not present
      *
-     * @public
-     * @param   {String} id
-     *
-     * @returns {void}
+     * @param id
      */
-    removeId(id) {
+    removeId(id: string): void {
         if (!this.hasId(id)) {
             throw new Error('Id not found');
         }
@@ -424,7 +424,7 @@ export abstract class AbstractContentItem extends EventEmitter {
         return result;
     }
 
-    getItemsById(id) {
+    getItemsById(id: string) {
         return this.getItemsByFilter(function(item) {
             if (item.config.id instanceof Array) {
                 return indexOf(id, item.config.id) !== -1;
@@ -438,13 +438,14 @@ export abstract class AbstractContentItem extends EventEmitter {
         return this._$getItemsByProperty('type', type);
     }
 
-    getComponentsByName(componentName) {
-        var components = this._$getItemsByProperty('componentName', componentName),
-            instances = [],
-            i;
+    getComponentsByName(componentName: string) {
+        const components = this._$getItemsByProperty('componentName', componentName);
+        const count = components.length;
+        
+        const instances: Array<> = [],
 
-        for (i = 0; i < components.length; i++) {
-            instances.push(components[i].instance);
+        for (let i = 0; i < count; i++) {
+            instances[i] = components[i].instance;
         }
 
         return instances;
@@ -453,13 +454,13 @@ export abstract class AbstractContentItem extends EventEmitter {
     /****************************************
      * PACKAGE PRIVATE
      ****************************************/
-    _$getItemsByProperty(key, value) {
+    _$getItemsByProperty(key: string, value) {
         return this.getItemsByFilter(function(item) {
             return item[key] === value;
         });
     }
 
-    _$setParent(parent) {
+    setParent(parent: AbstractContentItem): void {
         this.parent = parent;
     }
 
@@ -519,7 +520,7 @@ export abstract class AbstractContentItem extends EventEmitter {
      *		contentItem: contentItem
      * }
      */
-    _$getArea(element: HTMLElement): AbstractContentItem.Area {
+    _$getArea(element: HTMLElement): AbstractContentItem.Area | null {
         element = element || this.element;
 
         const offset = getJQueryOffset(element);
@@ -602,7 +603,7 @@ export abstract class AbstractContentItem extends EventEmitter {
      *
      * @returns {configuration item node} extended config
      */
-    private extendItemNode(config: Config) {
+    private extendItemNode(config: ItemConfig) {
 
         for (const key in itemDefaultConfig) {
             if (config[key] === undefined) {
@@ -632,7 +633,7 @@ export abstract class AbstractContentItem extends EventEmitter {
              * to the layoutManager
              */
             if (this.isRoot === false && this.parent) {
-                this.parent.emit(name, event);
+                this.parent.emitUnknown(name, event);
             } else {
                 this.scheduleEventPropagationToLayoutManager(name, event);
             }

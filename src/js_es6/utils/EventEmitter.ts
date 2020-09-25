@@ -44,6 +44,25 @@ export class EventEmitter {
         }
     }
 
+    emitUnknown(eventName: string, ...args: EventEmitter.UnknownParams): void {
+        let subs = this._subscriptionsMap.get(eventName);
+
+        if (subs !== undefined) {
+            subs = subs.slice();
+            for (let i = 0; i < subs.length; i++) {
+                subs[i](args);
+            }
+        }
+
+        args.unshift(eventName);
+
+        const allEventSubs = this._allEventSubscriptions.slice();
+
+        for (let i = 0; i < allEventSubs.length; i++) {
+            allEventSubs[i](args);
+        }
+    }
+
     /**
      * Removes a listener for an event, or all listeners if no callback and context is provided.
      *
@@ -53,16 +72,19 @@ export class EventEmitter {
      * @returns {void}
      */
     off<K extends keyof EventEmitter.EventParamsMap>(eventName: K, callback: EventEmitter.Callback<K>): void {
-        const subscriptions = this._subscriptionsMap.get(eventName);
-        if (subscriptions === undefined) {
-            throw new Error('No subscribtions to unsubscribe for event ' + eventName);
+        const unknownCallback = callback as EventEmitter.UnknownCallback;
+        this.offUnknown(eventName, unknownCallback);
+    }
+
+    offUnknown(eventName: string, callback: EventEmitter.UnknownCallback): void {
+        if (eventName === EventEmitter.ALL_EVENT) {
+            this.removeSubscription(eventName, this._allEventSubscriptions, callback);
         } else {
-            const unknownCallback = callback as EventEmitter.UnknownCallback;
-            const idx = subscriptions.indexOf(unknownCallback);
-            if (idx < 0) {
-                throw new Error('Nothing to unbind for ' + eventName);
+            const subscriptions = this._subscriptionsMap.get(eventName);
+            if (subscriptions === undefined) {
+                throw new Error('No subscribtions to unsubscribe for event ' + eventName);
             } else {
-                subscriptions.splice(idx, 1);
+                this.removeSubscription(eventName, subscriptions, callback);
             }
         }
     }
@@ -84,21 +106,34 @@ export class EventEmitter {
      * @param   callback The callback to execute when the event occurs
      */
     on<K extends keyof EventEmitter.EventParamsMap>(eventName: K, callback: EventEmitter.Callback<K>): void {
+        const unknownCallback = callback as EventEmitter.UnknownCallback;
+        this.onUnknown(eventName, unknownCallback);
+    }
+
+    onUnknown(eventName: string, callback: EventEmitter.UnknownCallback): void {
         if (!isFunction(callback)) {
             throw new Error('Tried to listen to event ' + eventName + ' with non-function callback ' + callback);
         } else {
-            const unknownCallback = callback as EventEmitter.UnknownCallback;
             if (eventName === EventEmitter.ALL_EVENT) {
-                this._allEventSubscriptions.push(unknownCallback);
+                this._allEventSubscriptions.push(callback);
             } else {
                 let subscriptions = this._subscriptionsMap.get(eventName);
                 if (subscriptions !== undefined) {
-                    subscriptions.push(unknownCallback);
+                    subscriptions.push(callback);
                 } else {
-                    subscriptions = [unknownCallback];
+                    subscriptions = [callback];
                     this._subscriptionsMap.set(eventName, subscriptions);
                 }
             }
+        }
+    }
+
+    private removeSubscription(eventName: string, subscriptions: EventEmitter.UnknownCallback[], callback: EventEmitter.UnknownCallback) {
+        const idx = subscriptions.indexOf(callback);
+        if (idx < 0) {
+            throw new Error('Nothing to unbind for ' + eventName);
+        } else {
+            subscriptions.splice(idx, 1);
         }
     }
 }
@@ -122,12 +157,24 @@ export namespace EventEmitter {
 
     export interface EventParamsMap {
         "__all": UnknownParams;
+        "activeContentItemChanged": UnknownParam;
+        "close": NoParams;
+        "destroy": NoParams;
         "drag": DragParams;
-        "dragStop": NoParams;
+        "dragStart": DragStartParams;
+        "dragStop": DragStopParams;
+        "hide": NoParams;
+        "open": NoParams;
+        "show": NoParams;
+        "shown": NoParams;
     }
 
     export type UnknownParams = unknown[];
     export type NoParams = [];
+    export type UnknownParam = [unknown];
+    export type DragStartParams = [originalX: number, originalY: number];
+    export type DragStopParams = [event: DragEvent];
+    export type DragParams = [offsetX: number, offsetY: number, event: DragEvent];
 
     export interface DragEvent {
         mouseEvent: MouseEvent | undefined;
@@ -135,5 +182,4 @@ export namespace EventEmitter {
         pageX: number;
         pageY: number;
     }
-    export type DragParams = [offsetX: number, offsetY: number, event: DragEvent];
 }

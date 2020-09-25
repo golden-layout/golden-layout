@@ -1,9 +1,10 @@
-import { ContentItem } from '../items/content-item';
+import { AbstractContentItem } from '../items/AbstractContentItem';
 import { LayoutManager } from '../LayoutManager';
 import { DragListener } from '../utils/DragListener';
 import { EventEmitter } from '../utils/EventEmitter';
 import {
     createTemplateHtmlElement,
+    numberToPixels,
     stripTags
 } from '../utils/utils';
 
@@ -40,12 +41,14 @@ export class DragProxy extends EventEmitter {
     private _minY: number;
     private _maxX: number;
     private _maxY: number;
+    private _contentItemParent: AbstractContentItem;
+    private _sided: boolean;
     element: HTMLElement;
 
     constructor(x: number, y: number,
         private readonly _dragListener: DragListener,
         private readonly _layoutManager: LayoutManager,
-        private readonly _contentItem: ContentItem,
+        private readonly _contentItem: AbstractContentItem,
         private readonly _originalParent: HTMLElement) {
 
         super();
@@ -74,7 +77,7 @@ export class DragProxy extends EventEmitter {
 
         this._undisplayTree();
         this._layoutManager._$calculateItemAreas();
-        this._setDimensions();
+        this.setDimensions();
 
         $(document.body).append(this.element);
 
@@ -146,7 +149,7 @@ export class DragProxy extends EventEmitter {
      * @returns {void}
      */
     onDrop() {
-        this._updateTree()
+        this.updateTree()
         this._layoutManager.dropTargetIndicator.hide();
 
         /*
@@ -186,61 +189,55 @@ export class DragProxy extends EventEmitter {
 
     /**
      * Undisplays the item from its original position within the tree
-     *
-     * @private
-     *
-     * @returns {void}
      */
-    _undisplayTree() {
+    private _undisplayTree() {
 
         /**
          * parent is null if the drag had been initiated by a external drag source
          */
-        if (this._contentItem.parent) {
+        if (this._contentItem.parent !== null) {
             this._contentItem.parent.undisplayChild(this._contentItem);
         }
     }
 
     /**
      * Removes the item from its original position within the tree
-     *
-     * @private
-     *
-     * @returns {void}
      */
-    _updateTree() {
-
+    private updateTree() {
         /**
          * parent is null if the drag had been initiated by a external drag source
          */
-        if (this._contentItem.parent) {
+        if (this._contentItem.parent !== null) {
             this._contentItem.parent.removeChild(this._contentItem, true);
         }
 
-        this._contentItem._$setParent(this);
+        this._contentItem.setParent(this._contentItemParent);
     }
 
     /**
      * Updates the Drag Proxie's dimensions
-     *
-     * @private
-     *
-     * @returns {void}
      */
-    _setDimensions() {
-        var dimensions = this._layoutManager.config.dimensions,
-            width = dimensions.dragProxyWidth,
-            height = dimensions.dragProxyHeight;
-
-        this.element.width(width);
-        this.element.height(height);
-        width -= (this._sided ? dimensions.headerHeight : 0);
-        height -= (!this._sided ? dimensions.headerHeight : 0);
-        this.childElementContainer.width(width);
-        this.childElementContainer.height(height);
-        this._contentItem.element.width(width);
-        this._contentItem.element.height(height);
-        this._contentItem.callDownwards('_$show');
-        this._contentItem.callDownwards('setSize');
+    private setDimensions() {
+        const dimensions = this._layoutManager.config.dimensions;
+        if (dimensions === undefined) {
+            throw new Error('DragProxy.setDimensions: dimensions undefined');
+        } else {
+            let width = dimensions.dragProxyWidth;
+            let height = dimensions.dragProxyHeight;
+            if (width === undefined || height === undefined) {
+                throw new Error('DragProxy.setDimensions: width and/or height undefined');
+            } else {
+                this.element.style.width = numberToPixels(width);
+                this.element.style.height = numberToPixels(height)
+                width -= (this._sided ? dimensions.headerHeight : 0);
+                height -= (!this._sided ? dimensions.headerHeight : 0);
+                this.childElementContainer.width(width);
+                this.childElementContainer.height(height);
+                this._contentItem.element.width(width);
+                this._contentItem.element.height(height);
+                this._contentItem.callDownwards('_$show');
+                this._contentItem.callDownwards('setSize');
+            }
+        }
     }
 }

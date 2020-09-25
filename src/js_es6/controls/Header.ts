@@ -1,11 +1,12 @@
 import $ from 'jquery';
 import { HeaderButton } from '../controls/HeaderButton';
 import { Tab } from '../controls/Tab';
+import { AbstractContentItem } from '../items/AbstractContentItem';
 import { Stack } from '../items/Stack';
 import { LayoutManager } from '../LayoutManager';
 import { EventEmitter } from '../utils/EventEmitter';
 import {
-    fnBind
+    fnBind, numberToPixels
 } from '../utils/utils';
 
 const _template = [
@@ -23,12 +24,12 @@ const _template = [
  * @param {AbstractContentItem} parent
  */
 export class Header extends EventEmitter {
+    activeContentItem: AbstractContentItem | null;
 
     constructor(public layoutManager: LayoutManager, private parent: Stack) {
 
         super();
         
-        this.layoutManager = layoutManager;
         this.element = $(_template);
 
         if (this.layoutManager.config.settings.selectionEnabled === true) {
@@ -451,7 +452,7 @@ export class Header extends EventEmitter {
                     //Check overlap against allowance.
                     if (overlap < tabOverlapAllowance) {
                         for (j = 0; j <= i; j++) {
-                            marginLeft = (j !== activeIndex && j !== 0) ? '-' + overlap + 'px' : '';
+                            marginLeft = (j !== activeIndex && j !== 0) ? '-' + numberToPixels(overlap) : '';
                             this.tabs[j].element.css({
                                 'z-index': i - j,
                                 'margin-left': marginLeft

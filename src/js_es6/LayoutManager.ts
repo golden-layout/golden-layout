@@ -1,8 +1,8 @@
 import { Container } from 'golden-layout'
-import { Config } from './config/config'
+import { ComponentConfig, Config, PopoutConfig } from './config/config'
 import { defaultConfig } from './config/defaultConfig'
-import BrowserPopout from './controls/BrowserPopout'
-import DragSource from './controls/DragSource'
+import { BrowserPopout } from './controls/BrowserPopout'
+import { DragSource } from './controls/DragSource'
 import DropTargetIndicator from './controls/DropTargetIndicator'
 import TransitionIndicator from './controls/TransitionIndicator'
 import { ConfigurationError } from './errors/ConfigurationError'
@@ -21,11 +21,18 @@ import {
     getUniqueId,
     indexOf,
     isFunction,
+    multiDeepExtend,
     objectKeys,
     stripTags
 } from './utils/utils'
 
 export const REACT_COMPONENT_ID = 'lm-react-component'
+
+declare global {
+    interface Window {
+        __glInstance: LayoutManager;
+    }
+}
 
 /**
  * The main class that will be exposed as GoldenLayout.
@@ -42,7 +49,7 @@ export const REACT_COMPONENT_ID = 'lm-react-component'
 export class LayoutManager extends EventEmitter {
     private _isFullPage;
     private _resizeTimeoutId: NodeJS.Timeout | null;
-    private _components: { [x: string]: any };
+    private _componentConstructors: Record<string, Component.InstanceConstructor>;
     private _itemAreas: {}[];
     private _resizeFunction: string | boolean | JQuery.EventHandlerBase<Window & typeof globalThis, JQuery.ResizeEvent<Window & typeof globalThis, null, Window & typeof globalThis, Window & typeof globalThis>> | undefined;
     private _unloadFunction: string | boolean | JQuery.EventHandlerBase<Window & typeof globalThis, JQuery.TriggeredEvent<Window & typeof globalThis, undefined, Window & typeof globalThis, Window & typeof globalThis>> | undefined;
@@ -53,13 +60,14 @@ export class LayoutManager extends EventEmitter {
     private _dragSources: DragSource[];
     private _updatingColumnsResponsive: boolean;
     private _firstLoad: boolean;
+    private _getComponentConstructorFtn: LayoutManager.GetComponentConstructorFtn;
 
     isInitialised: boolean; 
 
     width: number | null;
     height: null;
     root: Root | null;
-    openPopouts: any[];
+    openPopouts: BrowserPopout[];
     selectedItem: { deselect: () => void } | null;
     isSubWindow: boolean;
     eventHub: EventHub;
@@ -75,7 +83,7 @@ export class LayoutManager extends EventEmitter {
         this.isInitialised = false;
         this._isFullPage = false;
         this._resizeTimeoutId = null;
-        this._components = {};
+        this._componentConstructors = {};
         this._itemAreas = [];
         this._resizeFunction = fnBind(this._onResize, this);
         this._unloadFunction = fnBind(this._onUnload, this);
@@ -146,16 +154,16 @@ export class LayoutManager extends EventEmitter {
      *
      * @returns {void}
      */
-    registerComponent(name, constructor) {
-        if (typeof constructor !== 'function') {
+    registerComponent(name: string, componentConstructor: Component.InstanceConstructor) {
+        if (typeof componentConstructor !== 'function') {
             throw new Error('Please register a constructor function');
         }
 
-        if (this._components[name] !== undefined) {
+        if (this._componentConstructors[name] !== undefined) {
             throw new Error('Component ' + name + ' is already registered');
         }
 
-        this._components[name] = constructor;
+        this._componentConstructors[name] = componentConstructor;
     }
 
     /**
@@ -165,20 +173,20 @@ export class LayoutManager extends EventEmitter {
      * error will be thrown.
      *
      * @public
-     * @param   {Function} callback
+     * @param callbackClosure
      *
      * @returns {void}
      */
-    registerComponentFunction(callback) {
-        if (typeof callback !== 'function') {
+    registerComponentFunction(callbackClosure: LayoutManager.GetComponentConstructorFtn) {
+        if (typeof callbackClosure !== 'function') {
             throw new Error('Please register a callback function');
         }
 
-        if (this._componentFunction !== undefined) {
+        if (this._getComponentConstructorFtn !== undefined) {
             console.warn('Multiple component functions are being registered.  Only the final registered function will be used.')
         }
 
-        this._componentFunction = callback;
+        this._getComponentConstructorFtn = callbackClosure;
     }
 
     /**
@@ -187,7 +195,7 @@ export class LayoutManager extends EventEmitter {
      * @public
      * @returns {Object} GoldenLayout configuration
      */
-    toConfig(root: Root | undefined | null) {
+    toConfig(root?: Root) {
         var next, i;
 
         if (this.isInitialised === false) {
@@ -258,21 +266,19 @@ export class LayoutManager extends EventEmitter {
      * lack a response for what the component should be, it throws an error.
      *
      * @public
-     * @param {Object} config - The item config
-     * 
-     * @returns {Function}
+     * @param config - The item config
      */
-    getComponent(config: Config) {
+    getComponentConstructor(config: ComponentConfig) {
         const name = this.getComponentNameFromConfig(config)
-        let componentToUse = this._components[name]
-        if (this._componentFunction !== undefined) {
-            componentToUse = componentToUse || this._componentFunction({config})
+        let constructorToUse = this._componentConstructors[name]
+        if (constructorToUse === undefined && this._getComponentConstructorFtn !== undefined) {
+            constructorToUse = this._getComponentConstructorFtn(config)
         }
-        if (componentToUse === undefined) {
-            throw new ConfigurationError('Unknown component "' + name + '"');
+        if (constructorToUse === undefined) {
+            throw new ConfigurationError('Unknown component constructor "' + name + '"', undefined);
         }
 
-        return componentToUse;
+        return constructorToUse;
     }
 
     /**
@@ -295,7 +301,7 @@ export class LayoutManager extends EventEmitter {
          * be caught. This also prevents any further initilisation from taking place.
          */
         if (this._subWindowsCreated === false) {
-            this._createSubWindows();
+            this.createSubWindows();
             this._subWindowsCreated = true;
         }
 
@@ -401,14 +407,10 @@ export class LayoutManager extends EventEmitter {
      * At some point the type is mutated, but the componentName should then correspond to the
      * REACT_COMPONENT_ID.
      * 
-     * @param {Object} config ItemConfig
+     * @param config ItemConfig
      * 
      * @returns {Boolean}
      */
-
-    isReactConfig(config) {
-        return config.type === 'react-component' || config.componentName === REACT_COMPONENT_ID
-    }
 
     /**
      * Returns the name of the component for the config, taking into account whether it's a react component or not.
@@ -418,11 +420,13 @@ export class LayoutManager extends EventEmitter {
      * @returns {String}
      */
 
-    getComponentNameFromConfig(config) {
-        if (this.isReactConfig(config)) {
-            return config.component
+    getComponentNameFromConfig(config: ComponentConfig) {
+        if (ComponentConfig.isReact(config)) {
+            throw new Error('LayoutManager.getComponentNameFromConfig: Not implemented for React')
+            // return config.component // what should this be
+        } else {
+            return config.componentName;
         }
-        return config.componentName
     }
 
     /**
@@ -494,7 +498,11 @@ export class LayoutManager extends EventEmitter {
      
      * @returns {BrowserPopout}
      */
-    createPopout(configOrContentItem, dimensions, parentId, indexInParent) {
+    createPopout(configOrContentItem: Config | AbstractContentItem,
+        dimensions: PopoutConfig.Dimensions,
+        parentId: string | undefined | null,
+        indexInParent: number
+    ): BrowserPopout {
         var config = configOrContentItem,
             isItem = configOrContentItem instanceof AbstractContentItem,
             self = this,
@@ -505,9 +513,9 @@ export class LayoutManager extends EventEmitter {
             child,
             browserPopout;
 
-        parentId = parentId || null;
+        parentId ??= null;
 
-        if (isItem) {
+        if (configOrContentItem instanceof AbstractContentItem) {
             config = this.toConfig(configOrContentItem).content;
             parentId = getUniqueId();
 
@@ -922,7 +930,7 @@ export class LayoutManager extends EventEmitter {
             localStorage.removeItem(windowConfigKey);
         }
 
-        config = $.extend(true, {}, defaultConfig, config);
+        config = multiDeepExtend({}, defaultConfig, config);
 
         var nextNode = (node: Config) => {
             for (var key in node) {
@@ -992,10 +1000,8 @@ export class LayoutManager extends EventEmitter {
     /**
      * Creates Subwindows (if there are any). Throws an error
      * if popouts are blocked.
-     *
-     * @returns {void}
      */
-    _createSubWindows() {
+    private createSubWindows() {
         var i, popout;
 
         for (i = 0; i < this.config.openPopouts.length; i++) {
@@ -1196,3 +1202,7 @@ export class LayoutManager extends EventEmitter {
  * Hook that allows to access private classes
  */
 // LayoutManager.__lm = lm;
+
+export namespace LayoutManager {
+    export type GetComponentConstructorFtn = (this: void, config: Config) => Component.InstanceConstructor
+}
