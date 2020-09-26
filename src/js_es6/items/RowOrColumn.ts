@@ -223,7 +223,7 @@ export class RowOrColumn extends AbstractContentItem {
      *
      * @returns {void}
      */
-    replaceChild(oldChild, newChild) {
+    replaceChild(oldChild: AbstractContentItem, newChild: AbstractContentItem) {
         var size = oldChild.config[this._dimension];
         super.replaceChild(oldChild, newChild);
         newChild.config[this._dimension] = size;
@@ -238,8 +238,8 @@ export class RowOrColumn extends AbstractContentItem {
      */
     setSize() {
         if (this.contentItems.length > 0) {
-            this._calculateRelativeSizes();
-            this._setAbsoluteSizes();
+            this.calculateRelativeSizes();
+            this.setAbsoluteSizes();
         }
         this.emitBubblingEvent('stateChanged');
         this.emit('resize');
@@ -359,12 +359,10 @@ export class RowOrColumn extends AbstractContentItem {
      *
      * Assigns additional pixels to counteract Math.floor
      *
-     * @private
-     * @returns {void}
      */
-    _setAbsoluteSizes() {
+    private setAbsoluteSizes() {
         var i,
-            sizeData = this._calculateAbsoluteSizes();
+            sizeData = this.calculateAbsoluteSizes();
 
         for (i = 0; i < this.contentItems.length; i++) {
             if (sizeData.additionalPixel - i > 0) {
@@ -385,7 +383,7 @@ export class RowOrColumn extends AbstractContentItem {
      * Calculates the absolute sizes of all of the children of this Item.
      * @returns {object} - Set with absolute sizes and additional pixels.
      */
-    _calculateAbsoluteSizes() {
+    private calculateAbsoluteSizes() {
         var i,
             totalSplitterSize = (this.contentItems.length - 1) * this._splitterSize,
             headerSize = this.layoutManager.config.dimensions.headerHeight,
@@ -454,7 +452,7 @@ export class RowOrColumn extends AbstractContentItem {
      * @private
      * @returns {void}
      */
-    _calculateRelativeSizes() {
+    private calculateRelativeSizes() {
 
         var i,
             total = 0,
@@ -473,7 +471,7 @@ export class RowOrColumn extends AbstractContentItem {
          * Everything adds up to hundred, all good :-)
          */
         if (Math.round(total) === 100) {
-            this._respectMinItemWidth();
+            this.respectMinItemWidth();
             return;
         }
 
@@ -484,7 +482,7 @@ export class RowOrColumn extends AbstractContentItem {
             for (i = 0; i < itemsWithoutSetDimension.length; i++) {
                 itemsWithoutSetDimension[i].config[dimension] = (100 - total) / itemsWithoutSetDimension.length;
             }
-            this._respectMinItemWidth();
+            this.respectMinItemWidth();
             return;
         }
 
@@ -508,14 +506,14 @@ export class RowOrColumn extends AbstractContentItem {
             this.contentItems[i].config[dimension] = (this.contentItems[i].config[dimension] / total) * 100;
         }
 
-        this._respectMinItemWidth();
+        this.respectMinItemWidth();
     }
 
     /**
      * Adjusts the column widths to respect the dimensions minItemWidth if set.
      * @returns {}
      */
-    _respectMinItemWidth() {
+    private respectMinItemWidth() {
         var minItemWidth = this.layoutManager.config.dimensions ? (this.layoutManager.config.dimensions.minItemWidth || 0) : 0,
             sizeData = null,
             entriesOverMin = [],
@@ -533,7 +531,7 @@ export class RowOrColumn extends AbstractContentItem {
             return;
         }
 
-        sizeData = this._calculateAbsoluteSizes();
+        sizeData = this.calculateAbsoluteSizes();
 
         /**
          * Figure out how much we are under the min item size total and how much room we have to use.
@@ -733,7 +731,7 @@ export class RowOrColumn extends AbstractContentItem {
      *
      * @returns {void}
      */
-    _onSplitterDragStop(splitter) {
+    _onSplitterDragStop(splitter: Splitter) {
 
         var items = this._getItemsForSplitter(splitter),
             sizeBefore = items.before.element[this._dimension](),

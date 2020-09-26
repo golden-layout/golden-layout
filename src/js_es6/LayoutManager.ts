@@ -1,11 +1,10 @@
-import { Container } from 'golden-layout'
-import { ComponentConfig, Config, PopoutConfig } from './config/config'
-import { defaultConfig } from './config/defaultConfig'
+import { ComponentConfig, Config, ItemConfig, ManagerConfig, PopoutManagerConfig } from './config/config'
+import { UserItemConfig } from './config/UserConfig'
 import { BrowserPopout } from './controls/BrowserPopout'
 import { DragSource } from './controls/DragSource'
 import DropTargetIndicator from './controls/DropTargetIndicator'
 import TransitionIndicator from './controls/TransitionIndicator'
-import { ConfigurationError } from './errors/ConfigurationError'
+import { ConfigurationError, UnexpectedNullError } from './errors/error'
 import { AbstractContentItem } from './items/AbstractContentItem'
 import { Component } from './items/Component'
 import { Root } from './items/Root'
@@ -17,16 +16,14 @@ import { EventHub } from './utils/EventHub'
 import {
     copy,
     fnBind,
-    getQueryStringParam,
     getUniqueId,
     indexOf,
     isFunction,
-    multiDeepExtend,
+
     objectKeys,
     stripTags
 } from './utils/utils'
 
-export const REACT_COMPONENT_ID = 'lm-react-component'
 
 declare global {
     interface Window {
@@ -46,51 +43,46 @@ declare global {
  */
 
 
-export class LayoutManager extends EventEmitter {
-    private _isFullPage;
-    private _resizeTimeoutId: NodeJS.Timeout | null;
-    private _componentConstructors: Record<string, Component.InstanceConstructor>;
-    private _itemAreas: {}[];
+export abstract class LayoutManager extends EventEmitter {
+    private _isFullPage = false;
+    private _resizeTimeoutId: NodeJS.Timeout | null = null;
+    private _componentConstructors: Record<string, Component.InstanceConstructor> = {};
+    private _itemAreas: AbstractContentItem.Area[];
     private _resizeFunction: string | boolean | JQuery.EventHandlerBase<Window & typeof globalThis, JQuery.ResizeEvent<Window & typeof globalThis, null, Window & typeof globalThis, Window & typeof globalThis>> | undefined;
     private _unloadFunction: string | boolean | JQuery.EventHandlerBase<Window & typeof globalThis, JQuery.TriggeredEvent<Window & typeof globalThis, undefined, Window & typeof globalThis, Window & typeof globalThis>> | undefined;
-    private _maximisedItem;
+    private _maximisedItem: AbstractContentItem | null;
     private _maximisePlaceholder: JQuery<HTMLElement>;
     private _creationTimeoutPassed: boolean;
-    private _subWindowsCreated: boolean;
+    private _subWindowsCreated = false;
     private _dragSources: DragSource[];
     private _updatingColumnsResponsive: boolean;
     private _firstLoad: boolean;
     private _getComponentConstructorFtn: LayoutManager.GetComponentConstructorFtn;
 
-    isInitialised: boolean; 
+    isInitialised = false;
 
     width: number | null;
     height: null;
     root: Root | null;
     openPopouts: BrowserPopout[];
     selectedItem: { deselect: () => void } | null;
-    isSubWindow: boolean;
     eventHub: EventHub;
-    config: Config;
-    container: Container;
+    container: Element | HTMLElement;
     dropTargetIndicator: DropTargetIndicator | null;
     transitionIndicator: TransitionIndicator | null;
     tabDropPlaceholder: JQuery<HTMLElement>;
 
-    constructor(config: Config, container: Container) {        
+    protected get maximisedItem() { return this._maximisedItem; }
+
+    constructor(public isSubWindow: boolean, public readonly config: ManagerConfig, container?: Element | HTMLElement) {        
         super();
 
-        this.isInitialised = false;
-        this._isFullPage = false;
-        this._resizeTimeoutId = null;
-        this._componentConstructors = {};
         this._itemAreas = [];
         this._resizeFunction = fnBind(this._onResize, this);
         this._unloadFunction = fnBind(this._onUnload, this);
         this._maximisedItem = null;
         this._maximisePlaceholder = $('<div class="lm_maximise_place"></div>');
         this._creationTimeoutPassed = false;
-        this._subWindowsCreated = false;
         this._dragSources = [];
         this._updatingColumnsResponsive = false;
         this._firstLoad = true;
@@ -100,10 +92,7 @@ export class LayoutManager extends EventEmitter {
         this.root = null;
         this.openPopouts = [];
         this.selectedItem = null;
-        this.isSubWindow = false;
         this.eventHub = new EventHub(this);
-        this.config = this.createConfig(config);
-        this.container = container;
         this.dropTargetIndicator = null;
         this.transitionIndicator = null;
         this.tabDropPlaceholder = $('<div class="lm_drop_tab_placeholder"></div>');
@@ -125,7 +114,7 @@ export class LayoutManager extends EventEmitter {
      * replaces its keys and values recursively with
      * one letter codes
      */
-    minifyConfig(config: Config): Config {
+    minifyConfig(config: ManagerConfig): ManagerConfig {
         return (new ConfigMinifier()).minifyConfig(config);
     }
 
@@ -133,7 +122,7 @@ export class LayoutManager extends EventEmitter {
      * Takes a configuration Object that was previously minified
      * using minifyConfig and returns its original version
      */
-    unminifyConfig(config: Config): Config {
+    unminifyConfig(config: ManagerConfig): ManagerConfig {
         return (new ConfigMinifier()).unminifyConfig(config);
     }
 
@@ -151,8 +140,6 @@ export class LayoutManager extends EventEmitter {
      * @public
      * @param   {String} name
      * @param   {Function} constructor
-     *
-     * @returns {void}
      */
     registerComponent(name: string, componentConstructor: Component.InstanceConstructor) {
         if (typeof componentConstructor !== 'function') {
@@ -195,31 +182,21 @@ export class LayoutManager extends EventEmitter {
      * @public
      * @returns {Object} GoldenLayout configuration
      */
-    toConfig(root?: Root) {
-        var next, i;
-
+    toConfig(root?: Root): ManagerConfig {
         if (this.isInitialised === false) {
             throw new Error('Can\'t create config, layout not yet initialised');
         }
 
-        if (root && !(root instanceof AbstractContentItem)) {
+        if (root !== undefined && !(root instanceof AbstractContentItem)) {
             throw new Error('Root must be a ContentItem');
         }
 
         /*
-         * settings & labels
-         */
-        const config: Config = {
-            settings: copy({}, this.config.settings),
-            dimensions: copy({}, this.config.dimensions),
-            labels: copy({}, this.config.labels)
-        };
-
-        /*
          * Content
          */
-        config.content = [];
-        next = function(configNode, item) {
+        const content: ItemConfig[] = [];
+        next = function(configNode: ItemConfig, item: AbstractContentItem) {
+            const copiedItemConfig = ItemConfig.createCopy(item.config);
             for (const key in item.config) {
                 if (key !== 'content') {
                     configNode[key] = item.config[key];
@@ -236,7 +213,7 @@ export class LayoutManager extends EventEmitter {
             }
         };
 
-        if (root) {
+        if (root !== undefined) {
             next(config, {
                 contentItems: [root]
             });
@@ -244,20 +221,21 @@ export class LayoutManager extends EventEmitter {
             next(config, this.root);
         }
 
+
+
         /*
          * Retrieve config for subwindows
          */
         this._$reconcilePopoutWindows();
-        config.openPopouts = [];
-        for (i = 0; i < this.openPopouts.length; i++) {
-            config.openPopouts.push(this.openPopouts[i].toConfig());
+        const openPopouts: PopoutManagerConfig[] = [];
+        for (let i = 0; i < this.openPopouts.length; i++) {
+            openPopouts.push(this.openPopouts[i].toConfig());
         }
 
         /*
          * Add maximised item
          */
-        config.maximisedItemId = this._maximisedItem ? '__glMaximised' : null;
-        return config;
+        return this.createToConfig(content, openPopouts);
     }
 
     /**
@@ -402,17 +380,6 @@ export class LayoutManager extends EventEmitter {
     }
 
     /**
-     * Returns whether or not the config corresponds to a react component or a normal component.
-     * 
-     * At some point the type is mutated, but the componentName should then correspond to the
-     * REACT_COMPONENT_ID.
-     * 
-     * @param config ItemConfig
-     * 
-     * @returns {Boolean}
-     */
-
-    /**
      * Returns the name of the component for the config, taking into account whether it's a react component or not.
      * 
      * @param {Object} config ItemConfig
@@ -498,7 +465,7 @@ export class LayoutManager extends EventEmitter {
      
      * @returns {BrowserPopout}
      */
-    createPopout(configOrContentItem: Config | AbstractContentItem,
+    createPopout(configOrContentItem: ItemConfig[] | AbstractContentItem,
         dimensions: PopoutConfig.Dimensions,
         parentId: string | undefined | null,
         indexInParent: number
@@ -712,7 +679,7 @@ export class LayoutManager extends EventEmitter {
         }, 1);
     }
 
-    _$getArea(x, y) {
+    _$getArea(x: number, y: number) {
         var i, area, smallestSurface = Infinity,
             mathingArea = null;
 
@@ -743,6 +710,9 @@ export class LayoutManager extends EventEmitter {
             x1: 'x2'
         };
         for (var side in sides) {
+            if (this.root === null) {
+                throw new UnexpectedNullError('LayoutManager.createRootItemAreas');
+            }
             var area = this.root._$getArea();
             area.side = side;
             if (sides[side][1] === '2' )
@@ -856,6 +826,8 @@ export class LayoutManager extends EventEmitter {
 
     }
 
+    protected abstract createToConfig(content: ItemConfig[], openPopouts: PopoutManagerConfig[]): ManagerConfig;
+
     /***************************
      * PRIVATE
      ***************************/
@@ -909,51 +881,6 @@ export class LayoutManager extends EventEmitter {
     _onResize() {
         clearTimeout(this._resizeTimeoutId);
         this._resizeTimeoutId = setTimeout(fnBind(this.updateSize, this), 100);
-    }
-
-    /**
-     * Extends the default config with the user specific settings and applies
-     * derivations. Please note that there's a separate method (AbstractContentItem._extendItemNode)
-     * that deals with the extension of item configs
-     */
-    private createConfig(config: Config): Config {
-        const windowConfigKey = getQueryStringParam('gl-window');
-
-        if (windowConfigKey) {
-            this.isSubWindow = true;
-            const windowConfigStr = localStorage.getItem(windowConfigKey);
-            if (windowConfigStr === null) {
-                throw new Error('Null gl-window Config');
-            }
-            const minifiedWindowConfig = JSON.parse(windowConfigStr);
-            config = (new ConfigMinifier()).unminifyConfig(minifiedWindowConfig);
-            localStorage.removeItem(windowConfigKey);
-        }
-
-        config = multiDeepExtend({}, defaultConfig, config);
-
-        var nextNode = (node: Config) => {
-            for (var key in node) {
-                if (key !== 'props' && typeof node[key] === 'object') {
-                    nextNode(node[key] as Config);
-                } else if (key === 'type' && this.isReactConfig(node)) {
-                    node.type = 'component';
-                    node.componentName = REACT_COMPONENT_ID;
-                }
-            }
-        }
-
-        nextNode(config);
-
-        if (config.settings !== undefined && config.settings.hasHeaders === false) {
-            if (config.dimensions === undefined) {
-                throw new Error('Undefined config dimensions');
-            } else {
-                config.dimensions.headerHeight = 0;
-            }
-        }
-
-        return config;
     }
 
     /**
@@ -1023,7 +950,7 @@ export class LayoutManager extends EventEmitter {
      *
      * @returns {void}
      */
-    _setContainer() {
+    private _setContainer() {
         var container = $(this.container || 'body');
 
         if (container.length === 0) {
@@ -1071,9 +998,15 @@ export class LayoutManager extends EventEmitter {
             throw new ConfigurationError(errorMsg, config);
         }
 
-        this.root = new Root(this, {
-            content: config.content
-        }, this.container);
+        // convert config.content to an ItemConfig
+        const rootUserItemConfig: UserItemConfig = {
+            type: ItemConfig.Type.root,
+            content: config.content,
+        }
+
+        const rootConfig = UserItemConfig.resolveDefaults(rootUserItemConfig);
+
+        this.root = new Root(this, rootConfig, this.container);
         this.root.callDownwards('_$init');
 
         if (config.maximisedItemId === '__glMaximised') {
@@ -1204,5 +1137,5 @@ export class LayoutManager extends EventEmitter {
 // LayoutManager.__lm = lm;
 
 export namespace LayoutManager {
-    export type GetComponentConstructorFtn = (this: void, config: Config) => Component.InstanceConstructor
+    export type GetComponentConstructorFtn = (this: void, config: ComponentConfig) => Component.InstanceConstructor
 }

@@ -120,7 +120,7 @@ export class Stack extends AbstractContentItem {
     setActiveContentItem(contentItem: AbstractContentItem): void {
         if (this._activeContentItem === contentItem) return;
 
-        if (indexOf(contentItem, this.contentItems) === -1) {
+        if (this.contentItems.indexOf(contentItem) === -1) {
             throw new Error('contentItem is not a child of this stack');
         }
 
@@ -164,7 +164,7 @@ export class Stack extends AbstractContentItem {
     }
 
     removeChild(contentItem, keepChild) {
-        var index = indexOf(contentItem, this.contentItems);
+        const index = this.contentItems.indexOf(contentItem);
         super.removeChild(contentItem, keepChild);
         this.header.removeTab(contentItem);
         if (this.header.activeContentItem === contentItem) {
@@ -175,7 +175,7 @@ export class Stack extends AbstractContentItem {
             }
         } else if (this.config.activeItemIndex >= this.contentItems.length) {
 			if (this.contentItems.length > 0) {
-				var activeIndex = indexOf(this.getActiveContentItem(), this.contentItems);
+				const activeIndex = this.contentItems.indexOf(this.getActiveContentItem());
 				this.config.activeItemIndex = Math.max(activeIndex, 0);
 			}
 		}
@@ -199,6 +199,10 @@ export class Stack extends AbstractContentItem {
                 this.parent._validateDocking();
         }
         this.emitBubblingEvent('stateChanged');
+    }
+
+    protected processChildReplaced(index: number, newChild: AbstractContentItem): void {
+        this.header.tabs[index].contentItem = newChild;
     }
 
     /**

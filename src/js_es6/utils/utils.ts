@@ -1,4 +1,5 @@
 import $ from 'jquery';
+import { AssertError } from '../errors/error';
 
 export type JsonValue = string | number | boolean | Json | JsonValueArray;
 export interface Json {
@@ -44,22 +45,7 @@ export function getHashValue(key: string): string | null {
 }
 
 export function getQueryStringParam(param: string): string | null {
-    if (window.location.hash) {
-        return getHashValue(param);
-    } else if (!window.location.search) {
-        return null;
-    }
-
-    const keyValuePairs = window.location.search.substr(1).split('&');
-    const params = {};
-    let pair: string[];
-
-    for (let i = 0; i < keyValuePairs.length; i++) {
-        pair = keyValuePairs[i].split('=');
-        params[pair[0]] = pair[1];
-    }
-
-    return params[param] || null;
+    return getHashValue(param);
 }
 
 export function createTemplateHtmlElement(templateText: string, selector: string): HTMLElement {
@@ -71,7 +57,7 @@ export function createTemplateHtmlElement(templateText: string, selector: string
     const parsedDocument = new DOMParser().parseFromString(templateText, 'text/html')
     const node = parsedDocument.querySelector(selector);
     if (node === null) {
-        throw new Error('Drag Proxy Template error: First node is not div')
+        throw new AssertError('UCTHE772242', `${selector}: ${templateText.substr(0, 400)}`);
     } else {
         template.content.append(node);
         return node as HTMLElement;
@@ -112,7 +98,7 @@ export function deepExtend(target: Record<string, unknown>, obj: Record<string, 
     return target;
 }
 
-function deepExtendValue(existingTarget: unknown, value: unknown) {
+export function deepExtendValue(existingTarget: unknown, value: unknown): unknown {
     if (typeof value !== 'object') {
         return value;
     } else {
@@ -138,7 +124,9 @@ function deepExtendValue(existingTarget: unknown, value: unknown) {
                         if (existingTarget instanceof Array) {
                             return deepExtend({}, valueObj); // overwrite
                         } else {
-                            if (existingTarget !== null) {
+                            if (existingTarget === null) {
+                                return deepExtend({}, valueObj); // overwrite
+                            } else {
                                 const existingTargetObj = existingTarget as Record<string, unknown>;
                                 return deepExtend(existingTargetObj, valueObj); // merge
                             }

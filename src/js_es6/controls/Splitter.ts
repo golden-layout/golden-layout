@@ -6,7 +6,7 @@ export class Splitter {
     private _grabSize;
     private _dragListener;
 
-    element;
+    readonly element;
 
     constructor(private _isVertical: boolean, private _size: number, grabSize: number) {
         this._grabSize = grabSize < this._size ? this._size : grabSize;

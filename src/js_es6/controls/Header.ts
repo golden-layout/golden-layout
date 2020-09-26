@@ -25,6 +25,8 @@ const _template = [
  */
 export class Header extends EventEmitter {
     activeContentItem: AbstractContentItem | null;
+    readonly tabs: Tab[];
+    readonly tabsMarkedForRemoval: Tab[];
 
     constructor(public layoutManager: LayoutManager, private parent: Stack) {
 
@@ -42,7 +44,7 @@ export class Header extends EventEmitter {
         this.tabDropdownContainer.hide();
         this.controlsContainer = this.element.find('.lm_controls');
         this.parent = parent;
-        this.parent.on('resize', this._updateTabSizes, this);
+        this.parent.on('resize', this._updateTabSizes);
         this.tabs = [];
         this.tabsMarkedForRemoval = [];
         this.activeContentItem = null;
@@ -60,12 +62,10 @@ export class Header extends EventEmitter {
     /**
      * Creates a new tab and associates it with a contentItem
      *
-     * @param    {AbstractContentItem} contentItem
-     * @param    {Integer} index The position of the tab
-     *
-     * @returns {void}
+     * @param    contentItem
+     * @param    index The position of the tab
      */
-    createTab(contentItem, index) {
+    createTab(contentItem: AbstractContentItem, index: number): void {
         var tab, i;
 
         //If there's already a tab relating to the
@@ -102,11 +102,9 @@ export class Header extends EventEmitter {
      * Finds a tab based on the contentItem its associated with and removes it.
      *
      * @param    {AbstractContentItem} contentItem
-     *
-     * @returns {void}
      */
-    removeTab(contentItem) {
-        for (var i = 0; i < this.tabs.length; i++) {
+    removeTab(contentItem: AbstractContentItem): void {
+        for (let i = 0; i < this.tabs.length; i++) {
             if (this.tabs[i].contentItem === contentItem) {
                 this.tabs[i]._$destroy();
                 this.tabs.splice(i, 1);
@@ -114,7 +112,7 @@ export class Header extends EventEmitter {
             }
         }
 
-        for (i = 0; i < this.tabsMarkedForRemoval.length; i++) {
+        for (let i = 0; i < this.tabsMarkedForRemoval.length; i++) {
             if (this.tabsMarkedForRemoval[i].contentItem === contentItem) {
                 this.tabsMarkedForRemoval[i]._$destroy();
                 this.tabsMarkedForRemoval.splice(i, 1);
@@ -152,13 +150,11 @@ export class Header extends EventEmitter {
      *
      * @param {AbstractContentItem} contentItem
      */
-    setActiveContentItem(contentItem) {
-        var i, j, isActive, activeTab;
-
+    setActiveContentItem(contentItem: AbstractContentItem) {
         if (this.activeContentItem === contentItem) return;
 
-        for (i = 0; i < this.tabs.length; i++) {
-            isActive = this.tabs[i].contentItem === contentItem;
+        for (let i = 0; i < this.tabs.length; i++) {
+            const isActive = this.tabs[i].contentItem === contentItem;
             this.tabs[i].setActive(isActive);
             if (isActive === true) {
                 this.activeContentItem = contentItem;
@@ -172,8 +168,8 @@ export class Header extends EventEmitter {
              * This will make sure the most used tabs stay visible.
              */
             if (this._lastVisibleTabIndex !== -1 && this.parent.config.activeItemIndex > this._lastVisibleTabIndex) {
-                activeTab = this.tabs[this.parent.config.activeItemIndex];
-                for (j = this.parent.config.activeItemIndex; j > 0; j--) {
+                const activeTab = this.tabs[this.parent.config.activeItemIndex];
+                for (let j = this.parent.config.activeItemIndex; j > 0; j--) {
                     this.tabs[j] = this.tabs[j - 1];
                 }
                 this.tabs[0] = activeTab;

@@ -1,5 +1,7 @@
 import $ from 'jquery';
-import { Config, ExtendibleConfig, PopoutConfig } from '../config/config';
+import { Config, ManagerConfig, PopoutManagerConfig } from '../config/config';
+import { UnexpectedNullError } from '../errors/error';
+import { AbstractContentItem } from '../items/AbstractContentItem';
 import { LayoutManager } from '../LayoutManager';
 import { ConfigMinifier } from '../utils/ConfigMinifier';
 import { EventEmitter } from '../utils/EventEmitter';
@@ -32,8 +34,8 @@ export class BrowserPopout extends EventEmitter {
     private _isInitialised;
     private _id: string | null;
 
-    constructor(private _config: PopoutConfig,
-        private _dimensions: PopoutConfig.Dimensions,
+    constructor(private _config: PopoutManagerConfig,
+        private _dimensions: ManagerConfig.Dimensions,
         private _parentId: string, 
         private _indexInParent: number,
         private _layoutManager: LayoutManager
@@ -47,7 +49,7 @@ export class BrowserPopout extends EventEmitter {
         this._createWindow();
     }
 
-    toConfig(): PopoutConfig {
+    toConfig(): PopoutManagerConfig {
         if (this._isInitialised === false) {
             throw new Error('Can\'t create config, layout not yet initialised');
         }
@@ -61,14 +63,28 @@ export class BrowserPopout extends EventEmitter {
             top = this._popoutWindow.screenY ?? this._popoutWindow.screenTop;
         }
 
-        const config: PopoutConfig = {
-            dimensions: {
-                width: this.getGlInstance().width,
-                height: this.getGlInstance().height,
-                left,
-                top,
-            },
+        const glInstanceConfig = this.getGlInstance().toConfig();
+        const glInstanceDimensions = glInstanceConfig.dimensions;
+        const dimensions: PopoutManagerConfig.Dimensions = {
+            borderWidth: glInstanceDimensions.borderWidth,
+            borderGrabWidth: glInstanceDimensions.borderGrabWidth,
+            minItemHeight: glInstanceDimensions.minItemHeight,
+            minItemWidth: glInstanceDimensions.minItemWidth,
+            headerHeight: glInstanceDimensions.headerHeight,
+            dragProxyWidth: glInstanceDimensions.dragProxyWidth,
+            dragProxyHeight: glInstanceDimensions.dragProxyHeight,
+            width: this.getGlInstance().width,
+            height: this.getGlInstance().height,
+            left,
+            top,
+        } 
+
+        const config: PopoutManagerConfig = {
             content: this.getGlInstance().toConfig().content,
+            openPopouts: [],
+            settings: glInstanceConfig.settings,
+            dimensions,
+            labels: glInstanceConfig.labels,
             parentId: this._parentId,
             indexInParent: this._indexInParent
         };
@@ -78,7 +94,7 @@ export class BrowserPopout extends EventEmitter {
 
     getGlInstance(): LayoutManager {
         if (this._popoutWindow === null) {
-            throw new Error('BrowserPopout.getGlInstance: _popoutWindow is null');
+            throw new UnexpectedNullError('BPGGI24693');
         } else {
             return this._popoutWindow.__glInstance;
         }
@@ -86,7 +102,7 @@ export class BrowserPopout extends EventEmitter {
 
     getWindow() {
         if (this._popoutWindow === null) {
-            throw new Error('BrowserPopout.getGlInstance: _popoutWindow is null');
+            throw new UnexpectedNullError('BPGW087215');
         } else {
             return this._popoutWindow;
         }
@@ -110,7 +126,7 @@ export class BrowserPopout extends EventEmitter {
      */
     popIn() {
         let copiedChildConfig: Config;
-        let parentItem: 
+        let parentItem: AbstractContentItem;
         let index = this._indexInParent;
 
         if (this._parentId) {
@@ -124,13 +140,13 @@ export class BrowserPopout extends EventEmitter {
              *
              * The callee (server [not server application]) is not available and disappeared
              */
-            const glInstanceConfig = this.getGlInstance().toConfig() as ExtendibleConfig;
-            const copiedGlInstanceConfig = deepExtend({}, glInstanceConfig) as Config;
+            const glInstanceConfig = this.getGlInstance().toConfig();
+            const copiedGlInstanceConfig = deepExtend({}, glInstanceConfig) as ManagerConfig;
             const copiedContent = copiedGlInstanceConfig.content;
             if (copiedContent === undefined || copiedContent.length === 0) {
                 throw new Error('BrowserPopout.popIn: child config not available');
             } else {
-                copiedChildConfig = copiedContent[0];
+                const copiedChildConfig = copiedContent[0];
                 const root = this._layoutManager.root;
                 if (root === null) {
                     throw new Error('BrowserPopout.popIn: LayoutManager root not available');
@@ -206,7 +222,7 @@ export class BrowserPopout extends EventEmitter {
         }
 
         $(this._popoutWindow)
-            .on('load', fnBind(this._positionWindow, this))
+            .on('load', fnBind(this.positionWindow, this))
             .on('unload beforeunload', fnBind(this._onClose, this));
 
         /**
@@ -277,14 +293,14 @@ export class BrowserPopout extends EventEmitter {
     /**
      * Move the newly created window roughly to
      * where the component used to be.
-     *
-     * @private
-     *
-     * @returns {void}
      */
-    _positionWindow() {
-        this._popoutWindow.moveTo(this._dimensions.left, this._dimensions.top);
-        this._popoutWindow.focus();
+    private positionWindow() {
+        if (this._popoutWindow === null) {
+            throw new Error('BrowserPopout.positionWindow: null popoutWindow');
+        } else {
+            this._popoutWindow.moveTo(this._dimensions.left, this._dimensions.top);
+            this._popoutWindow.focus();
+        }
     }
 
     /**

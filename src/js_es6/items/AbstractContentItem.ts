@@ -1,6 +1,6 @@
 import { ItemConfig } from '../config/config'
 import { itemDefaultConfig } from '../config/ItemDefaultConfig'
-import { ConfigurationError } from '../errors/ConfigurationError'
+import { ConfigurationError } from '../errors/error'
 import { LayoutManager } from '../LayoutManager'
 import { BubblingEvent } from '../utils/BubblingEvent'
 import { EventEmitter } from '../utils/EventEmitter'
@@ -173,7 +173,7 @@ export abstract class AbstractContentItem extends EventEmitter {
         /*
          * Get the position of the item that's to be removed within all content items this node contains
          */
-        var index = indexOf(contentItem, this.contentItems);
+        const index = this.contentItems.indexOf(contentItem);
 
         /*
          * Make sure the content item to be removed is actually a child of this item
@@ -229,7 +229,7 @@ export abstract class AbstractContentItem extends EventEmitter {
 
         newChild = this.layoutManager._$normalizeContentItem(newChild);
 
-        const index = indexOf(oldChild, this.contentItems);
+        const index = this.contentItems.indexOf(oldChild);
         const parentNode = oldChild.element[0].parentNode;
 
         if (index === -1) {
@@ -253,11 +253,9 @@ export abstract class AbstractContentItem extends EventEmitter {
         newChild.parent = this;
 
         /*
-         * Update tab reference
+         * Give descendants a chance to process replace using index - eg. used by Header to update tab
          */
-        if (this.isStack) {
-            this.header.tabs[index].contentItem = newChild;
-        }
+        this.processChildReplaced(index, newChild)
 
         //TODO This doesn't update the config... refactor to leave item nodes untouched after creation
         if (newChild.parent.isInitialised === true && newChild.isInitialised === false) {
@@ -575,6 +573,11 @@ export abstract class AbstractContentItem extends EventEmitter {
         for (let i = 0; i < this.contentItems.length; i++) {
             this.contentItems[i]._$init();
         }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    protected processChildReplaced(index: number, newChild: AbstractContentItem): void {
+        // virtual function to allow descendants to further process replaceChild()
     }
 
     /**

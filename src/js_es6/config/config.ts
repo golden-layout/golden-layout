@@ -1,52 +1,23 @@
-import { Json } from '../utils/utils';
+import { UnreachableCaseError } from '../errors/error';
+import { deepExtendValue, JsonValue } from '../utils/utils';
 
 export interface ItemConfig {
-    /**
-     * The type of the item. Possible values are 'row', 'column', 'stack', 'component' and 'react-component'.
-     */
+    // see UserItemConfig for comments
     type: ItemConfig.Type;
-
-    /**
-     * An array of configurations for items that will be created as children of this item.
-     */
-    content?: ItemConfig[];
-
-    /**
-     * The width of this item, relative to the other children of its parent in percent
-     */
-    width?: number;
-
-    /**
-     * The height of this item, relative to the other children of its parent in percent
-     */
-    height?: number;
-
-    /**
-     * A String or an Array of Strings. Used to retrieve the item using item.getItemsById()
-     */
-    id?: string | string[];
-
-    /**
-     * Determines if the item is closable. If false, the x on the items tab will be hidden and container.close()
-     * will return false
-     * Default: true
-     */
-    isClosable?: boolean;
-
-    /**
-     * The title of the item as displayed on its tab and on popout windows
-     * Default: componentName or ''
-     */
-    title?: string;
-
-    /**
-     * Default: true
-     */
+    content: ItemConfig[];
+    width: number;
+    height: number;
+    id: string | string[];
+    isClosable: boolean;
+    title: string;
     reorderEnabled: boolean;
+
+    activeItemIndex: number;
 }
 
 export namespace ItemConfig {
     export const enum Type {
+        'root',
         'row',
         'column',
         'stack',
@@ -54,11 +25,43 @@ export namespace ItemConfig {
         'react-component'
     }
 
-    export const defaults: ItemConfig = {
-        type: Type.stack, // not really default but need something
-        isClosable: true,
-        reorderEnabled: true,
-        title: ''
+    export function createCopy(original: ItemConfig): ItemConfig {
+        switch (original.type) {
+            case ItemConfig.Type.root:
+            case ItemConfig.Type.row:
+            case ItemConfig.Type.column:
+            case ItemConfig.Type.stack:
+                const result: ItemConfig = {
+                    type: original.type,
+                    content: copyContent(original.content),
+                    width: original.width,
+                    height: original.height,
+                    id: original.id,
+                    isClosable: original.isClosable,
+                    reorderEnabled: original.reorderEnabled,
+                    title: original.title,
+                    activeItemIndex: original.activeItemIndex,
+                }
+                return result;
+
+            case ItemConfig.Type.component:
+                return JsonComponentConfig.createCopy(original as JsonComponentConfig);
+
+            case ItemConfig.Type['react-component']:
+                return ReactComponentConfig.createCopy(original as ReactComponentConfig);
+
+            default:
+                throw new UnreachableCaseError('CCC913564', original.type, 'Invalid Config Item type specified');
+        }
+    }
+
+    export function copyContent(original: ItemConfig[]): ItemConfig[] {
+        const count = original.length;
+        const result = new Array<ItemConfig>(count);
+        for (let i = 0; i < count; i++) {
+            result[i] = ItemConfig.createCopy(original[i]);
+        }
+        return result;
     }
 }
 
@@ -79,141 +82,80 @@ export namespace ComponentConfig {
 }
 
 export interface JsonComponentConfig extends ComponentConfig {
-    /**
-     * A serialisable object. Will be passed to the component constructor function and will be the value returned by
-     * container.getState().
-     */
-    componentState?: Json;
+    // see UserJsonComponentConfig for comments
+    componentState: JsonValue;
 }
 
-export interface ReactComponentConfig extends ComponentConfig {
-    /**
-     * Properties that will be passed to the component and accessible using this.props.
-     */
-    props?: unknown;
-}
-
-export interface ItemRootConfig {
-    content?: ItemConfig[];
-}
-
-export interface PopoutConfig extends ItemRootConfig {
-    parentId: string;
-    indexInParent: number;
-    dimensions: PopoutConfig.Dimensions;
-}
-
-export namespace PopoutConfig {
-    export interface Dimensions {
-        width: number | null,
-        height: number | null,
-        left: number | null,
-        top: number | null,
+export namespace JsonComponentConfig {
+    export function createCopy(original: JsonComponentConfig): JsonComponentConfig {
+        const result: JsonComponentConfig = {
+            type: original.type,
+            content: ItemConfig.copyContent(original.content),
+            width: original.width,
+            height: original.height,
+            id: original.id,
+            isClosable: original.isClosable,
+            reorderEnabled: original.reorderEnabled,
+            title: original.title,
+            activeItemIndex: original.activeItemIndex,
+            componentName: original.componentName,
+            componentState: deepExtendValue(undefined, original.componentState) as JsonValue,
+        }
+        return result;
     }
 }
 
-export interface Config extends ItemRootConfig {
-    componentName: string;
-    openPopouts: PopoutConfig[];
-    dimensions?: Config.Dimensions;
-    settings?: Config.Settings;
-    labels?: Config.Labels;
+export interface ReactComponentConfig extends ComponentConfig {
+    // see UserReactComponentConfig for comments
+    props?: unknown;
 }
 
-export interface ExtendibleConfig extends Config {
-    [name: string]: unknown;
+export namespace ReactComponentConfig {
+    export const REACT_COMPONENT_ID = 'lm-react-component'
+
+    export function createCopy(original: ReactComponentConfig): ReactComponentConfig {
+        const result: ReactComponentConfig = {
+            type: original.type,
+            content: ItemConfig.copyContent(original.content),
+            width: original.width,
+            height: original.height,
+            id: original.id,
+            isClosable: original.isClosable,
+            reorderEnabled: original.reorderEnabled,
+            title: original.title,
+            activeItemIndex: original.activeItemIndex,
+            componentName: REACT_COMPONENT_ID,
+            props: deepExtendValue(undefined, original.props),
+        }
+        return result;
+    }
 }
 
-export namespace Config {
+export interface ManagerConfig {
+    content: ItemConfig[];
+    openPopouts: PopoutManagerConfig[];
+    dimensions: ManagerConfig.Dimensions;
+    settings: ManagerConfig.Settings;
+    labels: ManagerConfig.Labels;
+    maximisedItemId: string | null,
+}
+
+export namespace ManagerConfig {
     export interface Settings {
-        /**
-         * Turns headers on or off. If false, the layout will be displayed with splitters only.
-         * Default: true
-         */
-        hasHeaders?: boolean;
-
-        /**
-         * Constrains the area in which items can be dragged to the layout's container. Will be set to false
-         * automatically when layout.createDragSource() is called.
-         * Default: true
-         */
-        constrainDragToContainer?: boolean;
-
-        /**
-         * If true, the user can re-arrange the layout by dragging items by their tabs to the desired location.
-         * Default: true
-         */
-        reorderEnabled?: boolean;
-
-        /**
-         * If true, the user can select items by clicking on their header. This sets the value of layout.selectedItem to
-         * the clicked item, highlights its header and the layout emits a 'selectionChanged' event.
-         * Default: false
-         */
-        selectionEnabled?: boolean;
-
-        /**
-         * Decides what will be opened in a new window if the user clicks the popout icon. If true the entire stack will
-         * be transferred to the new window, if false only the active component will be opened.
-         * Default: false
-         */
-        popoutWholeStack?: boolean;
-
-        /**
-         * Specifies if an error is thrown when a popout is blocked by the browser (e.g. by opening it programmatically).
-         * If false, the popout call will fail silently.
-         * Default: true
-         */
-        blockedPopoutsThrowError?: boolean;
-
-        /**
-         * Specifies if all popouts should be closed when the page that created them is closed. Popouts don't have a
-         * strong dependency on their parent and can exist on their own, but can be quite annoying to close by hand. In
-         * addition, any changes made to popouts won't be stored after the parent is closed.
-         * Default: true
-         */
-        closePopoutsOnUnload?: boolean;
-
-        /**
-         * Specifies if the popout icon should be displayed in the header-bar.
-         * Default: true
-         */
-        showPopoutIcon?: boolean;
-
-        /**
-         * Specifies if the maximise icon should be displayed in the header-bar.
-         * Default: true
-         */
-        showMaximiseIcon?: boolean;
-
-        /**
-         * Specifies if the close icon should be displayed in the header-bar.
-         * Default: true
-         */
-        showCloseIcon?: boolean;
-
-        /**
-         * Specifies Responsive Mode (more info needed).
-         * Default: onload
-         */
+        // see UserConfig.Settings for comments
+        hasHeaders: boolean;
+        constrainDragToContainer: boolean;
+        reorderEnabled: boolean;
+        selectionEnabled: boolean;
+        popoutWholeStack: boolean;
+        blockedPopoutsThrowError: boolean;
+        closePopoutsOnUnload: boolean;
+        showPopoutIcon: boolean;
+        showMaximiseIcon: boolean;
+        showCloseIcon: boolean;
         responsiveMode: Settings.ResponsiveMode;
-
-        /**
-         * Specifies Maximum pixel overlap per tab.
-         * Default: 0
-         */
         tabOverlapAllowance: number;
-
-        /**
-         * 
-         * Default: true
-         */
         reorderOnTabMenuClick: boolean;
-
-        /**
-         * @default Settings.tabControlOffset
-         * Default: 10
-         */
         tabControlOffset: number;
     }
 
@@ -224,135 +166,181 @@ export namespace Config {
             'onload',
         }
 
-        export const defaults: Settings = {
-            hasHeaders: true,
-            constrainDragToContainer: true,
-            reorderEnabled: true,
-            selectionEnabled: false,
-            popoutWholeStack: false,
-            blockedPopoutsThrowError: true,
-            closePopoutsOnUnload: true,
-            showPopoutIcon: true,
-            showMaximiseIcon: true,
-            showCloseIcon: true,
-            responsiveMode: Settings.ResponsiveMode.onload,
-            tabOverlapAllowance: 0,
-            reorderOnTabMenuClick: true,
-            tabControlOffset: 10
+        export function createCopy(original: Settings): Settings {
+            return {
+                hasHeaders: original.hasHeaders,
+                constrainDragToContainer: original.constrainDragToContainer,
+                reorderEnabled: original.reorderEnabled,
+                selectionEnabled: original.selectionEnabled,
+                popoutWholeStack: original.popoutWholeStack,
+                blockedPopoutsThrowError: original.blockedPopoutsThrowError,
+                closePopoutsOnUnload: original.closePopoutsOnUnload,
+                showPopoutIcon: original.showPopoutIcon,
+                showMaximiseIcon: original.showMaximiseIcon,
+                showCloseIcon: original.showCloseIcon,
+                responsiveMode: original.responsiveMode,
+                tabOverlapAllowance: original.tabOverlapAllowance,
+                reorderOnTabMenuClick: original.reorderOnTabMenuClick,
+                tabControlOffset: original.tabControlOffset,
+            }
         }
     }
 
     export interface Dimensions {
-        /**
-         * The width of the borders between the layout items in pixel. Please note: The actual draggable area is wider
-         * than the visible one, making it safe to set this to small values without affecting usability.
-         * Default: 5
-         */
-        borderWidth?: number;
-
-        /**
-         * Default: 15
-         */
-        borderGrabWidth?: number,
-
-        /**
-         * The minimum height an item can be resized to (in pixel).
-         * Default: 10
-         */
-        minItemHeight?: number;
-
-        /**
-         * The minimum width an item can be resized to (in pixel).
-         * Default: 10
-         */
-        minItemWidth?: number;
-
-        /**
-         * The height of the header elements in pixel. This can be changed, but your theme's header css needs to be
-         * adjusted accordingly.
-         * Default: 20
-         */
-        headerHeight?: number;
-
-        /**
-         * The width of the element that appears when an item is dragged (in pixel).
-         * Default: 300
-         */
-        dragProxyWidth?: number;
-
-        /**
-         * The height of the element that appears when an item is dragged (in pixel).
-         * Default: 200
-         */
-        dragProxyHeight?: number;
+        // see UserConfig.Dimensions for comments
+        borderWidth: number;
+        borderGrabWidth: number,
+        minItemHeight: number;
+        minItemWidth: number;
+        headerHeight: number;
+        dragProxyWidth: number;
+        dragProxyHeight: number;
     }
 
     export namespace Dimensions {
-        export const defaults: Dimensions = {
-            borderWidth: 5,
-            borderGrabWidth: 15,
-            minItemHeight: 10,
-            minItemWidth: 10,
-            headerHeight: 20,
-            dragProxyWidth: 300,
-            dragProxyHeight: 200
+        export function createCopy(original: Dimensions): Dimensions {
+            if (isPopout(original)) {
+                return PopoutManagerConfig.Dimensions.createCopy(original);
+            } else {
+                return {
+                    borderWidth: original.borderWidth,
+                    borderGrabWidth: original.borderGrabWidth,
+                    minItemHeight: original.minItemHeight,
+                    minItemWidth: original.minItemWidth,
+                    headerHeight: original.headerHeight,
+                    dragProxyWidth: original.dragProxyWidth,
+                    dragProxyHeight: original.dragProxyHeight,
+                }
+            }
+        }
+
+        export function isPopout(dimensions: Dimensions): dimensions is PopoutManagerConfig.Dimensions {
+            return 'left' in dimensions;
         }
     }
 
     export interface Labels {
-        /**
-         * The tooltip text that appears when hovering over the close icon.
-         * Default: 'close'
-         */
-        close?: string;
-
-        /**
-         * The tooltip text that appears when hovering over the maximise icon.
-         * Default: 'maximise'
-         */
-        maximise?: string;
-
-        /**
-         * The tooltip text that appears when hovering over the minimise icon.
-         * Default: 'minimise'
-         */
-        minimise?: string;
-
-        /**
-         * The tooltip text that appears when hovering over the popin icon.
-         * Default: 'pop in'
-         */
-        popin?: string;
-
-        /**
-         * The tooltip text that appears when hovering over the popout icon.
-         * Default: 'open in new window'
-         */
-        popout?: string;
-
-        /**
-         * 
-         * Default: 'additional tabs'
-         */
-        tabDropdown?: string;
+        // see UserConfig.Labels for comments
+        close: string;
+        maximise: string;
+        minimise: string;
+        popin: string;
+        popout: string;
+        tabDropdown: string;
     }
 
     export namespace Labels {
-        export const defaults: Labels = {
-            close: 'close',
-            maximise: 'maximise',
-            minimise: 'minimise',
-            popout: 'open in new window',
-            popin: 'pop in',
-            tabDropdown: 'additional tabs'
+        export function createCopy(original: Labels): Labels {
+            return {
+                close: original.close,
+                maximise: original.maximise,
+                minimise: original.minimise,
+                popin: original.popin,
+                popout: original.popout,
+                tabDropdown: original.tabDropdown,
+            }
         }
     }
 
-    export const defaultConfig: Config = {
-        componentName: '',
-        openPopouts: [],
-        settings: Settings.defaults,
-        dimensions: Dimensions.defaults,
-        labels: Labels.defaults,
-    };
+    export function isPopout(config: ManagerConfig): config is PopoutManagerConfig {
+        return 'parentId' in config;
+    }
+
+    export function createCopy(config: ManagerConfig): ManagerConfig {
+        if (isPopout(config)) {
+            return PopoutManagerConfig.createCopy(config);
+        } else {
+            return Config.createCopy(config as Config);
+        }
+    }
+
+    export function createRootItemConfig(managerConfig: PopoutManagerConfig): ItemConfig {
+        return {
+            type: ItemConfig.Type.root,
+            content: managerConfig.content,
+            width: 100,
+            height: 100,
+            id: '',
+            isClosable: false,
+            title: '',
+            reorderEnabled: false,
+            activeItemIndex: -1,
+        }
+    }
+
+    export function copyOpenPopouts(original: PopoutManagerConfig[]): PopoutManagerConfig[] {
+        const count = original.length;
+        const result = new Array<PopoutManagerConfig>(count);
+        for (let i = 0; i < count; i++) {
+            result[i] = PopoutManagerConfig.createCopy(original[i]);
+        }
+        return result;
+    }
+}
+
+export interface PopoutManagerConfig extends ManagerConfig {
+    parentId: string;
+    indexInParent: number;
+    dimensions: PopoutManagerConfig.Dimensions;
+}
+
+export namespace PopoutManagerConfig {
+    export interface Dimensions extends ManagerConfig.Dimensions {
+        width: number | null,
+        height: number | null,
+        left: number | null,
+        top: number | null,
+    }
+
+    export namespace Dimensions {
+        export function createCopy(original: Dimensions): Dimensions {
+            return {
+                borderWidth: original.borderWidth,
+                borderGrabWidth: original.borderGrabWidth,
+                minItemHeight: original.minItemHeight,
+                minItemWidth: original.minItemWidth,
+                headerHeight: original.headerHeight,
+                dragProxyWidth: original.dragProxyWidth,
+                dragProxyHeight: original.dragProxyHeight,
+                width: original.width,
+                height: original.height,
+                left: original.left,
+                top: original.top,
+            }
+        }
+    }
+
+    export function createCopy(original: PopoutManagerConfig): PopoutManagerConfig {
+        const result: PopoutManagerConfig = {
+            content: ItemConfig.copyContent(original.content),
+            openPopouts: ManagerConfig.copyOpenPopouts(original.openPopouts),
+            settings: ManagerConfig.Settings.createCopy(original.settings),
+            dimensions: Dimensions.createCopy(original.dimensions),
+            labels: ManagerConfig.Labels.createCopy(original.labels),
+            maximisedItemId: original.maximisedItemId,
+            parentId: original.parentId,
+            indexInParent: original.indexInParent,
+        }
+        return result;
+    }
+}
+
+export interface Config extends ManagerConfig {
+    defaultsResolved: true,
+}
+
+export namespace Config {
+
+    export function createCopy(original: Config): Config {
+        const result: Config = {
+            defaultsResolved: original.defaultsResolved,
+            content: ItemConfig.copyContent(original.content),
+            openPopouts: ManagerConfig.copyOpenPopouts(original.openPopouts),
+            settings: ManagerConfig.Settings.createCopy(original.settings),
+            dimensions: ManagerConfig.Dimensions.createCopy(original.dimensions),
+            labels: ManagerConfig.Labels.createCopy(original.labels),
+            maximisedItemId: original.maximisedItemId,
+        }
+        return result;
+    }
 }

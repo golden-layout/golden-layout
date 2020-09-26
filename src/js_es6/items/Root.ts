@@ -1,4 +1,4 @@
-import { Config } from '../config/config';
+import { ItemConfig } from '../config/config';
 import { AbstractContentItem } from '../items/AbstractContentItem';
 import { RowOrColumn } from '../items/RowOrColumn';
 import { LayoutManager } from '../LayoutManager';
@@ -9,12 +9,11 @@ export class Root extends AbstractContentItem {
     readonly childElementContainer;
     private _containerElement: HTMLElement;
 
-    constructor(layoutManager: LayoutManager, config: Config, containerElement: HTMLElement) {
+    constructor(layoutManager: LayoutManager, config: ItemConfig, containerElement: HTMLElement) {
       
         super(layoutManager, config, null);
 
         this.isRoot = true;
-        this.type = 'root';
         this.element = createTemplateHtmlElement('<div class="lm_goldenlayout lm_item lm_root"></div>', 'div');
         this.childElementContainer = this.element;
         this._containerElement = containerElement;
