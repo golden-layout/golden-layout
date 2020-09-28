@@ -5,8 +5,8 @@ import { LayoutManager } from './LayoutManager';
 export class MainLayoutManager extends LayoutManager {
     private _mainConfig: Config;
 
-    constructor(configOrUserConfig: Config | UserConfig, container?: Element | HTMLElement) {        
-        super(false, MainLayoutManager.createConfig(configOrUserConfig), container);
+    constructor(userConfig: UserConfig, container?: Element | HTMLElement) {        
+        super(false, MainLayoutManager.createConfig(userConfig), container);
 
         this._mainConfig = this.config as Config;
     }
@@ -19,8 +19,7 @@ export class MainLayoutManager extends LayoutManager {
             settings:  ManagerConfig.Settings.createCopy(this._mainConfig.settings),
             dimensions: ManagerConfig.Dimensions.createCopy(this._mainConfig.dimensions),
             labels: ManagerConfig.Labels.createCopy(this._mainConfig.labels),
-            maximisedItemId: this.maximisedItem ? '__glMaximised' : null,
-            defaultsResolved: true,
+            resolved: true,
         }
 
         return config;
@@ -28,12 +27,12 @@ export class MainLayoutManager extends LayoutManager {
 }
 
 export namespace MainLayoutManager {
-    export function createConfig(configOrUserConfig: Config | UserConfig): Config {
+    export function createConfig(userConfig: UserConfig): Config {
         let config: Config;
-        if (UserConfig.isUserConfig(configOrUserConfig)) {
-            config = UserConfig.resolveDefaults(configOrUserConfig);
+        if (UserConfig.isUserConfig(userConfig)) {
+            config = UserConfig.resolve(userConfig);
         } else {
-            config = configOrUserConfig as Config;
+            config = userConfig as Config;
         }
 
         // var nextNode = (node: Config) => {

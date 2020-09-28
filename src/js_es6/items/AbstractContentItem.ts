@@ -2,7 +2,6 @@ import { ItemConfig } from '../config/config'
 import { itemDefaultConfig } from '../config/ItemDefaultConfig'
 import { ConfigurationError } from '../errors/error'
 import { LayoutManager } from '../LayoutManager'
-import { BubblingEvent } from '../utils/BubblingEvent'
 import { EventEmitter } from '../utils/EventEmitter'
 import { getJQueryOffset, getJQueryWidthAndHeight } from '../utils/jquery-legacy'
 import {
@@ -75,7 +74,7 @@ export abstract class AbstractContentItem extends EventEmitter {
         this._pendingEventPropagations = {};
         this._throttledEvents = ['stateChanged'];
 
-        this.on(EventEmitter.ALL_EVENT, (name, event) => this.propagateEvent(name as string, event as BubblingEvent));
+        this.on(EventEmitter.ALL_EVENT, (name, ...args: unknown[]) => this.propagateEvent(name as string, args));
 
         if (config.content) {
             this.createContentItems(config);
@@ -282,7 +281,7 @@ export abstract class AbstractContentItem extends EventEmitter {
      * @returns {BrowserPopout}
      */
     popout() {
-        var browserPopout = this.layoutManager.createPopout(this);
+        const browserPopout = this.layoutManager.createPopoutFromContentItem(this);
         this.emitBubblingEvent('stateChanged');
         return browserPopout;
     }
@@ -462,6 +461,22 @@ export abstract class AbstractContentItem extends EventEmitter {
         this.parent = parent;
     }
 
+    toConfig(): ItemConfig {
+        const content = this.calculateConfigContent();
+        return ItemConfig.createCopy(this.config, content);
+    }
+
+    calculateConfigContent(): ItemConfig[] {
+        const contentItems = this.contentItems;
+        const count = contentItems.length;
+        const result = new Array<ItemConfig>(count);
+        for (let i = 0; i < count; i++) {
+            const item = contentItems[i];
+            result[i] = item.toConfig();
+        }
+        return result;
+    }
+
     _$highlightDropZone(x, y, area) {
         this.layoutManager.dropTargetIndicator.highlightArea(area);
     }
@@ -473,13 +488,13 @@ export abstract class AbstractContentItem extends EventEmitter {
     _$hide() {
         this._callOnActiveComponents('hide');
         this.element.hide();
-        this.layoutManager.updateSize();
+        this.layoutManager.updateSizeFromContainer();
     }
 
     _$show() {
         this._callOnActiveComponents('show');
         this.element.show();
-        this.layoutManager.updateSize();
+        this.layoutManager.updateSizeFromContainer();
     }
 
     _callOnActiveComponents(methodName) {
@@ -498,8 +513,6 @@ export abstract class AbstractContentItem extends EventEmitter {
 
     /**
      * Destroys this item ands its children
-     *
-     * @returns {void}
      */
     _$destroy(): void {
         this.emitBubblingEvent('beforeItemDestroyed');
@@ -554,19 +567,7 @@ export abstract class AbstractContentItem extends EventEmitter {
 
         this.isInitialised = true;
         this.emitBubblingEvent('itemCreated');
-        this.emitBubblingEvent(this.type + 'Created');
-    }
-
-    /**
-     * Emit an event that bubbles up the item tree.
-     *
-     * @param   {String} name The name of the event
-     *
-     * @returns {void}
-     */
-    emitBubblingEvent(name: string): void {
-        const event = new BubblingEvent(name, this);
-        this.emit(name, event);
+        this.emitUnknownBubblingEvent(this.type + 'Created');
     }
 
     protected initContentItems(): void {
@@ -624,21 +625,24 @@ export abstract class AbstractContentItem extends EventEmitter {
      * @param    name the name of the event
      * @param   event
      */
-    private propagateEvent(name: string, event: unknown) {
-        if (event instanceof BubblingEvent &&
-            event.isPropagationStopped === false &&
-            this.isInitialised === true) {
+    private propagateEvent(name: string, args: unknown[]) {
+        if (args.length === 1) {
+            const event = args[0];
+            if (event instanceof EventEmitter.BubblingEvent &&
+                event.isPropagationStopped === false &&
+                this.isInitialised === true) {
 
-            /**
-             * In some cases (e.g. if an element is created from a DragSource) it
-             * doesn't have a parent and is not below root. If that's the case
-             * propagate the bubbling event from the top level of the substree directly
-             * to the layoutManager
-             */
-            if (this.isRoot === false && this.parent) {
-                this.parent.emitUnknown(name, event);
-            } else {
-                this.scheduleEventPropagationToLayoutManager(name, event);
+                /**
+                 * In some cases (e.g. if an element is created from a DragSource) it
+                 * doesn't have a parent and is not below root. If that's the case
+                 * propagate the bubbling event from the top level of the substree directly
+                 * to the layoutManager
+                 */
+                if (this.isRoot === false && this.parent) {
+                    this.parent.emitUnknown(name, event);
+                } else {
+                    this.scheduleEventPropagationToLayoutManager(name, event);
+                }
             }
         }
     }
@@ -650,9 +654,9 @@ export abstract class AbstractContentItem extends EventEmitter {
      *
      * @param {String} name the name of the event
      */
-    private scheduleEventPropagationToLayoutManager(name: string, event: BubblingEvent) {
+    private scheduleEventPropagationToLayoutManager(name: string, event: EventEmitter.BubblingEvent) {
         if (indexOf(name, this._throttledEvents) === -1) {
-            this.layoutManager.emit(name, event.origin);
+            this.layoutManager.emitUnknown(name, event.origin);
         } else {
             if (this._pendingEventPropagations[name] !== true) {
                 this._pendingEventPropagations[name] = true;
@@ -667,9 +671,9 @@ export abstract class AbstractContentItem extends EventEmitter {
      *
      * @param name the name of the event
      */
-    private propagateEventToLayoutManager(name: string, event: BubblingEvent) {
+    private propagateEventToLayoutManager(name: string, event: EventEmitter.BubblingEvent) {
         this._pendingEventPropagations[name] = false;
-        this.layoutManager.emit(name, event);
+        this.layoutManager.emitUnknown(name, event);
     }
 }
 

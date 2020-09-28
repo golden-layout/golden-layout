@@ -1,4 +1,5 @@
 import { isFunction } from '../utils/utils';
+import { BubblingEvent } from './BubblingEvent';
 
 /**
  * A generic and very fast EventEmitter
@@ -61,6 +62,22 @@ export class EventEmitter {
         for (let i = 0; i < allEventSubs.length; i++) {
             allEventSubs[i](args);
         }
+    }
+
+    /**
+     * Emit an event that bubbles up the item tree.
+     *
+     * @param  eventName The name of the event
+     */
+
+    emitBubblingEvent<K extends keyof EventEmitter.EventParamsMap>(eventName: K): void {
+        const event = new BubblingEvent(eventName, this);
+        this.emitUnknown(eventName, event);
+    }
+
+    emitUnknownBubblingEvent(eventName: string): void {
+        const event = new BubblingEvent(eventName, this);
+        this.emitUnknown(eventName, event);
     }
 
     /**
@@ -158,23 +175,57 @@ export namespace EventEmitter {
     export interface EventParamsMap {
         "__all": UnknownParams;
         "activeContentItemChanged": UnknownParam;
+        "beforeItemDestroyed": BubblingEventParam;
         "close": NoParams;
         "destroy": NoParams;
         "drag": DragParams;
         "dragStart": DragStartParams;
         "dragStop": DragStopParams;
         "hide": NoParams;
+        "initialised": NoParams;
+        "itemCreated": BubblingEventParam;
+        "itemDestroyed": BubblingEventParam;
+        "itemDropped": UnknownParam;
+        "maximised": NoParams;
+        "minimised": NoParams;
         "open": NoParams;
+        "popIn": NoParams;
+        "resize": NoParams;
+        "selectionChanged": UnknownParam;
         "show": NoParams;
         "shown": NoParams;
+        "stateChanged": NoParams;
+        "tab": UnknownParam;
+        "tabCreated": UnknownParam;
+        "titleChanged": StringParam;
+        "windowClosed": UnknownParam;
+        "windowOpened": UnknownParam;
     }
 
     export type UnknownParams = unknown[];
     export type NoParams = [];
     export type UnknownParam = [unknown];
+    export type BubblingEventParam = [EventEmitter.BubblingEvent]
+    export type StringParam = [string];
     export type DragStartParams = [originalX: number, originalY: number];
     export type DragStopParams = [event: DragEvent];
     export type DragParams = [offsetX: number, offsetY: number, event: DragEvent];
+
+    export class BubblingEvent {
+        name: string;
+        isPropagationStopped: boolean;
+        origin: EventEmitter;
+    
+        constructor(name: string, origin: EventEmitter) {
+            this.name = name;
+            this.origin = origin;
+            this.isPropagationStopped = false;
+        }
+    
+        stopPropagation(): void {
+            this.isPropagationStopped = true;
+        }
+    }
 
     export interface DragEvent {
         mouseEvent: MouseEvent | undefined;

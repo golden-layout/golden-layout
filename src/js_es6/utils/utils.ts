@@ -1,12 +1,6 @@
 import $ from 'jquery';
 import { AssertError } from '../errors/error';
 
-export type JsonValue = string | number | boolean | Json | JsonValueArray;
-export interface Json {
-    [name: string]: JsonValue;
-}
-export type JsonValueArray = Array<JsonValue>
-
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 export function F(): void {}
 
@@ -53,19 +47,34 @@ export function createTemplateHtmlElement(templateText: string, selector: string
     // modify the template's content
     // template.content.append(document.createElement('div'))
     // add it to the document so it is parsed and ready to be used
-    document.head.append(template)
+    document.head.appendChild(template)
     const parsedDocument = new DOMParser().parseFromString(templateText, 'text/html')
     const node = parsedDocument.querySelector(selector);
     if (node === null) {
         throw new AssertError('UCTHE772242', `${selector}: ${templateText.substr(0, 400)}`);
     } else {
-        template.content.append(node);
+        template.content.appendChild(node);
         return node as HTMLElement;
     }
 }
 
 export function numberToPixels(value: number): string {
     return value.toString(10) + 'px';
+}
+
+export function pixelsToNumber(value: string): number {
+    const numberStr = value.replace("px", "");
+    return parseFloat(numberStr);
+}
+
+export function getElementWidth(element: HTMLElement): number {
+    const widthAsPixels = getComputedStyle(element).width;
+    return pixelsToNumber(widthAsPixels);
+}
+
+export function getElementHeight(element: HTMLElement): number {
+    const widthAsPixels = getComputedStyle(element).height;
+    return pixelsToNumber(widthAsPixels);
 }
 
 export function copy(target: Record<string, unknown>, source: Record<string, unknown>): Record<string, unknown> {

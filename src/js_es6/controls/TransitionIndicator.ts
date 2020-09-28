@@ -1,14 +1,15 @@
-import {
-    now,
-    animFrame,
-    fnBind
-} from '../utils/utils'
-import $ from 'jquery'
+import { Rect } from '../utils/types';
+import { createTemplateHtmlElement } from '../utils/utils';
 
+export class TransitionIndicator {
+    private _element: HTMLElement;
+    private _toElement: HTMLElement | null;
+    private _fromDimensions: null;
+    private _totalAnimationDuration: number;
+    private _animationStartTime: number | null;
 
-export default class TransitionIndicator {
     constructor() {
-        this._element = $('<div class="lm_transition_indicator"></div>');
+        this._element = createTemplateHtmlElement('<div class="lm_transition_indicator"></div>', 'div');
         $(document.body).append(this._element);
 
         this._toElement = null;
@@ -17,11 +18,12 @@ export default class TransitionIndicator {
         this._animationStartTime = null;
     }
 
-    destroy() {
+    destroy(): void {
         this._element.remove();
     }
 
-    transitionElements(fromElement, toElement) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    transitionElements(fromElement: HTMLElement, toElement: HTMLElement): void {
         /**
          * TODO - This is not quite as cool as expected. Review.
          */
@@ -34,37 +36,41 @@ export default class TransitionIndicator {
         // animFrame(fnBind(this._nextAnimationFrame, this));
     }
 
-    _nextAnimationFrame() {
-        var toDimensions = this._measure(this._toElement),
-            animationProgress = (now() - this._animationStartTime) / this._totalAnimationDuration,
-            currentFrameStyles = {},
-            cssProperty;
+    private nextAnimationFrame(): void {
+        // if (this._toElement === null || this._fromDimensions === null || this._animationStartTime === null) {
+        //     throw new UnexpectedNullError('TINAFTD97115');
+        // } else {
+        //     const toDimensions = this.measure(this._toElement);
+        //     const animationProgress = (now() - this._animationStartTime) / this._totalAnimationDuration;
+        //     const currentFrameStyles = {};
+        //     const cssProperty;
 
-        if (animationProgress >= 1) {
-            this._element.hide();
-            return;
-        }
+        //     if (animationProgress >= 1) {
+        //         this._element.style.display = 'none';
+        //         return;
+        //     }
 
-        toDimensions.opacity = 0;
+        //     toDimensions.opacity = 0;
 
-        for (cssProperty in this._fromDimensions) {
-            currentFrameStyles[cssProperty] = this._fromDimensions[cssProperty] +
-                (toDimensions[cssProperty] - this._fromDimensions[cssProperty]) *
-                animationProgress;
-        }
+        //     for (const cssProperty in this._fromDimensions) {
+        //         currentFrameStyles[cssProperty] = this._fromDimensions[cssProperty] +
+        //             (toDimensions[cssProperty] - this._fromDimensions[cssProperty]) *
+        //             animationProgress;
+        //     }
 
-        this._element.css(currentFrameStyles);
-        animFrame(fnBind(this._nextAnimationFrame, this));
+        //     this._element.css(currentFrameStyles);
+        //     animFrame(fnBind(this._nextAnimationFrame, this));
+        // }
     }
 
-    _measure(element) {
-        var offset = element.offset();
+    private measure(element: HTMLElement): Rect {
+        const rect = element.getBoundingClientRect();
 
         return {
-            left: offset.left,
-            top: offset.top,
-            width: element.outerWidth(),
-            height: element.outerHeight()
+            left: rect.left,
+            top: rect.top,
+            width: element.offsetWidth,
+            height: element.offsetHeight,
         };
     }
 }

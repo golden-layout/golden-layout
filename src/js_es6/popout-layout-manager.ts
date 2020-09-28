@@ -19,10 +19,11 @@ export class PopoutLayoutManager extends LayoutManager {
             content,
             openPopouts,
             settings:  ManagerConfig.Settings.createCopy(this._popoutManagerConfig.settings),
-            dimensions: PopoutManagerConfig.Dimensions.createCopy(this._popoutManagerConfig.dimensions),
+            dimensions: ManagerConfig.Dimensions.createCopy(this._popoutManagerConfig.dimensions),
             labels: ManagerConfig.Labels.createCopy(this._popoutManagerConfig.labels),
             parentId: this._popoutManagerConfig.parentId,
             indexInParent: this._popoutManagerConfig.indexInParent,
+            window: window,
         }
 
         return config;

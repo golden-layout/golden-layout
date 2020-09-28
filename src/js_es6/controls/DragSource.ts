@@ -1,4 +1,4 @@
-import { ItemConfig } from 'golden-layout';
+import { ItemConfig } from '../config/config';
 import { DragProxy } from '../controls/DragProxy';
 import { LayoutManager } from '../LayoutManager';
 import { DragListener } from '../utils/DragListener';
@@ -23,10 +23,8 @@ export class DragSource {
 
 	/**
 	 * Disposes of the drag listeners so the drag source is not usable any more.
-	 *
-	 * @returns {void}
 	 */
-	destroy() {
+	destroy(): void {
 		this.removeDragListener();
     }
     
@@ -64,7 +62,8 @@ export class DragSource {
 	 */
 	private removeDragListener() {
 		if (this._dragListener !== null ) {
-			this._dragListener.destroy();
+            this._dragListener.destroy();
+            this._dragListener = null;
 		}
 	}
 }

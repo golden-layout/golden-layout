@@ -1,38 +1,35 @@
-import $ from 'jquery'
+import { LinkedRect } from '../utils/types';
+import { createTemplateHtmlElement, numberToPixels } from '../utils/utils';
 
 const _template = '<div class="lm_dropTargetIndicator"><div class="lm_inner"></div></div>'
 
-
-export default class DropTargetIndicator {
+export class DropTargetIndicator {
+    element: HTMLElement;
 
     constructor() {
-        this.element = $(_template);
-        $(document.body).append(this.element);
+        // Maybe use container instead of Document Body?
+        this.element = createTemplateHtmlElement(_template, 'div');
+        document.body.appendChild(this.element);
     }
 
-    destroy() {
+    destroy(): void {
         this.element.remove();
     }
 
-    highlight(x1, y1, x2, y2) {
+    highlight(left: number, top: number, nextLeft: number, nextTop: number): void {
         this.highlightArea({
-            x1: x1,
-            y1: y1,
-            x2: x2,
-            y2: y2
+            left,
+            top,
+            nextLeft: nextLeft,
+            nextTop: nextTop
         });
     }
 
-    highlightArea(area) {
-        this.element.css({
-            left: area.x1,
-            top: area.y1,
-            width: area.x2 - area.x1,
-            height: area.y2 - area.y1
-        }).show();
-    }
-
-    hide() {
-        this.element.hide();
+    highlightArea(rectSegment: LinkedRect): void {
+        this.element.style.left = numberToPixels(rectSegment.left);
+        this.element.style.top = numberToPixels(rectSegment.top);
+        this.element.style.width = numberToPixels(rectSegment.nextLeft - rectSegment.left);
+        this.element.style.height = numberToPixels(rectSegment.nextTop - rectSegment.top);
+        this.element.style.display = '';
     }
 }

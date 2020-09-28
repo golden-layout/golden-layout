@@ -1,4 +1,3 @@
-import { Config } from '../config/config';
 import { Header } from '../controls/Header';
 import { AbstractContentItem } from '../items/AbstractContentItem';
 import { RowOrColumn } from '../items/RowOrColumn';
@@ -19,7 +18,7 @@ export class Stack extends AbstractContentItem {
 
     header: Header;
 
-    constructor(layoutManager: LayoutManager, config: Config, parent: AbstractContentItem) {
+    constructor(layoutManager: LayoutManager, config: ItemConfig, parent: AbstractContentItem) {
         super(layoutManager, config, parent)
 
         this.element = $('<div class="lm_item lm_stack"></div>');

@@ -1,4 +1,4 @@
-import { JsonValue } from '../utils/utils';
+import { JsonValue } from '../utils/types';
 import { Config, ItemConfig, JsonComponentConfig, ManagerConfig, PopoutManagerConfig, ReactComponentConfig } from './config';
 
 export interface UserItemConfig {
@@ -49,7 +49,7 @@ export interface UserItemConfig {
 }
 
 export namespace UserItemConfig {
-    export function resolveDefaults(user: UserItemConfig): ItemConfig {
+    export function resolve(user: UserItemConfig): ItemConfig {
         switch (user.type) {
             case ItemConfig.Type.root:
             case ItemConfig.Type.row:
@@ -69,14 +69,14 @@ export namespace UserItemConfig {
                 return result;
 
             case ItemConfig.Type.component:
-                return UserJsonComponentConfig.resolveDefaults(user as UserJsonComponentConfig);
+                return UserJsonComponentConfig.resolve(user as UserJsonComponentConfig);
 
             case ItemConfig.Type['react-component']:
-                return UserReactComponentConfig.resolveDefaults(user as UserReactComponentConfig);
+                return UserReactComponentConfig.resolve(user as UserReactComponentConfig);
 
             default:
                 const neverUserType: never = user.type;
-                throw new Error(`UserItemConfig.resolveDefaults: Unreachable Type: ${neverUserType}`);
+                throw new Error(`UserItemConfig.resolve: Unreachable Type: ${neverUserType}`);
         }
     }
 
@@ -87,7 +87,7 @@ export namespace UserItemConfig {
             const count = content.length;
             const result = new Array<ItemConfig>(count);
             for (let i = 0; i < count; i++) {
-                result[i] = UserItemConfig.resolveDefaults(content[i]);
+                result[i] = UserItemConfig.resolve(content[i]);
             }
             return result;
         }
@@ -141,7 +141,7 @@ export interface UserJsonComponentConfig extends UserComponentConfig {
 }
 
 export namespace UserJsonComponentConfig {
-    export function resolveDefaults(user: UserJsonComponentConfig): JsonComponentConfig {
+    export function resolve(user: UserJsonComponentConfig): JsonComponentConfig {
         if (user.componentName === undefined) {
             throw new Error('UserJsonComponentConfig.componentName is undefined');
         } else {
@@ -171,7 +171,7 @@ export interface UserReactComponentConfig extends UserComponentConfig {
 }
 
 export namespace UserReactComponentConfig {
-    export function resolveDefaults(user: UserReactComponentConfig): ReactComponentConfig {
+    export function resolve(user: UserReactComponentConfig): ReactComponentConfig {
         if (user.componentName === undefined) {
             throw new Error('UserReactComponentConfig.componentName is undefined');
         } else {
@@ -199,7 +199,6 @@ export interface UserManagerConfig {
     dimensions?: UserManagerConfig.Dimensions;
     settings?: UserManagerConfig.Settings;
     labels?: UserManagerConfig.Labels;
-    maximisedItemId?: string | null,
 }
 
 export namespace UserManagerConfig {
@@ -296,7 +295,7 @@ export namespace UserManagerConfig {
     }
 
     export namespace Settings {
-        export function resolveDefaults(user: Settings | undefined): ManagerConfig.Settings {
+        export function resolve(user: Settings | undefined): ManagerConfig.Settings {
             const result: ManagerConfig.Settings = {
                 hasHeaders: user?.hasHeaders ?? defaults.hasHeaders,
                 constrainDragToContainer: user?.constrainDragToContainer ?? defaults.constrainDragToContainer,
@@ -380,7 +379,7 @@ export namespace UserManagerConfig {
     }
 
     export namespace Dimensions {
-        export function resolveDefaults(user: Dimensions | undefined): ManagerConfig.Dimensions {
+        export function resolve(user: Dimensions | undefined): ManagerConfig.Dimensions {
             const result: ManagerConfig.Dimensions = {
                 borderWidth: user?.borderWidth ?? defaults.borderWidth,
                 borderGrabWidth: user?.borderGrabWidth ?? defaults.borderGrabWidth,
@@ -443,7 +442,7 @@ export namespace UserManagerConfig {
     }
 
     export namespace Labels {
-        export function resolveDefaults(user: Labels | undefined): ManagerConfig.Labels {
+        export function resolve(user: Labels | undefined): ManagerConfig.Labels {
             const result: ManagerConfig.Labels = {
                 close: user?.close ?? defaults.close,
                 maximise: user?.maximise ?? defaults.maximise,
@@ -472,7 +471,7 @@ export namespace UserManagerConfig {
             const count = userPopoutConfigs.length;
             const result = new Array<PopoutManagerConfig>(count);
             for (let i = 0; i < count; i++) {
-                result[i] = UserPopoutManagerConfig.resolveDefaults(userPopoutConfigs[i]);
+                result[i] = UserPopoutManagerConfig.resolve(userPopoutConfigs[i]);
             }
             return result;
         }
@@ -482,95 +481,128 @@ export namespace UserManagerConfig {
 export interface UserPopoutManagerConfig extends UserManagerConfig {
     parentId: string;
     indexInParent: number;
-    dimensions: UserPopoutManagerConfig.Dimensions;
+    dimensions: UserPopoutManagerConfig.Dimensions; // for backwards compatibility
+    window: UserPopoutManagerConfig.Window;
+    /** @ deprecated use Window.maximised */
+    maximisedItemId?: string | null,
 }
 
 export namespace UserPopoutManagerConfig {
+    // Previous versions kept window information in Dimensions key.  Only use for backwards compatibility
+    /** @deprecated use Window */
     export interface Dimensions extends UserManagerConfig.Dimensions {
+        /** @deprecated use Window.width */
         width: number | null,
+        /** @deprecated use Window.height */
         height: number | null,
+        /** @deprecated use Window.left */
         left: number | null,
+        /** @deprecated use Window.top */
         top: number | null,
     }
 
-    export namespace Dimensions {
-        export function resolveDefaults(user: Dimensions | undefined): PopoutManagerConfig.Dimensions {
-            const result: PopoutManagerConfig.Dimensions = {
-                borderWidth: user?.borderWidth ?? defaults.borderWidth,
-                borderGrabWidth: user?.borderGrabWidth ?? defaults.borderGrabWidth,
-                minItemHeight: user?.minItemHeight ?? defaults.minItemHeight,
-                minItemWidth: user?.minItemWidth ?? defaults.minItemWidth,
-                headerHeight: user?.headerHeight ?? defaults.headerHeight,
-                dragProxyWidth: user?.dragProxyWidth ?? defaults.dragProxyWidth,
-                dragProxyHeight: user?.dragProxyHeight ?? defaults.dragProxyHeight,
-                width: user?.width ?? defaults.width,
-                height: user?.height ?? defaults.height,
-                left: user?.left ?? defaults.left,
-                top: user?.top ?? defaults.top,
+    export interface Window {
+        width?: number,
+        height?: number,
+        left?: number,
+        top?: number,
+        maximised?: boolean;
+    }
+
+    export namespace Window {
+        export function resolve(userWindow: Window | undefined,
+            userDimensions: Dimensions | undefined,
+            maximisedItemId: string | null | undefined): PopoutManagerConfig.Window
+        {
+            let result: PopoutManagerConfig.Window;
+            if (userWindow !== undefined) {
+                result = {
+                    width: userWindow.width ?? defaults.width,
+                    height: userWindow.height ?? defaults.height,
+                    left: userWindow.left ?? defaults.left,
+                    top: userWindow.top ?? defaults.top,
+                    maximised: userWindow.maximised ?? defaults.maximised,
+                }
+            } else {
+                result = {
+                    width: userDimensions?.width ?? defaults.width,
+                    height: userDimensions?.height ?? defaults.height,
+                    left: userDimensions?.left ?? defaults.left,
+                    top: userDimensions?.top ?? defaults.top,
+                    maximised: maximisedItemId === undefined ? defaults.maximised : maximisedItemId === '__glMaximised',
+                }
             }
             return result;
         }
 
-        export const defaults: PopoutManagerConfig.Dimensions = {
-            borderWidth: 5,
-            borderGrabWidth: 15,
-            minItemHeight: 10,
-            minItemWidth: 10,
-            headerHeight: 20,
-            dragProxyWidth: 300,
-            dragProxyHeight: 200,
+        export const defaults: PopoutManagerConfig.Window = {
             width: null,
             height: null,
             left: null,
             top: null,
+            maximised: false,
         }
     }
 
-    export function resolveDefaults(user: UserPopoutManagerConfig): PopoutManagerConfig {
+    export function resolve(user: UserPopoutManagerConfig): PopoutManagerConfig {
         const config: PopoutManagerConfig = {
             content: UserItemConfig.resolveContentDefaults(user.content),
+            openPopouts: UserManagerConfig.resolveOpenPopouts(user.openPopouts),
+            settings: UserManagerConfig.Settings.resolve(user.settings),
+            labels: UserManagerConfig.Labels.resolve(user.labels),
+            dimensions: UserManagerConfig.Dimensions.resolve(user.dimensions),
             parentId: user.parentId,
             indexInParent: user.indexInParent,
-            openPopouts: UserManagerConfig.resolveOpenPopouts(user.openPopouts),
-            settings: UserManagerConfig.Settings.resolveDefaults(user.settings),
-            labels: UserManagerConfig.Labels.resolveDefaults(user.labels),
-            dimensions: Dimensions.resolveDefaults(user.dimensions),
-            maximisedItemId: user.maximisedItemId ?? null,
+            window: UserPopoutManagerConfig.Window.resolve(user.window, user.dimensions, user.maximisedItemId),
         } 
         return config;
     }
 }
 
+/** Use to specify Config with defaults or deserialise a Config.
+ * Deserialisation will handle backwards compatibility.
+ * Note that Config should be used for serialisation (not UserConfig)
+ */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface UserConfig extends UserManagerConfig {
 }
 
 export namespace UserConfig {
-    export function resolveDefaults(user: UserConfig): Config {
+    export function resolve(user: UserConfig): Config {
         const config: Config = {
-            defaultsResolved: true,
+            resolved: true,
             content: UserItemConfig.resolveContentDefaults(user.content),
             openPopouts: UserManagerConfig.resolveOpenPopouts(user.openPopouts),
-            dimensions: UserManagerConfig.Dimensions.resolveDefaults(user.dimensions),
-            settings: UserManagerConfig.Settings.resolveDefaults(user.settings),
-            labels: UserManagerConfig.Labels.resolveDefaults(user.labels),
-            maximisedItemId: user.maximisedItemId ?? null,
+            dimensions: UserManagerConfig.Dimensions.resolve(user.dimensions),
+            settings: UserManagerConfig.Settings.resolve(user.settings),
+            labels: UserManagerConfig.Labels.resolve(user.labels),
         } 
         return config;
     }
 
     export const defaultConfig: Config = {
-        defaultsResolved: true,
+        resolved: true,
         content: [],
         openPopouts: [],
         settings: UserManagerConfig.Settings.defaults,
         dimensions: UserManagerConfig.Dimensions.defaults,
         labels: UserManagerConfig.Labels.defaults,
-        maximisedItemId: null,
     };
+
+    /** Shallow transformation of Config to UserConfig */
+    export function fromConfig(config: Config): UserConfig {
+        const userConfig: UserConfig = {
+            content: config.content,
+            openPopouts: config.openPopouts as UserPopoutManagerConfig[],
+            dimensions: config.dimensions,
+            labels: config.labels,
+            settings: config.settings,
+        };
+        return userConfig;
+    }
 
     export function isUserConfig(configOrUserConfig: Config | UserConfig): configOrUserConfig is UserConfig {
         const config = configOrUserConfig as Config;
-        return config.defaultsResolved === undefined || !config.defaultsResolved;
+        return config.resolved === undefined || !config.resolved;
     }
 }

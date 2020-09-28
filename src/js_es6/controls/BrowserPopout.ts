@@ -5,6 +5,7 @@ import { AbstractContentItem } from '../items/AbstractContentItem';
 import { LayoutManager } from '../LayoutManager';
 import { ConfigMinifier } from '../utils/ConfigMinifier';
 import { EventEmitter } from '../utils/EventEmitter';
+import { Rect } from '../utils/types';
 import {
     deepExtend,
     fnBind,
@@ -35,9 +36,7 @@ export class BrowserPopout extends EventEmitter {
     private _id: string | null;
 
     constructor(private _config: PopoutManagerConfig,
-        private _dimensions: ManagerConfig.Dimensions,
-        private _parentId: string, 
-        private _indexInParent: number,
+        private _initialWindow: Rect,
         private _layoutManager: LayoutManager
     ) {
         super();
@@ -53,6 +52,10 @@ export class BrowserPopout extends EventEmitter {
         if (this._isInitialised === false) {
             throw new Error('Can\'t create config, layout not yet initialised');
         }
+
+        const glInstance = this.getGlInstance();
+        const glInstanceConfig = glInstance.toConfig();
+        
         let left: number | null;
         let top: number | null;
         if (this._popoutWindow === null) {
@@ -63,30 +66,23 @@ export class BrowserPopout extends EventEmitter {
             top = this._popoutWindow.screenY ?? this._popoutWindow.screenTop;
         }
 
-        const glInstanceConfig = this.getGlInstance().toConfig();
-        const glInstanceDimensions = glInstanceConfig.dimensions;
-        const dimensions: PopoutManagerConfig.Dimensions = {
-            borderWidth: glInstanceDimensions.borderWidth,
-            borderGrabWidth: glInstanceDimensions.borderGrabWidth,
-            minItemHeight: glInstanceDimensions.minItemHeight,
-            minItemWidth: glInstanceDimensions.minItemWidth,
-            headerHeight: glInstanceDimensions.headerHeight,
-            dragProxyWidth: glInstanceDimensions.dragProxyWidth,
-            dragProxyHeight: glInstanceDimensions.dragProxyHeight,
+        const window: PopoutManagerConfig.Window = {
             width: this.getGlInstance().width,
             height: this.getGlInstance().height,
             left,
             top,
-        } 
+            maximised: false, // need to work out maximised properly
+        };
 
         const config: PopoutManagerConfig = {
-            content: this.getGlInstance().toConfig().content,
-            openPopouts: [],
+            content: glInstanceConfig.content,
+            openPopouts: glInstanceConfig.openPopouts,
             settings: glInstanceConfig.settings,
-            dimensions,
+            dimensions: glInstanceConfig.dimensions,
             labels: glInstanceConfig.labels,
-            parentId: this._parentId,
-            indexInParent: this._indexInParent
+            window,
+            parentId: this._config.parentId,
+            indexInParent: this._config.indexInParent
         };
 
         return config;
@@ -100,7 +96,7 @@ export class BrowserPopout extends EventEmitter {
         }
     }
 
-    getWindow() {
+    getWindow(): Window {
         if (this._popoutWindow === null) {
             throw new UnexpectedNullError('BPGW087215');
         } else {
@@ -108,9 +104,9 @@ export class BrowserPopout extends EventEmitter {
         }
     }
 
-    close() {
+    close(): void {
         if (this.getGlInstance()) {
-            this.getGlInstance()._$closeWindow();
+            this.getGlInstance().closeWindow();
         } else {
             try {
                 this.getWindow().close();
@@ -196,10 +192,10 @@ export class BrowserPopout extends EventEmitter {
              * The options as used in the window.open string
              */
             options = this._serializeWindowOptions({
-                width: this._dimensions.width,
-                height: this._dimensions.height,
-                innerWidth: this._dimensions.width,
-                innerHeight: this._dimensions.height,
+                width: this._initialWindow.width,
+                height: this._initialWindow.height,
+                innerWidth: this._initialWindow.width,
+                innerHeight: this._initialWindow.height,
                 menubar: 'no',
                 toolbar: 'no',
                 location: 'no',
@@ -298,7 +294,7 @@ export class BrowserPopout extends EventEmitter {
         if (this._popoutWindow === null) {
             throw new Error('BrowserPopout.positionWindow: null popoutWindow');
         } else {
-            this._popoutWindow.moveTo(this._dimensions.left, this._dimensions.top);
+            this._popoutWindow.moveTo(this._initialWindow.left, this._initialWindow.top);
             this._popoutWindow.focus();
         }
     }

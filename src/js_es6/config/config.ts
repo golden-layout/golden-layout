@@ -1,5 +1,6 @@
 import { UnreachableCaseError } from '../errors/error';
-import { deepExtendValue, JsonValue } from '../utils/utils';
+import { JsonValue } from '../utils/types';
+import { deepExtendValue } from '../utils/utils';
 
 export interface ItemConfig {
     // see UserItemConfig for comments
@@ -25,7 +26,8 @@ export namespace ItemConfig {
         'react-component'
     }
 
-    export function createCopy(original: ItemConfig): ItemConfig {
+    /** Creates a copy of the original ItemConfig using an alternative content if specified */
+    export function createCopy(original: ItemConfig, content?: ItemConfig[]): ItemConfig {
         switch (original.type) {
             case ItemConfig.Type.root:
             case ItemConfig.Type.row:
@@ -33,7 +35,7 @@ export namespace ItemConfig {
             case ItemConfig.Type.stack:
                 const result: ItemConfig = {
                     type: original.type,
-                    content: copyContent(original.content),
+                    content: content ?? copyContent(original.content),
                     width: original.width,
                     height: original.height,
                     id: original.id,
@@ -137,7 +139,6 @@ export interface ManagerConfig {
     dimensions: ManagerConfig.Dimensions;
     settings: ManagerConfig.Settings;
     labels: ManagerConfig.Labels;
-    maximisedItemId: string | null,
 }
 
 export namespace ManagerConfig {
@@ -199,23 +200,15 @@ export namespace ManagerConfig {
 
     export namespace Dimensions {
         export function createCopy(original: Dimensions): Dimensions {
-            if (isPopout(original)) {
-                return PopoutManagerConfig.Dimensions.createCopy(original);
-            } else {
-                return {
-                    borderWidth: original.borderWidth,
-                    borderGrabWidth: original.borderGrabWidth,
-                    minItemHeight: original.minItemHeight,
-                    minItemWidth: original.minItemWidth,
-                    headerHeight: original.headerHeight,
-                    dragProxyWidth: original.dragProxyWidth,
-                    dragProxyHeight: original.dragProxyHeight,
-                }
+            return {
+                borderWidth: original.borderWidth,
+                borderGrabWidth: original.borderGrabWidth,
+                minItemHeight: original.minItemHeight,
+                minItemWidth: original.minItemWidth,
+                headerHeight: original.headerHeight,
+                dragProxyWidth: original.dragProxyWidth,
+                dragProxyHeight: original.dragProxyHeight,
             }
-        }
-
-        export function isPopout(dimensions: Dimensions): dimensions is PopoutManagerConfig.Dimensions {
-            return 'left' in dimensions;
         }
     }
 
@@ -281,31 +274,26 @@ export namespace ManagerConfig {
 export interface PopoutManagerConfig extends ManagerConfig {
     parentId: string;
     indexInParent: number;
-    dimensions: PopoutManagerConfig.Dimensions;
+    window: PopoutManagerConfig.Window;
 }
 
 export namespace PopoutManagerConfig {
-    export interface Dimensions extends ManagerConfig.Dimensions {
+    export interface Window {
         width: number | null,
         height: number | null,
         left: number | null,
         top: number | null,
+        maximised: boolean;
     }
 
-    export namespace Dimensions {
-        export function createCopy(original: Dimensions): Dimensions {
+    export namespace Window {
+        export function createCopy(original: Window): Window {
             return {
-                borderWidth: original.borderWidth,
-                borderGrabWidth: original.borderGrabWidth,
-                minItemHeight: original.minItemHeight,
-                minItemWidth: original.minItemWidth,
-                headerHeight: original.headerHeight,
-                dragProxyWidth: original.dragProxyWidth,
-                dragProxyHeight: original.dragProxyHeight,
                 width: original.width,
                 height: original.height,
                 left: original.left,
                 top: original.top,
+                maximised: original.maximised,
             }
         }
     }
@@ -315,31 +303,30 @@ export namespace PopoutManagerConfig {
             content: ItemConfig.copyContent(original.content),
             openPopouts: ManagerConfig.copyOpenPopouts(original.openPopouts),
             settings: ManagerConfig.Settings.createCopy(original.settings),
-            dimensions: Dimensions.createCopy(original.dimensions),
+            dimensions: ManagerConfig.Dimensions.createCopy(original.dimensions),
             labels: ManagerConfig.Labels.createCopy(original.labels),
-            maximisedItemId: original.maximisedItemId,
             parentId: original.parentId,
             indexInParent: original.indexInParent,
+            window: PopoutManagerConfig.Window.createCopy(original.window),
         }
         return result;
     }
 }
 
 export interface Config extends ManagerConfig {
-    defaultsResolved: true,
+    resolved: true,
 }
 
 export namespace Config {
 
     export function createCopy(original: Config): Config {
         const result: Config = {
-            defaultsResolved: original.defaultsResolved,
+            resolved: original.resolved,
             content: ItemConfig.copyContent(original.content),
             openPopouts: ManagerConfig.copyOpenPopouts(original.openPopouts),
             settings: ManagerConfig.Settings.createCopy(original.settings),
             dimensions: ManagerConfig.Dimensions.createCopy(original.dimensions),
             labels: ManagerConfig.Labels.createCopy(original.labels),
-            maximisedItemId: original.maximisedItemId,
         }
         return result;
     }
