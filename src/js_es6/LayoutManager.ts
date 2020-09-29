@@ -1,4 +1,4 @@
-import { ComponentConfig, ItemConfig, ManagerConfig, PopoutManagerConfig } from './config/config'
+import { ComponentConfig, ItemConfig, ManagerConfig, PopoutManagerConfig, StackItemConfig } from './config/config'
 import { UserItemConfig } from './config/UserConfig'
 import { BrowserPopout } from './controls/BrowserPopout'
 import { DragSource } from './controls/DragSource'
@@ -328,9 +328,9 @@ export abstract class LayoutManager extends EventEmitter {
             return;
         }
         this._onUnload();
-        window.removeEventListener('resize', this._windowResizeListener);
-        window.removeEventListener('unload', this._windowUnloadListener);
-        window.removeEventListener('beforeunload', this._windowUnloadListener);
+        globalThis.removeEventListener('resize', this._windowResizeListener);
+        globalThis.removeEventListener('unload', this._windowUnloadListener);
+        globalThis.removeEventListener('beforeunload', this._windowUnloadListener);
         if (this.root !== null) {
             this.root.callDownwards('_$destroy', [], true);
             this.root.contentItems = [];
@@ -575,7 +575,7 @@ export abstract class LayoutManager extends EventEmitter {
             case ItemConfig.Type.root: return new Root(this, config, this.container);
             case ItemConfig.Type.row: return new RowOrColumn(false, this, config, parent);
             case ItemConfig.Type.column: return new RowOrColumn(true, this, config, parent);
-            case ItemConfig.Type.stack: return new Stack(this, config, parent);
+            case ItemConfig.Type.stack: return new Stack(this, config as StackItemConfig, parent);
             case ItemConfig.Type.component:
             case ItemConfig.Type["react-component"]:
                 return new Component(this, config as ComponentConfig, parent);
@@ -584,14 +584,14 @@ export abstract class LayoutManager extends EventEmitter {
         }
     }
 
-    private _$maximiseItem(contentItem: AbstractContentItem) {
+    maximiseItem(contentItem: AbstractContentItem): void {
         if (this._maximisedItem !== null) {
-            this._$minimiseItem(this._maximisedItem);
+            this.minimiseItem(this._maximisedItem);
         }
         this._maximisedItem = contentItem;
         contentItem.on('beforeItemDestroyed', (ev: EventEmitter.BubblingEvent) => this.cleanupBeforeMaximisedItemDestroyed(ev));
         this._maximisedItem.addId('__glMaximised');
-        contentItem.element.addClass('lm_maximised');
+        contentItem.element.classList.add('lm_maximised');
         contentItem.element.after(this._maximisePlaceholder);
         this.root.element.prepend(contentItem.element);
         contentItem.element.width(this.container.width());
@@ -601,8 +601,8 @@ export abstract class LayoutManager extends EventEmitter {
         this.emit('stateChanged');
     }
 
-    _$minimiseItem(contentItem: AbstractContentItem) {
-        contentItem.element.removeClass('lm_maximised');
+    private minimiseItem(contentItem: AbstractContentItem) {
+        contentItem.element.classList.remove('lm_maximised');
         contentItem.removeId('__glMaximised');
         this._maximisePlaceholder.after(contentItem.element);
         this._maximisePlaceholder.remove();
@@ -633,16 +633,16 @@ export abstract class LayoutManager extends EventEmitter {
      * @packagePrivate
      */
     closeWindow(): void {
-        window.setTimeout(() => window.close(), 1);
+        globalThis.setTimeout(() => globalThis.close(), 1);
     }
 
-    _$getArea(x: number, y: number) {
-        var i, area, smallestSurface = Infinity,
-            mathingArea = null;
+    getArea(x: number, y: number): AbstractContentItem.Area | null {
+        let mathingArea = null;
 
-        for (i = 0; i < this._itemAreas.length; i++) {
-            area = this._itemAreas[i];
+        for (let i = 0; i < this._itemAreas.length; i++) {
+            const area = this._itemAreas[i];
 
+            let smallestSurface = Infinity;
             if (
                 x > area.x1 &&
                 x < area.x2 &&
@@ -658,31 +658,36 @@ export abstract class LayoutManager extends EventEmitter {
         return mathingArea;
     }
 
-    _$createRootItemAreas() {
-        var areaSize = 50;
-        var sides = {
+    private createRootItemAreas() {
+        const areaSize = 50;
+        const sides = {
             y2: 'y1',
             x2: 'x1',
             y1: 'y2',
             x1: 'x2'
         };
-        for (var side in sides) {
+        for (const side in sides) {
             if (this.root === null) {
                 throw new UnexpectedNullError('LayoutManager.createRootItemAreas');
+            } else {
+                const area = this.root.getArea();
+                if (area === null) {
+                    throw new UnexpectedNullError('LMCRIA77553');
+                } else {
+                    area.side = side;
+                    if (sides[side][1] === '2' )
+                        area[side] = area[sides[side]] - areaSize;
+                    else
+                        area[side] = area[sides[side]] + areaSize;
+                    area.surface = (area.x2 - area.x1) * (area.y2 - area.y1);
+                    this._itemAreas.push(area);
+                }
             }
-            var area = this.root._$getArea();
-            area.side = side;
-            if (sides[side][1] === '2' )
-                area[side] = area[sides[side]] - areaSize;
-            else
-                area[side] = area[sides[side]] + areaSize;
-            area.surface = (area.x2 - area.x1) * (area.y2 - area.y1);
-            this._itemAreas.push(area);
         }
     }
 
-    _$calculateItemAreas() {
-        var i, area, allContentItems = this._getAllContentItems();
+    calculateItemAreas() {
+        const allContentItems = this.getAllContentItems();
         this._itemAreas = [];
 
         /**
@@ -693,18 +698,18 @@ export abstract class LayoutManager extends EventEmitter {
          * will used for every gap in the layout, e.g. splitters
          */
         if (allContentItems.length === 1) {
-            this._itemAreas.push(this.root._$getArea());
+            this._itemAreas.push(this.root.getArea());
             return;
         }
-        this._$createRootItemAreas();
+        this.createRootItemAreas();
 
-        for (i = 0; i < allContentItems.length; i++) {
+        for (let i = 0; i < allContentItems.length; i++) {
 
             if (!(allContentItems[i].isStack)) {
                 continue;
             }
 
-            area = allContentItems[i]._$getArea();
+            const area = allContentItems[i].getArea();
 
             if (area === null) {
                 continue;
@@ -712,7 +717,14 @@ export abstract class LayoutManager extends EventEmitter {
                 this._itemAreas = this._itemAreas.concat(area);
             } else {
                 this._itemAreas.push(area);
-                var header = {};
+                const header: AbstractContentItem.Area = {
+                    x1: area.x1,
+                    x2: area.x2,
+                    y1: area.y1,
+                    y2: area.y2,
+                    contentItem: 1,
+                };
+                const h = area.contentItem._contentAreaDimensions.header.highlightArea
                 copy(header, area);
                 copy(header, area.contentItem._contentAreaDimensions.header.highlightArea);
                 header.surface = (header.x2 - header.x1) * (header.y2 - header.y1);
@@ -792,22 +804,14 @@ export abstract class LayoutManager extends EventEmitter {
      *
      * @returns {void}
      */
-    _getAllContentItems() {
-        var allContentItems = [];
-
-        var addChildren = function(contentItem) {
-            allContentItems.push(contentItem);
-
-            if (contentItem.contentItems instanceof Array) {
-                for (var i = 0; i < contentItem.contentItems.length; i++) {
-                    addChildren(contentItem.contentItems[i]);
-                }
-            }
-        };
-
-        addChildren(this.root);
-
-        return allContentItems;
+    private getAllContentItems() {
+        if (this.root === null) {
+            throw new UnexpectedNullError('LMGACI13130');
+        } else {
+            const allContentItems: AbstractContentItem[] = [this.root];
+            this.root.addChildContentItems(allContentItems);
+            return allContentItems;
+        }
     }
 
     /**
@@ -815,10 +819,10 @@ export abstract class LayoutManager extends EventEmitter {
      */
     private bindEvents() {
         if (this._isFullPage) {
-            window.addEventListener('resize', this._windowResizeListener);
+            globalThis.addEventListener('resize', this._windowResizeListener);
         }
-        window.addEventListener('unload', this._windowUnloadListener);
-        window.addEventListener('beforeunload', this._windowUnloadListener);
+        globalThis.addEventListener('unload', this._windowUnloadListener);
+        globalThis.addEventListener('beforeunload', this._windowUnloadListener);
     }
 
     /**
@@ -844,7 +848,7 @@ export abstract class LayoutManager extends EventEmitter {
      * @returns {void}
      */
     private _adjustToWindowMode() {
-        const popInButton = createTemplateHtmlElement('<div class="lm_popin" title="' + this.config.labels.popin + '">' +
+        const popInButton = createTemplateHtmlElement('<div class="lm_popin" title="' + this.config.header.dock + '">' +
             '<div class="lm_icon"></div>' +
             '<div class="lm_bg"></div>' +
             '</div>', 'div');

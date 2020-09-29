@@ -15,11 +15,11 @@ export class Splitter {
         this._dragListener = new DragListener(this.element);
     }
 
-    onUnknown(eventName: string, callback: EventEmitter.UnknownCallback): void {
-        this._dragListener.onUnknown(eventName, callback);
+    on<K extends keyof EventEmitter.EventParamsMap>(eventName: K, callback: EventEmitter.Callback<K>): void {
+        this._dragListener.on<K>(eventName, callback);
     }
 
-    _$destroy(): void {
+    destroy(): void {
         this.element.remove();
     }
 

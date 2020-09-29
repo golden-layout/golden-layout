@@ -1,5 +1,5 @@
 import { UnreachableCaseError } from '../errors/error';
-import { JsonValue } from '../utils/types';
+import { JsonValue, Side } from '../utils/types';
 import { deepExtendValue } from '../utils/utils';
 
 export interface ItemConfig {
@@ -7,7 +7,9 @@ export interface ItemConfig {
     type: ItemConfig.Type;
     content: ItemConfig[];
     width: number;
+    minWidth: number;
     height: number;
+    minHeight: number;
     id: string | string[];
     isClosable: boolean;
     title: string;
@@ -26,6 +28,10 @@ export namespace ItemConfig {
         'react-component'
     }
 
+    export interface Header {
+        show: Side;
+    }
+
     /** Creates a copy of the original ItemConfig using an alternative content if specified */
     export function createCopy(original: ItemConfig, content?: ItemConfig[]): ItemConfig {
         switch (original.type) {
@@ -37,7 +43,9 @@ export namespace ItemConfig {
                     type: original.type,
                     content: content ?? copyContent(original.content),
                     width: original.width,
+                    minWidth: original.minWidth,
                     height: original.height,
+                    minHeight: original.minHeight,
                     id: original.id,
                     isClosable: original.isClosable,
                     reorderEnabled: original.reorderEnabled,
@@ -67,7 +75,39 @@ export namespace ItemConfig {
     }
 }
 
-export interface ComponentConfig extends ItemConfig {
+// Stack or Component
+export interface HeaderedItemConfig extends ItemConfig {
+    header: HeaderedItemConfig.Header | undefined; // undefined means get header settings from ManagerConfig
+}
+
+export namespace HeaderedItemConfig {
+    export interface Header {
+        // undefined means get property value from ManagerConfig
+        show: false | Side | undefined;
+        popout: false | string | undefined;
+        dock: false | string | undefined;
+        maximise: false | string | undefined;
+        close: string | undefined;
+        minimise: string | undefined;
+        tabDropdown: false | string | undefined;
+    }
+
+    export function createCopy(original: Header): Header {
+        return {
+            show: original.show,
+            popout: original.popout,
+            dock: original.dock,
+            close: original.close,
+            maximise: original.maximise,
+            minimise: original.minimise,
+            tabDropdown: original.tabDropdown,
+        }
+    }
+}
+
+export type StackItemConfig = HeaderedItemConfig
+
+export interface ComponentConfig extends HeaderedItemConfig {
     /**
      * The name of the component as specified in layout.registerComponent. Mandatory if type is 'component'.
      */
@@ -94,12 +134,15 @@ export namespace JsonComponentConfig {
             type: original.type,
             content: ItemConfig.copyContent(original.content),
             width: original.width,
+            minWidth: original.minWidth,
             height: original.height,
+            minHeight: original.minHeight,
             id: original.id,
             isClosable: original.isClosable,
             reorderEnabled: original.reorderEnabled,
             title: original.title,
             activeItemIndex: original.activeItemIndex,
+            header: original.header === undefined ? undefined : HeaderedItemConfig.createCopy(original.header),
             componentName: original.componentName,
             componentState: deepExtendValue(undefined, original.componentState) as JsonValue,
         }
@@ -120,12 +163,15 @@ export namespace ReactComponentConfig {
             type: original.type,
             content: ItemConfig.copyContent(original.content),
             width: original.width,
+            minWidth: original.minWidth,
             height: original.height,
+            minHeight: original.minHeight,
             id: original.id,
             isClosable: original.isClosable,
             reorderEnabled: original.reorderEnabled,
             title: original.title,
             activeItemIndex: original.activeItemIndex,
+            header: original.header === undefined ? undefined : HeaderedItemConfig.createCopy(original.header),
             componentName: REACT_COMPONENT_ID,
             props: deepExtendValue(undefined, original.props),
         }
@@ -138,13 +184,12 @@ export interface ManagerConfig {
     openPopouts: PopoutManagerConfig[];
     dimensions: ManagerConfig.Dimensions;
     settings: ManagerConfig.Settings;
-    labels: ManagerConfig.Labels;
+    header: ManagerConfig.Header;
 }
 
 export namespace ManagerConfig {
     export interface Settings {
         // see UserConfig.Settings for comments
-        hasHeaders: boolean;
         constrainDragToContainer: boolean;
         reorderEnabled: boolean;
         selectionEnabled: boolean;
@@ -169,7 +214,6 @@ export namespace ManagerConfig {
 
         export function createCopy(original: Settings): Settings {
             return {
-                hasHeaders: original.hasHeaders,
                 constrainDragToContainer: original.constrainDragToContainer,
                 reorderEnabled: original.reorderEnabled,
                 selectionEnabled: original.selectionEnabled,
@@ -212,24 +256,25 @@ export namespace ManagerConfig {
         }
     }
 
-    export interface Labels {
-        // see UserConfig.Labels for comments
-        close: string;
-        maximise: string;
+    export interface Header {
+        show: false | Side;
+        popout: false | string;
+        dock: string;
+        maximise: false | string;
         minimise: string;
-        popin: string;
-        popout: string;
+        close: string;
         tabDropdown: string;
     }
 
-    export namespace Labels {
-        export function createCopy(original: Labels): Labels {
+    export namespace Header {
+        export function createCopy(original: Header): Header {
             return {
+                show: original.show,
+                popout: original.popout,
+                dock: original.dock,
                 close: original.close,
                 maximise: original.maximise,
                 minimise: original.minimise,
-                popin: original.popin,
-                popout: original.popout,
                 tabDropdown: original.tabDropdown,
             }
         }
@@ -252,7 +297,9 @@ export namespace ManagerConfig {
             type: ItemConfig.Type.root,
             content: managerConfig.content,
             width: 100,
+            minWidth: 0,
             height: 100,
+            minHeight: 0,
             id: '',
             isClosable: false,
             title: '',
@@ -304,7 +351,7 @@ export namespace PopoutManagerConfig {
             openPopouts: ManagerConfig.copyOpenPopouts(original.openPopouts),
             settings: ManagerConfig.Settings.createCopy(original.settings),
             dimensions: ManagerConfig.Dimensions.createCopy(original.dimensions),
-            labels: ManagerConfig.Labels.createCopy(original.labels),
+            header: ManagerConfig.Header.createCopy(original.header),
             parentId: original.parentId,
             indexInParent: original.indexInParent,
             window: PopoutManagerConfig.Window.createCopy(original.window),
@@ -326,7 +373,7 @@ export namespace Config {
             openPopouts: ManagerConfig.copyOpenPopouts(original.openPopouts),
             settings: ManagerConfig.Settings.createCopy(original.settings),
             dimensions: ManagerConfig.Dimensions.createCopy(original.dimensions),
-            labels: ManagerConfig.Labels.createCopy(original.labels),
+            header: ManagerConfig.Header.createCopy(original.header),
         }
         return result;
     }

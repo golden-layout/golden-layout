@@ -90,7 +90,7 @@ export class Component extends AbstractContentItem {
      *
      * @returns null
      */
-    _$getArea(): AbstractContentItem.Area | null {
+    getArea(): AbstractContentItem.Area | null {
         return null;
     }
 }

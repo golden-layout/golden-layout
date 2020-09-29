@@ -1,5 +1,5 @@
-import { JsonValue } from '../utils/types';
-import { Config, ItemConfig, JsonComponentConfig, ManagerConfig, PopoutManagerConfig, ReactComponentConfig } from './config';
+import { JsonValue, Side } from '../utils/types';
+import { Config, HeaderedItemConfig, ItemConfig, JsonComponentConfig, ManagerConfig, PopoutManagerConfig, ReactComponentConfig, StackItemConfig } from './config';
 
 export interface UserItemConfig {
     /**
@@ -18,9 +18,21 @@ export interface UserItemConfig {
     width?: number;
 
     /**
+     * The minimum width of this item in pixels
+     * CAUTION - Not tested - do not use
+     */
+    minWidth?: number;
+
+    /**
      * The height of this item, relative to the other children of its parent in percent
      */
     height?: number;
+
+    /**
+     * The minimum height of this item in pixels
+     * CAUTION - Not tested - do not use
+     */
+    minHeight?: number;
 
     /**
      * A String or an Array of Strings. Used to retrieve the item using item.getItemsById()
@@ -54,12 +66,13 @@ export namespace UserItemConfig {
             case ItemConfig.Type.root:
             case ItemConfig.Type.row:
             case ItemConfig.Type.column:
-            case ItemConfig.Type.stack:
                 const result: ItemConfig = {
                     type: user.type,
-                    content: UserItemConfig.resolveContentDefaults(user.content),
+                    content: UserItemConfig.resolveContent(user.content),
                     width: user.width ?? defaults.width,
+                    minWidth: user.width ?? defaults.minWidth,
                     height: user.height ?? defaults.height,
+                    minHeight: user.height ?? defaults.minHeight,
                     id: user.id ?? defaults.id,
                     isClosable: user.isClosable ?? defaults.isClosable,
                     reorderEnabled: user.reorderEnabled ?? defaults.reorderEnabled,
@@ -67,6 +80,9 @@ export namespace UserItemConfig {
                     activeItemIndex: user.activeItemIndex ?? defaults.activeItemIndex,
                 }
                 return result;
+
+            case ItemConfig.Type.stack:
+                return UserStackItemConfig.resolve(user as UserHeaderedItemConfig);
 
             case ItemConfig.Type.component:
                 return UserJsonComponentConfig.resolve(user as UserJsonComponentConfig);
@@ -80,7 +96,7 @@ export namespace UserItemConfig {
         }
     }
 
-    export function resolveContentDefaults(content: UserItemConfig[] | undefined): ItemConfig[] {
+    export function resolveContent(content: UserItemConfig[] | undefined): ItemConfig[] {
         if (content === undefined) {
             return [];
         } else {
@@ -97,7 +113,9 @@ export namespace UserItemConfig {
         type: ItemConfig.Type.stack, // not really default but need something
         content: [],
         width: 50,
+        minWidth: 0,
         height: 50,
+        minHeight: 0,
         id: '',
         isClosable: true,
         reorderEnabled: true,
@@ -125,7 +143,67 @@ export namespace UserItemConfig {
     }
 }
 
-export interface UserComponentConfig extends UserItemConfig {
+// Stack or Component
+export interface UserHeaderedItemConfig extends UserItemConfig {
+    /** @deprecated use Header.show instead */
+    hasHeaders?: boolean;
+    header?: UserHeaderedItemConfig.Header;
+}
+
+namespace UserHeaderedItemConfig {
+    export interface Header {
+        show?: false | Side;
+        popout?: false | string;
+        dock?: false | string;
+        maximise?: false | string;
+        close?: string;
+        minimise?: string;
+        tabDropdown?: false | string;
+    }
+
+    export namespace Header {
+        export function resolve(userHeader: Header | undefined, hasHeaders: boolean | undefined): HeaderedItemConfig.Header | undefined {
+            if (userHeader === undefined && hasHeaders === undefined) {
+                return undefined;
+            } else {
+                const result: HeaderedItemConfig.Header = {
+                    show: userHeader?.show ?? hasHeaders === undefined ? undefined : hasHeaders ? UserManagerConfig.Header.defaults.show : false,
+                    popout: userHeader?.popout,
+                    dock: userHeader?.dock,
+                    maximise: userHeader?.maximise,
+                    close: userHeader?.close,
+                    minimise: userHeader?.minimise,
+                    tabDropdown: userHeader?.tabDropdown,
+                }
+                return result;
+            }
+        }
+    }
+}
+
+export type UserStackItemConfig = UserHeaderedItemConfig
+
+export namespace UserStackItemConfig {
+    export function resolve(user: UserStackItemConfig): StackItemConfig {
+        const result: StackItemConfig = {
+            type: user.type,
+            content: UserItemConfig.resolveContent(user.content),
+            width: user.width ?? UserItemConfig.defaults.width,
+            minWidth: user.minWidth ?? UserItemConfig.defaults.minWidth,
+            height: user.height ?? UserItemConfig.defaults.height,
+            minHeight: user.minHeight ?? UserItemConfig.defaults.minHeight,
+            id: user.id ?? UserItemConfig.defaults.id,
+            isClosable: user.isClosable ?? UserItemConfig.defaults.isClosable,
+            reorderEnabled: user.reorderEnabled ?? UserItemConfig.defaults.reorderEnabled,
+            title: user.title ?? UserItemConfig.defaults.title,
+            activeItemIndex: user.activeItemIndex ?? UserItemConfig.defaults.activeItemIndex,
+            header: UserHeaderedItemConfig.Header.resolve(user.header, user.hasHeaders),
+        };
+        return result;
+    }
+}
+
+export interface UserComponentConfig extends UserHeaderedItemConfig {
     /**
      * The name of the component as specified in layout.registerComponent. Mandatory if type is 'component'.
      */
@@ -147,14 +225,17 @@ export namespace UserJsonComponentConfig {
         } else {
             const result: JsonComponentConfig = {
                 type: user.type,
-                content: UserItemConfig.resolveContentDefaults(user.content),
+                content: UserItemConfig.resolveContent(user.content),
                 width: user.width ?? UserItemConfig.defaults.width,
+                minWidth: user.minWidth ?? UserItemConfig.defaults.minWidth,
                 height: user.height ?? UserItemConfig.defaults.height,
+                minHeight: user.minHeight ?? UserItemConfig.defaults.minHeight,
                 id: user.id ?? UserItemConfig.defaults.id,
                 isClosable: user.isClosable ?? UserItemConfig.defaults.isClosable,
                 reorderEnabled: user.reorderEnabled ?? UserItemConfig.defaults.reorderEnabled,
                 title: user.title ?? user.componentName,
                 activeItemIndex: user.activeItemIndex ?? UserItemConfig.defaults.activeItemIndex,
+                header: UserHeaderedItemConfig.Header.resolve(user.header, user.hasHeaders),
                 componentName: user.componentName,
                 componentState: user.componentState ?? {},
             };
@@ -177,14 +258,17 @@ export namespace UserReactComponentConfig {
         } else {
             const result: ReactComponentConfig = {
                 type: ItemConfig.Type["react-component"],
-                content: UserItemConfig.resolveContentDefaults(user.content),
+                content: UserItemConfig.resolveContent(user.content),
                 width: user.width ?? UserItemConfig.defaults.width,
+                minWidth: user.minWidth ?? UserItemConfig.defaults.minWidth,
                 height: user.height ?? UserItemConfig.defaults.height,
+                minHeight: user.minHeight ?? UserItemConfig.defaults.minHeight,
                 id: user.id ?? UserItemConfig.defaults.id,
                 isClosable: user.isClosable ?? UserItemConfig.defaults.isClosable,
                 reorderEnabled: user.reorderEnabled ?? UserItemConfig.defaults.reorderEnabled,
                 title: user.title ?? user.componentName,
                 activeItemIndex: user.activeItemIndex ?? UserItemConfig.defaults.activeItemIndex,
+                header: UserHeaderedItemConfig.Header.resolve(user.header, user.hasHeaders),
                 componentName: ReactComponentConfig.REACT_COMPONENT_ID,
                 props: user.props,
             };
@@ -198,14 +282,15 @@ export interface UserManagerConfig {
     openPopouts?: UserPopoutManagerConfig[];
     dimensions?: UserManagerConfig.Dimensions;
     settings?: UserManagerConfig.Settings;
+    /** @deprecated use header instead */
     labels?: UserManagerConfig.Labels;
+    header?: UserManagerConfig.Header;
 }
 
 export namespace UserManagerConfig {
     export interface Settings {
         /**
-         * Turns headers on or off. If false, the layout will be displayed with splitters only.
-         * Default: true
+         * @deprecated use Header.show instead
          */
         hasHeaders?: boolean;
 
@@ -297,7 +382,6 @@ export namespace UserManagerConfig {
     export namespace Settings {
         export function resolve(user: Settings | undefined): ManagerConfig.Settings {
             const result: ManagerConfig.Settings = {
-                hasHeaders: user?.hasHeaders ?? defaults.hasHeaders,
                 constrainDragToContainer: user?.constrainDragToContainer ?? defaults.constrainDragToContainer,
                 reorderEnabled: user?.reorderEnabled ?? defaults.reorderEnabled,
                 selectionEnabled: user?.selectionEnabled ?? defaults.selectionEnabled,
@@ -316,7 +400,6 @@ export namespace UserManagerConfig {
         }
 
         export const defaults: ManagerConfig.Settings = {
-            hasHeaders: true,
             constrainDragToContainer: true,
             reorderEnabled: true,
             selectionEnabled: false,
@@ -405,35 +488,68 @@ export namespace UserManagerConfig {
 
     export interface Labels {
         /**
-         * The tooltip text that appears when hovering over the close icon.
-         * Default: 'close'
+         * @deprecated use Header.close instead
          */
         close?: string;
 
         /**
-         * The tooltip text that appears when hovering over the maximise icon.
-         * Default: 'maximise'
+         * @deprecated use Header.maximise instead
          */
         maximise?: string;
 
         /**
-         * The tooltip text that appears when hovering over the minimise icon.
-         * Default: 'minimise'
+         * @deprecated use Header.minimise instead
          */
         minimise?: string;
 
+        /**
+         * @deprecated use Header.popin instead
+         */
+        popin?: string;
+
+        /**
+         * @deprecated use Header.popout instead
+         */
+        popout?: string;
+
+        /**
+         * @deprecated use Header.tabDropdown instead
+         */
+        tabDropdown?: string;
+    }
+
+    export interface Header {
+        /**
+         * Specifies whether header should be displayed, and if so, on which side.
+         * If false, the layout will be displayed with splitters only.
+         * Default: 'top'
+         */
+        show?: false | Side;
+        /**
+         * The tooltip text that appears when hovering over the popout icon or false if popout button not displayed.
+         * Default: 'open in new window'
+         */
+        popout?: false | string;
         /**
          * The tooltip text that appears when hovering over the popin icon.
          * Default: 'pop in'
          */
         popin?: string;
-
         /**
-         * The tooltip text that appears when hovering over the popout icon.
-         * Default: 'open in new window'
+         * The tooltip text that appears when hovering over the maximise icon or false if maximised button not displayed.
+         * Default: 'maximise'
          */
-        popout?: string;
-
+        maximise?: false | string;
+        /**
+         * The tooltip text that appears when hovering over the close icon.
+         * Default: 'close'
+         */
+        close?: string;
+        /**
+         * The tooltip text that appears when hovering over the minimise icon.
+         * Default: 'minimise'
+         */
+        minimise?: string;
         /**
          * 
          * Default: 'additional tabs'
@@ -441,25 +557,39 @@ export namespace UserManagerConfig {
         tabDropdown?: string;
     }
 
-    export namespace Labels {
-        export function resolve(user: Labels | undefined): ManagerConfig.Labels {
-            const result: ManagerConfig.Labels = {
-                close: user?.close ?? defaults.close,
-                maximise: user?.maximise ?? defaults.maximise,
-                minimise: user?.minimise ?? defaults.minimise,
-                popout: user?.popout ?? defaults.popout,
-                popin: user?.popin ?? defaults.popin,
-                tabDropdown: user?.tabDropdown ?? defaults.tabDropdown,
+    export namespace Header {
+        export function resolve(userHeader: Header | undefined,
+            userSettings: UserManagerConfig.Settings | undefined, userLabels: UserManagerConfig.Labels | undefined
+        ): ManagerConfig.Header {
+            let show: false | Side;
+            if (userHeader?.show !== undefined) {
+                show = userHeader.show;
+            } else {
+                if (userSettings !== undefined && userSettings.hasHeaders !== undefined) {
+                    show = userSettings.hasHeaders ? defaults.show : false;
+                } else {
+                    show = defaults.show;
+                }
+            }
+            const result: ManagerConfig.Header = {
+                show,
+                popout: userHeader?.popout ?? userLabels?.popout ?? defaults.popout,
+                dock: userHeader?.popin ?? userLabels?.popin ?? defaults.dock,
+                maximise: userHeader?.maximise ?? userLabels?.maximise ?? defaults.maximise,
+                close: userHeader?.close ?? userLabels?.close ?? defaults.close,
+                minimise: userHeader?.minimise ?? userLabels?.minimise ?? defaults.minimise,
+                tabDropdown: userHeader?.tabDropdown ?? userLabels?.tabDropdown ?? defaults.tabDropdown,
             }
             return result;
         }
 
-        export const defaults: ManagerConfig.Labels = {
-            close: 'close',
+        export const defaults: ManagerConfig.Header = {
+            show: Side.top,
+            popout: 'open in new window',
+            dock: 'dock',
             maximise: 'maximise',
             minimise: 'minimise',
-            popout: 'open in new window',
-            popin: 'pop in',
+            close: 'close',
             tabDropdown: 'additional tabs'
         }
     }
@@ -546,11 +676,11 @@ export namespace UserPopoutManagerConfig {
 
     export function resolve(user: UserPopoutManagerConfig): PopoutManagerConfig {
         const config: PopoutManagerConfig = {
-            content: UserItemConfig.resolveContentDefaults(user.content),
+            content: UserItemConfig.resolveContent(user.content),
             openPopouts: UserManagerConfig.resolveOpenPopouts(user.openPopouts),
             settings: UserManagerConfig.Settings.resolve(user.settings),
-            labels: UserManagerConfig.Labels.resolve(user.labels),
             dimensions: UserManagerConfig.Dimensions.resolve(user.dimensions),
+            header: UserManagerConfig.Header.resolve(user.header, user.settings, user.labels),
             parentId: user.parentId,
             indexInParent: user.indexInParent,
             window: UserPopoutManagerConfig.Window.resolve(user.window, user.dimensions, user.maximisedItemId),
@@ -571,11 +701,11 @@ export namespace UserConfig {
     export function resolve(user: UserConfig): Config {
         const config: Config = {
             resolved: true,
-            content: UserItemConfig.resolveContentDefaults(user.content),
+            content: UserItemConfig.resolveContent(user.content),
             openPopouts: UserManagerConfig.resolveOpenPopouts(user.openPopouts),
             dimensions: UserManagerConfig.Dimensions.resolve(user.dimensions),
             settings: UserManagerConfig.Settings.resolve(user.settings),
-            labels: UserManagerConfig.Labels.resolve(user.labels),
+            header: UserManagerConfig.Header.resolve(user.header, user.settings, user.labels),
         } 
         return config;
     }
@@ -586,7 +716,7 @@ export namespace UserConfig {
         openPopouts: [],
         settings: UserManagerConfig.Settings.defaults,
         dimensions: UserManagerConfig.Dimensions.defaults,
-        labels: UserManagerConfig.Labels.defaults,
+        header: UserManagerConfig.Header.defaults,
     };
 
     /** Shallow transformation of Config to UserConfig */
@@ -595,8 +725,8 @@ export namespace UserConfig {
             content: config.content,
             openPopouts: config.openPopouts as UserPopoutManagerConfig[],
             dimensions: config.dimensions,
-            labels: config.labels,
             settings: config.settings,
+            header: config.header,
         };
         return userConfig;
     }

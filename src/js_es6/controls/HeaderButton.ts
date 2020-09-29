@@ -11,7 +11,7 @@ export class HeaderButton {
         this._header.on('destroy', this._$destroy);
         this.element.addEventListener('click', this._clickEventListener);
         this.element.addEventListener('touchstart', this._touchStartEventListener);
-        this._header.controlsContainer.append(this.element);
+        this._header.controlsContainerElement.append(this.element);
     }
 
     _$destroy(): void {

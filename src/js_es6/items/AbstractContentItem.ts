@@ -1,6 +1,6 @@
 import { ItemConfig } from '../config/config'
 import { itemDefaultConfig } from '../config/ItemDefaultConfig'
-import { ConfigurationError } from '../errors/error'
+import { ConfigurationError, UnexpectedNullError } from '../errors/error'
 import { LayoutManager } from '../LayoutManager'
 import { EventEmitter } from '../utils/EventEmitter'
 import { getJQueryOffset, getJQueryWidthAndHeight } from '../utils/jquery-legacy'
@@ -53,6 +53,8 @@ export abstract class AbstractContentItem extends EventEmitter {
     isComponent: boolean
 
     element: HTMLElement;
+
+    protected _docker: AbstractContentItem.Docker;
 
     constructor(readonly layoutManager: LayoutManager, config: ItemConfig, parent: AbstractContentItem | null) {
 
@@ -294,9 +296,9 @@ export abstract class AbstractContentItem extends EventEmitter {
     toggleMaximise(e) {
         e && e.preventDefault();
         if (this.isMaximised === true) {
-            this.layoutManager._$minimiseItem(this);
+            this.layoutManager.minimiseItem(this);
         } else {
-            this.layoutManager._$maximiseItem(this);
+            this.layoutManager.maximiseItem(this);
         }
 
         this.isMaximised = !this.isMaximised;
@@ -477,11 +479,24 @@ export abstract class AbstractContentItem extends EventEmitter {
         return result;
     }
 
-    _$highlightDropZone(x, y, area) {
-        this.layoutManager.dropTargetIndicator.highlightArea(area);
+    addChildContentItems(contentItems: AbstractContentItem[]): void {
+        for (let i = 0; i < this.contentItems.length; i++) {
+            const contentItem = this.contentItems[i];
+            contentItems.push(contentItem);
+            contentItem.addChildContentItems(contentItems);
+        }
     }
 
-    _$onDrop(contentItem) {
+    _$highlightDropZone(x: number, y: number, area: AbstractContentItem.Area) {
+        const dropTargetIndicator = this.layoutManager.dropTargetIndicator;
+        if (dropTargetIndicator === null) {
+            throw new UnexpectedNullError('ACIHDZ5593');
+        } else {
+            dropTargetIndicator.highlightArea(area);
+        }
+    }
+
+    _$onDrop(contentItem: AbstractContentItem) {
         this.addChild(contentItem);
     }
 
@@ -531,7 +546,7 @@ export abstract class AbstractContentItem extends EventEmitter {
      *		contentItem: contentItem
      * }
      */
-    _$getArea(element: HTMLElement): AbstractContentItem.Area | null {
+    getArea(element?: HTMLElement): AbstractContentItem.Area | null {
         element = element || this.element;
 
         const offset = getJQueryOffset(element);
@@ -685,5 +700,14 @@ export namespace AbstractContentItem {
         y2: number;
         surface: number;
         contentItem: AbstractContentItem;
-   }
+    }
+
+    export type ItemConfigHeightOrWidth = 'height' | 'width'; // properties in ItemConfig
+
+    export interface Docker {
+        dimension: ItemConfigHeightOrWidth;
+        size: number;
+        realSize: number;
+        docked: boolean;
+    }
 }

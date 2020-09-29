@@ -1,3 +1,10 @@
+export const enum Side {
+    'top',
+    'left',
+    'right',
+    'bottom',
+}
+
 export interface Rect {
     left: number,
     top: number,

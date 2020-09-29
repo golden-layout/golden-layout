@@ -54,7 +54,7 @@ export class Root extends AbstractContentItem {
         super._$highlightDropZone(x, y, area);
     }
 
-    _$onDrop(contentItem, area) {
+    _$onDrop(contentItem: AbstractContentItem, area: AbstractContentItem.Area): void {
         var stack;
 
         if (contentItem.isComponent) {

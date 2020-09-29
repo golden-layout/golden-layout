@@ -35,8 +35,8 @@ const _template = '<div class="lm_dragProxy">' +
  * @param {AbstractContentItem} originalParent
  */
 export class DragProxy extends EventEmitter {
-    private _area: null;
-    private _lastValidArea: null;
+    private _area: AbstractContentItem.Area | null;
+    private _lastValidArea: AbstractContentItem.Area | null;
     private _minX: number;
     private _minY: number;
     private _maxX: number;
@@ -76,7 +76,7 @@ export class DragProxy extends EventEmitter {
         this.childElementContainer.append(contentItem.element);
 
         this._undisplayTree();
-        this._layoutManager._$calculateItemAreas();
+        this._layoutManager.calculateItemAreas();
         this.setDimensions();
 
         $(document.body).append(this.element);
@@ -132,7 +132,7 @@ export class DragProxy extends EventEmitter {
             left: x,
             top: y
         });
-        this._area = this._layoutManager._$getArea(x, y);
+        this._area = this._layoutManager.getArea(x, y);
 
         if (this._area !== null) {
             this._lastValidArea = this._area;

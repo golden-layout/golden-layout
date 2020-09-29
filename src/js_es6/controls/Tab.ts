@@ -153,7 +153,7 @@ export class Tab {
      * @returns {void}
      */
     _onDragStart(x, y) {
-        if (!this.header._canDestroy)
+        if (!this.header.canDestroy)
             return null;
         if (this.contentItem.parent.isMaximised === true) {
             this.contentItem.parent.toggleMaximise();
@@ -197,7 +197,7 @@ export class Tab {
      */
     private onCloseClick(event: MouseEvent) {
         event.stopPropagation();
-        if (!this.header._canDestroy) {
+        if (!this.header.canDestroy) {
             return;
         } else {
             this.header.parent.removeChild(this.contentItem);
@@ -206,7 +206,7 @@ export class Tab {
 
     private onCloseTouchStart(event: TouchEvent) {
         event.stopPropagation();
-        if (!this.header._canDestroy) {
+        if (!this.header.canDestroy) {
             return;
         } else {
             this.header.parent.removeChild(this.contentItem);
