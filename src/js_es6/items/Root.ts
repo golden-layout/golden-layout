@@ -3,6 +3,7 @@ import { AbstractContentItem } from '../items/AbstractContentItem';
 import { RowOrColumn } from '../items/RowOrColumn';
 import { LayoutManager } from '../LayoutManager';
 import { createTemplateHtmlElement } from '../utils/utils';
+import { Stack } from './Stack';
 
 export class Root extends AbstractContentItem {
     readonly element;
@@ -49,13 +50,13 @@ export class Root extends AbstractContentItem {
         }
     }
 
-    _$highlightDropZone(x, y, area): void {
+    _$highlightDropZone(x: number, y: number, area: AbstractContentItem.Area): void {
         this.layoutManager.tabDropPlaceholder.remove();
         super._$highlightDropZone(x, y, area);
     }
 
     _$onDrop(contentItem: AbstractContentItem, area: AbstractContentItem.Area): void {
-        var stack;
+        let stack: Stack;
 
         if (contentItem.isComponent) {
             stack = this.layoutManager.createContentItem({
@@ -75,7 +76,7 @@ export class Root extends AbstractContentItem {
              * which would wrap the contentItem in a Stack) we need to check whether contentItem is a RowOrColumn.
              * If it is, we need to re-wrap it in a Stack like it was when it was dragged by its Tab (it was dragged!).
              */
-            if(contentItem.config.type === 'row' || contentItem.config.type === 'column'){
+            if(contentItem.config.type === ItemConfig.Type.row || contentItem.config.type === ItemConfig.Type.column){
                 stack = this.layoutManager.createContentItem({
                     type: 'stack'
                 }, this)
@@ -83,10 +84,10 @@ export class Root extends AbstractContentItem {
                 contentItem = stack
             }
 
-            var type = area.side[0] == 'x' ? 'row' : 'column';
-            var dimension = area.side[0] == 'x' ? 'width' : 'height';
-            var insertBefore = area.side[1] == '2';
-            var column = this.contentItems[0];
+            const type = area.side[0] == 'x' ? ItemConfig.Type.row : ItemConfig.Type.column;
+            const dimension = area.side[0] == 'x' ? 'width' : 'height';
+            const insertBefore = area.side[1] == '2';
+            const column = this.contentItems[0];
             if (!(column instanceof RowOrColumn) || column.type != type) {
                 var rowOrColumn = this.layoutManager.createContentItem({
                     type: type

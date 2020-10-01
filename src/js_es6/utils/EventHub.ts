@@ -1,9 +1,5 @@
-import $ from 'jquery';
 import { LayoutManager } from '../LayoutManager';
 import { EventEmitter } from '../utils/EventEmitter';
-import {
-    fnBind
-} from '../utils/utils';
 
 /**
  * An EventEmitter singleton that propagates events
@@ -16,40 +12,55 @@ import {
  * - Propagate events from parent to this and children
  * - Propagate events from children to the other children (but not the emitting one) and the parent
  *
- * @constructor
- *
- * @param {lm.LayoutManager} layoutManager
  */
 
+// Add our ChildEvent to WindowEventMap for type safety
+declare global {
+    interface WindowEventMap {
+        [EventHub.ChildEventName]: CustomEvent<EventHub.ChildEventDetail>;
+    }
+}
 
 export class EventHub extends EventEmitter {
+    private _childEventSource: LayoutManager | null;
+    private _dontPropagateToParent: string | null;
+
+    private _childEventListener = (childEvent: CustomEvent<EventHub.ChildEventDetail>) => this.onEventFromChild(childEvent);
+
     constructor(private _layoutManager: LayoutManager) {
         
         super();
 
         this._dontPropagateToParent = null;
         this._childEventSource = null;
-        this.on(ALL_EVENT, fnBind(this._onEventFromThis, this));
-        this._boundOnEventFromChild = fnBind(this._onEventFromChild, this);
-        $(window).on('gl_child_event', this._boundOnEventFromChild);
+        this.on(EventEmitter.ALL_EVENT, (name, ...args) => this.onEventFromThis(name as string, args));
+
+        globalThis.addEventListener(EventHub.ChildEventName, this._childEventListener);
+    }
+
+    /**
+     * Destroys the EventHub
+     */
+    destroy(): void {
+        globalThis.removeEventListener(EventHub.ChildEventName, this._childEventListener);
+    }
+
+    /**
+     * Called by the parent layout.
+     */
+    onEventFromParent(eventName: string, ...args: unknown[]): void {
+        this._dontPropagateToParent = eventName;
+        this.emitUnknown(eventName, args);
     }
 
     /**
      * Called on every event emitted on this eventHub, regardles of origin.
-     *
-     * @private
-     *
-     * @param {Mixed}
-     *
-     * @returns {void}
      */
-    private _onEventFromThis() {
-        var args = Array.prototype.slice.call(arguments);
-
+    private onEventFromThis(eventName: string, ...args: unknown[]) {
         if (this._layoutManager.isSubWindow && args[0] !== this._dontPropagateToParent) {
-            this._propagateToParent(args);
+            this.propagateToParent(eventName, args);
         }
-        this._propagateToChildren(args);
+        this.propagateToChildren(eventName, args);
 
         //Reset
         this._dontPropagateToParent = null;
@@ -57,89 +68,57 @@ export class EventHub extends EventEmitter {
     }
 
     /**
-     * Called by the parent layout.
-     *
-     * @param   {Array} args Event name + arguments
-     *
-     * @returns {void}
-     */
-    _$onEventFromParent(...args: unknown[]): void {
-        this._dontPropagateToParent = args[0];
-        this.emit.apply(this, args);
-    }
-
-    /**
      * Callback for child events raised on the window
-     *
-     * @param   {DOMEvent} event
-     * @private
-     *
-     * @returns {void}
      */
-    private _onEventFromChild(event) {
-        this._childEventSource = event.originalEvent.__gl;
-        this.emit.apply(this, event.originalEvent.__glArgs);
+    private onEventFromChild(event: CustomEvent<EventHub.ChildEventDetail>) {
+        const detail = event.detail;
+        this._childEventSource = detail.layoutManager;
+        this.emitUnknown(detail.eventName, detail.args);
     }
 
     /**
      * Propagates the event to the parent by emitting
      * it on the parent's DOM window
-     *
-     * @param   {Array} args Event name + arguments
-     * @private
-     *
-     * @returns {void}
      */
-    private _propagateToParent(args) {
-        var event,
-            eventName = 'gl_child_event';
-
-        if (document.createEvent) {
-            event = window.opener.document.createEvent('HTMLEvents');
-            event.initEvent(eventName, true, true);
-        } else {
-            event = window.opener.document.createEventObject();
-            event.eventType = eventName;
+    private propagateToParent(eventName: string, args: unknown[]) {
+        const detail: EventHub.ChildEventDetail = {
+            layoutManager: this._layoutManager,
+            eventName,
+            args: args,
         }
 
-        event.eventName = eventName;
-        event.__glArgs = args;
-        event.__gl = this._layoutManager;
+        const eventInit: EventHub.ChildEventInit = {
+            bubbles: true,
+            cancelable: true,
+            detail,
+        };
 
-        if (document.createEvent) {
-            window.opener.dispatchEvent(event);
-        } else {
-            window.opener.fireEvent('on' + event.eventType, event);
-        }
+        const event = new CustomEvent<EventHub.ChildEventDetail>(EventHub.ChildEventName, eventInit);
+        globalThis.opener.dispatchEvent(event);
     }
 
     /**
      * Propagate events to children
-     *
-     * @param   {Array} args Event name + arguments
-     * @private
-     *
-     * @returns {void}
      */
-    private _propagateToChildren(args) {
+    private propagateToChildren(eventName: string, args: unknown[]) {
 
         for (let i = 0; i < this._layoutManager.openPopouts.length; i++) {
             const childGl = this._layoutManager.openPopouts[i].getGlInstance();
 
             if (childGl && childGl !== this._childEventSource) {
-                childGl.eventHub._$onEventFromParent(args);
+                childGl.eventHub.onEventFromParent(eventName, args);
             }
         }
     }
+}
 
-    /**
-     * Destroys the EventHub
-     *
-     * @public
-     * @returns {void}
-     */
+export namespace EventHub {
+    export const ChildEventName = 'gl_child_event';
+    export type ChildEventDetail = {
+        layoutManager: LayoutManager;
+        eventName: string;
+        args: unknown[];
+    };
 
-    destroy() {
-        $(window).off('gl_child_event', this._boundOnEventFromChild);
-    }
+    export type ChildEventInit = CustomEventInit<ChildEventDetail>;
 }

@@ -77,6 +77,14 @@ export function getElementHeight(element: HTMLElement): number {
     return pixelsToNumber(widthAsPixels);
 }
 
+export function setElementVisibility(element: HTMLElement, visible: boolean): void {
+    if (visible) {
+        element.style.display = 'none';
+    } else {
+        element.style.display = '';
+    }
+}
+
 export function copy(target: Record<string, unknown>, source: Record<string, unknown>): Record<string, unknown> {
     for (const key in source) {
         target[key] = source[key];
@@ -167,24 +175,6 @@ export function animFrame(fn) {
         fn();
     });
 }
-
-export function indexOf(needle, haystack) {
-    if (!(haystack instanceof Array)) {
-        throw new Error('Haystack is not an Array');
-    }
-
-    if (haystack.indexOf) {
-        return haystack.indexOf(needle);
-    } else {
-        for (var i = 0; i < haystack.length; i++) {
-            if (haystack[i] === needle) {
-                return i;
-            }
-        }
-        return -1;
-    }
-}
-
 
 export const isFunction = (typeof /./ != 'function' && typeof Int8Array != 'object') ? 
     function isFunction(obj: unknown) {

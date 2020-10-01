@@ -1,66 +1,86 @@
-import { HeaderedItemConfig, StackItemConfig } from '../config/config';
+import { HeaderedItemConfig, ItemConfig, StackItemConfig } from '../config/config';
 import { Header } from '../controls/Header';
+import { UnexpectedNullError } from '../errors/error';
 import { AbstractContentItem } from '../items/AbstractContentItem';
 import { RowOrColumn } from '../items/RowOrColumn';
 import { LayoutManager } from '../LayoutManager';
+import { getJQueryOffset } from '../utils/jquery-legacy';
+import { LinkedRect, Side } from '../utils/types';
 import {
-    createTemplateHtmlElement, fnBind,
-
+    createTemplateHtmlElement,
     getElementHeight,
-
     getElementWidth,
-
-    indexOf,
-    numberToPixels
+    numberToPixels,
+    setElementVisibility
 } from '../utils/utils';
 
 
 
 export class Stack extends AbstractContentItem {
-    private _side: Stack.Side;
-    private _sided: boolean;
-    private _header: Header.Settings; // config header
-    private _activeContentItem: AbstractContentItem | null;
+    private readonly _stackConfig: StackItemConfig;
 
-    header: Header;
-    childElementContainer: HTMLElement;
+    private readonly _header: Header;
+    private _activeContentItem: AbstractContentItem | null;
+    private _dropSegment: Stack.Segment | null;
+    private _dropIndex: number | null;
+    private _contentAreaDimensions: Stack.ContentAreaDimensions | null;
+    private _headerSideChanged = false;
+
+    private _elementMouseEnterEventListener = () => this.onElementMouseEnter();
+    private _elementMouseLeaveEventListener = () => this.onElementMouseLeave();
+
+    _docker: Stack.Docker;
+
+    readonly childElementContainer: HTMLElement;
+
+    get headerSide(): Side { return this._header.side; }
 
     constructor(layoutManager: LayoutManager, config: StackItemConfig, parent: AbstractContentItem) {
         super(layoutManager, config, parent)
 
+        this._stackConfig = config;
         this.element = createTemplateHtmlElement('<div class="lm_item lm_stack"></div>', 'div');
         this._activeContentItem = null;
         const itemHeaderConfig = config.header;
         const managerHeaderConfig = layoutManager.config.header;
         const configContent = config.content;
+        // If stack has only one component, then we can also check this for header settings
         let componentHeaderConfig: HeaderedItemConfig.Header | undefined;
-        if (configContent.length === 0) {
+        if (configContent.length !== 1) {
             componentHeaderConfig = undefined;
         } else {
             const firstChildItemConfig = configContent[0];
-            componentHeaderConfig = (firstChildItemConfig as HeaderedItemConfig).header; // will be undefined if not component (or Stack)
+            componentHeaderConfig = (firstChildItemConfig as HeaderedItemConfig).header; // will be undefined if not component (and wont be stack)
         }
 
         // check for defined value for each item in order of Stack (this Item), Component (first child), Manager.
-        this._header = {
-            show: itemHeaderConfig?.show ?? componentHeaderConfig?.show ?? managerHeaderConfig.show,
-            popoutLabel: 
-                Header.Settings.resolveLabel(itemHeaderConfig?.popout ?? componentHeaderConfig?.popout ?? managerHeaderConfig.popout),
-            dockLabel: 
-                Header.Settings.resolveLabel(itemHeaderConfig?.dock ?? componentHeaderConfig?.dock ?? managerHeaderConfig.dock),
-            maximiseLabel:
-                Header.Settings.resolveLabel(itemHeaderConfig?.maximise ?? componentHeaderConfig?.maximise ?? managerHeaderConfig.maximise),
-            closeLabel:
-                Header.Settings.resolveLabel(itemHeaderConfig?.close ?? componentHeaderConfig?.close ?? managerHeaderConfig.close),
-            minimiseLabel:
-                Header.Settings.resolveLabel(itemHeaderConfig?.minimise ?? componentHeaderConfig?.minimise ?? managerHeaderConfig.minimise),
-            tabDropdownLabel:
-                Header.Settings.resolveLabel(
-                    itemHeaderConfig?.tabDropdown ?? componentHeaderConfig?.tabDropdown ?? managerHeaderConfig.tabDropdown
-                ),
+        const show = itemHeaderConfig?.show ?? componentHeaderConfig?.show ?? managerHeaderConfig.show;
+        const popout = itemHeaderConfig?.popout ?? componentHeaderConfig?.popout ?? managerHeaderConfig.popout;
+        const dock = itemHeaderConfig?.dock ?? componentHeaderConfig?.dock ?? managerHeaderConfig.dock;
+        const maximise = itemHeaderConfig?.maximise ?? componentHeaderConfig?.maximise ?? managerHeaderConfig.maximise;
+        const close = itemHeaderConfig?.close ?? componentHeaderConfig?.close ?? managerHeaderConfig.close;
+        const minimise = itemHeaderConfig?.minimise ?? componentHeaderConfig?.minimise ?? managerHeaderConfig.minimise;
+        const tabDropdown = itemHeaderConfig?.tabDropdown ?? componentHeaderConfig?.tabDropdown ?? managerHeaderConfig.tabDropdown;
+        const headerSettings: Header.Settings = {
+            show: show !== false,
+            side: show === false ? Side.top : show,
+            popoutEnabled: popout !== false,
+            popoutLabel: popout === false ? '' : popout,
+            dockEnabled: dock !== false,
+            dockLabel: dock === false ? '' : dock,
+            maximiseEnabled: maximise !== false,
+            maximiseLabel: maximise === false ? '' : maximise,
+            closeEnabled: true,
+            closeLabel: close,
+            minimiseEnabled: true,
+            minimiseLabel: minimise,
+            tabDropdownEnabled: tabDropdown !== false,
+            tabDropdownLabel: tabDropdown === false ? '' : tabDropdown,
         };  
 
-        this._dropZones = {};
+        this._header = new Header(layoutManager, this, headerSettings, () => this.remove());
+
+        // this._dropZones = {};
         this._dropSegment = null;
         this._contentAreaDimensions = null;
         this._dropIndex = null;
@@ -68,20 +88,17 @@ export class Stack extends AbstractContentItem {
         this.isStack = true;
 
         this.childElementContainer = createTemplateHtmlElement('<div class="lm_items"></div>', 'div');
-        this.header = new Header(layoutManager, this, this._header);
 
-        this.element.on('mouseleave mouseenter', fnBind(function(event) {
-            if (this._docker && this._docker.docked)
-                this.childElementContainer[this._docker.dimension](event.type == 'mouseenter' ? this._docker.realSize : 0);
-        }, this));
-        this.element.append(this.header.element);
+        this.element.addEventListener('mouseenter', this._elementMouseEnterEventListener);
+        this.element.addEventListener('mouseleave', this._elementMouseLeaveEventListener);
+        this.element.append(this._header.element);
         this.element.append(this.childElementContainer);
-        this._setupHeaderPosition();
-        this._$validateClosability();
+        this.setupHeaderPosition();
+        this.validateClosability();
     }
 
-    dock(mode: boolean): void {
-        if (this._header.dockLabel !== undefined)
+    dock(mode?: boolean): void {
+        if (this._header.dockEnabled)
             if (this.parent instanceof RowOrColumn)
                 this.parent.dock(this, mode);
     }
@@ -95,7 +112,7 @@ export class Stack extends AbstractContentItem {
             };
 
         if (this._header.show)
-            content[this._sided ? 'width' : 'height'] -= this.layoutManager.config.dimensions.headerHeight;
+            content[this._header.leftRightSided ? 'width' : 'height'] -= this.layoutManager.config.dimensions.headerHeight;
         if (isDocked)
             content[this._docker.dimension] = this._docker.realSize;
         if (!isDocked || this._docker.dimension == 'height')
@@ -117,7 +134,7 @@ export class Stack extends AbstractContentItem {
         super._$init();
 
         for (let i = 0; i < this.contentItems.length; i++) {
-            this.header.createTab(this.contentItems[i]);
+            this._header.createTab(this.contentItems[i], i);
             this.contentItems[i]._$hide();
         }
 
@@ -130,7 +147,7 @@ export class Stack extends AbstractContentItem {
 
             this.setActiveContentItem(initialItem);
         }
-        this._$validateClosability();		
+        this.validateClosability();		
 		if (this.parent instanceof RowOrColumn) {
 			this.parent._validateDocking();
         }
@@ -150,18 +167,18 @@ export class Stack extends AbstractContentItem {
         }
 
         this._activeContentItem = contentItem;
-        this.header.setActiveContentItem(contentItem);
+        this._header.setActiveContentItem(contentItem);
         contentItem._$show();
         this.emit('activeContentItemChanged', contentItem);
         this.layoutManager.emit('activeContentItemChanged', contentItem);
         this.emitBubblingEvent('stateChanged');
     }
 
-    getActiveContentItem(): AbstractContentItem {
-        return this.header.activeContentItem;
+    getActiveContentItem(): AbstractContentItem | null {
+        return this._header.activeContentItem;
     }
 
-    addChild(contentItem, index) {
+    addChild(contentItem: AbstractContentItem, index: number): void {
         if(index > this.contentItems.length){
             /* 
              * UGLY PATCH: PR #428, commit a4e84ec5 fixed a bug appearing on touchscreens during the drag of a panel. 
@@ -175,10 +192,10 @@ export class Stack extends AbstractContentItem {
         contentItem = this.layoutManager._$normalizeContentItem(contentItem, this);
         super.addChild(contentItem, index);
         this.childElementContainer.append(contentItem.element);
-        this.header.createTab(contentItem, index);
+        this._header.createTab(contentItem, index);
         this.setActiveContentItem(contentItem);
         this.callDownwards('setSize');
-        this._$validateClosability();
+        this.validateClosability();
         if (this.parent instanceof RowOrColumn)
             this.parent._validateDocking();
         this.emitBubblingEvent('stateChanged');
@@ -187,8 +204,8 @@ export class Stack extends AbstractContentItem {
     removeChild(contentItem: AbstractContentItem, keepChild: boolean): void {
         const index = this.contentItems.indexOf(contentItem);
         super.removeChild(contentItem, keepChild);
-        this.header.removeTab(contentItem);
-        if (this.header.activeContentItem === contentItem) {
+        this._header.removeTab(contentItem);
+        if (this._header.activeContentItem === contentItem) {
             if (this.contentItems.length > 0) {
                 this.setActiveContentItem(this.contentItems[Math.max(index - 1, 0)]);
             } else {
@@ -196,12 +213,15 @@ export class Stack extends AbstractContentItem {
             }
         } else if (this.config.activeItemIndex >= this.contentItems.length) {
 			if (this.contentItems.length > 0) {
-				const activeIndex = this.contentItems.indexOf(this.getActiveContentItem());
-				this.config.activeItemIndex = Math.max(activeIndex, 0);
+                const activeContentItem = this.getActiveContentItem();
+                if (activeContentItem !== null) {
+                    const activeIndex = this.contentItems.indexOf(activeContentItem);
+                    this.config.activeItemIndex = Math.max(activeIndex, 0);
+                }
 			}
 		}
 
-        this._$validateClosability();
+        this.validateClosability();
         if (this.parent instanceof RowOrColumn)
             this.parent._validateDocking();
         this.emitBubblingEvent('stateChanged');
@@ -209,11 +229,11 @@ export class Stack extends AbstractContentItem {
 
     undisplayChild(contentItem: AbstractContentItem): void {
         if(this.contentItems.length > 1){
-            var index = indexOf(contentItem, this.contentItems)
+            const index = this.contentItems.indexOf(contentItem)
             contentItem._$hide && contentItem._$hide()
             this.setActiveContentItem(this.contentItems[index === 0 ? index+1 : index-1])
         } else {
-            this.header.hideTab(contentItem);
+            this._header.hideTab(contentItem);
             contentItem._$hide && contentItem._$hide()
             super.undisplayChild(contentItem);
             if (this.parent instanceof RowOrColumn)
@@ -223,25 +243,19 @@ export class Stack extends AbstractContentItem {
     }
 
     protected processChildReplaced(index: number, newChild: AbstractContentItem): void {
-        this.header.tabs[index].contentItem = newChild;
+        this._header.tabs[index].contentItem = newChild;
     }
 
     /**
      * Validates that the stack is still closable or not. If a stack is able
      * to close, but has a non closable component added to it, the stack is no
      * longer closable until all components are closable.
-     *
-     * @returns {void}
      */
-    _$validateClosability() {
-        var contentItem,
-            isClosable,
-            len,
-            i;
+    private validateClosability() {
+        let isClosable = this._header.isClosable();
 
-        isClosable = this.header.isClosable();
-
-        for (i = 0, len = this.contentItems.length; i < len; i++) {
+        const len = this.contentItems.length;
+        for (let i = 0; i < len; i++) {
             if (!isClosable) {
                 break;
             }
@@ -249,13 +263,21 @@ export class Stack extends AbstractContentItem {
             isClosable = this.contentItems[i].config.isClosable;
         }
 
-        this.header._$setClosable(isClosable);
+        this._header.setClosable(isClosable);
     }
 
     _$destroy(): void {
         super._$destroy();
-        this.header._$destroy();
-        this.element.off('mouseenter mouseleave');
+        this._header.destroy();
+        this.element.removeEventListener('mouseenter', this._elementMouseEnterEventListener);
+        this.element.removeEventListener('mouseleave', this._elementMouseLeaveEventListener);
+    }
+
+    toConfig(): StackItemConfig {
+        // cannot rely on ItemConfig.createCopy() to create StackItemConfig as header may have changed
+        const result = super.toConfig() as StackItemConfig;
+        result.header = this.createHeaderConfig();
+        return result;
     }
 
     /**
@@ -281,17 +303,21 @@ export class Stack extends AbstractContentItem {
          * The item was dropped on the header area. Just add it as a child of this stack and
          * get the hell out of this logic
          */
-        if (this._dropSegment === 'header') {
+        if (this._dropSegment === Stack.Segment.Header) {
             this.resetHeaderDropZone();
-            this.addChild(contentItem, this._dropIndex);
-            return;
+            if (this._dropIndex === null) {
+                throw new UnexpectedNullError('SODDI68990');
+            } else {
+                this.addChild(contentItem, this._dropIndex);
+                return;
+            }
         }
 
         /*
          * The stack is empty. Let's just add the element.
          */
-        if (this._dropSegment === 'body') {
-            this.addChild(contentItem);
+        if (this._dropSegment === Stack.Segment.Body) {
+            this.addChild(contentItem, 0);
             return;
         }
 
@@ -299,24 +325,20 @@ export class Stack extends AbstractContentItem {
          * The item was dropped on the top-, left-, bottom- or right- part of the content. Let's
          * aggregate some conditions to make the if statements later on more readable
          */
-        var isVertical = this._dropSegment === 'top' || this._dropSegment === 'bottom',
-            isHorizontal = this._dropSegment === 'left' || this._dropSegment === 'right',
-            insertBefore = this._dropSegment === 'top' || this._dropSegment === 'left',
-            hasCorrectParent = (isVertical && this.parent.isColumn) || (isHorizontal && this.parent.isRow),
-            type = isVertical ? 'column' : 'row',
-            dimension = isVertical ? 'height' : 'width',
-            index,
-            stack,
-            rowOrColumn;
+        const isVertical = this._dropSegment === Stack.Segment.Top || this._dropSegment === Stack.Segment.Bottom;
+        const isHorizontal = this._dropSegment === Stack.Segment.Left || this._dropSegment === Stack.Segment.Right;
+        const insertBefore = this._dropSegment === Stack.Segment.Top || this._dropSegment === Stack.Segment.Left;
+        const hasCorrectParent = (isVertical && this.parent.isColumn) || (isHorizontal && this.parent.isRow);
+        const type = isVertical ? ItemConfig.Type.column : ItemConfig.Type.row;
+        const dimension = isVertical ? 'height' : 'width';
 
         /*
          * The content item can be either a component or a stack. If it is a component, wrap it into a stack
          */
         if (contentItem.isComponent) {
-            stack = this.layoutManager.createContentItem({
-                type: 'stack',
-                header: contentItem.config.header || {}
-            }, this);
+            const itemConfig = ItemConfig.createDefault(ItemConfig.Type.stack) as StackItemConfig;
+            itemConfig.header = this.createHeaderConfig();
+            const stack = this.layoutManager.createContentItem(itemConfig, this);
             stack._$init();
             stack.addChild(contentItem);
             contentItem = stack;
@@ -328,10 +350,10 @@ export class Stack extends AbstractContentItem {
          * which would wrap the contentItem in a Stack) we need to check whether contentItem is a RowOrColumn.
          * If it is, we need to re-wrap it in a Stack like it was when it was dragged by its Tab (it was dragged!).
          */
-        if(contentItem.config.type === 'row' || contentItem.config.type === 'column'){
-            stack = this.layoutManager.createContentItem({
-                type: 'stack'
-            }, this)
+        if(contentItem.config.type === ItemConfig.Type.row || contentItem.config.type === ItemConfig.Type.column){
+            const itemConfig = ItemConfig.createDefault(ItemConfig.Type.stack) as StackItemConfig;
+            itemConfig.header = this.createHeaderConfig();
+            const stack = this.layoutManager.createContentItem(itemConfig, this);
             stack.addChild(contentItem)
             contentItem = stack
         }
@@ -341,7 +363,7 @@ export class Stack extends AbstractContentItem {
          * layd out in the correct way. Just add it as a child
          */
         if (hasCorrectParent) {
-            index = indexOf(this, this.parent.contentItems);
+            const index = this.parent.contentItems.indexOf(this);
             this.parent.addChild(contentItem, insertBefore ? index : index + 1, true);
             this.config[dimension] *= 0.5;
             contentItem.config[dimension] = this.config[dimension];
@@ -351,10 +373,9 @@ export class Stack extends AbstractContentItem {
              * to create the appropriate contentItem for them to live in
              */
         } else {
-            type = isVertical ? 'column' : 'row';
-            rowOrColumn = this.layoutManager.createContentItem({
-                type: type
-            }, this);
+            const type = isVertical ? ItemConfig.Type.column : ItemConfig.Type.row;
+            const itemConfig = ItemConfig.createDefault(type) as ItemConfig;
+            const rowOrColumn = this.layoutManager.createContentItem(itemConfig, this);
             this.parent.replaceChild(this, rowOrColumn);
 
             rowOrColumn.addChild(contentItem, insertBefore ? 0 : undefined, true);
@@ -374,17 +395,16 @@ export class Stack extends AbstractContentItem {
      * @param    x Absolute Screen X
      * @param    y Absolute Screen Y
      */
-    _$highlightDropZone(x: number, y: number) {
-        var segment, area;
-
-        for (segment in this._contentAreaDimensions) {
-            area = this._contentAreaDimensions[segment].hoverArea;
+    _$highlightDropZone(x: number, y: number): void {
+        for (const key in this._contentAreaDimensions) {
+            const segment = key as Stack.Segment;
+            const area = this._contentAreaDimensions[segment].hoverArea;
 
             if (area.x1 < x && area.x2 > x && area.y1 < y && area.y2 > y) {
 
-                if (segment === 'header') {
-                    this._dropSegment = 'header';
-                    this._highlightHeaderDropZone(this._sided ? y : x);
+                if (segment === Stack.Segment.Header) {
+                    this._dropSegment = Stack.Segment.Header;
+                    this._highlightHeaderDropZone(this._header.leftRightSided ? y : x);
                 } else {
                     this.resetHeaderDropZone();
                     this._highlightBodyDropZone(segment);
@@ -400,10 +420,12 @@ export class Stack extends AbstractContentItem {
             return null;
         }
 
-        const getArea = super.getArea;
-        const headerArea = getArea.call(this, this.header.element),
-        const contentArea = getArea.call(this, this.childElementContainer),
-        const contentWidth = contentArea.x2 - contentArea.x1,
+        const headerArea = super.getArea(this._header.element);
+        const contentArea = super.getArea(this.childElementContainer);
+        if (headerArea === null || contentArea === null) {
+            throw new UnexpectedNullError('SGAHC13086');
+        }
+        const contentWidth = contentArea.x2 - contentArea.x1;
         const contentHeight = contentArea.y2 - contentArea.y1;
 
         this._contentAreaDimensions = {
@@ -451,7 +473,7 @@ export class Stack extends AbstractContentItem {
                 }
             };
 
-            return getArea.call(this, this.element);
+            return super.getArea(this.element);
         }
 
         this._contentAreaDimensions.left = {
@@ -514,126 +536,219 @@ export class Stack extends AbstractContentItem {
             }
         };
 
-        return getArea.call(this, this.element);
+        return super.getArea(this.element);
     }
 
-    _highlightHeaderDropZone(x) {
-        var i,
-            tabElement,
-            tabsLength = this.header.tabs.length,
-            isAboveTab = false,
-            tabTop,
-            tabLeft,
-            offset,
-            placeHolderLeft,
-            headerOffset,
-            tabWidth,
-            halfX;
+    _highlightHeaderDropZone(x: number): void {
+        const tabsLength = this._header.tabs.length;
+
+        const dropTargetIndicator = this.layoutManager.dropTargetIndicator;
+        if (dropTargetIndicator === null) {
+            throw new UnexpectedNullError('SHHDZDTI97110');
+        }
+
+        let area: LinkedRect;
 
         // Empty stack
         if (tabsLength === 0) {
-            headerOffset = this.header.element.offset();
+            const headerOffset = getJQueryOffset(this._header.element);
 
-            this.layoutManager.dropTargetIndicator.highlightArea({
+            const elementHeight = getElementHeight(this._header.element);
+            area = {
                 x1: headerOffset.left,
                 x2: headerOffset.left + 100,
-                y1: headerOffset.top + this.header.element.height() - 20,
-                y2: headerOffset.top + this.header.element.height()
-            });
-
-            return;
-        }
-
-        for (i = 0; i < tabsLength; i++) {
-            tabElement = this.header.tabs[i].element;
-            offset = tabElement.offset();
-            if (this._sided) {
-                tabLeft = offset.top;
-                tabTop = offset.left;
-                tabWidth = tabElement.height();
-            } else {
-                tabLeft = offset.left;
-                tabTop = offset.top;
-                tabWidth = tabElement.width();
-            }
-
-            if (x > tabLeft && x < tabLeft + tabWidth) {
-                isAboveTab = true;
-                break;
-            }
-        }
-
-        if (isAboveTab === false && x < tabLeft) {
-            return;
-        }
-
-        halfX = tabLeft + tabWidth / 2;
-
-        if (x < halfX) {
-            this._dropIndex = i;
-            tabElement.before(this.layoutManager.tabDropPlaceholder);
+                y1: headerOffset.top + elementHeight - 20,
+                y2: headerOffset.top + elementHeight,
+            };
         } else {
-            this._dropIndex = Math.min(i + 1, tabsLength);
-            tabElement.after(this.layoutManager.tabDropPlaceholder);
+            let tabIndex = 0;
+            let isAboveTab = false;
+            let tabTop: number;
+            let tabLeft: number;
+            let tabWidth: number;
+            let tabElement: HTMLElement;
+            do {
+                tabElement = this._header.tabs[tabIndex].element;
+                const offset = getJQueryOffset(tabElement);
+                if (this._header.leftRightSided) {
+                    tabLeft = offset.top;
+                    tabTop = offset.left;
+                    tabWidth = getElementHeight(tabElement);
+                } else {
+                    tabLeft = offset.left;
+                    tabTop = offset.top;
+                    tabWidth = getElementWidth(tabElement);
+                }
+
+                if (x > tabLeft && x < tabLeft + tabWidth) {
+                    isAboveTab = true;
+                } else {
+                    tabIndex++;
+                }
+            } while (tabIndex < tabsLength && !isAboveTab);
+
+            if (isAboveTab === false && x < tabLeft) {
+                return;
+            }
+
+            const halfX = tabLeft + tabWidth / 2;
+
+            if (x < halfX) {
+                this._dropIndex = tabIndex;
+                tabElement.insertAdjacentElement('beforebegin', this.layoutManager.tabDropPlaceholder);
+            } else {
+                this._dropIndex = Math.min(tabIndex + 1, tabsLength);
+                tabElement.after(this.layoutManager.tabDropPlaceholder);
+            }
+
+            const tabDropPlaceholderOffset = getJQueryOffset(this.layoutManager.tabDropPlaceholder);
+            const tabDropPlaceholderWidth = getElementWidth(this.layoutManager.tabDropPlaceholder)
+            if (this._header.leftRightSided) {
+                const placeHolderTop = tabDropPlaceholderOffset.top;
+                area = {
+                    x1: tabTop,
+                    x2: tabTop + tabElement.clientHeight,
+                    y1: placeHolderTop,
+                    y2: placeHolderTop + tabDropPlaceholderWidth,
+                };
+            } else {
+                const placeHolderLeft = tabDropPlaceholderOffset.left;
+
+                area = {
+                    x1: placeHolderLeft,
+                    x2: placeHolderLeft + tabDropPlaceholderWidth,
+                    y1: tabTop,
+                    y2: tabTop + tabElement.clientHeight,
+                };
+            }
         }
 
-
-        if (this._sided) {
-            var placeHolderTop = this.layoutManager.tabDropPlaceholder.offset().top;
-            this.layoutManager.dropTargetIndicator.highlightArea({
-                x1: tabTop,
-                x2: tabTop + tabElement.innerHeight(),
-                y1: placeHolderTop,
-                y2: placeHolderTop + this.layoutManager.tabDropPlaceholder.width()
-            });
-            return;
-        }
-        placeHolderLeft = this.layoutManager.tabDropPlaceholder.offset().left;
-
-        this.layoutManager.dropTargetIndicator.highlightArea({
-            x1: placeHolderLeft,
-            x2: placeHolderLeft + this.layoutManager.tabDropPlaceholder.width(),
-            y1: tabTop,
-            y2: tabTop + tabElement.innerHeight()
-        });
+        dropTargetIndicator.highlightArea(area);
+        return;
     }
 
     private resetHeaderDropZone() {
         this.layoutManager.tabDropPlaceholder.remove();
     }
 
-    toggleMaximise(e) {
+    toggleMaximise(): void {
         if (!this.isMaximised)
             this.dock(false);
-        super.toggleMaximise(e);
+        super.toggleMaximise();
     }
 
-    _setupHeaderPosition() {
-        const side = ['right', 'left', 'bottom'].indexOf(this._header.show) >= 0 && this._header.show;
-        this.header.element.toggle(!!this._header.show);
-        this._side = side;
-        this._sided = ['right', 'left'].indexOf(this._side) >= 0;
-        this.element.removeClass('lm_left lm_right lm_bottom');
-        if (this._side)
-            this.element.addClass('lm_' + this._side);
-        if (this.element.find('.lm_header').length && this.childElementContainer) {
-            var headerPosition = ['right', 'bottom'].indexOf(this._side) >= 0 ? 'before' : 'after';
-            this.header.element[headerPosition](this.childElementContainer);
-            this.callDownwards('setSize');
+    private setupHeaderPosition() {
+        setElementVisibility(this._header.element, this._header.show);
+        this.element.classList.remove('lm_left', 'lm_right', 'lm_bottom');
+        if (this._header.leftRightSided) {
+            this.element.classList.add('lm_' + this._header.side);
+        }
+
+        const adjacentPosition = [Side.right, Side.bottom].includes(this._header.side) ? 'beforeend' : 'afterend';
+        this._header.element.insertAdjacentElement(adjacentPosition, this.childElementContainer); // move
+        this.callDownwards('setSize');
+    }
+
+    /**
+     * Programmatically operate with header position.
+     *
+     * @param position one of ('top','left','right','bottom') to set or empty to get it.
+     *
+     * @returns previous header position
+     */
+    positionHeader(position: Side): void {
+        if (this._docker && this._docker.docked) {
+            throw new Error('Can\'t change header position in docked stack');
+        }
+        if (this._header.side !== position) {
+            this._header.setSide(position);
+            this._headerSideChanged = true;
+            this.setupHeaderPosition();
         }
     }
 
-    _highlightBodyDropZone(segment) {
-        const highlightArea = this._contentAreaDimensions[segment].highlightArea;
-        this.layoutManager.dropTargetIndicator.highlightArea(highlightArea);
-        this._dropSegment = segment;
+    _highlightBodyDropZone(segment: Stack.Segment): void {
+        if (this._contentAreaDimensions === null) {
+            throw new UnexpectedNullError('SHBDZC82265');
+        } else {
+            const highlightArea = this._contentAreaDimensions[segment].highlightArea;
+            const dropTargetIndicator = this.layoutManager.dropTargetIndicator;
+            if (dropTargetIndicator === null) {
+                throw new UnexpectedNullError('SHBDZD96110');
+            } else {
+                dropTargetIndicator.highlightArea(highlightArea);
+                this._dropSegment = segment;
+            }
+        }
+    }
+
+    private onElementMouseEnter() {
+        if (this._docker && this._docker.docked) {
+            this.childElementContainer.style[this._docker.dimension] = numberToPixels(this._docker.realSize);
+        }
+    }
+
+    private onElementMouseLeave() {
+        if (this._docker && this._docker.docked) {
+            this.childElementContainer.style[this._docker.dimension] = numberToPixels(0);
+        }
+    }
+
+    private createHeaderConfig() {
+        const currentHeaderConfig = this._stackConfig.header;
+        if (!this._headerSideChanged) {
+            return HeaderedItemConfig.Header.createCopy(currentHeaderConfig);
+        } else {
+            const show = this._header.show ? this._header.side : false;
+
+            let result = HeaderedItemConfig.Header.createCopy(currentHeaderConfig);
+            if (result !== undefined) {
+                result.show = show;
+            } else {
+                result = {
+                    show,
+                    popout: undefined,
+                    dock: undefined,
+                    maximise: undefined,
+                    close: undefined,
+                    minimise: undefined,
+                    tabDropdown: undefined,
+                };
+            }
+            return result;
+        }
     }
 }
 
 export namespace Stack {
-    export const enum Side {
-        'right',
-        'left',
-        'bottom',
+    export const enum Segment {
+        Header = 'header',
+        Body = 'body',
+        Left = 'left',
+        Right = 'right',
+        Top = 'top',
+        Bottom = 'bottom',
+    }
+
+    export interface ContentAreaDimension {
+        hoverArea: AbstractContentItem.Area;
+        highlightArea: AbstractContentItem.Area;
+    }
+
+    export type ContentAreaDimensions = {
+        [segment: string]: ContentAreaDimension;
+    };
+
+    export interface Docker {
+        dimension: ItemConfig.HeightOrWidthPropertyName;
+        size: number;
+        realSize: number;
+        docked: boolean;
+    }
+
+
+    export interface Parent {
+        readonly isColumn: boolean;       
+        readonly isRow: boolean;       
     }
 }

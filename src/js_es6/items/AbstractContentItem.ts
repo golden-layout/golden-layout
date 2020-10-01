@@ -1,13 +1,12 @@
 import { ItemConfig } from '../config/config'
 import { itemDefaultConfig } from '../config/ItemDefaultConfig'
-import { ConfigurationError, UnexpectedNullError } from '../errors/error'
+import { Tab } from '../controls/Tab'
+import { AssertError, ConfigurationError, UnexpectedNullError } from '../errors/error'
 import { LayoutManager } from '../LayoutManager'
 import { EventEmitter } from '../utils/EventEmitter'
 import { getJQueryOffset, getJQueryWidthAndHeight } from '../utils/jquery-legacy'
 import {
-    animFrame, fnBind,
-
-    indexOf
+    animFrame, fnBind
 } from '../utils/utils'
 import { Root } from './Root'
 
@@ -53,10 +52,9 @@ export abstract class AbstractContentItem extends EventEmitter {
     isComponent: boolean
 
     element: HTMLElement;
+    tab: Tab;
 
-    protected _docker: AbstractContentItem.Docker;
-
-    constructor(readonly layoutManager: LayoutManager, config: ItemConfig, parent: AbstractContentItem | null) {
+    constructor(readonly layoutManager: LayoutManager, config: ItemConfig, parent: AbstractContentItem) {
 
         super();
 
@@ -293,8 +291,8 @@ export abstract class AbstractContentItem extends EventEmitter {
      *
      * @returns {void}
      */
-    toggleMaximise(e) {
-        e && e.preventDefault();
+    toggleMaximise(/* e */): void {
+        // e && e.preventDefault(); // not sure what this was here for
         if (this.isMaximised === true) {
             this.layoutManager.minimiseItem(this);
         } else {
@@ -307,25 +305,21 @@ export abstract class AbstractContentItem extends EventEmitter {
 
     /**
      * Selects the item if it is not already selected
-     *
-     * @returns {void}
      */
-    select() {
+    select(): void {
         if (this.layoutManager.selectedItem !== this) {
             this.layoutManager.selectItem(this, true);
-            this.element.addClass('lm_selected');
+            this.element.classList.add('lm_selected');
         }
     }
 
     /**
      * De-selects the item if it is selected
-     *
-     * @returns {void}
      */
     deselect() {
         if (this.layoutManager.selectedItem === this) {
             this.layoutManager.selectedItem = null;
-            this.element.removeClass('lm_selected');
+            this.element.classList.remove('lm_selected');
         }
     }
 
@@ -337,7 +331,7 @@ export abstract class AbstractContentItem extends EventEmitter {
      *
      * @returns {void}
      */
-    setTitle(title) {
+    setTitle(title: string): void {
         this.config.title = title;
         this.emit('titleChanged', title);
         this.emit('stateChanged');
@@ -346,31 +340,27 @@ export abstract class AbstractContentItem extends EventEmitter {
     /**
      * Checks whether a provided id is present
      *
-     * @public
-     * @param   {String}  id
+     * @param   id
      *
-     * @returns {Boolean} isPresent
+     * @returns isPresent
      */
     hasId(id: string): boolean {
-        if (!this.config.id) {
-            return false;
-        } else if (typeof this.config.id === 'string') {
+        if (typeof this.config.id === 'string') {
             return this.config.id === id;
-        } else if (this.config.id instanceof Array) {
-            return indexOf(id, this.config.id) !== -1;
+        } else {
+            if (this.config.id instanceof Array) {
+                return this.config.id.includes(id);
+            } else {
+                throw new AssertError('ACIHI55521', `ItemConfig.id is not string or string array ${this.config.id}`);
+            }
         }
     }
 
     /**
      * Adds an id. Adds it as a string if the component doesn't
      * have an id yet or creates/uses an array
-     *
-     * @public
-     * @param {String} id
-     *
-     * @returns {void}
      */
-    addId(id) {
+    addId(id: string): void {
         if (this.hasId(id)) {
             return;
         }
@@ -398,7 +388,7 @@ export abstract class AbstractContentItem extends EventEmitter {
         if (typeof this.config.id === 'string') {
             delete this.config.id;
         } else if (this.config.id instanceof Array) {
-            var index = indexOf(id, this.config.id);
+            const index = this.config.id.indexOf(id);
             this.config.id.splice(index, 1);
         }
     }
@@ -426,7 +416,7 @@ export abstract class AbstractContentItem extends EventEmitter {
     getItemsById(id: string) {
         return this.getItemsByFilter(function(item) {
             if (item.config.id instanceof Array) {
-                return indexOf(id, item.config.id) !== -1;
+                return item.config.id.indexOf(id) !== -1;
             } else {
                 return item.config.id === id;
             }
@@ -496,23 +486,23 @@ export abstract class AbstractContentItem extends EventEmitter {
         }
     }
 
-    _$onDrop(contentItem: AbstractContentItem) {
+    _$onDrop(contentItem: AbstractContentItem): void {
         this.addChild(contentItem);
     }
 
-    _$hide() {
+    _$hide(): void {
         this._callOnActiveComponents('hide');
         this.element.hide();
         this.layoutManager.updateSizeFromContainer();
     }
 
-    _$show() {
+    _$show(): void {
         this._callOnActiveComponents('show');
         this.element.show();
         this.layoutManager.updateSizeFromContainer();
     }
 
-    _callOnActiveComponents(methodName) {
+    _callOnActiveComponents(methodName: string): void {
         var stacks = this.getItemsByType('stack'),
             activeContentItem,
             i;
@@ -604,7 +594,7 @@ export abstract class AbstractContentItem extends EventEmitter {
      *
      * @returns {void}
      */
-    private createContentItems(config: Config) {
+    private createContentItems(config: ItemConfig) {
         if (!(config.content instanceof Array)) {
             throw new ConfigurationError('content must be an Array', config);
         }
@@ -670,7 +660,7 @@ export abstract class AbstractContentItem extends EventEmitter {
      * @param {String} name the name of the event
      */
     private scheduleEventPropagationToLayoutManager(name: string, event: EventEmitter.BubblingEvent) {
-        if (indexOf(name, this._throttledEvents) === -1) {
+        if (this._throttledEvents.indexOf(name) === -1) {
             this.layoutManager.emitUnknown(name, event.origin);
         } else {
             if (this._pendingEventPropagations[name] !== true) {
@@ -698,16 +688,7 @@ export namespace AbstractContentItem {
         x2: number;
         y1: number;
         y2: number;
-        surface: number;
-        contentItem: AbstractContentItem;
-    }
-
-    export type ItemConfigHeightOrWidth = 'height' | 'width'; // properties in ItemConfig
-
-    export interface Docker {
-        dimension: ItemConfigHeightOrWidth;
-        size: number;
-        realSize: number;
-        docked: boolean;
+        surface?: number;
+        contentItem?: AbstractContentItem;
     }
 }

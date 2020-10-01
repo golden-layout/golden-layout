@@ -1,3 +1,4 @@
+import { ConfigurationError, UnreachableCaseError } from '../errors/error';
 import { JsonValue, Side } from '../utils/types';
 import { Config, HeaderedItemConfig, ItemConfig, JsonComponentConfig, ManagerConfig, PopoutManagerConfig, ReactComponentConfig, StackItemConfig } from './config';
 
@@ -64,20 +65,21 @@ export namespace UserItemConfig {
     export function resolve(user: UserItemConfig): ItemConfig {
         switch (user.type) {
             case ItemConfig.Type.root:
+                throw new ConfigurationError('UserItemConfig cannot specify type root', user);
             case ItemConfig.Type.row:
             case ItemConfig.Type.column:
                 const result: ItemConfig = {
                     type: user.type,
                     content: UserItemConfig.resolveContent(user.content),
-                    width: user.width ?? defaults.width,
-                    minWidth: user.width ?? defaults.minWidth,
-                    height: user.height ?? defaults.height,
-                    minHeight: user.height ?? defaults.minHeight,
-                    id: user.id ?? defaults.id,
-                    isClosable: user.isClosable ?? defaults.isClosable,
-                    reorderEnabled: user.reorderEnabled ?? defaults.reorderEnabled,
-                    title: user.title ?? defaults.title,
-                    activeItemIndex: user.activeItemIndex ?? defaults.activeItemIndex,
+                    width: user.width ?? ItemConfig.defaults.width,
+                    minWidth: user.width ?? ItemConfig.defaults.minWidth,
+                    height: user.height ?? ItemConfig.defaults.height,
+                    minHeight: user.height ?? ItemConfig.defaults.minHeight,
+                    id: user.id ?? ItemConfig.defaults.id,
+                    isClosable: user.isClosable ?? ItemConfig.defaults.isClosable,
+                    reorderEnabled: user.reorderEnabled ?? ItemConfig.defaults.reorderEnabled,
+                    title: user.title ?? ItemConfig.defaults.title,
+                    activeItemIndex: user.activeItemIndex ?? ItemConfig.defaults.activeItemIndex,
                 }
                 return result;
 
@@ -87,12 +89,11 @@ export namespace UserItemConfig {
             case ItemConfig.Type.component:
                 return UserJsonComponentConfig.resolve(user as UserJsonComponentConfig);
 
-            case ItemConfig.Type['react-component']:
+            case ItemConfig.Type.reactComponent:
                 return UserReactComponentConfig.resolve(user as UserReactComponentConfig);
 
             default:
-                const neverUserType: never = user.type;
-                throw new Error(`UserItemConfig.resolve: Unreachable Type: ${neverUserType}`);
+                throw new UnreachableCaseError('UCUICR55499', user.type);
         }
     }
 
@@ -107,20 +108,6 @@ export namespace UserItemConfig {
             }
             return result;
         }
-    }
-
-    export const defaults: ItemConfig = {
-        type: ItemConfig.Type.stack, // not really default but need something
-        content: [],
-        width: 50,
-        minWidth: 0,
-        height: 50,
-        minHeight: 0,
-        id: '',
-        isClosable: true,
-        reorderEnabled: true,
-        title: '',
-        activeItemIndex: -1,
     }
 
     export function isRoot(config: UserItemConfig): config is UserItemConfig {
@@ -139,7 +126,7 @@ export namespace UserItemConfig {
         return config.type === ItemConfig.Type.component;
     }
     export function isReact(config: UserItemConfig): config is UserReactComponentConfig {
-        return config.type === ItemConfig.Type["react-component"];
+        return config.type === ItemConfig.Type.reactComponent;
     }
 }
 
@@ -167,7 +154,7 @@ namespace UserHeaderedItemConfig {
                 return undefined;
             } else {
                 const result: HeaderedItemConfig.Header = {
-                    show: userHeader?.show ?? hasHeaders === undefined ? undefined : hasHeaders ? UserManagerConfig.Header.defaults.show : false,
+                    show: userHeader?.show ?? hasHeaders === undefined ? undefined : hasHeaders ? ManagerConfig.Header.defaults.show : false,
                     popout: userHeader?.popout,
                     dock: userHeader?.dock,
                     maximise: userHeader?.maximise,
@@ -188,15 +175,15 @@ export namespace UserStackItemConfig {
         const result: StackItemConfig = {
             type: user.type,
             content: UserItemConfig.resolveContent(user.content),
-            width: user.width ?? UserItemConfig.defaults.width,
-            minWidth: user.minWidth ?? UserItemConfig.defaults.minWidth,
-            height: user.height ?? UserItemConfig.defaults.height,
-            minHeight: user.minHeight ?? UserItemConfig.defaults.minHeight,
-            id: user.id ?? UserItemConfig.defaults.id,
-            isClosable: user.isClosable ?? UserItemConfig.defaults.isClosable,
-            reorderEnabled: user.reorderEnabled ?? UserItemConfig.defaults.reorderEnabled,
-            title: user.title ?? UserItemConfig.defaults.title,
-            activeItemIndex: user.activeItemIndex ?? UserItemConfig.defaults.activeItemIndex,
+            width: user.width ?? ItemConfig.defaults.width,
+            minWidth: user.minWidth ?? ItemConfig.defaults.minWidth,
+            height: user.height ?? ItemConfig.defaults.height,
+            minHeight: user.minHeight ?? ItemConfig.defaults.minHeight,
+            id: user.id ?? ItemConfig.defaults.id,
+            isClosable: user.isClosable ?? ItemConfig.defaults.isClosable,
+            reorderEnabled: user.reorderEnabled ?? ItemConfig.defaults.reorderEnabled,
+            title: user.title ?? ItemConfig.defaults.title,
+            activeItemIndex: user.activeItemIndex ?? ItemConfig.defaults.activeItemIndex,
             header: UserHeaderedItemConfig.Header.resolve(user.header, user.hasHeaders),
         };
         return result;
@@ -226,15 +213,15 @@ export namespace UserJsonComponentConfig {
             const result: JsonComponentConfig = {
                 type: user.type,
                 content: UserItemConfig.resolveContent(user.content),
-                width: user.width ?? UserItemConfig.defaults.width,
-                minWidth: user.minWidth ?? UserItemConfig.defaults.minWidth,
-                height: user.height ?? UserItemConfig.defaults.height,
-                minHeight: user.minHeight ?? UserItemConfig.defaults.minHeight,
-                id: user.id ?? UserItemConfig.defaults.id,
-                isClosable: user.isClosable ?? UserItemConfig.defaults.isClosable,
-                reorderEnabled: user.reorderEnabled ?? UserItemConfig.defaults.reorderEnabled,
+                width: user.width ?? ItemConfig.defaults.width,
+                minWidth: user.minWidth ?? ItemConfig.defaults.minWidth,
+                height: user.height ?? ItemConfig.defaults.height,
+                minHeight: user.minHeight ?? ItemConfig.defaults.minHeight,
+                id: user.id ?? ItemConfig.defaults.id,
+                isClosable: user.isClosable ?? ItemConfig.defaults.isClosable,
+                reorderEnabled: user.reorderEnabled ?? ItemConfig.defaults.reorderEnabled,
                 title: user.title ?? user.componentName,
-                activeItemIndex: user.activeItemIndex ?? UserItemConfig.defaults.activeItemIndex,
+                activeItemIndex: user.activeItemIndex ?? ItemConfig.defaults.activeItemIndex,
                 header: UserHeaderedItemConfig.Header.resolve(user.header, user.hasHeaders),
                 componentName: user.componentName,
                 componentState: user.componentState ?? {},
@@ -257,17 +244,17 @@ export namespace UserReactComponentConfig {
             throw new Error('UserReactComponentConfig.componentName is undefined');
         } else {
             const result: ReactComponentConfig = {
-                type: ItemConfig.Type["react-component"],
+                type: ItemConfig.Type.reactComponent,
                 content: UserItemConfig.resolveContent(user.content),
-                width: user.width ?? UserItemConfig.defaults.width,
-                minWidth: user.minWidth ?? UserItemConfig.defaults.minWidth,
-                height: user.height ?? UserItemConfig.defaults.height,
-                minHeight: user.minHeight ?? UserItemConfig.defaults.minHeight,
-                id: user.id ?? UserItemConfig.defaults.id,
-                isClosable: user.isClosable ?? UserItemConfig.defaults.isClosable,
-                reorderEnabled: user.reorderEnabled ?? UserItemConfig.defaults.reorderEnabled,
+                width: user.width ?? ItemConfig.defaults.width,
+                minWidth: user.minWidth ?? ItemConfig.defaults.minWidth,
+                height: user.height ?? ItemConfig.defaults.height,
+                minHeight: user.minHeight ?? ItemConfig.defaults.minHeight,
+                id: user.id ?? ItemConfig.defaults.id,
+                isClosable: user.isClosable ?? ItemConfig.defaults.isClosable,
+                reorderEnabled: user.reorderEnabled ?? ItemConfig.defaults.reorderEnabled,
                 title: user.title ?? user.componentName,
-                activeItemIndex: user.activeItemIndex ?? UserItemConfig.defaults.activeItemIndex,
+                activeItemIndex: user.activeItemIndex ?? ItemConfig.defaults.activeItemIndex,
                 header: UserHeaderedItemConfig.Header.resolve(user.header, user.hasHeaders),
                 componentName: ReactComponentConfig.REACT_COMPONENT_ID,
                 props: user.props,
@@ -382,37 +369,21 @@ export namespace UserManagerConfig {
     export namespace Settings {
         export function resolve(user: Settings | undefined): ManagerConfig.Settings {
             const result: ManagerConfig.Settings = {
-                constrainDragToContainer: user?.constrainDragToContainer ?? defaults.constrainDragToContainer,
-                reorderEnabled: user?.reorderEnabled ?? defaults.reorderEnabled,
-                selectionEnabled: user?.selectionEnabled ?? defaults.selectionEnabled,
-                popoutWholeStack: user?.popoutWholeStack ?? defaults.popoutWholeStack,
-                blockedPopoutsThrowError: user?.blockedPopoutsThrowError ?? defaults.blockedPopoutsThrowError,
-                closePopoutsOnUnload: user?.closePopoutsOnUnload ?? defaults.closePopoutsOnUnload,
-                showPopoutIcon: user?.showPopoutIcon ?? defaults.showPopoutIcon,
-                showMaximiseIcon: user?.showMaximiseIcon ?? defaults.showMaximiseIcon,
-                showCloseIcon: user?.showCloseIcon ?? defaults.showCloseIcon,
-                responsiveMode: user?.responsiveMode ?? defaults.responsiveMode,
-                tabOverlapAllowance: user?.tabOverlapAllowance ?? defaults.tabOverlapAllowance,
-                reorderOnTabMenuClick: user?.reorderOnTabMenuClick ?? defaults.reorderOnTabMenuClick,
-                tabControlOffset: user?.tabControlOffset ?? defaults.tabControlOffset,
+                constrainDragToContainer: user?.constrainDragToContainer ?? ManagerConfig.Settings.defaults.constrainDragToContainer,
+                reorderEnabled: user?.reorderEnabled ?? ManagerConfig.Settings.defaults.reorderEnabled,
+                selectionEnabled: user?.selectionEnabled ?? ManagerConfig.Settings.defaults.selectionEnabled,
+                popoutWholeStack: user?.popoutWholeStack ?? ManagerConfig.Settings.defaults.popoutWholeStack,
+                blockedPopoutsThrowError: user?.blockedPopoutsThrowError ?? ManagerConfig.Settings.defaults.blockedPopoutsThrowError,
+                closePopoutsOnUnload: user?.closePopoutsOnUnload ?? ManagerConfig.Settings.defaults.closePopoutsOnUnload,
+                showPopoutIcon: user?.showPopoutIcon ?? ManagerConfig.Settings.defaults.showPopoutIcon,
+                showMaximiseIcon: user?.showMaximiseIcon ?? ManagerConfig.Settings.defaults.showMaximiseIcon,
+                showCloseIcon: user?.showCloseIcon ?? ManagerConfig.Settings.defaults.showCloseIcon,
+                responsiveMode: user?.responsiveMode ?? ManagerConfig.Settings.defaults.responsiveMode,
+                tabOverlapAllowance: user?.tabOverlapAllowance ?? ManagerConfig.Settings.defaults.tabOverlapAllowance,
+                reorderOnTabMenuClick: user?.reorderOnTabMenuClick ?? ManagerConfig.Settings.defaults.reorderOnTabMenuClick,
+                tabControlOffset: user?.tabControlOffset ?? ManagerConfig.Settings.defaults.tabControlOffset,
             }
             return result;
-        }
-
-        export const defaults: ManagerConfig.Settings = {
-            constrainDragToContainer: true,
-            reorderEnabled: true,
-            selectionEnabled: false,
-            popoutWholeStack: false,
-            blockedPopoutsThrowError: true,
-            closePopoutsOnUnload: true,
-            showPopoutIcon: true,
-            showMaximiseIcon: true,
-            showCloseIcon: true,
-            responsiveMode: ManagerConfig.Settings.ResponsiveMode.onload,
-            tabOverlapAllowance: 0,
-            reorderOnTabMenuClick: true,
-            tabControlOffset: 10
         }
     }
 
@@ -464,25 +435,15 @@ export namespace UserManagerConfig {
     export namespace Dimensions {
         export function resolve(user: Dimensions | undefined): ManagerConfig.Dimensions {
             const result: ManagerConfig.Dimensions = {
-                borderWidth: user?.borderWidth ?? defaults.borderWidth,
-                borderGrabWidth: user?.borderGrabWidth ?? defaults.borderGrabWidth,
-                minItemHeight: user?.minItemHeight ?? defaults.minItemHeight,
-                minItemWidth: user?.minItemWidth ?? defaults.minItemWidth,
-                headerHeight: user?.headerHeight ?? defaults.headerHeight,
-                dragProxyWidth: user?.dragProxyWidth ?? defaults.dragProxyWidth,
-                dragProxyHeight: user?.dragProxyHeight ?? defaults.dragProxyHeight,
+                borderWidth: user?.borderWidth ?? ManagerConfig.Dimensions.defaults.borderWidth,
+                borderGrabWidth: user?.borderGrabWidth ?? ManagerConfig.Dimensions.defaults.borderGrabWidth,
+                minItemHeight: user?.minItemHeight ?? ManagerConfig.Dimensions.defaults.minItemHeight,
+                minItemWidth: user?.minItemWidth ?? ManagerConfig.Dimensions.defaults.minItemWidth,
+                headerHeight: user?.headerHeight ?? ManagerConfig.Dimensions.defaults.headerHeight,
+                dragProxyWidth: user?.dragProxyWidth ?? ManagerConfig.Dimensions.defaults.dragProxyWidth,
+                dragProxyHeight: user?.dragProxyHeight ?? ManagerConfig.Dimensions.defaults.dragProxyHeight,
             }
             return result;
-        }
-
-        export const defaults: ManagerConfig.Dimensions = {
-            borderWidth: 5,
-            borderGrabWidth: 15,
-            minItemHeight: 10,
-            minItemWidth: 10,
-            headerHeight: 20,
-            dragProxyWidth: 300,
-            dragProxyHeight: 200
         }
     }
 
@@ -566,31 +527,21 @@ export namespace UserManagerConfig {
                 show = userHeader.show;
             } else {
                 if (userSettings !== undefined && userSettings.hasHeaders !== undefined) {
-                    show = userSettings.hasHeaders ? defaults.show : false;
+                    show = userSettings.hasHeaders ? ManagerConfig.Header.defaults.show : false;
                 } else {
-                    show = defaults.show;
+                    show = ManagerConfig.Header.defaults.show;
                 }
             }
             const result: ManagerConfig.Header = {
                 show,
-                popout: userHeader?.popout ?? userLabels?.popout ?? defaults.popout,
-                dock: userHeader?.popin ?? userLabels?.popin ?? defaults.dock,
-                maximise: userHeader?.maximise ?? userLabels?.maximise ?? defaults.maximise,
-                close: userHeader?.close ?? userLabels?.close ?? defaults.close,
-                minimise: userHeader?.minimise ?? userLabels?.minimise ?? defaults.minimise,
-                tabDropdown: userHeader?.tabDropdown ?? userLabels?.tabDropdown ?? defaults.tabDropdown,
+                popout: userHeader?.popout ?? userLabels?.popout ?? ManagerConfig.Header.defaults.popout,
+                dock: userHeader?.popin ?? userLabels?.popin ?? ManagerConfig.Header.defaults.dock,
+                maximise: userHeader?.maximise ?? userLabels?.maximise ?? ManagerConfig.Header.defaults.maximise,
+                close: userHeader?.close ?? userLabels?.close ?? ManagerConfig.Header.defaults.close,
+                minimise: userHeader?.minimise ?? userLabels?.minimise ?? ManagerConfig.Header.defaults.minimise,
+                tabDropdown: userHeader?.tabDropdown ?? userLabels?.tabDropdown ?? ManagerConfig.Header.defaults.tabDropdown,
             }
             return result;
-        }
-
-        export const defaults: ManagerConfig.Header = {
-            show: Side.top,
-            popout: 'open in new window',
-            dock: 'dock',
-            maximise: 'maximise',
-            minimise: 'minimise',
-            close: 'close',
-            tabDropdown: 'additional tabs'
         }
     }
 
@@ -645,6 +596,7 @@ export namespace UserPopoutManagerConfig {
             maximisedItemId: string | null | undefined): PopoutManagerConfig.Window
         {
             let result: PopoutManagerConfig.Window;
+            const defaults = PopoutManagerConfig.Window.defaults;
             if (userWindow !== undefined) {
                 result = {
                     width: userWindow.width ?? defaults.width,
@@ -663,14 +615,6 @@ export namespace UserPopoutManagerConfig {
                 }
             }
             return result;
-        }
-
-        export const defaults: PopoutManagerConfig.Window = {
-            width: null,
-            height: null,
-            left: null,
-            top: null,
-            maximised: false,
         }
     }
 
@@ -714,16 +658,16 @@ export namespace UserConfig {
         resolved: true,
         content: [],
         openPopouts: [],
-        settings: UserManagerConfig.Settings.defaults,
-        dimensions: UserManagerConfig.Dimensions.defaults,
-        header: UserManagerConfig.Header.defaults,
+        settings: ManagerConfig.Settings.defaults,
+        dimensions: ManagerConfig.Dimensions.defaults,
+        header: ManagerConfig.Header.defaults,
     };
 
     /** Shallow transformation of Config to UserConfig */
     export function fromConfig(config: Config): UserConfig {
         const userConfig: UserConfig = {
             content: config.content,
-            openPopouts: config.openPopouts as UserPopoutManagerConfig[],
+            openPopouts: config.openPopouts as unknown as UserPopoutManagerConfig[],
             dimensions: config.dimensions,
             settings: config.settings,
             header: config.header,

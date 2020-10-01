@@ -1,4 +1,4 @@
-import { UnreachableCaseError } from '../errors/error';
+import { AssertError, UnreachableCaseError } from '../errors/error';
 import { JsonValue, Side } from '../utils/types';
 import { deepExtendValue } from '../utils/utils';
 
@@ -20,16 +20,28 @@ export interface ItemConfig {
 
 export namespace ItemConfig {
     export const enum Type {
-        'root',
-        'row',
-        'column',
-        'stack',
-        'component',
-        'react-component'
+        root = 'root',
+        row = 'row',
+        column = 'column',
+        stack = 'stack',
+        component = 'component',
+        reactComponent = 'react-component',
     }
 
-    export interface Header {
-        show: Side;
+    export type HeightOrWidthPropertyName = 'height' | 'width';
+
+    export const defaults: ItemConfig = {
+        type: ItemConfig.Type.stack, // not really default but need something
+        content: [],
+        width: 50,
+        minWidth: 0,
+        height: 50,
+        minHeight: 0,
+        id: '',
+        isClosable: true,
+        reorderEnabled: true,
+        title: '',
+        activeItemIndex: -1,
     }
 
     /** Creates a copy of the original ItemConfig using an alternative content if specified */
@@ -57,11 +69,11 @@ export namespace ItemConfig {
             case ItemConfig.Type.component:
                 return JsonComponentConfig.createCopy(original as JsonComponentConfig);
 
-            case ItemConfig.Type['react-component']:
+            case ItemConfig.Type.reactComponent:
                 return ReactComponentConfig.createCopy(original as ReactComponentConfig);
 
             default:
-                throw new UnreachableCaseError('CCC913564', original.type, 'Invalid Config Item type specified');
+                throw new UnreachableCaseError('CICC91354', original.type, 'Invalid Config Item type specified');
         }
     }
 
@@ -72,6 +84,39 @@ export namespace ItemConfig {
             result[i] = ItemConfig.createCopy(original[i]);
         }
         return result;
+    }
+
+    export function createDefault(type: Type): ItemConfig {
+        switch (type) {
+            case ItemConfig.Type.root:
+                throw new AssertError('CICCDR91562'); // Get default root from ManagerConfig
+            case ItemConfig.Type.row:
+            case ItemConfig.Type.column:
+            case ItemConfig.Type.stack:
+                const result: ItemConfig = {
+                    type: defaults.type,
+                    content: defaults.content,
+                    width: defaults.width,
+                    minWidth: defaults.minWidth,
+                    height: defaults.height,
+                    minHeight: defaults.minHeight,
+                    id: defaults.id,
+                    isClosable: defaults.isClosable,
+                    reorderEnabled: defaults.reorderEnabled,
+                    title: defaults.title,
+                    activeItemIndex: defaults.activeItemIndex,
+                }
+                return result;
+
+            case ItemConfig.Type.component:
+                return JsonComponentConfig.createDefault();
+
+            case ItemConfig.Type.reactComponent:
+                return ReactComponentConfig.createDefault();
+
+            default:
+                throw new UnreachableCaseError('CICCDD91563', type, 'Invalid Config Item type specified');
+        }
     }
 }
 
@@ -92,15 +137,21 @@ export namespace HeaderedItemConfig {
         tabDropdown: false | string | undefined;
     }
 
-    export function createCopy(original: Header): Header {
-        return {
-            show: original.show,
-            popout: original.popout,
-            dock: original.dock,
-            close: original.close,
-            maximise: original.maximise,
-            minimise: original.minimise,
-            tabDropdown: original.tabDropdown,
+    export namespace Header {
+        export function createCopy(original: Header | undefined): Header | undefined {
+            if (original === undefined) {
+                return undefined;
+            } else {
+                return {
+                    show: original.show,
+                    popout: original.popout,
+                    dock: original.dock,
+                    close: original.close,
+                    maximise: original.maximise,
+                    minimise: original.minimise,
+                    tabDropdown: original.tabDropdown,
+                }
+            }
         }
     }
 }
@@ -116,7 +167,7 @@ export interface ComponentConfig extends HeaderedItemConfig {
 
 export namespace ComponentConfig {
     export function isReact(config: ComponentConfig): config is ReactComponentConfig {
-        return config.type === ItemConfig.Type["react-component"];
+        return config.type === ItemConfig.Type.reactComponent;
     }
     export function isJson(config: ComponentConfig): config is JsonComponentConfig {
         return config.type === ItemConfig.Type.component;
@@ -142,9 +193,29 @@ export namespace JsonComponentConfig {
             reorderEnabled: original.reorderEnabled,
             title: original.title,
             activeItemIndex: original.activeItemIndex,
-            header: original.header === undefined ? undefined : HeaderedItemConfig.createCopy(original.header),
+            header: HeaderedItemConfig.Header.createCopy(original.header),
             componentName: original.componentName,
             componentState: deepExtendValue(undefined, original.componentState) as JsonValue,
+        }
+        return result;
+    }
+
+    export function createDefault(): JsonComponentConfig {
+        const result: JsonComponentConfig = {
+            type: ItemConfig.Type.component,
+            content: ItemConfig.defaults.content,
+            width: ItemConfig.defaults.width,
+            minWidth: ItemConfig.defaults.minWidth,
+            height: ItemConfig.defaults.height,
+            minHeight: ItemConfig.defaults.minHeight,
+            id: ItemConfig.defaults.id,
+            isClosable: ItemConfig.defaults.isClosable,
+            reorderEnabled: ItemConfig.defaults.reorderEnabled,
+            title: ItemConfig.defaults.title,
+            activeItemIndex: ItemConfig.defaults.activeItemIndex,
+            header: undefined,
+            componentName: '',
+            componentState: {},
         }
         return result;
     }
@@ -171,9 +242,29 @@ export namespace ReactComponentConfig {
             reorderEnabled: original.reorderEnabled,
             title: original.title,
             activeItemIndex: original.activeItemIndex,
-            header: original.header === undefined ? undefined : HeaderedItemConfig.createCopy(original.header),
+            header: HeaderedItemConfig.Header.createCopy(original.header),
             componentName: REACT_COMPONENT_ID,
             props: deepExtendValue(undefined, original.props),
+        }
+        return result;
+    }
+
+    export function createDefault(): JsonComponentConfig {
+        const result: JsonComponentConfig = {
+            type: ItemConfig.Type.reactComponent,
+            content: ItemConfig.defaults.content,
+            width: ItemConfig.defaults.width,
+            minWidth: ItemConfig.defaults.minWidth,
+            height: ItemConfig.defaults.height,
+            minHeight: ItemConfig.defaults.minHeight,
+            id: ItemConfig.defaults.id,
+            isClosable: ItemConfig.defaults.isClosable,
+            reorderEnabled: ItemConfig.defaults.reorderEnabled,
+            title: ItemConfig.defaults.title,
+            activeItemIndex: ItemConfig.defaults.activeItemIndex,
+            header: undefined,
+            componentName: '',
+            componentState: {},
         }
         return result;
     }
@@ -210,6 +301,22 @@ export namespace ManagerConfig {
             'none',
             'always',
             'onload',
+        }
+
+        export const defaults: ManagerConfig.Settings = {
+            constrainDragToContainer: true,
+            reorderEnabled: true,
+            selectionEnabled: false,
+            popoutWholeStack: false,
+            blockedPopoutsThrowError: true,
+            closePopoutsOnUnload: true,
+            showPopoutIcon: true,
+            showMaximiseIcon: true,
+            showCloseIcon: true,
+            responsiveMode: ManagerConfig.Settings.ResponsiveMode.onload,
+            tabOverlapAllowance: 0,
+            reorderOnTabMenuClick: true,
+            tabControlOffset: 10
         }
 
         export function createCopy(original: Settings): Settings {
@@ -254,6 +361,16 @@ export namespace ManagerConfig {
                 dragProxyHeight: original.dragProxyHeight,
             }
         }
+
+        export const defaults: ManagerConfig.Dimensions = {
+            borderWidth: 5,
+            borderGrabWidth: 15,
+            minItemHeight: 10,
+            minItemWidth: 10,
+            headerHeight: 20,
+            dragProxyWidth: 300,
+            dragProxyHeight: 200
+        }
     }
 
     export interface Header {
@@ -277,6 +394,16 @@ export namespace ManagerConfig {
                 minimise: original.minimise,
                 tabDropdown: original.tabDropdown,
             }
+        }
+
+        export const defaults: ManagerConfig.Header = {
+            show: Side.top,
+            popout: 'open in new window',
+            dock: 'dock',
+            maximise: 'maximise',
+            minimise: 'minimise',
+            close: 'close',
+            tabDropdown: 'additional tabs'
         }
     }
 
@@ -342,6 +469,14 @@ export namespace PopoutManagerConfig {
                 top: original.top,
                 maximised: original.maximised,
             }
+        }
+
+        export const defaults: PopoutManagerConfig.Window = {
+            width: null,
+            height: null,
+            left: null,
+            top: null,
+            maximised: false,
         }
     }
 

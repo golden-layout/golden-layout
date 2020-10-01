@@ -30,3 +30,9 @@ export class UnexpectedNullError extends CodedError {
         super('UnexpectedNull', code, message)
     }
 }
+
+export class UnexpectedUndefinedError extends CodedError {
+    constructor(code: string, message?: string) {
+        super('UnexpectedUndefined', code, message)
+    }
+}

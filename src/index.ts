@@ -5,27 +5,27 @@
 //import './less/goldenlayout-dark-theme.less'
 //
 // Layout
-export { default } from './js_es6/LayoutManager'
 //
 // container
-export { default as ItemContainer } from './js_es6/container/ItemContainer'
+export { ItemContainer } from './js_es6/container/ItemContainer'
 //
 // controls
-export { default as BrowserPopout } from './js_es6/controls/BrowserPopout'
-export { default as Header } from './js_es6/controls/Header'
-export { default as HeaderButton } from './js_es6/controls/HeaderButton'
-export { default as Tab } from './js_es6/controls/Tab'
+export { BrowserPopout } from './js_es6/controls/BrowserPopout'
+export { Header } from './js_es6/controls/Header'
+export { HeaderButton } from './js_es6/controls/HeaderButton'
+export { Tab } from './js_es6/controls/Tab'
 //
 // items
-export { default as Component } from './js_es6/items/Component'
-export { default as Root } from './js_es6/items/Root'
-export { default as RowOrColumn } from './js_es6/items/RowOrColumn'
-export { default as Stack } from './js_es6/items/Stack'
+export { Component } from './js_es6/items/Component'
+export { Root } from './js_es6/items/Root'
+export { RowOrColumn } from './js_es6/items/RowOrColumn'
+export { Stack } from './js_es6/items/Stack'
+export { LayoutManager } from './js_es6/LayoutManager'
 //
 // utils
-export { default as BubblingEvent } from './js_es6/utils/BubblingEvent'
-export { default as ConfigMinifier } from './js_es6/utils/ConfigMinifier'
-export { default as DragListener } from './js_es6/utils/DragListener'
-export { default as EventEmitter } from './js_es6/utils/EventEmitter'
-export { default as EventHub } from './js_es6/utils/EventHub'
-export { default as ReactComponentHandler } from './js_es6/utils/ReactComponentHandler'
+export { ConfigMinifier } from './js_es6/utils/ConfigMinifier'
+export { DragListener } from './js_es6/utils/DragListener'
+export { EventEmitter } from './js_es6/utils/EventEmitter'
+export { EventHub } from './js_es6/utils/EventHub'
+export { ReactComponentHandler } from './js_es6/utils/ReactComponentHandler'
+

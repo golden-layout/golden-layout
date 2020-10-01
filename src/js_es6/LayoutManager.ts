@@ -22,7 +22,6 @@ import {
     getElementHeight,
     getElementWidth,
     getUniqueId,
-    indexOf,
     isFunction,
 
 
@@ -80,7 +79,7 @@ export abstract class LayoutManager extends EventEmitter {
     container: HTMLElement;
     dropTargetIndicator: DropTargetIndicator | null;
     transitionIndicator: TransitionIndicator | null;
-    tabDropPlaceholder: JQuery<HTMLElement>;
+    tabDropPlaceholder: HTMLElement;
 
     protected get maximisedItem(): AbstractContentItem | null { return this._maximisedItem; }
 
@@ -403,7 +402,9 @@ export abstract class LayoutManager extends EventEmitter {
                 type: ItemConfig.Type.stack,
                 content: [config],
                 width: config.width,
+                minWidth: config.minWidth,
                 height: config.height,
+                minHeight: config.minHeight,
                 id: config.id,
                 isClosable: config.isClosable,
                 title: config.title,
@@ -450,7 +451,7 @@ export abstract class LayoutManager extends EventEmitter {
             throw new UnexpectedNullError('LMCPFCI00834');
         } else {
             parent.addId(parentId);
-            const indexInParent = indexOf(child, parent.contentItems);
+            const indexInParent = parent.contentItems.indexOf(child);
 
             const windowLeft = globalThis.screenX || globalThis.screenLeft;
             const windowTop = globalThis.screenY || globalThis.screenTop;
@@ -601,7 +602,7 @@ export abstract class LayoutManager extends EventEmitter {
         this.emit('stateChanged');
     }
 
-    private minimiseItem(contentItem: AbstractContentItem) {
+    minimiseItem(contentItem: AbstractContentItem): void {
         contentItem.element.classList.remove('lm_maximised');
         contentItem.removeId('__glMaximised');
         this._maximisePlaceholder.after(contentItem.element);

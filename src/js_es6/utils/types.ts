@@ -13,10 +13,10 @@ export interface Rect {
 }
 
 export interface LinkedRect {
-    left: number,
-    top: number,
-    nextLeft: number,
-    nextTop: number,
+    x1: number, // left
+    x2: number, // nextLeft
+    y1: number, // top
+    y2: number, // nextTop
 }
 
 export type JsonValue = string | number | boolean | Json | JsonValueArray;
