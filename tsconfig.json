@@ -34,20 +34,16 @@
           "es2018",
           "dom"
       ]
-      // "traceResolution": true, // can use this to debug paths below
-      //// the following entries allow you to link in revgrid without copying dist to Motif.
-      // "paths": {
-      //     "@angular/*": [
-      //         "./node_modules/@angular/*"
-      //     ],
-      //     "revgrid": [
-      //         "../../../RevGrid/ng/dist/revgrid"
-      //     ]
-      // }
-      //// revgrid entries end
   },
+  "include": [
+    "src/**.ts",
+  ],
   "exclude": [
+    "dist",
     "node_modules",
+    "website",
+    "test",
+    "script",
     "typings/browser",
     "typings/browser.d.ts"
   ]

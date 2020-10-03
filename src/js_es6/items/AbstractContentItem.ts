@@ -1,10 +1,9 @@
 import { ItemConfig } from '../config/config'
-import { itemDefaultConfig } from '../config/ItemDefaultConfig'
-import { Tab } from '../controls/Tab'
 import { AssertError, ConfigurationError, UnexpectedNullError } from '../errors/error'
 import { LayoutManager } from '../LayoutManager'
 import { EventEmitter } from '../utils/EventEmitter'
 import { getJQueryOffset, getJQueryWidthAndHeight } from '../utils/jquery-legacy'
+import { LinkedRect } from '../utils/types'
 import {
     animFrame, fnBind
 } from '../utils/utils'
@@ -35,7 +34,7 @@ import { Root } from './Root'
  */
 
 
-export abstract class AbstractContentItem extends EventEmitter {
+export abstract class AbstractContentItem extends EventEmitter implements AbstractContentItem.Parent {
     private _pendingEventPropagations: Record<string, unknown>;
     private _throttledEvents: string[];
 
@@ -52,9 +51,8 @@ export abstract class AbstractContentItem extends EventEmitter {
     isComponent: boolean
 
     element: HTMLElement;
-    tab: Tab;
 
-    constructor(readonly layoutManager: LayoutManager, config: ItemConfig, parent: AbstractContentItem) {
+    constructor(readonly layoutManager: LayoutManager, config: ItemConfig, parent: AbstractContentItem | null) {
 
         super();
 
@@ -208,9 +206,9 @@ export abstract class AbstractContentItem extends EventEmitter {
         }
 
         this.config.content.splice(index, 0, contentItem.config);
-        contentItem.parent = this;
+        contentItem.setParent(this);
 
-        if (contentItem.parent.isInitialised === true && contentItem.isInitialised === false) {
+        if (this.isInitialised === true && contentItem.isInitialised === false) {
             contentItem._$init();
         }
     }
@@ -226,7 +224,7 @@ export abstract class AbstractContentItem extends EventEmitter {
      */
     replaceChild(oldChild: AbstractContentItem, newChild: AbstractContentItem, _$destroyOldChild = false): void {
 
-        newChild = this.layoutManager._$normalizeContentItem(newChild);
+        // newChild = this.layoutManager._$normalizeContentItem(newChild);
 
         const index = this.contentItems.indexOf(oldChild);
         const parentNode = oldChild.element[0].parentNode;
@@ -249,7 +247,7 @@ export abstract class AbstractContentItem extends EventEmitter {
          * Wire the new contentItem into the tree
          */
         this.contentItems[index] = newChild;
-        newChild.parent = this;
+        newChild.setParent(this);
 
         /*
          * Give descendants a chance to process replace using index - eg. used by Header to update tab
@@ -449,10 +447,6 @@ export abstract class AbstractContentItem extends EventEmitter {
         });
     }
 
-    setParent(parent: AbstractContentItem): void {
-        this.parent = parent;
-    }
-
     toConfig(): ItemConfig {
         const content = this.calculateConfigContent();
         return ItemConfig.createCopy(this.config, content);
@@ -477,7 +471,7 @@ export abstract class AbstractContentItem extends EventEmitter {
         }
     }
 
-    _$highlightDropZone(x: number, y: number, area: AbstractContentItem.Area) {
+    _$highlightDropZone(x: number, y: number, area: LinkedRect): void {
         const dropTargetIndicator = this.layoutManager.dropTargetIndicator;
         if (dropTargetIndicator === null) {
             throw new UnexpectedNullError('ACIHDZ5593');
@@ -564,15 +558,13 @@ export abstract class AbstractContentItem extends EventEmitter {
      * @returns {void}
      */
     _$init(): void {
-        this.setSize();
-
-        for (let i = 0; i < this.contentItems.length; i++) {
-            this.childElementContainer.append(this.contentItems[i].element);
-        }
-
         this.isInitialised = true;
         this.emitBubblingEvent('itemCreated');
         this.emitUnknownBubblingEvent(this.type + 'Created');
+    }
+
+    protected setParent(parent: AbstractContentItem): void {
+        this.parent = parent;
     }
 
     protected initContentItems(): void {
@@ -688,7 +680,7 @@ export namespace AbstractContentItem {
         x2: number;
         y1: number;
         y2: number;
-        surface?: number;
-        contentItem?: AbstractContentItem;
+        surface: number;
+        contentItem: AbstractContentItem;
     }
 }

@@ -7,14 +7,18 @@ import { LayoutManager } from '../LayoutManager'
 import { Side } from '../utils/types'
 import {
     animFrame, createTemplateHtmlElement, fnBind,
+    getElementHeight,
+    getElementWidth,
     numberToPixels,
-    pixelsToNumber
+    pixelsToNumber,
+    setElementHeight,
+    setElementVisibility,
+    setElementWidth
 } from '../utils/utils'
 
-
-
 export class RowOrColumn extends AbstractContentItem {
-    childElementContainer: HTMLElement;
+    private readonly _childElementContainer: HTMLElement;
+    private readonly _configType: ItemConfig.Type.row | ItemConfig.Type.column;
     private _splitterSize: number;
     private _splitterGrabSize: number;
     private _isColumn: boolean;
@@ -23,17 +27,18 @@ export class RowOrColumn extends AbstractContentItem {
     private _splitterPosition: number | null;
     private _splitterMinPosition: number | null;
     private _splitterMaxPosition: number | null;
-    private readonly _configType: ItemConfig.Type.row | ItemConfig.Type.column;
 
-    constructor(isColumn: boolean, layoutManager: LayoutManager, config: ItemConfig, parent: AbstractContentItem) {
+    constructor(isColumn: boolean, layoutManager: LayoutManager, config: ItemConfig,
+        private readonly _rowOrColumnParent: AbstractContentItem
+    ) {
       
-        super(layoutManager, config, parent);
+        super(layoutManager, config, _rowOrColumnParent);
 
         this.isRow = !isColumn;
         this.isColumn = isColumn;
 
         this.element = createTemplateHtmlElement('<div class="lm_item lm_' + (isColumn ? 'column' : 'row') + '"></div>', 'div');
-        this.childElementContainer = this.element;
+        this._childElementContainer = this.element;
         this._splitterSize = layoutManager.config.dimensions.borderWidth;
         this._splitterGrabSize = layoutManager.config.dimensions.borderGrabWidth;
         this._isColumn = isColumn;
@@ -66,9 +71,9 @@ export class RowOrColumn extends AbstractContentItem {
      *
      * @returns {void}
      */
-    addChild(contentItem: AbstractContentItem, index: number, _$suspendResize: boolean): void {
+    addChild(contentItem: AbstractContentItem, index: number | undefined, _$suspendResize: boolean): void {
 
-        contentItem = this.layoutManager._$normalizeContentItem(contentItem, this);
+        // contentItem = this.layoutManager._$normalizeContentItem(contentItem, this);
 
         if (index === undefined) {
             index = this.contentItems.length;
@@ -81,15 +86,15 @@ export class RowOrColumn extends AbstractContentItem {
                 this.contentItems[index - 1].element.after(splitterElement);
                 splitterElement.after(contentItem.element);
                 if (this.isDocked(index - 1)) {
-                    this._splitter[index - 1].element.hide();
-                    this._splitter[index].element.show();
+                    setElementVisibility(this._splitter[index - 1].element, false);
+                    setElementVisibility(this._splitter[index].element, true);
                 }
             } else {
                 this.contentItems[0].element.before(splitterElement);
                 splitterElement.before(contentItem.element);
             }
         } else {
-            this.childElementContainer.append(contentItem.element);
+            this._childElementContainer.append(contentItem.element);
         }
 
         super.addChild(contentItem, index);
@@ -112,19 +117,17 @@ export class RowOrColumn extends AbstractContentItem {
 
         this.callDownwards('setSize');
         this.emitBubblingEvent('stateChanged');
-        this._validateDocking();
+        this.validateDocking();
     }
 
 
     /**
      * Undisplays a child of this element
      */
-    undisplayChild(contentItem: AbstractContentItem) {
-        const undisplayedItemSize = contentItem.config[this._dimension],
-        const index = this.contentItems.indexOf(contentItem),
-            splitterIndex = Math.max(index - 1, 0),
-            i,
-            childItem;
+    undisplayChild(contentItem: AbstractContentItem): void {
+        const undisplayedItemSize = contentItem.config[this._dimension];
+        const index = this.contentItems.indexOf(contentItem);
+        const splitterIndex = Math.max(index - 1, 0);
 
         if (index === -1) {
             throw new Error('Can\'t undisplay child. ContentItem is not child of this Row or Column');
@@ -135,19 +138,19 @@ export class RowOrColumn extends AbstractContentItem {
          * to be the first in the row/column
          */
         if (this._splitter[splitterIndex]) {
-            this._splitter[splitterIndex].element.hide();
+            setElementVisibility(this._splitter[splitterIndex].element, false);
         }
 
         if (splitterIndex < this._splitter.length) {
             if (this.isDocked(splitterIndex))
-                this._splitter[splitterIndex].element.hide();
+            setElementVisibility(this._splitter[splitterIndex].element, false);
         }
 
         /**
          * Allocate the space that the hidden item occupied to the remaining items
          */
         const dockedCount = this.calculateDockedCount();
-        for (i = 0; i < this.contentItems.length; i++) {
+        for (let i = 0; i < this.contentItems.length; i++) {
             if (this.contentItems[i] !== contentItem) {
                 if (!this.isDocked(i))
                     this.contentItems[i].config[this._dimension] += undisplayedItemSize / (this.contentItems.length - 1 - dockedCount);                
@@ -168,12 +171,11 @@ export class RowOrColumn extends AbstractContentItem {
     /**
      * Removes a child of this element
      *
-     * @param   {AbstractContentItem} contentItem
-     * @param   {boolean} keepChild   If true the child will be removed, but not destroyed
+     * @param   contentItem
+     * @param   keepChild   If true the child will be removed, but not destroyed
      *
-     * @returns {void}
      */
-    removeChild(contentItem: AbstractContentItem, keepChild: boolean) {
+    removeChild(contentItem: AbstractContentItem, keepChild: boolean): void {
         const removedItemSize = contentItem.config[this._dimension];
         const index = this.contentItems.indexOf(contentItem);
         const splitterIndex = Math.max(index - 1, 0);
@@ -193,7 +195,7 @@ export class RowOrColumn extends AbstractContentItem {
 
         if (splitterIndex < this._splitter.length) {
             if (this.isDocked(splitterIndex))
-                this._splitter[splitterIndex].element.hide();
+                setElementVisibility(this._splitter[splitterIndex].element, false);
         }
         /**
          * Allocate the space that the removed item occupied to the remaining items
@@ -212,25 +214,23 @@ export class RowOrColumn extends AbstractContentItem {
         if (this.contentItems.length === 1 && this.config.isClosable === true) {
             const childItem = this.contentItems[0];
             this.contentItems = [];
-            this.parent.replaceChild(this, childItem, true);
-            this._validateDocking(this.parent);
+            this._rowOrColumnParent.replaceChild(this, childItem, true);
+            if (this._rowOrColumnParent instanceof RowOrColumn) { // this check not included originally.
+                // If Root, then validateDocking not require
+                this._rowOrColumnParent.validateDocking();
+            }
         } else {
             this.callDownwards('setSize');
             this.emitBubblingEvent('stateChanged');
-            this._validateDocking();
+            this.validateDocking();
         }
     }
 
     /**
      * Replaces a child of this Row or Column with another contentItem
-     *
-     * @param   {AbstractContentItem} oldChild
-     * @param   {AbstractContentItem} newChild
-     *
-     * @returns {void}
      */
-    replaceChild(oldChild: AbstractContentItem, newChild: AbstractContentItem) {
-        var size = oldChild.config[this._dimension];
+    replaceChild(oldChild: AbstractContentItem, newChild: AbstractContentItem): void {
+        const size = oldChild.config[this._dimension];
         super.replaceChild(oldChild, newChild);
         newChild.config[this._dimension] = size;
         this.callDownwards('setSize');
@@ -242,7 +242,7 @@ export class RowOrColumn extends AbstractContentItem {
      *
      * @returns {void}
      */
-    setSize() {
+    setSize(): void {
         if (this.contentItems.length > 0) {
             this.calculateRelativeSizes();
             this.setAbsoluteSizes();
@@ -264,20 +264,19 @@ export class RowOrColumn extends AbstractContentItem {
 
         const removedItemSize = contentItem.config[this._dimension];
         const headerSize = this.layoutManager.config.dimensions.headerHeight;
-        const index = this.contentItems.indexOf(contentItem),
+        const index = this.contentItems.indexOf(contentItem);
         const splitterIndex = Math.max(index - 1, 0);
 
         if (index === -1) {
             throw new Error('Can\'t dock child. ContentItem is not child of this Row or Column');
         }
-        const isDocked = contentItem._docker && contentItem._docker.docked;
-        if (typeof mode !== undefined)
-            if (mode == isDocked)
-                return;
+        const isDocked = contentItem.docker.docked;
+        if (mode !== undefined && mode === isDocked)
+            return;
         if (isDocked) { // undock it
             this._splitter[splitterIndex].element.style.display = '';
             for (let i = 0; i < this.contentItems.length; i++) {
-                const newItemSize = contentItem._docker.size;
+                const newItemSize = contentItem.docker.size;
                 if (this.contentItems[i] === contentItem) {
                     contentItem.config[this._dimension] = newItemSize;
                 } else {
@@ -285,12 +284,10 @@ export class RowOrColumn extends AbstractContentItem {
                     this.contentItems[i].config[this._dimension] = itemSize;
                 }
             }
-            contentItem._docker = {
-                docked: false
-            };
+            contentItem.setUndocked();
         } else { // dock
             if (this.contentItems.length - this.calculateDockedCount() < 2)
-                throw new Error('Can\'t dock child when it is last in ' + this.config.type);
+                throw new AssertError('Can\'t dock child when it is last in ' + this.config.type);
             const autoside = {
                 column: {
                     first: Side.top,
@@ -306,7 +303,7 @@ export class RowOrColumn extends AbstractContentItem {
                 contentItem.positionHeader(required);
 
             if (this._splitter[splitterIndex]) {
-                this._splitter[splitterIndex].element.hide();
+                setElementVisibility(this._splitter[splitterIndex].element, false);
             }
             const dockedCount = this.calculateDockedCount();
             for (let i = 0; i < this.contentItems.length; i++) {
@@ -316,19 +313,20 @@ export class RowOrColumn extends AbstractContentItem {
                 } else
                     this.contentItems[i].config[this._dimension] = 0;
             }
-            contentItem._docker = {
+            contentItem.setDocked({
+                docked: true,
                 dimension: this._dimension,
                 size: removedItemSize,
-                realSize: contentItem.element[this._dimension]() - headerSize,
-                docked: true,
-            };
-            if (collapsed)
-                contentItem.childElementContainer[this._dimension](0);
+                realSize: RowOrColumn.getElementDimensionSize(contentItem.element, this._dimension) - headerSize,
+            });
+            if (collapsed) {
+                RowOrColumn.setElementDimensionSize(contentItem.childElementContainer, this._dimension, 0);
+            }
         }
-        contentItem.element.toggleClass('lm_docked', contentItem._docker.docked);
+        contentItem.element.classList.toggle('lm_docked', contentItem.docker.docked);
         this.callDownwards('setSize');
         this.emitBubblingEvent('stateChanged');
-        this._validateDocking();
+        this.validateDocking();
     }
 
     /**
@@ -343,14 +341,21 @@ export class RowOrColumn extends AbstractContentItem {
     _$init(): void {
         if (this.isInitialised === true) return;
 
+        this.setSize();
+
+        for (let i = 0; i < this.contentItems.length; i++) {
+            this._childElementContainer.append(this.contentItems[i].element);
+        }
+
         super._$init();
 
         for (let i = 0; i < this.contentItems.length - 1; i++) {
             this.contentItems[i].element.after(this.createSplitter(i).element);
         }
         for (let i = 0; i < this.contentItems.length; i++) {
-            if (this.contentItems[i]._header && this.contentItems[i]._header.docked)
-                this.dock(this.contentItems[i], true, true);
+            const stack = this.contentItems[i] as Stack;
+            if (stack.dockEnabled)
+                this.dock(stack, true, true);
         }
 
         this.initContentItems();
@@ -364,20 +369,19 @@ export class RowOrColumn extends AbstractContentItem {
      *
      */
     private setAbsoluteSizes() {
-        var i,
-            sizeData = this.calculateAbsoluteSizes();
+        const sizeData = this.calculateAbsoluteSizes();
 
-        for (i = 0; i < this.contentItems.length; i++) {
+        for (let i = 0; i < this.contentItems.length; i++) {
             if (sizeData.additionalPixel - i > 0) {
                 sizeData.itemSizes[i]++;
             }
 
             if (this._isColumn) {
-                this.contentItems[i].element.width(sizeData.totalWidth);
-                this.contentItems[i].element.height(sizeData.itemSizes[i]);
+                setElementWidth(this.contentItems[i].element, sizeData.totalWidth);
+                setElementHeight(this.contentItems[i].element, sizeData.itemSizes[i]);
             } else {
-                this.contentItems[i].element.width(sizeData.itemSizes[i]);
-                this.contentItems[i].element.height(sizeData.totalHeight);
+                setElementWidth(this.contentItems[i].element, sizeData.itemSizes[i]);
+                setElementHeight(this.contentItems[i].element, sizeData.totalHeight);
             }
         }
     }
@@ -387,31 +391,31 @@ export class RowOrColumn extends AbstractContentItem {
      * @returns {object} - Set with absolute sizes and additional pixels.
      */
     private calculateAbsoluteSizes() {
-        var i,
-            totalSplitterSize = (this.contentItems.length - 1) * this._splitterSize,
-            headerSize = this.layoutManager.config.dimensions.headerHeight,
-            totalWidth = this.element.width(),
-            totalHeight = this.element.height(),
-            totalAssigned = 0,
-            additionalPixel,
-            itemSize,
-            itemSizes = [];
+        const totalSplitterSize = (this.contentItems.length - 1) * this._splitterSize;
+        const headerSize = this.layoutManager.config.dimensions.headerHeight;
+        let totalWidth = getElementWidth(this.element);
+        let totalHeight = getElementHeight(this.element);
 
         if (this._isColumn) {
             totalHeight -= totalSplitterSize;
         } else {
             totalWidth -= totalSplitterSize;
         }
-        for (i = 0; i < this.contentItems.length; i++) {
-            if (this.isDocked(i))
+        for (let i = 0; i < this.contentItems.length; i++) {
+            if (this.isDocked(i)) {
                 if (this._isColumn) {
                     totalHeight -= headerSize - this._splitterSize;
                 } else {
                     totalWidth -= headerSize - this._splitterSize;
                 }
+            }
         }
 
-        for (i = 0; i < this.contentItems.length; i++) {
+        let totalAssigned = 0;
+        const itemSizes = [];
+
+        for (let i = 0; i < this.contentItems.length; i++) {
+            let itemSize: number;
             if (this._isColumn) {
                 itemSize = Math.floor(totalHeight * (this.contentItems[i].config.height / 100));
             } else {
@@ -424,7 +428,7 @@ export class RowOrColumn extends AbstractContentItem {
             itemSizes.push(itemSize);
         }
 
-        additionalPixel = Math.floor((this._isColumn ? totalHeight : totalWidth) - totalAssigned);
+        const additionalPixel = Math.floor((this._isColumn ? totalHeight : totalWidth) - totalAssigned);
 
         return {
             itemSizes: itemSizes,
@@ -456,12 +460,11 @@ export class RowOrColumn extends AbstractContentItem {
     private calculateRelativeSizes() {
 
         let total = 0;
-        let itemsWithoutSetDimension = [];
-        const dimension = this._isColumn ? RowOrColumn.Dimension.height : RowOrColumn.Dimension.width;
+        const itemsWithoutSetDimension: AbstractContentItem[] = [];
 
         for (let i = 0; i < this.contentItems.length; i++) {
-            if (this.contentItems[i].config[dimension] !== undefined) {
-                total += this.contentItems[i].config[dimension];
+            if (this.contentItems[i].config[this._dimension] !== undefined) {
+                total += this.contentItems[i].config[this._dimension];
             } else {
                 itemsWithoutSetDimension.push(this.contentItems[i]);
             }
@@ -480,7 +483,7 @@ export class RowOrColumn extends AbstractContentItem {
          */
         if (Math.round(total) < 100 && itemsWithoutSetDimension.length > 0) {
             for (let i = 0; i < itemsWithoutSetDimension.length; i++) {
-                itemsWithoutSetDimension[i].config[dimension] = (100 - total) / itemsWithoutSetDimension.length;
+                itemsWithoutSetDimension[i].config[this._dimension] = (100 - total) / itemsWithoutSetDimension.length;
             }
             this.respectMinItemWidth();
             return;
@@ -494,7 +497,7 @@ export class RowOrColumn extends AbstractContentItem {
          */
         if (Math.round(total) > 100) {
             for (let i = 0; i < itemsWithoutSetDimension.length; i++) {
-                itemsWithoutSetDimension[i].config[dimension] = 50;
+                itemsWithoutSetDimension[i].config[this._dimension] = 50;
                 total += 50;
             }
         }
@@ -503,7 +506,7 @@ export class RowOrColumn extends AbstractContentItem {
          * Set every items size relative to 100 relative to its size to total
          */
         for (let i = 0; i < this.contentItems.length; i++) {
-            this.contentItems[i].config[dimension] = (this.contentItems[i].config[dimension] / total) * 100;
+            this.contentItems[i].config[this._dimension] = (this.contentItems[i].config[this._dimension] / total) * 100;
         }
 
         this.respectMinItemWidth();
@@ -624,10 +627,15 @@ export class RowOrColumn extends AbstractContentItem {
     }
 
     private isDocked(index: number) {
-        if (index < this.contentItems.length) {
-            return this.contentItems[index]._docker && this.contentItems[index]._docker.docked;
-        } else {
+        if (index >= this.contentItems.length) {
             return false;
+        } else {
+            const contentItem = this.contentItems[index];
+            if (contentItem instanceof Stack) {
+                return contentItem.docker.docked;
+            } else {
+                return false;
+            }
         }
     }
 
@@ -643,14 +651,15 @@ export class RowOrColumn extends AbstractContentItem {
      * Validate if row or column has ability to dock
      * @private
      */
-    _validateDocking(that?: RowOrColumn) {
-        that = that ?? this;
-        var can = that.contentItems.length - that.calculateDockedCount() > 1;
-        for (var i = 0; i < that.contentItems.length; ++i)
-            if (that.contentItems[i] instanceof Stack) {
-                that.contentItems[i].header._setDockable(that.isDocked(i) ?? can);
-                that.contentItems[i].header._$setClosable(can);
+    validateDocking(): void {
+        const can = this.contentItems.length - this.calculateDockedCount() > 1;
+        for (let i = 0; i < this.contentItems.length; ++i) {
+            const contentItem = this.contentItems[i];
+            if (contentItem instanceof Stack) {
+                contentItem.setDockable(this.isDocked(i) ?? can);
+                contentItem.setClosable(can);
             }
+        }
     }
 
     /**
@@ -740,6 +749,24 @@ export class RowOrColumn extends AbstractContentItem {
             splitter.element.style.left = numberToPixels(0);
 
             animFrame(fnBind(this.callDownwards, this, ['setSize']));
+        }
+    }
+}
+
+export namespace RowOrColumn {
+    export function getElementDimensionSize(element: HTMLElement, dimension: ItemConfig.HeightOrWidthPropertyName): number {
+        if (dimension === 'width') {
+            return getElementWidth(element);
+        } else {
+            return getElementHeight(element);
+        }
+    }
+
+    export function setElementDimensionSize(element: HTMLElement, dimension: ItemConfig.HeightOrWidthPropertyName, value: number): void {
+        if (dimension === 'width') {
+            return setElementWidth(element, value);
+        } else {
+            return setElementHeight(element, value);
         }
     }
 }

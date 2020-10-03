@@ -1,5 +1,4 @@
 import { isFunction } from '../utils/utils';
-import { BubblingEvent } from './BubblingEvent';
 
 /**
  * A generic and very fast EventEmitter
@@ -71,12 +70,12 @@ export class EventEmitter {
      */
 
     emitBubblingEvent<K extends keyof EventEmitter.EventParamsMap>(eventName: K): void {
-        const event = new BubblingEvent(eventName, this);
+        const event = new EventEmitter.BubblingEvent(eventName, this);
         this.emitUnknown(eventName, event);
     }
 
     emitUnknownBubblingEvent(eventName: string): void {
-        const event = new BubblingEvent(eventName, this);
+        const event = new EventEmitter.BubblingEvent(eventName, this);
         this.emitUnknown(eventName, event);
     }
 

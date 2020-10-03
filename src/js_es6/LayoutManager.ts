@@ -22,7 +22,7 @@ import {
     getElementHeight,
     getElementWidth,
     getUniqueId,
-    isFunction,
+
 
 
     removeFromArray,
@@ -519,7 +519,7 @@ export abstract class LayoutManager extends EventEmitter {
 	 *          and the attached itemConfig. This can be used in
 	 *          removeDragSource() later to get rid of the drag listeners.
      */
-    createDragSource(element: HTMLElement, itemConfig: ItemConfig): DragSource {
+    createDragSource(element: HTMLElement, itemConfig: ItemConfig | (() => ItemConfig)): DragSource {
         this.config.settings.constrainDragToContainer = false;
         const dragSource = new DragSource(element, itemConfig, this);
         this._dragSources.push(dragSource);
@@ -578,7 +578,7 @@ export abstract class LayoutManager extends EventEmitter {
             case ItemConfig.Type.column: return new RowOrColumn(true, this, config, parent);
             case ItemConfig.Type.stack: return new Stack(this, config as StackItemConfig, parent);
             case ItemConfig.Type.component:
-            case ItemConfig.Type["react-component"]:
+            case ItemConfig.Type.reactComponent:
                 return new Component(this, config as ComponentConfig, parent);
             default:
                 throw new UnreachableCaseError('CCC913564', config.type, 'Invalid Config Item type specified');
@@ -746,25 +746,13 @@ export abstract class LayoutManager extends EventEmitter {
      *
      * @returns {AbtractContentItem}
      */
-    _$normalizeContentItem(contentItemOrConfig, parent) {
-        if (!contentItemOrConfig) {
-            throw new Error('No content item defined');
-        }
-
-        if (isFunction(contentItemOrConfig)) {
-            contentItemOrConfig = contentItemOrConfig();
-        }
-
+    _$normalizeContentItem(contentItemOrConfig: AbstractContentItem | ItemConfig, parent?: AbstractContentItem) {
         if (contentItemOrConfig instanceof AbstractContentItem) {
             return contentItemOrConfig;
-        }
-
-        if ($.isPlainObject(contentItemOrConfig) && contentItemOrConfig.type) {
-            var newContentItem = this.createContentItem(contentItemOrConfig, parent);
+        } else {
+            const newContentItem = this.createContentItem(contentItemOrConfig, parent);
             newContentItem.callDownwards('_$init');
             return newContentItem;
-        } else {
-            throw new Error('Invalid contentItem');
         }
     }
 
@@ -1085,7 +1073,7 @@ export abstract class LayoutManager extends EventEmitter {
      */
     _findAllStackContainersRecursive(stackContainers, node) {
         node.contentItems.forEach(fnBind(function(item) {
-            if (item.type == 'stack') {
+            if (item.type === ItemConfig.Type.stack) {
                 stackContainers.push(item);
             } else if (!item.isComponent) {
                 this._findAllStackContainersRecursive(stackContainers, item);

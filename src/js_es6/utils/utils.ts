@@ -72,9 +72,19 @@ export function getElementWidth(element: HTMLElement): number {
     return pixelsToNumber(widthAsPixels);
 }
 
+export function setElementWidth(element: HTMLElement, width: number): void {
+    const widthAsPixels = numberToPixels(width);
+    element.style.width = widthAsPixels;
+}
+
 export function getElementHeight(element: HTMLElement): number {
     const widthAsPixels = getComputedStyle(element).height;
     return pixelsToNumber(widthAsPixels);
+}
+
+export function setElementHeight(element: HTMLElement, height: number): void {
+    const heightAsPixels = numberToPixels(height);
+    element.style.height = heightAsPixels;
 }
 
 export function setElementVisibility(element: HTMLElement, visible: boolean): void {

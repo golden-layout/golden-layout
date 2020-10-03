@@ -1,9 +1,10 @@
 import { ComponentConfig } from '../config/config';
+import { AssertError, UnexpectedNullError } from '../errors/error';
 import { AbstractContentItem } from '../items/AbstractContentItem';
-import { RowOrColumn } from '../items/RowOrColumn';
 import { LayoutManager } from '../LayoutManager';
 import { EventEmitter } from '../utils/EventEmitter';
-import { createTemplateHtmlElement, deepExtend } from '../utils/utils';
+import { JsonValue } from '../utils/types';
+import { createTemplateHtmlElement, deepExtend, setElementHeight, setElementWidth } from '../utils/utils';
 
 export class ItemContainer extends EventEmitter {
     width: number | null;
@@ -12,8 +13,9 @@ export class ItemContainer extends EventEmitter {
     isHidden;
     readonly element;
     private readonly _contentElement;
+    private _tab: ItemContainer.Tab;
 
-    constructor(private readonly _config: ComponentConfig, public readonly parent: RowOrColumn, public readonly layoutManager: LayoutManager) {
+    constructor(private readonly _config: ComponentConfig, public readonly parent: ItemContainer.Parent, public readonly layoutManager: LayoutManager) {
 
         super();
 
@@ -71,7 +73,7 @@ export class ItemContainer extends EventEmitter {
         this.emit('show');
         this.isHidden = false;
         this.element.style.display = '';
-        // call shown only if the container has a valid size
+        // emit shown only if the container has a valid size
         if (this.height != 0 || this.width != 0) {
             this.emit('shown');
         }
@@ -86,46 +88,52 @@ export class ItemContainer extends EventEmitter {
      * If this container isn't a descendant of a row or column
      * it returns false
      * @todo  Rework!!!
-     * @param {Number} width  The new width in pixel
-     * @param {Number} height The new height in pixel
+     * @param width  The new width in pixel
+     * @param height The new height in pixel
      *
-     * @returns {Boolean} resizeSuccesful
+     * @returns resizeSuccesful
      */
     setSize(width: number, height: number): boolean {
-        let rowOrColumn = this.parent;
-        // eslint-disable-next-line @typescript-eslint/no-this-alias
-        let rowOrColumnChild: AbstractContentItem = this;
+        let ancestorItem: AbstractContentItem | null = this.parent;
+        if (ancestorItem.isColumn || ancestorItem.isRow || ancestorItem.parent === null) {
+            throw new AssertError('ICSSPRC', 'ItemContainer cannot have RowColumn Parent');
+        } else {
+            let ancestorChildItem: AbstractContentItem;
+            do {
+                ancestorChildItem = ancestorItem;
+                ancestorItem = ancestorItem.parent;
+            } while (ancestorItem !== null && !ancestorItem.isColumn && !ancestorItem.isRow);
 
-        while (!rowOrColumn.isColumn && !rowOrColumn.isRow) {
-            rowOrColumnChild = rowOrColumn;
-            rowOrColumn = rowOrColumn.parent;
-
-            /**
-             * No row or column has been found
-             */
-            if (rowOrColumn.isRoot) {
+            if (ancestorItem === null) {
+                // no Row or Column found
                 return false;
-            }
-        }
-
-        const direction = rowOrColumn.isColumn ? 'height' : 'width';
-        const newSize = direction === 'height' ? height : width;
-
-        const totalPixel = this[direction] * (1 / (rowOrColumnChild.config[direction] / 100));
-        const percentage = (newSize / totalPixel) * 100;
-        const delta = (rowOrColumnChild.config[direction] - percentage) / (rowOrColumn.contentItems.length - 1);
-
-        for (let i = 0; i < rowOrColumn.contentItems.length; i++) {
-            if (rowOrColumn.contentItems[i] === rowOrColumnChild) {
-                rowOrColumn.contentItems[i].config[direction] = percentage;
             } else {
-                rowOrColumn.contentItems[i].config[direction] += delta;
+                // ancestorItem is Row or Column
+                const direction = ancestorItem.isColumn ? 'height' : 'width';
+                const currentSize = this[direction];
+                if (currentSize === null) {
+                    throw new UnexpectedNullError('ICSSCS11194');
+                } else {
+                    const newSize = direction === 'height' ? height : width;
+
+                    const totalPixel = currentSize * (1 / (ancestorChildItem.config[direction] / 100));
+                    const percentage = (newSize / totalPixel) * 100;
+                    const delta = (ancestorChildItem.config[direction] - percentage) / (ancestorItem.contentItems.length - 1);
+
+                    for (let i = 0; i < ancestorItem.contentItems.length; i++) {
+                        if (ancestorItem.contentItems[i] === ancestorChildItem) {
+                            ancestorItem.contentItems[i].config[direction] = percentage;
+                        } else {
+                            ancestorItem.contentItems[i].config[direction] += delta;
+                        }
+                    }
+
+                    ancestorItem.callDownwards('setSize');
+
+                    return true;
+                }
             }
         }
-
-        rowOrColumn.callDownwards('setSize');
-
-        return true;
     }
 
 
@@ -149,21 +157,25 @@ export class ItemContainer extends EventEmitter {
      *
      * @returns {Object} state
      */
-    getState(): Record<string, unknown> {
-        return this._config.componentState;
+    getState(): JsonValue {
+        if (ComponentConfig.isJson(this._config)) {
+            return this._config.componentState;
+        } else {
+            if (ComponentConfig.isReact(this._config)) {
+                return this._config.props as JsonValue;
+            } else {
+                throw new AssertError('ICGS25546');
+            }
+        }
     }
 
 
     /**
      * Merges the provided state into the current one
-     *
-     * @param   {Object} state
-     *
-     * @returns {void}
      */
     extendState(state: Record<string, unknown>): void {
-        const extendedState = deepExtend(this.getState(), state);
-        this.setState(extendedState);
+        const extendedState = deepExtend(this.getState() as Record<string, unknown>, state);
+        this.setState(extendedState as JsonValue);
     }
 
 
@@ -172,19 +184,31 @@ export class ItemContainer extends EventEmitter {
      *
      * @param {serialisable} state
      */
-    setState(state: Record<string, unknown>): void {
-        this._config.componentState = state;
-        this.parent.emitBubblingEvent('stateChanged');
+    setState(state: JsonValue): void {
+        if (ComponentConfig.isJson(this._config)) {
+            this._config.componentState = state;
+            this.parent.emitBubblingEvent('stateChanged');
+        } else {
+            if (ComponentConfig.isReact(this._config)) {
+                this._config.props = state;
+                this.parent.emitBubblingEvent('stateChanged');
+            } else {
+                throw new AssertError('ICSS25546');
+            }
+        }
     }
 
 
     /**
      * Set's the components title
-     *
-     * @param {String} title
      */
-    setTitle(title: string) {
+    setTitle(title: string): void {
         this.parent.setTitle(title);
+    }
+
+    setTab(tab: ItemContainer.Tab): void {
+        this._tab = tab;
+        this.emit('tab', tab)
     }
 
 
@@ -198,13 +222,30 @@ export class ItemContainer extends EventEmitter {
      *
      * @returns {void}
      */
-    _$setSize(width: [Int], height: [Int]): void {
+    _$setSize(width: number, height: number): void {
         if (width !== this.width || height !== this.height) {
             this.width = width;
             this.height = height;
-            $.zepto ? this._contentElement.width(width) : this._contentElement.outerWidth(width);
-            $.zepto ? this._contentElement.height(height) : this._contentElement.outerHeight(height);
+            // Previously tried to set offsetWidth and offsetHeight if full jQuery was available
+            // There is no simple alternative for setting offsetWidth/offsetHeight
+            // See if just setting width and height suffices.  If not, needs more work
+            // $.zepto ? this._contentElement.width(width) : this._contentElement.outerWidth(width);
+            // $.zepto ? this._contentElement.height(height) : this._contentElement.outerHeight(height);
+            setElementWidth(this._contentElement, width);
+            setElementHeight(this._contentElement, height);
             this.emit('resize');
         }
+    }
+}
+
+export namespace ItemContainer {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface Tab {
+
+    }
+
+    export interface Parent extends AbstractContentItem {
+        close(): void;
+        setTitle(title: string): void;
     }
 }

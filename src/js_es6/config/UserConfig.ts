@@ -56,7 +56,7 @@ export interface UserItemConfig {
     /**
      * Default: true
      */
-    reorderEnabled?: boolean;
+    reorderEnabled?: boolean;  // Takes precedence over UserManagerConfig.reorderEnabled. Should be settings.reorderEnabled
 
     activeItemIndex?: number;
 }
@@ -290,6 +290,7 @@ export namespace UserManagerConfig {
 
         /**
          * If true, the user can re-arrange the layout by dragging items by their tabs to the desired location.
+         * Can be overridden by UserItemConfig.reorderEnabled for specific ItemConfigs
          * Default: true
          */
         reorderEnabled?: boolean;

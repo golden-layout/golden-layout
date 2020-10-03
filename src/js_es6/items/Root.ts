@@ -1,13 +1,13 @@
-import { ItemConfig } from '../config/config';
+import { HeaderedItemConfig, ItemConfig, StackItemConfig } from '../config/config';
 import { AbstractContentItem } from '../items/AbstractContentItem';
 import { RowOrColumn } from '../items/RowOrColumn';
 import { LayoutManager } from '../LayoutManager';
-import { createTemplateHtmlElement } from '../utils/utils';
-import { Stack } from './Stack';
+import { LinkedRect } from '../utils/types';
+import { createTemplateHtmlElement, getElementHeight, getElementWidth, setElementHeight, setElementWidth } from '../utils/utils';
+import { Component } from './Component';
 
 export class Root extends AbstractContentItem {
-    readonly element;
-    readonly childElementContainer;
+    private readonly _childElementContainer;
     private _containerElement: HTMLElement;
 
     constructor(layoutManager: LayoutManager, config: ItemConfig, containerElement: HTMLElement) {
@@ -16,9 +16,21 @@ export class Root extends AbstractContentItem {
 
         this.isRoot = true;
         this.element = createTemplateHtmlElement('<div class="lm_goldenlayout lm_item lm_root"></div>', 'div');
-        this.childElementContainer = this.element;
+        this._childElementContainer = this.element;
         this._containerElement = containerElement;
         this._containerElement.append(this.element);
+    }
+
+    _$init(): void {
+        if (this.isInitialised === true) return;
+
+        this.setSize();
+
+        for (let i = 0; i < this.contentItems.length; i++) {
+            this._childElementContainer.append(this.contentItems[i].element);
+        }
+
+        super._$init();
     }
 
     addChild(contentItem: AbstractContentItem, index?: number): void {
@@ -26,49 +38,53 @@ export class Root extends AbstractContentItem {
             throw new Error('Root node can only have a single child');
         }
 
-        contentItem = this.layoutManager._$normalizeContentItem(contentItem, this);
-        this.childElementContainer.append(contentItem.element);
+        // contentItem = this.layoutManager._$normalizeContentItem(contentItem, this);
+        this._childElementContainer.append(contentItem.element);
         super.addChild(contentItem, index);
 
         this.callDownwards('setSize');
         this.emitBubblingEvent('stateChanged');
     }
 
-    setSize(width, height) {
-        width = (typeof width === 'undefined') ? this._containerElement.width() : width;
-        height = (typeof height === 'undefined') ? this._containerElement.height() : height;
+    setSize(width?: number, height?: number): void {
+        width = (width === undefined) ? getElementWidth(this._containerElement) : width;
+        height = (height === undefined) ? getElementHeight(this._containerElement) : height;
 
-        this.element.width(width);
-        this.element.height(height);
+        setElementWidth(this.element, width);
+        setElementHeight(this.element, height);
 
         /*
          * Root can be empty
          */
-        if (this.contentItems[0]) {
-            this.contentItems[0].element.width(width);
-            this.contentItems[0].element.height(height);
+        if (this.contentItems.length > 0) {
+            setElementWidth(this.contentItems[0].element, width);
+            setElementHeight(this.contentItems[0].element, height);
         }
     }
 
-    _$highlightDropZone(x: number, y: number, area: AbstractContentItem.Area): void {
+    _$highlightDropZone(x: number, y: number, area: LinkedRect): void {
         this.layoutManager.tabDropPlaceholder.remove();
         super._$highlightDropZone(x, y, area);
     }
 
     _$onDrop(contentItem: AbstractContentItem, area: AbstractContentItem.Area): void {
-        let stack: Stack;
 
         if (contentItem.isComponent) {
-            stack = this.layoutManager.createContentItem({
-                type: 'stack',
-                header: contentItem.config.header || {}
-            }, this);
+            const itemConfig = StackItemConfig.createDefault();
+            // since ItemConfig.contentItems not set up, we need to add header from Component
+            const component = contentItem as Component;
+            itemConfig.header = HeaderedItemConfig.Header.createCopy(component.headerConfig);
+            const stack = this.layoutManager.createContentItem(itemConfig, this);
+            // const stack = this.layoutManager.createContentItem({
+            //     type: 'stack',
+            //     header: contentItem.config.header || {}
+            // }, this);
             stack._$init();
             stack.addChild(contentItem);
             contentItem = stack;
         }
 
-        if (!this.contentItems.length) {
+        if (this.contentItems.length === 0) {
             this.addChild(contentItem);
         } else {
             /*
@@ -77,9 +93,8 @@ export class Root extends AbstractContentItem {
              * If it is, we need to re-wrap it in a Stack like it was when it was dragged by its Tab (it was dragged!).
              */
             if(contentItem.config.type === ItemConfig.Type.row || contentItem.config.type === ItemConfig.Type.column){
-                stack = this.layoutManager.createContentItem({
-                    type: 'stack'
-                }, this)
+                const itemConfig = StackItemConfig.createDefault();
+                const stack = this.layoutManager.createContentItem(itemConfig, this);
                 stack.addChild(contentItem)
                 contentItem = stack
             }
@@ -88,10 +103,9 @@ export class Root extends AbstractContentItem {
             const dimension = area.side[0] == 'x' ? 'width' : 'height';
             const insertBefore = area.side[1] == '2';
             const column = this.contentItems[0];
-            if (!(column instanceof RowOrColumn) || column.type != type) {
-                var rowOrColumn = this.layoutManager.createContentItem({
-                    type: type
-                }, this);
+            if (!(column instanceof RowOrColumn) || column.type !== type) {
+                const itemConfig = ItemConfig.createDefault(type);
+                const rowOrColumn = this.layoutManager.createContentItem(itemConfig, this);
                 this.replaceChild(column, rowOrColumn);
                 rowOrColumn.addChild(contentItem, insertBefore ? 0 : undefined, true);
                 rowOrColumn.addChild(column, insertBefore ? undefined : 0, true);
@@ -99,10 +113,10 @@ export class Root extends AbstractContentItem {
                 contentItem.config[dimension] = 50;
                 rowOrColumn.callDownwards('setSize');
             } else {
-                var sibbling = column.contentItems[insertBefore ? 0 : column.contentItems.length - 1]
+                const sibling = column.contentItems[insertBefore ? 0 : column.contentItems.length - 1]
                 column.addChild(contentItem, insertBefore ? 0 : undefined, true);
-                sibbling.config[dimension] *= 0.5;
-                contentItem.config[dimension] = sibbling.config[dimension];
+                sibling.config[dimension] *= 0.5;
+                contentItem.config[dimension] = sibling.config[dimension];
                 column.callDownwards('setSize');
             }
         }

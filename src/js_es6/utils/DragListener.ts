@@ -60,7 +60,7 @@ export class DragListener extends EventEmitter {
     private onMouseDown(oEvent: MouseEvent) {
         oEvent.preventDefault();
 
-        if (oEvent.button == 0) {
+        if (oEvent.button === 0) {
             const coordinates = this.getMouseCoordinates(oEvent);
             this.processMouseDownTouchStart(coordinates);
         }

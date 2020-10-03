@@ -1,3 +1,4 @@
+import { UnexpectedNullError } from '../errors/error';
 import { AbstractContentItem } from '../items/AbstractContentItem';
 import { LayoutManager } from '../LayoutManager';
 import { DragListener } from '../utils/DragListener';
@@ -43,13 +44,16 @@ export class DragProxy extends EventEmitter {
     private _maxY: number;
     private _contentItemParent: AbstractContentItem;
     private _sided: boolean;
-    element: HTMLElement;
+    private _childElementContainer: HTMLElement;
+    private _element: HTMLElement;
+
+    get element(): HTMLElement { return this._element; }
 
     constructor(x: number, y: number,
         private readonly _dragListener: DragListener,
         private readonly _layoutManager: LayoutManager,
         private readonly _contentItem: AbstractContentItem,
-        private readonly _originalParent: HTMLElement) {
+        private readonly _originalParent: AbstractContentItem) {
 
         super();
 
@@ -59,27 +63,27 @@ export class DragProxy extends EventEmitter {
         this._dragListener.on('drag', (offsetX, offsetY, event) => this.onDrag(offsetX, offsetY, event));
         this._dragListener.on('dragStop', () => this.onDrop());
 
-        this.element = createTemplateHtmlElement(_template, 'div');
+        this._element = createTemplateHtmlElement(_template, 'div');
         if (this._originalParent !== undefined && originalParent._side) {
             this._sided = originalParent._sided;
-            this.element.addClass('lm_' + originalParent._side);
+            this._element.addClass('lm_' + originalParent._side);
             if (['right', 'bottom'].indexOf(originalParent._side) >= 0)
-                this.element.find('.lm_content').after(this.element.find('.lm_header'));
+                this._element.find('.lm_content').after(this._element.find('.lm_header'));
         }
-        this.element.css({
+        this._element.css({
             left: x,
             top: y
         });
-        this.element.find('.lm_tab').attr('title', stripTags(this._contentItem.config.title));
-        this.element.find('.lm_title').html(this._contentItem.config.title);
-        this.childElementContainer = this.element.find('.lm_content');
-        this.childElementContainer.append(contentItem.element);
+        this._element.find('.lm_tab').attr('title', stripTags(this._contentItem.config.title));
+        this._element.find('.lm_title').html(this._contentItem.config.title);
+        this._childElementContainer = this._element.find('.lm_content');
+        this._childElementContainer.append(contentItem.element);
 
         this._undisplayTree();
         this._layoutManager.calculateItemAreas();
         this.setDimensions();
 
-        $(document.body).append(this.element);
+        $(document.body).append(this._element);
 
         var offset = this._layoutManager.container.offset();
 
@@ -87,8 +91,8 @@ export class DragProxy extends EventEmitter {
         this._minY = offset.top;
         this._maxX = this._layoutManager.container.width() + this._minX;
         this._maxY = this._layoutManager.container.height() + this._minY;
-        this._width = this.element.width();
-        this._height = this.element.height();
+        this._width = this._element.width();
+        this._height = this._element.height();
 
         this._setDropPosition(x, y);
     }
@@ -123,12 +127,10 @@ export class DragProxy extends EventEmitter {
      * @param   {Number} x The x position in px
      * @param   {Number} y The y position in px
      *
-     * @private
-     *
      * @returns {void}
      */
-    _setDropPosition(x, y) {
-        this.element.css({
+    _setDropPosition(x: number, y: number): void {
+        this._element.css({
             left: x,
             top: y
         });
@@ -143,14 +145,15 @@ export class DragProxy extends EventEmitter {
     /**
      * Callback when the drag has finished. Determines the drop area
      * and adds the child to it
-     *
-     * @private
-     *
-     * @returns {void}
      */
-    onDrop() {
+    onDrop(): void {
         this.updateTree()
-        this._layoutManager.dropTargetIndicator.hide();
+        const dropTargetIndicator = this._layoutManager.dropTargetIndicator;
+        if (dropTargetIndicator === null) {
+            throw new UnexpectedNullError('DPOD30011');
+        } else {
+            dropTargetIndicator.hide();
+        }
 
         /*
          * Valid drop area found
@@ -182,7 +185,7 @@ export class DragProxy extends EventEmitter {
             this._contentItem._$destroy();
         }
 
-        this.element.remove();
+        this._element.remove();
 
         this._layoutManager.emit('itemDropped', this._contentItem);
     }
@@ -227,12 +230,12 @@ export class DragProxy extends EventEmitter {
             if (width === undefined || height === undefined) {
                 throw new Error('DragProxy.setDimensions: width and/or height undefined');
             } else {
-                this.element.style.width = numberToPixels(width);
-                this.element.style.height = numberToPixels(height)
+                this._element.style.width = numberToPixels(width);
+                this._element.style.height = numberToPixels(height)
                 width -= (this._sided ? dimensions.headerHeight : 0);
                 height -= (!this._sided ? dimensions.headerHeight : 0);
-                this.childElementContainer.width(width);
-                this.childElementContainer.height(height);
+                this._childElementContainer.width(width);
+                this._childElementContainer.height(height);
                 this._contentItem.element.width(width);
                 this._contentItem.element.height(height);
                 this._contentItem.callDownwards('_$show');

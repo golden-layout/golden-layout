@@ -13,7 +13,7 @@ export interface ItemConfig {
     id: string | string[];
     isClosable: boolean;
     title: string;
-    reorderEnabled: boolean;
+    reorderEnabled: boolean; // Takes precedence over ManagerConfig.reorderEnabled. Should be settings.reorderEnabled
 
     activeItemIndex: number;
 }
@@ -50,7 +50,6 @@ export namespace ItemConfig {
             case ItemConfig.Type.root:
             case ItemConfig.Type.row:
             case ItemConfig.Type.column:
-            case ItemConfig.Type.stack:
                 const result: ItemConfig = {
                     type: original.type,
                     content: content ?? copyContent(original.content),
@@ -65,6 +64,9 @@ export namespace ItemConfig {
                     activeItemIndex: original.activeItemIndex,
                 }
                 return result;
+
+            case ItemConfig.Type.stack:
+                return StackItemConfig.createCopy(original as StackItemConfig);
 
             case ItemConfig.Type.component:
                 return JsonComponentConfig.createCopy(original as JsonComponentConfig);
@@ -157,6 +159,44 @@ export namespace HeaderedItemConfig {
 }
 
 export type StackItemConfig = HeaderedItemConfig
+
+export namespace StackItemConfig {
+    export function createCopy(original: StackItemConfig): StackItemConfig {
+        const result: StackItemConfig = {
+            type: original.type,
+            content: ItemConfig.copyContent(original.content),
+            width: original.width,
+            minWidth: original.minWidth,
+            height: original.height,
+            minHeight: original.minHeight,
+            id: original.id,
+            isClosable: original.isClosable,
+            reorderEnabled: original.reorderEnabled,
+            title: original.title,
+            activeItemIndex: original.activeItemIndex,
+            header: HeaderedItemConfig.Header.createCopy(original.header),
+        }
+        return result;
+    }
+
+    export function createDefault(): StackItemConfig {
+        const result: StackItemConfig = {
+            type: ItemConfig.Type.component,
+            content: ItemConfig.defaults.content,
+            width: ItemConfig.defaults.width,
+            minWidth: ItemConfig.defaults.minWidth,
+            height: ItemConfig.defaults.height,
+            minHeight: ItemConfig.defaults.minHeight,
+            id: ItemConfig.defaults.id,
+            isClosable: ItemConfig.defaults.isClosable,
+            reorderEnabled: ItemConfig.defaults.reorderEnabled,
+            title: ItemConfig.defaults.title,
+            activeItemIndex: ItemConfig.defaults.activeItemIndex,
+            header: undefined,
+        }
+        return result;
+    }
+}
 
 export interface ComponentConfig extends HeaderedItemConfig {
     /**
@@ -282,7 +322,7 @@ export namespace ManagerConfig {
     export interface Settings {
         // see UserConfig.Settings for comments
         constrainDragToContainer: boolean;
-        reorderEnabled: boolean;
+        reorderEnabled: boolean; // also in ItemConfig which takes precedence
         selectionEnabled: boolean;
         popoutWholeStack: boolean;
         blockedPopoutsThrowError: boolean;
@@ -419,7 +459,7 @@ export namespace ManagerConfig {
         }
     }
 
-    export function createRootItemConfig(managerConfig: PopoutManagerConfig): ItemConfig {
+    export function createRootItemConfig(managerConfig: ManagerConfig): ItemConfig {
         return {
             type: ItemConfig.Type.root,
             content: managerConfig.content,

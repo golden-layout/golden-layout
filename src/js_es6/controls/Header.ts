@@ -2,7 +2,7 @@ import { HeaderButton } from '../controls/HeaderButton';
 import { Tab } from '../controls/Tab';
 import { UnexpectedNullError } from '../errors/error';
 import { AbstractContentItem } from '../items/AbstractContentItem';
-import { Stack } from '../items/Stack';
+import { Component } from '../items/Component';
 import { LayoutManager } from '../LayoutManager';
 import { EventEmitter } from '../utils/EventEmitter';
 import { Side } from '../utils/types';
@@ -67,7 +67,7 @@ export class Header extends EventEmitter {
     get leftRightSided(): boolean { return this._leftRightSided; }
     get dockEnabled(): boolean { return this._dockEnabled; }
 
-    constructor(public layoutManager: LayoutManager, private parent: Stack,
+    constructor(public layoutManager: LayoutManager, private _parent: Header.Parent,
         settings: Header.Settings, closeEvent: Header.CloseEvent) {
 
         super();
@@ -111,8 +111,8 @@ export class Header extends EventEmitter {
                     throw new UnexpectedNullError('HCC21222');
                 } else {
                     this.controlsContainerElement = controlsContainerElement as HTMLElement;
-                    this.parent = parent;
-                    this.parent.on('resize', this.updateTabSizes);
+                    this._parent = _parent;
+                    this._parent.on('resize', this.updateTabSizes);
                     this.tabs = [];
                     this.tabsMarkedForRemoval = [];
                     this.activeContentItem = null;
@@ -132,19 +132,19 @@ export class Header extends EventEmitter {
     /**
      * Creates a new tab and associates it with a contentItem
      *
-     * @param    contentItem
+     * @param    component
      * @param    index The position of the tab
      */
-    createTab(contentItem: AbstractContentItem, index: number): void {
+    createTab(component: Component, index: number): void {
         //If there's already a tab relating to the
         //content item, don't do anything
         for (let i = 0; i < this.tabs.length; i++) {
-            if (this.tabs[i].contentItem === contentItem) {
+            if (this.tabs[i].component === component) {
                 return;
             }
         }
 
-        const tab = new Tab(this, contentItem);
+        const tab = new Tab(this, component, this._parent);
 
         if (this.tabs.length === 0) {
             this.tabs.push(tab);
@@ -173,7 +173,7 @@ export class Header extends EventEmitter {
      */
     removeTab(contentItem: AbstractContentItem): void {
         for (let i = 0; i < this.tabs.length; i++) {
-            if (this.tabs[i].contentItem === contentItem) {
+            if (this.tabs[i].component === contentItem) {
                 this.tabs[i]._$destroy();
                 this.tabs.splice(i, 1);
                 return;
@@ -181,7 +181,7 @@ export class Header extends EventEmitter {
         }
 
         for (let i = 0; i < this.tabsMarkedForRemoval.length; i++) {
-            if (this.tabsMarkedForRemoval[i].contentItem === contentItem) {
+            if (this.tabsMarkedForRemoval[i].component === contentItem) {
                 this.tabsMarkedForRemoval[i]._$destroy();
                 this.tabsMarkedForRemoval.splice(i, 1);
                 return;
@@ -198,7 +198,7 @@ export class Header extends EventEmitter {
      */
     hideTab(contentItem: AbstractContentItem): void {
         for (let i = 0; i < this.tabs.length; i++) {
-            if (this.tabs[i].contentItem === contentItem) {
+            if (this.tabs[i].component === contentItem) {
                 this.tabs[i].element.style.display = 'none';
                 this.tabsMarkedForRemoval.push(this.tabs[i])
                 this.tabs.splice(i, 1);
@@ -216,11 +216,11 @@ export class Header extends EventEmitter {
         if (this.activeContentItem === contentItem) return;
 
         for (let i = 0; i < this.tabs.length; i++) {
-            const isActive = this.tabs[i].contentItem === contentItem;
+            const isActive = this.tabs[i].component === contentItem;
             this.tabs[i].setActive(isActive);
             if (isActive === true) {
                 this.activeContentItem = contentItem;
-                this.parent.config.activeItemIndex = i;
+                this._parent.config.activeItemIndex = i;
             }
         }
 
@@ -229,18 +229,18 @@ export class Header extends EventEmitter {
              * If the tab selected was in the dropdown, move everything down one to make way for this one to be the first.
              * This will make sure the most used tabs stay visible.
              */
-            if (this._lastVisibleTabIndex !== -1 && this.parent.config.activeItemIndex > this._lastVisibleTabIndex) {
-                const activeTab = this.tabs[this.parent.config.activeItemIndex];
-                for (let j = this.parent.config.activeItemIndex; j > 0; j--) {
+            if (this._lastVisibleTabIndex !== -1 && this._parent.config.activeItemIndex > this._lastVisibleTabIndex) {
+                const activeTab = this.tabs[this._parent.config.activeItemIndex];
+                for (let j = this._parent.config.activeItemIndex; j > 0; j--) {
                     this.tabs[j] = this.tabs[j - 1];
                 }
                 this.tabs[0] = activeTab;
-                this.parent.config.activeItemIndex = 0;
+                this._parent.config.activeItemIndex = 0;
             }
         }
 
         this.updateTabSizes();
-        this.parent.emitBubblingEvent('stateChanged');
+        this._parent.emitBubblingEvent('stateChanged');
     }
 
     setSide(value: Side): void {
@@ -272,7 +272,7 @@ export class Header extends EventEmitter {
      * @returns Whether the header is closable.
      */
     isClosable(): boolean {
-        return this.parent.config.isClosable && this.layoutManager.config.settings.showCloseIcon;
+        return this._parent.config.isClosable && this.layoutManager.config.settings.showCloseIcon;
     }
 
     /**
@@ -326,10 +326,10 @@ export class Header extends EventEmitter {
          * Maximise control - set the component to the full size of the layout
          */
         if (this._maximiseEnabled) {
-            const maximiseButton = new HeaderButton(this, this._maximiseLabel, 'lm_maximise', () => this.parent.toggleMaximise());
+            const maximiseButton = new HeaderButton(this, this._maximiseLabel, 'lm_maximise', () => this._parent.toggleMaximise());
 
-            this.parent.on('maximised', () => maximiseButton.element.setAttribute('title', this._minimiseLabel) );
-            this.parent.on('minimised', () => maximiseButton.element.setAttribute('title', this._maximiseLabel) );
+            this._parent.on('maximised', () => maximiseButton.element.setAttribute('title', this._minimiseLabel) );
+            this._parent.on('minimised', () => maximiseButton.element.setAttribute('title', this._maximiseLabel) );
         }
 
         /**
@@ -355,12 +355,12 @@ export class Header extends EventEmitter {
     }
 
     private onDockClick() {
-        this.parent.dock();
+        this._parent.dock();
     }
 
     private onPopoutClick() {
         if (this.layoutManager.config.settings.popoutWholeStack === true) {
-            this.parent.popout();
+            this._parent.popout();
         } else {
             if (this.activeContentItem === null) {
                 throw new UnexpectedNullError('HOPC70222');
@@ -375,7 +375,7 @@ export class Header extends EventEmitter {
      */
     private onHeaderClick(event: MouseEvent) {
         if (event.target === this._element.childNodes[0]) {
-            this.parent.select();
+            this._parent.select();
         }
     }
 
@@ -384,7 +384,7 @@ export class Header extends EventEmitter {
      */
     private onHeaderTouchStart(event: TouchEvent) {
         if (event.target === this._element.childNodes[0]) {
-            this.parent.select();
+            this._parent.select();
         }
     }
 
@@ -516,5 +516,10 @@ export namespace Header {
         closeLabel: string;
         tabDropdownEnabled: boolean;
         tabDropdownLabel: string;
+    }
+
+    // Stack
+    export interface Parent extends Tab.HeaderParent {
+        dock(): void;
     }
 }
