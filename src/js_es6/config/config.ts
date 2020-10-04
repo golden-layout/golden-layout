@@ -1,4 +1,4 @@
-import { AssertError, UnreachableCaseError } from '../errors/error';
+import { AssertError, UnreachableCaseError } from '../errors/internal-error';
 import { JsonValue, Side } from '../utils/types';
 import { deepExtendValue } from '../utils/utils';
 
@@ -10,12 +10,14 @@ export interface ItemConfig {
     minWidth: number;
     height: number;
     minHeight: number;
+    // Currently id has 2 purposes. It can be used by user to identify Items and it is also used to track which Item is maximised
+    // This is confusing
+    // It should be refactored to only exist for User purposes
+    // A new property "maximised: true | undefined" should be added to track which Item is maximised
     id: string | string[];
     isClosable: boolean;
     title: string;
     reorderEnabled: boolean; // Takes precedence over ManagerConfig.reorderEnabled. Should be settings.reorderEnabled
-
-    activeItemIndex: number;
 }
 
 export namespace ItemConfig {
@@ -41,7 +43,6 @@ export namespace ItemConfig {
         isClosable: true,
         reorderEnabled: true,
         title: '',
-        activeItemIndex: -1,
     }
 
     /** Creates a copy of the original ItemConfig using an alternative content if specified */
@@ -61,7 +62,6 @@ export namespace ItemConfig {
                     isClosable: original.isClosable,
                     reorderEnabled: original.reorderEnabled,
                     title: original.title,
-                    activeItemIndex: original.activeItemIndex,
                 }
                 return result;
 
@@ -94,7 +94,6 @@ export namespace ItemConfig {
                 throw new AssertError('CICCDR91562'); // Get default root from ManagerConfig
             case ItemConfig.Type.row:
             case ItemConfig.Type.column:
-            case ItemConfig.Type.stack:
                 const result: ItemConfig = {
                     type: defaults.type,
                     content: defaults.content,
@@ -106,9 +105,11 @@ export namespace ItemConfig {
                     isClosable: defaults.isClosable,
                     reorderEnabled: defaults.reorderEnabled,
                     title: defaults.title,
-                    activeItemIndex: defaults.activeItemIndex,
                 }
                 return result;
+
+            case ItemConfig.Type.stack:
+                return StackItemConfig.createDefault();
 
             case ItemConfig.Type.component:
                 return JsonComponentConfig.createDefault();
@@ -118,6 +119,14 @@ export namespace ItemConfig {
 
             default:
                 throw new UnreachableCaseError('CICCDD91563', type, 'Invalid Config Item type specified');
+        }
+    }
+
+    export function idEqualsOrContainsId(id: string | string[], otherId: string): boolean {
+        if (id instanceof Array) {
+            return id.includes(otherId);
+        } else {
+            return id === otherId;
         }
     }
 }
@@ -158,9 +167,13 @@ export namespace HeaderedItemConfig {
     }
 }
 
-export type StackItemConfig = HeaderedItemConfig
+export interface StackItemConfig extends HeaderedItemConfig {
+    activeItemIndex: number;
+}
 
 export namespace StackItemConfig {
+    export const defaultActiveItemIndex = 0;
+
     export function createCopy(original: StackItemConfig): StackItemConfig {
         const result: StackItemConfig = {
             type: original.type,
@@ -191,7 +204,7 @@ export namespace StackItemConfig {
             isClosable: ItemConfig.defaults.isClosable,
             reorderEnabled: ItemConfig.defaults.reorderEnabled,
             title: ItemConfig.defaults.title,
-            activeItemIndex: ItemConfig.defaults.activeItemIndex,
+            activeItemIndex: defaultActiveItemIndex,
             header: undefined,
         }
         return result;
@@ -232,7 +245,6 @@ export namespace JsonComponentConfig {
             isClosable: original.isClosable,
             reorderEnabled: original.reorderEnabled,
             title: original.title,
-            activeItemIndex: original.activeItemIndex,
             header: HeaderedItemConfig.Header.createCopy(original.header),
             componentName: original.componentName,
             componentState: deepExtendValue(undefined, original.componentState) as JsonValue,
@@ -252,7 +264,6 @@ export namespace JsonComponentConfig {
             isClosable: ItemConfig.defaults.isClosable,
             reorderEnabled: ItemConfig.defaults.reorderEnabled,
             title: ItemConfig.defaults.title,
-            activeItemIndex: ItemConfig.defaults.activeItemIndex,
             header: undefined,
             componentName: '',
             componentState: {},
@@ -263,6 +274,7 @@ export namespace JsonComponentConfig {
 
 export interface ReactComponentConfig extends ComponentConfig {
     // see UserReactComponentConfig for comments
+    component: string;
     props?: unknown;
 }
 
@@ -281,16 +293,16 @@ export namespace ReactComponentConfig {
             isClosable: original.isClosable,
             reorderEnabled: original.reorderEnabled,
             title: original.title,
-            activeItemIndex: original.activeItemIndex,
             header: HeaderedItemConfig.Header.createCopy(original.header),
             componentName: REACT_COMPONENT_ID,
+            component: original.component,
             props: deepExtendValue(undefined, original.props),
         }
         return result;
     }
 
-    export function createDefault(): JsonComponentConfig {
-        const result: JsonComponentConfig = {
+    export function createDefault(): ReactComponentConfig {
+        const result: ReactComponentConfig = {
             type: ItemConfig.Type.reactComponent,
             content: ItemConfig.defaults.content,
             width: ItemConfig.defaults.width,
@@ -301,10 +313,10 @@ export namespace ReactComponentConfig {
             isClosable: ItemConfig.defaults.isClosable,
             reorderEnabled: ItemConfig.defaults.reorderEnabled,
             title: ItemConfig.defaults.title,
-            activeItemIndex: ItemConfig.defaults.activeItemIndex,
             header: undefined,
             componentName: '',
-            componentState: {},
+            component: '',
+            props: undefined,
         }
         return result;
     }
@@ -316,6 +328,11 @@ export interface ManagerConfig {
     dimensions: ManagerConfig.Dimensions;
     settings: ManagerConfig.Settings;
     header: ManagerConfig.Header;
+    // maximisedItemId should be removed in future
+    // Instead LayoutManager should scan Config Items for first Item with property maximised = true
+    // when it first loads config
+    // See comments on property "id" in ItemConfig
+    maximisedItemId: string | null;
 }
 
 export namespace ManagerConfig {
@@ -471,7 +488,6 @@ export namespace ManagerConfig {
             isClosable: false,
             title: '',
             reorderEnabled: false,
-            activeItemIndex: -1,
         }
     }
 
@@ -486,7 +502,9 @@ export namespace ManagerConfig {
 }
 
 export interface PopoutManagerConfig extends ManagerConfig {
+    /** The id of the element the item will be appended to on popIn */
     parentId: string;
+    /** The position of this element within its parent */
     indexInParent: number;
     window: PopoutManagerConfig.Window;
 }
@@ -497,7 +515,6 @@ export namespace PopoutManagerConfig {
         height: number | null,
         left: number | null,
         top: number | null,
-        maximised: boolean;
     }
 
     export namespace Window {
@@ -507,7 +524,6 @@ export namespace PopoutManagerConfig {
                 height: original.height,
                 left: original.left,
                 top: original.top,
-                maximised: original.maximised,
             }
         }
 
@@ -516,7 +532,6 @@ export namespace PopoutManagerConfig {
             height: null,
             left: null,
             top: null,
-            maximised: false,
         }
     }
 
@@ -527,6 +542,7 @@ export namespace PopoutManagerConfig {
             settings: ManagerConfig.Settings.createCopy(original.settings),
             dimensions: ManagerConfig.Dimensions.createCopy(original.dimensions),
             header: ManagerConfig.Header.createCopy(original.header),
+            maximisedItemId: original.maximisedItemId,
             parentId: original.parentId,
             indexInParent: original.indexInParent,
             window: PopoutManagerConfig.Window.createCopy(original.window),
@@ -549,6 +565,7 @@ export namespace Config {
             settings: ManagerConfig.Settings.createCopy(original.settings),
             dimensions: ManagerConfig.Dimensions.createCopy(original.dimensions),
             header: ManagerConfig.Header.createCopy(original.header),
+            maximisedItemId: original.maximisedItemId,
         }
         return result;
     }

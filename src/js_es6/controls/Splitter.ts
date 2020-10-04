@@ -24,8 +24,8 @@ export class Splitter {
     }
 
     private createElement(): HTMLElement {
-        const dragHandle = createTemplateHtmlElement('<div class="lm_drag_handle"></div>', 'div');
-        const element = createTemplateHtmlElement('<div class="lm_splitter"></div>', 'div');
+        const dragHandle = createTemplateHtmlElement('<div class="lm_drag_handle"></div>');
+        const element = createTemplateHtmlElement('<div class="lm_splitter"></div>');
         element.appendChild(dragHandle);
 
         const handleExcessSize = this._grabSize - this._size;

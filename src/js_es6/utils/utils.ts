@@ -1,5 +1,6 @@
 import $ from 'jquery';
-import { AssertError } from '../errors/error';
+import { UnexpectedNullError } from '../errors/internal-error';
+import { WidthAndHeight } from './types';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 export function F(): void {}
@@ -42,19 +43,19 @@ export function getQueryStringParam(param: string): string | null {
     return getHashValue(param);
 }
 
-export function createTemplateHtmlElement(templateText: string, selector: string): HTMLElement {
+// Caution! Try not to use this function.  Converting text to HTML can have security implications
+// While the templateText is not user generated and should be safe, some security reviews may reject applications
+// which use this technique regardless
+// https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML
+// Try creating fragments using javascript without HTML text
+export function createTemplateHtmlElement(templateText: string): HTMLElement {
     const template = document.createElement('template')
-    // modify the template's content
-    // template.content.append(document.createElement('div'))
-    // add it to the document so it is parsed and ready to be used
-    document.head.appendChild(template)
-    const parsedDocument = new DOMParser().parseFromString(templateText, 'text/html')
-    const node = parsedDocument.querySelector(selector);
-    if (node === null) {
-        throw new AssertError('UCTHE772242', `${selector}: ${templateText.substr(0, 400)}`);
+    template.insertAdjacentHTML('afterbegin', templateText);
+    const element = template.firstElementChild as HTMLElement;
+    if (element === null) {
+        throw new UnexpectedNullError('UCTHE43328', templateText);
     } else {
-        template.content.appendChild(node);
-        return node as HTMLElement;
+        return element;
     }
 }
 
@@ -78,13 +79,21 @@ export function setElementWidth(element: HTMLElement, width: number): void {
 }
 
 export function getElementHeight(element: HTMLElement): number {
-    const widthAsPixels = getComputedStyle(element).height;
-    return pixelsToNumber(widthAsPixels);
+    const heightAsPixels = getComputedStyle(element).height;
+    return pixelsToNumber(heightAsPixels);
 }
 
 export function setElementHeight(element: HTMLElement, height: number): void {
     const heightAsPixels = numberToPixels(height);
     element.style.height = heightAsPixels;
+}
+
+export function getElementWidthAndHeight(element: HTMLElement): WidthAndHeight {
+    const computedStyle = getComputedStyle(element);
+    return {
+        width: pixelsToNumber(computedStyle.width),
+        height: pixelsToNumber(computedStyle.height),
+    };
 }
 
 export function setElementVisibility(element: HTMLElement, visible: boolean): void {
@@ -98,6 +107,16 @@ export function setElementVisibility(element: HTMLElement, visible: boolean): vo
 export function copy(target: Record<string, unknown>, source: Record<string, unknown>): Record<string, unknown> {
     for (const key in source) {
         target[key] = source[key];
+    }
+    return target;
+}
+
+// replacement for JQuery $.extend(target, obj)
+export function extend(target: Record<string, unknown>, obj: Record<string, unknown>): Record<string, unknown> {
+    for (const key in obj) {
+        if (obj.hasOwnProperty(key)) {
+            target[key] = obj[key];
+        }
     }
     return target;
 }

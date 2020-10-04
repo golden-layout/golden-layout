@@ -1,5 +1,5 @@
 import { ComponentConfig } from '../config/config';
-import { AssertError, UnexpectedNullError } from '../errors/error';
+import { AssertError, UnexpectedNullError } from '../errors/internal-error';
 import { AbstractContentItem } from '../items/AbstractContentItem';
 import { LayoutManager } from '../LayoutManager';
 import { EventEmitter } from '../utils/EventEmitter';
@@ -15,6 +15,9 @@ export class ItemContainer extends EventEmitter {
     private readonly _contentElement;
     private _tab: ItemContainer.Tab;
 
+    get config(): ComponentConfig { return this._config; }
+    get tab(): ItemContainer.Tab { return this._tab; }
+
     constructor(private readonly _config: ComponentConfig, public readonly parent: ItemContainer.Parent, public readonly layoutManager: LayoutManager) {
 
         super();
@@ -27,7 +30,7 @@ export class ItemContainer extends EventEmitter {
         this.element = createTemplateHtmlElement(
             '<div class="lm_item_container"> ' +
             '  <div class="lm_content"></div>' +
-            '</div>', 'div');
+            '</div>');
 
         const contentElement = this.element.querySelector('.lm_content') as HTMLElement;
         if (contentElement === null) {
@@ -43,7 +46,7 @@ export class ItemContainer extends EventEmitter {
      *
      * @returns {DOM element}
      */
-    getElement(): HTMLElement {
+    getContentElement(): HTMLElement {
         return this._contentElement;
     }
 

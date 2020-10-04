@@ -1,10 +1,9 @@
 import { ItemConfig, ManagerConfig } from '../config/config';
 import { DragProxy } from '../controls/DragProxy';
-import { UnexpectedNullError, UnexpectedUndefinedError } from '../errors/error';
+import { UnexpectedNullError, UnexpectedUndefinedError } from '../errors/internal-error';
 import { Root } from '../items/Root';
 import { LayoutManager } from '../LayoutManager';
 import { DragListener } from '../utils/DragListener';
-import { createTemplateHtmlElement } from '../utils/utils';
 
 /**
  * Allows for any DOM item to create a component on drag
@@ -18,12 +17,21 @@ import { createTemplateHtmlElement } from '../utils/utils';
  */
 export class DragSource {
     private _dragListener: DragListener | null;
-    private _rootContainer: HTMLElement;
-    private _dummyRootContentItem: Root | undefined;
+    private _dummyRootContainer: HTMLElement;
+    private _dummyRootContentItem: Root;
  
     constructor(private _element: HTMLElement, private _itemConfigOrFtn: ItemConfig | (() => ItemConfig), private _layoutManager: LayoutManager) {
         this._dragListener = null;
-        this._rootContainer = createTemplateHtmlElement('')
+
+        // Need to review dummyRootContainer
+        // Should this part of a fragment or template?
+        // Does this need to be regenerated with each drag operation?
+        this._dummyRootContainer = document.createElement('div');
+
+        const rootConfig = ManagerConfig.createRootItemConfig(this._layoutManager.config);
+        rootConfig.content = []; // want to create root with 0 children
+        this._dummyRootContentItem = new Root(this._layoutManager, rootConfig, this._dummyRootContainer);
+
 
         this.createDragListener();
     }
@@ -65,21 +73,15 @@ export class DragSource {
 
         // Create a dummy ContentItem only for drag purposes
         // All ContentItems (except for root) need a parent.  When dragging, the parent is not used.
-        // Instead of allowing null parents (as Javascript version did), create a temporary dummy root parent and add ContentItem to that
-        // Delete Dummy root when finished dragging
+        // Instead of allowing null parents (as Javascript version did), use a temporary dummy root parent and add ContentItem to that
         // If this does not work, need to create alternative Root class
-
-        const rootConfig = ManagerConfig.createRootItemConfig(this._layoutManager.config);
-        rootConfig.content = []; // want to create root with 0 children
-        this._dummyRootContentItem = new Root(this._layoutManager, rootConfig, rootContainer);
         
-        const contentItem = this._layoutManager.createContentItem(copiedConfig, this._dummyRootContentItem);
-        contentItem.callDownwards('_$init');
+        const contentItem = this._layoutManager.createAndInitContentItem(copiedConfig, this._dummyRootContentItem);
 
         if (this._dragListener === null) {
             throw new UnexpectedNullError('DSODSD66746');
         } else {
-            const dragProxy = new DragProxy(x, y, this._dragListener, this._layoutManager, contentItem, null);
+            const dragProxy = new DragProxy(x, y, this._dragListener, this._layoutManager, contentItem, this._dummyRootContentItem);
 
             const transitionIndicator = this._layoutManager.transitionIndicator;
             if (transitionIndicator === null) {

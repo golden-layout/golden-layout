@@ -1,18 +1,9 @@
+import { LeftAndTop, WidthAndHeight } from './types';
 import { pixelsToNumber } from './utils';
 
 export interface JQueryOffset {
     top: number;
     left: number;    
-}
-
-export interface JQueryWidthAndHeight {
-    width: number;
-    height: number;    
-}
-
-export interface JQueryLeftAndTop {
-    left: number;
-    top: number;    
 }
 
 export function getJQueryOffset(element: HTMLElement): JQueryOffset {
@@ -23,18 +14,18 @@ export function getJQueryOffset(element: HTMLElement): JQueryOffset {
     }
 }
 
-export function getJQueryWidthAndHeight(element: HTMLElement): JQueryWidthAndHeight {
+export function getJQueryWidthAndHeight(element: HTMLElement): WidthAndHeight {
     const style = getComputedStyle(element, null);
-    const widthAndHeight: JQueryWidthAndHeight = {
+    const widthAndHeight: WidthAndHeight = {
         width: pixelsToNumber(style.width),
         height: pixelsToNumber(style.height),
     }
     return widthAndHeight;
 }
 
-export function getJQueryLeftAndTop(element: HTMLElement): JQueryLeftAndTop {
+export function getJQueryLeftAndTop(element: HTMLElement): LeftAndTop {
     const style = getComputedStyle(element, null);
-    const leftAndTop: JQueryLeftAndTop = {
+    const leftAndTop: LeftAndTop = {
         left: pixelsToNumber(style.left),
         top: pixelsToNumber(style.top),
     }

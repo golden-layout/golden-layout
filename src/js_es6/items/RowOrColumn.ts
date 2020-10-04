@@ -1,6 +1,6 @@
 import { ItemConfig } from '../config/config'
 import { Splitter } from '../controls/Splitter'
-import { AssertError, UnexpectedNullError } from '../errors/error'
+import { AssertError, UnexpectedNullError } from '../errors/internal-error'
 import { AbstractContentItem } from '../items/AbstractContentItem'
 import { Stack } from '../items/Stack'
 import { LayoutManager } from '../LayoutManager'
@@ -29,7 +29,7 @@ export class RowOrColumn extends AbstractContentItem {
     private _splitterMaxPosition: number | null;
 
     constructor(isColumn: boolean, layoutManager: LayoutManager, config: ItemConfig,
-        private readonly _rowOrColumnParent: AbstractContentItem
+        private _rowOrColumnParent: AbstractContentItem
     ) {
       
         super(layoutManager, config, _rowOrColumnParent);
@@ -37,7 +37,7 @@ export class RowOrColumn extends AbstractContentItem {
         this.isRow = !isColumn;
         this.isColumn = isColumn;
 
-        this.element = createTemplateHtmlElement('<div class="lm_item lm_' + (isColumn ? 'column' : 'row') + '"></div>', 'div');
+        this.element = createTemplateHtmlElement('<div class="lm_item lm_' + (isColumn ? 'column' : 'row') + '"></div>');
         this._childElementContainer = this.element;
         this._splitterSize = layoutManager.config.dimensions.borderWidth;
         this._splitterGrabSize = layoutManager.config.dimensions.borderGrabWidth;
@@ -83,18 +83,18 @@ export class RowOrColumn extends AbstractContentItem {
             const splitterElement = this.createSplitter(Math.max(0, index - 1)).element;
 
             if (index > 0) {
-                this.contentItems[index - 1].element.after(splitterElement);
-                splitterElement.after(contentItem.element);
+                this.contentItems[index - 1].element.insertAdjacentElement('afterend', splitterElement);
+                splitterElement.insertAdjacentElement('afterend', contentItem.element);
                 if (this.isDocked(index - 1)) {
                     setElementVisibility(this._splitter[index - 1].element, false);
                     setElementVisibility(this._splitter[index].element, true);
                 }
             } else {
-                this.contentItems[0].element.before(splitterElement);
-                splitterElement.before(contentItem.element);
+                this.contentItems[0].element.insertAdjacentElement('beforebegin', splitterElement);
+                splitterElement.insertAdjacentElement('beforebegin', contentItem.element);
             }
         } else {
-            this._childElementContainer.append(contentItem.element);
+            this._childElementContainer.appendChild(contentItem.element);
         }
 
         super.addChild(contentItem, index);
@@ -344,21 +344,27 @@ export class RowOrColumn extends AbstractContentItem {
         this.setSize();
 
         for (let i = 0; i < this.contentItems.length; i++) {
-            this._childElementContainer.append(this.contentItems[i].element);
+            this._childElementContainer.appendChild(this.contentItems[i].element);
         }
 
         super._$init();
 
         for (let i = 0; i < this.contentItems.length - 1; i++) {
-            this.contentItems[i].element.after(this.createSplitter(i).element);
+            this.contentItems[i].element.insertAdjacentElement('afterend', this.createSplitter(i).element);
         }
         for (let i = 0; i < this.contentItems.length; i++) {
-            const stack = this.contentItems[i] as Stack;
+            const contentItem = this.contentItems[i];
+            const stack = contentItem as Stack;
             if (stack.dockEnabled)
                 this.dock(stack, true, true);
         }
 
         this.initContentItems();
+    }
+
+    setParent(parent: AbstractContentItem): void {
+        this._rowOrColumnParent = parent;
+        super.setParent(parent);
     }
 
     /**
@@ -388,7 +394,7 @@ export class RowOrColumn extends AbstractContentItem {
 
     /**
      * Calculates the absolute sizes of all of the children of this Item.
-     * @returns {object} - Set with absolute sizes and additional pixels.
+     * @returns Set with absolute sizes and additional pixels.
      */
     private calculateAbsoluteSizes() {
         const totalSplitterSize = (this.contentItems.length - 1) * this._splitterSize;

@@ -1,6 +1,7 @@
+import { StackItemConfig } from '../config/config';
 import { HeaderButton } from '../controls/HeaderButton';
 import { Tab } from '../controls/Tab';
-import { UnexpectedNullError } from '../errors/error';
+import { UnexpectedNullError } from '../errors/internal-error';
 import { AbstractContentItem } from '../items/AbstractContentItem';
 import { Component } from '../items/Component';
 import { LayoutManager } from '../LayoutManager';
@@ -58,7 +59,7 @@ export class Header extends EventEmitter {
     private _tabDropdownButton: HeaderButton | null;
 
     readonly controlsContainerElement: HTMLElement;
-    activeContentItem: AbstractContentItem | null;
+    activeContentItem: Component | null;
 
     get canDestroy(): boolean { return this._canDestroy; }
     get element(): HTMLElement { return this._element; }
@@ -87,7 +88,7 @@ export class Header extends EventEmitter {
         this._tabDropdownLabel = settings.tabDropdownLabel;
         this.setSide(settings.side);
 
-        this._element = createTemplateHtmlElement(_template, 'div');
+        this._element = createTemplateHtmlElement(_template);
 
         if (this.layoutManager.config.settings.selectionEnabled === true) {
             this._element.classList.add('lm_selectable');
@@ -148,7 +149,7 @@ export class Header extends EventEmitter {
 
         if (this.tabs.length === 0) {
             this.tabs.push(tab);
-            this._tabsContainerElement.append(tab.element);
+            this._tabsContainerElement.appendChild(tab.element);
             return;
         }
 
@@ -157,9 +158,9 @@ export class Header extends EventEmitter {
         }
 
         if (index > 0) {
-            this.tabs[index - 1].element.after(tab.element);
+            this.tabs[index - 1].element.insertAdjacentElement('afterend', tab.element);
         } else {
-            this.tabs[0].element.before(tab.element);
+            this.tabs[0].element.insertAdjacentElement('beforebegin', tab.element);
         }
 
         this.tabs.splice(index, 0, tab);
@@ -212,7 +213,7 @@ export class Header extends EventEmitter {
     /**
      * The programmatical equivalent of clicking a Tab.
      */
-    setActiveContentItem(contentItem: AbstractContentItem): void {
+    setActiveContentItem(contentItem: Component): void {
         if (this.activeContentItem === contentItem) return;
 
         for (let i = 0; i < this.tabs.length; i++) {
@@ -220,7 +221,7 @@ export class Header extends EventEmitter {
             this.tabs[i].setActive(isActive);
             if (isActive === true) {
                 this.activeContentItem = contentItem;
-                this._parent.config.activeItemIndex = i;
+                this._parent.stackConfig.activeItemIndex = i;
             }
         }
 
@@ -229,13 +230,13 @@ export class Header extends EventEmitter {
              * If the tab selected was in the dropdown, move everything down one to make way for this one to be the first.
              * This will make sure the most used tabs stay visible.
              */
-            if (this._lastVisibleTabIndex !== -1 && this._parent.config.activeItemIndex > this._lastVisibleTabIndex) {
-                const activeTab = this.tabs[this._parent.config.activeItemIndex];
-                for (let j = this._parent.config.activeItemIndex; j > 0; j--) {
+            if (this._lastVisibleTabIndex !== -1 && this._parent.stackConfig.activeItemIndex > this._lastVisibleTabIndex) {
+                const activeTab = this.tabs[this._parent.stackConfig.activeItemIndex];
+                for (let j = this._parent.stackConfig.activeItemIndex; j > 0; j--) {
                     this.tabs[j] = this.tabs[j - 1];
                 }
                 this.tabs[0] = activeTab;
-                this._parent.config.activeItemIndex = 0;
+                this._parent.stackConfig.activeItemIndex = 0;
             }
         }
 
@@ -424,7 +425,7 @@ export class Header extends EventEmitter {
             const tabElement = this.tabs[i].element;
 
             //Put the tab in the tabContainer so its true width can be checked
-            this._tabsContainerElement.append(tabElement);
+            this._tabsContainerElement.appendChild(tabElement);
             const tabWidth = tabElement.offsetWidth + pixelsToNumber(tabElement.style.marginRight);
 
             cumulativeTabWidth += tabWidth;
@@ -461,7 +462,7 @@ export class Header extends EventEmitter {
                             this.tabs[j].element.style.marginLeft = marginLeft;
                         }
                         this._lastVisibleTabIndex = i;
-                        this._tabsContainerElement.append(tabElement);
+                        this._tabsContainerElement.appendChild(tabElement);
                     } else {
                         tabOverlapAllowanceExceeded = true;
                     }
@@ -470,7 +471,7 @@ export class Header extends EventEmitter {
                     //Active tab should show even if allowance exceeded. (We left room.)
                     tabElement.style.zIndex = 'auto';
                     tabElement.style.marginLeft = '';
-                    this._tabsContainerElement.append(tabElement);
+                    this._tabsContainerElement.appendChild(tabElement);
                 }
 
                 if (tabOverlapAllowanceExceeded && i !== activeIndex) {
@@ -479,7 +480,7 @@ export class Header extends EventEmitter {
                         tabElement.style.zIndex = 'auto';
                         tabElement.style.marginLeft = '';
                         
-                        this._tabDropdownContainerElement.append(tabElement);
+                        this._tabDropdownContainerElement.appendChild(tabElement);
                     } else {
                         //We now know the tab menu must be shown, so we have to recalculate everything.
                         this.updateTabSizes(true);
@@ -491,7 +492,7 @@ export class Header extends EventEmitter {
                 this._lastVisibleTabIndex = i;
                 tabElement.style.zIndex = 'auto';
                 tabElement.style.marginLeft = '';
-                this._tabsContainerElement.append(tabElement);
+                this._tabsContainerElement.appendChild(tabElement);
             }
         }
 
@@ -520,6 +521,7 @@ export namespace Header {
 
     // Stack
     export interface Parent extends Tab.HeaderParent {
+        readonly stackConfig: StackItemConfig;
         dock(): void;
     }
 }

@@ -1,68 +1,65 @@
 import { ItemConfig } from '../config/config'
-import { AssertError, ConfigurationError, UnexpectedNullError } from '../errors/error'
+import { BrowserPopout } from '../controls/BrowserPopout'
+import { ConfigurationError } from '../errors/external-error'
+import { AssertError, UnexpectedNullError } from '../errors/internal-error'
 import { LayoutManager } from '../LayoutManager'
 import { EventEmitter } from '../utils/EventEmitter'
 import { getJQueryOffset, getJQueryWidthAndHeight } from '../utils/jquery-legacy'
-import { LinkedRect } from '../utils/types'
-import {
-    animFrame, fnBind
-} from '../utils/utils'
+import { Area } from '../utils/types'
+import { animFrame, fnBind } from '../utils/utils'
 import { Root } from './Root'
-
-
 
 /**
  * This is the baseclass that all content items inherit from.
  * Most methods provide a subset of what the sub-classes do.
  *
  * It also provides a number of functions for tree traversal
- *
- * @param {lm.LayoutManager} layoutManager
- * @param {item node configuration} config
- * @param {lm.item} parent
- *
- * @event stateChanged
- * @event beforeItemDestroyed
- * @event itemDestroyed
- * @event itemCreated
- * @event componentCreated
- * @event rowCreated
- * @event columnCreated
- * @event stackCreated
- *
- * @constructor
  */
 
 
-export abstract class AbstractContentItem extends EventEmitter implements AbstractContentItem.Parent {
+export abstract class AbstractContentItem extends EventEmitter {
     private _pendingEventPropagations: Record<string, unknown>;
     private _throttledEvents: string[];
+    private _isInitialised;
+    private _isMaximised;
 
-    config;
-    type;
     contentItems: AbstractContentItem[];
-    parent;
-    isInitialised;
-    isMaximised;
+    element: HTMLElement;
     isRoot: boolean
     isRow: boolean
     isColumn: boolean
     isStack: boolean
     isComponent: boolean
 
-    element: HTMLElement;
+    get type(): ItemConfig.Type { return this._config.type; }
+    get parent(): AbstractContentItem | null { return this._parent; }
+    get config(): ItemConfig { return this._config; }
+    get isInitialised(): boolean { return this._isInitialised; }
+    get isMaximised(): boolean { return this._isMaximised; }
 
-    constructor(readonly layoutManager: LayoutManager, config: ItemConfig, parent: AbstractContentItem | null) {
+    /**
+    *
+    * @param {lm.LayoutManager} layoutManager
+    * @param {item node configuration} config
+    * @param {lm.item} _parent
+    *
+    * @event stateChanged
+    * @event beforeItemDestroyed
+    * @event itemDestroyed
+    * @event itemCreated
+    * @event componentCreated
+    * @event rowCreated
+    * @event columnCreated
+    * @event stackCreated
+    */
+    constructor(readonly layoutManager: LayoutManager, private _config: ItemConfig, private _parent: AbstractContentItem | null) {
 
         super();
 
-        this.config = this.extendItemNode(config);
-        this.type = config.type;
         this.contentItems = [];
-        this.parent = parent;
 
-        this.isInitialised = false;
-        this.isMaximised = false;
+        this._isInitialised = false;
+        this._isMaximised = false;
         this.isRoot = false;
         this.isRow = false;
         this.isColumn = false;
@@ -74,8 +71,8 @@ export abstract class AbstractContentItem extends EventEmitter implements Abstra
 
         this.on(EventEmitter.ALL_EVENT, (name, ...args: unknown[]) => this.propagateEvent(name as string, args));
 
-        if (config.content) {
-            this.createContentItems(config);
+        if (_config.content) {
+            this.createContentItems(_config);
         }
     }
 
@@ -108,10 +105,6 @@ export abstract class AbstractContentItem extends EventEmitter implements Abstra
 
     /**
      * Removes a child node (and its children) from the tree
-     *
-     * @param   {ContentItem} contentItem
-     *
-     * @returns {void}
      */
     removeChild(contentItem: AbstractContentItem, keepChild = false): void {
         /*
@@ -143,7 +136,7 @@ export abstract class AbstractContentItem extends EventEmitter implements Abstra
         /**
          * Remove the item from the configuration
          */
-        this.config.content.splice(index, 1);
+        this._config.content.splice(index, 1);
 
         /**
          * If this node still contains other content items, adjust their size
@@ -154,19 +147,19 @@ export abstract class AbstractContentItem extends EventEmitter implements Abstra
             /**
              * If this was the last content item, remove this node as well
              */
-        } else if (!(this instanceof Root) && this.config.isClosable === true) {
-            this.parent.removeChild(this);
+        } else if (!(this instanceof Root) && this._config.isClosable === true) {
+            if (this._parent === null) {
+                throw new UnexpectedNullError('CIUC00874');
+            } else {
+                this._parent.removeChild(this);
+            }
         }
     }
 
     /**
      * Hides a child node (and its children) from the tree reclaiming its space in the layout
-     *
-     * @param   {ContentItem} contentItem
-     *
-     * @returns {void}
      */
-    undisplayChild(contentItem) {
+    undisplayChild(contentItem: AbstractContentItem): void {
         /*
          * Get the position of the item that's to be removed within all content items this node contains
          */
@@ -179,8 +172,12 @@ export abstract class AbstractContentItem extends EventEmitter implements Abstra
             throw new Error('Can\'t remove child item. Unknown content item');
         }
 
-        if (!(this instanceof Root) && this.config.isClosable === true) {
-            this.parent.undisplayChild(this);
+        if (!(this instanceof Root) && this._config.isClosable === true) {
+            if (this._parent === null) {
+                throw new UnexpectedNullError('CIUC00874');
+            } else {
+                this._parent.undisplayChild(this);
+            }
         }
     }
 
@@ -201,14 +198,14 @@ export abstract class AbstractContentItem extends EventEmitter implements Abstra
 
         this.contentItems.splice(index, 0, contentItem);
 
-        if (this.config.content === undefined) {
-            this.config.content = [];
+        if (this._config.content === undefined) {
+            this._config.content = [];
         }
 
-        this.config.content.splice(index, 0, contentItem.config);
+        this._config.content.splice(index, 0, contentItem._config);
         contentItem.setParent(this);
 
-        if (this.isInitialised === true && contentItem.isInitialised === false) {
+        if (this._isInitialised === true && contentItem._isInitialised === false) {
             contentItem._$init();
         }
     }
@@ -227,58 +224,66 @@ export abstract class AbstractContentItem extends EventEmitter implements Abstra
         // newChild = this.layoutManager._$normalizeContentItem(newChild);
 
         const index = this.contentItems.indexOf(oldChild);
-        const parentNode = oldChild.element[0].parentNode;
+        const parentNode = oldChild.element.parentNode;
 
         if (index === -1) {
-            throw new Error('Can\'t replace child. oldChild is not child of this');
+            throw new AssertError('CIRCI23232', 'Can\'t replace child. oldChild is not child of this');
         }
 
-        parentNode.replaceChild(newChild.element[0], oldChild.element[0]);
+        if (parentNode === null) {
+            throw new UnexpectedNullError('CIRCP23232');
+        } else {
+            parentNode.replaceChild(newChild.element, oldChild.element);
 
-        /*
-         * Optionally destroy the old content item
-         */
-        if (_$destroyOldChild === true) {
-            oldChild.parent = null;
-            oldChild._$destroy();
+            /*
+            * Optionally destroy the old content item
+            */
+            if (_$destroyOldChild === true) {
+                oldChild._parent = null;
+                oldChild._$destroy();
+            }
+
+            /*
+            * Wire the new contentItem into the tree
+            */
+            this.contentItems[index] = newChild;
+            newChild.setParent(this);
+
+            /*
+            * Give descendants a chance to process replace using index - eg. used by Header to update tab
+            */
+            this.processChildReplaced(index, newChild)
+
+            //TODO This doesn't update the config... refactor to leave item nodes untouched after creation
+            if (newChild._parent === null) {
+                throw new UnexpectedNullError('CIRCNC45699');
+            } else {
+                if (newChild._parent._isInitialised === true && newChild._isInitialised === false) {
+                    newChild._$init();
+                }
+
+                this.callDownwards('setSize');
+            }
         }
-
-        /*
-         * Wire the new contentItem into the tree
-         */
-        this.contentItems[index] = newChild;
-        newChild.setParent(this);
-
-        /*
-         * Give descendants a chance to process replace using index - eg. used by Header to update tab
-         */
-        this.processChildReplaced(index, newChild)
-
-        //TODO This doesn't update the config... refactor to leave item nodes untouched after creation
-        if (newChild.parent.isInitialised === true && newChild.isInitialised === false) {
-            newChild._$init();
-        }
-
-        this.callDownwards('setSize');
     }
 
     /**
      * Convenience method.
      * Shorthand for this.parent.removeChild( this )
-     *
-     * @returns {void}
      */
-    remove() {
-        this.parent.removeChild(this);
+    remove(): void {
+        if (this._parent === null) {
+            throw new UnexpectedNullError('CIR11110');
+        } else {
+            this._parent.removeChild(this);
+        }
     }
 
     /**
      * Removes the component from the layout and creates a new
      * browser window with the component and its children inside
-     *
-     * @returns {BrowserPopout}
      */
-    popout() {
+    popout(): BrowserPopout {
         const browserPopout = this.layoutManager.createPopoutFromContentItem(this);
         this.emitBubblingEvent('stateChanged');
         return browserPopout;
@@ -291,13 +296,13 @@ export abstract class AbstractContentItem extends EventEmitter implements Abstra
      */
     toggleMaximise(/* e */): void {
         // e && e.preventDefault(); // not sure what this was here for
-        if (this.isMaximised === true) {
+        if (this._isMaximised === true) {
             this.layoutManager.minimiseItem(this);
         } else {
             this.layoutManager.maximiseItem(this);
         }
 
-        this.isMaximised = !this.isMaximised;
+        this._isMaximised = !this._isMaximised;
         this.emitBubblingEvent('stateChanged');
     }
 
@@ -330,7 +335,7 @@ export abstract class AbstractContentItem extends EventEmitter implements Abstra
      * @returns {void}
      */
     setTitle(title: string): void {
-        this.config.title = title;
+        this._config.title = title;
         this.emit('titleChanged', title);
         this.emit('stateChanged');
     }
@@ -343,13 +348,13 @@ export abstract class AbstractContentItem extends EventEmitter implements Abstra
      * @returns isPresent
      */
     hasId(id: string): boolean {
-        if (typeof this.config.id === 'string') {
-            return this.config.id === id;
+        if (typeof this._config.id === 'string') {
+            return this._config.id === id;
         } else {
-            if (this.config.id instanceof Array) {
-                return this.config.id.includes(id);
+            if (this._config.id instanceof Array) {
+                return this._config.id.includes(id);
             } else {
-                throw new AssertError('ACIHI55521', `ItemConfig.id is not string or string array ${this.config.id}`);
+                throw new AssertError('ACIHI55521', `ItemConfig.id is not string or string array ${this._config.id}`);
             }
         }
     }
@@ -363,93 +368,66 @@ export abstract class AbstractContentItem extends EventEmitter implements Abstra
             return;
         }
 
-        if (!this.config.id) {
-            this.config.id = id;
-        } else if (typeof this.config.id === 'string') {
-            this.config.id = [this.config.id, id];
-        } else if (this.config.id instanceof Array) {
-            this.config.id.push(id);
+        if (!this._config.id) {
+            this._config.id = id;
+        } else if (typeof this._config.id === 'string') {
+            this._config.id = [this._config.id, id];
+        } else if (this._config.id instanceof Array) {
+            this._config.id.push(id);
         }
     }
 
     /**
      * Removes an existing id. Throws an error
      * if the id is not present
-     *
-     * @param id
      */
     removeId(id: string): void {
         if (!this.hasId(id)) {
             throw new Error('Id not found');
         }
 
-        if (typeof this.config.id === 'string') {
-            delete this.config.id;
-        } else if (this.config.id instanceof Array) {
-            const index = this.config.id.indexOf(id);
-            this.config.id.splice(index, 1);
+        if (typeof this._config.id === 'string') {
+            this._config.id = [];
+        } else if (this._config.id instanceof Array) {
+            const index = this._config.id.indexOf(id);
+            this._config.id.splice(index, 1);
         }
     }
 
     /****************************************
      * SELECTOR
      ****************************************/
-    getItemsByFilter(filter) {
-        var result = [],
-            next = function(contentItem) {
-                for (var i = 0; i < contentItem.contentItems.length; i++) {
 
-                    if (filter(contentItem.contentItems[i]) === true) {
-                        result.push(contentItem.contentItems[i]);
-                    }
+    private deepFilterAddChildContentItems(contentItems: AbstractContentItem[],
+        checkAcceptFtn: ((this: void, item: AbstractContentItem) => boolean)
+    ): void {
+        for (let i = 0; i < this.contentItems.length; i++) {
+            const contentItem = this.contentItems[i];
+            if (checkAcceptFtn(contentItem)) {
+                contentItems.push(contentItem);
+                contentItem.deepFilterAddChildContentItems(contentItems, checkAcceptFtn);
+            }
+        }
+    }
 
-                    next(contentItem.contentItems[i]);
-                }
-            };
-
-        next(this);
+    getItemsById(id: string): AbstractContentItem[] {
+        const result: AbstractContentItem[] = [];
+        this.deepFilterAddChildContentItems(result, (item) => ItemConfig.idEqualsOrContainsId(item._config.id, id));
         return result;
     }
 
-    getItemsById(id: string) {
-        return this.getItemsByFilter(function(item) {
-            if (item.config.id instanceof Array) {
-                return item.config.id.indexOf(id) !== -1;
-            } else {
-                return item.config.id === id;
-            }
-        });
-    }
-
-    getItemsByType(type) {
-        return this._$getItemsByProperty('type', type);
-    }
-
-    getComponentsByName(componentName: string) {
-        const components = this._$getItemsByProperty('componentName', componentName);
-        const count = components.length;
-        
-        const instances: Array<> = [],
-
-        for (let i = 0; i < count; i++) {
-            instances[i] = components[i].instance;
-        }
-
-        return instances;
+    getItemsByType(type: ItemConfig.Type): AbstractContentItem[] {
+        const result: AbstractContentItem[] = [];
+        this.deepFilterAddChildContentItems(result, (item) => (item.type === type));
+        return result;
     }
 
     /****************************************
      * PACKAGE PRIVATE
      ****************************************/
-    _$getItemsByProperty(key: string, value) {
-        return this.getItemsByFilter(function(item) {
-            return item[key] === value;
-        });
-    }
-
     toConfig(): ItemConfig {
         const content = this.calculateConfigContent();
-        return ItemConfig.createCopy(this.config, content);
+        return ItemConfig.createCopy(this._config, content);
     }
 
     calculateConfigContent(): ItemConfig[] {
@@ -463,15 +441,15 @@ export abstract class AbstractContentItem extends EventEmitter implements Abstra
         return result;
     }
 
-    addChildContentItems(contentItems: AbstractContentItem[]): void {
+    deepAddChildContentItems(contentItems: AbstractContentItem[]): void {
         for (let i = 0; i < this.contentItems.length; i++) {
             const contentItem = this.contentItems[i];
             contentItems.push(contentItem);
-            contentItem.addChildContentItems(contentItems);
+            contentItem.deepAddChildContentItems(contentItems);
         }
     }
 
-    _$highlightDropZone(x: number, y: number, area: LinkedRect): void {
+    _$highlightDropZone(x: number, y: number, area: Area): void {
         const dropTargetIndicator = this.layoutManager.dropTargetIndicator;
         if (dropTargetIndicator === null) {
             throw new UnexpectedNullError('ACIHDZ5593');
@@ -480,7 +458,8 @@ export abstract class AbstractContentItem extends EventEmitter implements Abstra
         }
     }
 
-    _$onDrop(contentItem: AbstractContentItem): void {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _$onDrop(contentItem: AbstractContentItem, area: AbstractContentItem.ExtendedArea): void {
         this.addChild(contentItem);
     }
 
@@ -497,12 +476,10 @@ export abstract class AbstractContentItem extends EventEmitter implements Abstra
     }
 
     _callOnActiveComponents(methodName: string): void {
-        var stacks = this.getItemsByType('stack'),
-            activeContentItem,
-            i;
+        const stacks = this.getItemsByType(ItemConfig.Type.stack);
 
-        for (i = 0; i < stacks.length; i++) {
-            activeContentItem = stacks[i].getActiveContentItem();
+        for (let i = 0; i < stacks.length; i++) {
+            const activeContentItem = stacks[i].getActiveContentItem();
 
             if (activeContentItem && activeContentItem.isComponent) {
                 activeContentItem.container[methodName]();
@@ -530,7 +507,7 @@ export abstract class AbstractContentItem extends EventEmitter implements Abstra
      *		contentItem: contentItem
      * }
      */
-    getArea(element?: HTMLElement): AbstractContentItem.Area | null {
+    getArea(element?: HTMLElement): AbstractContentItem.ExtendedArea | null {
         element = element || this.element;
 
         const offset = getJQueryOffset(element);
@@ -558,13 +535,13 @@ export abstract class AbstractContentItem extends EventEmitter implements Abstra
      * @returns {void}
      */
     _$init(): void {
-        this.isInitialised = true;
+        this._isInitialised = true;
         this.emitBubblingEvent('itemCreated');
         this.emitUnknownBubblingEvent(this.type + 'Created');
     }
 
-    protected setParent(parent: AbstractContentItem): void {
-        this.parent = parent;
+    setParent(parent: AbstractContentItem): void {
+        this._parent = parent;
     }
 
     protected initContentItems(): void {
@@ -581,10 +558,6 @@ export abstract class AbstractContentItem extends EventEmitter implements Abstra
     /**
      * Private method, creates all content items for this node at initialisation time
      * PLEASE NOTE, please see addChild for adding contentItems add runtime
-     * @private
-     * @param   {configuration item node} config
-     *
-     * @returns {void}
      */
     private createContentItems(config: ItemConfig) {
         if (!(config.content instanceof Array)) {
@@ -627,7 +600,7 @@ export abstract class AbstractContentItem extends EventEmitter implements Abstra
             const event = args[0];
             if (event instanceof EventEmitter.BubblingEvent &&
                 event.isPropagationStopped === false &&
-                this.isInitialised === true) {
+                this._isInitialised === true) {
 
                 /**
                  * In some cases (e.g. if an element is created from a DragSource) it
@@ -635,8 +608,8 @@ export abstract class AbstractContentItem extends EventEmitter implements Abstra
                  * propagate the bubbling event from the top level of the substree directly
                  * to the layoutManager
                  */
-                if (this.isRoot === false && this.parent) {
-                    this.parent.emitUnknown(name, event);
+                if (this.isRoot === false && this._parent) {
+                    this._parent.emitUnknown(name, event);
                 } else {
                     this.scheduleEventPropagationToLayoutManager(name, event);
                 }
@@ -675,11 +648,7 @@ export abstract class AbstractContentItem extends EventEmitter implements Abstra
 }
 
 export namespace AbstractContentItem {
-    export interface Area {
-        x1: number;
-        x2: number;
-        y1: number;
-        y2: number;
+    export interface ExtendedArea extends Area {
         surface: number;
         contentItem: AbstractContentItem;
     }

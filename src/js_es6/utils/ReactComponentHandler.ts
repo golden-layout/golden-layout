@@ -1,25 +1,42 @@
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { ReactComponentConfig } from '../config/config';
+import { ItemContainer } from '../container/ItemContainer';
+import { UnexpectedNullError } from '../errors/internal-error';
+import { Component } from '../items/Component';
+import { JsonValue } from './types';
+import { extend } from './utils';
+
+// This needs more attention - refer to original Javascript ReactComponentHandler
+
 /**
  * A specialised GoldenLayout component that binds GoldenLayout container
  * lifecycle events to react components
- *
- * @constructor
- *
- * @param {ItemContainer} container
- * @param {Object} state state is not required for react components
  */
-
-import { ItemContainer } from '../container/ItemContainer';
-
-
 export class ReactComponentHandler {
+    private _reactComponent: React.Component | null;
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    private _originalComponentWillUpdate: Function | null;
+    private _container: ItemContainer;
+    private _initialState: unknown;
+    private _reactClass: Component.InstanceConstructor;
+
+    private _containerOpenListener = () => this._render();
+    private _containerDestroyListener = () => this._destroy();
+
+    /**
+     * @param container
+     * @param state state is not required for react components
+     */
     constructor(container: ItemContainer, state: unknown) {
         this._reactComponent = null;
         this._originalComponentWillUpdate = null;
         this._container = container;
         this._initialState = state;
         this._reactClass = this._getReactClass();
-        this._container.on('open', this._render, this);
-        this._container.on('destroy', this._destroy, this);
+
+        this._container.on('open', this._containerOpenListener);
+        this._container.on('destroy', this._containerDestroyListener);
     }
 
 
@@ -29,12 +46,11 @@ export class ReactComponentHandler {
      * the initial state - if one is present
      *
      * By default, react's getInitialState will be used
-     *
-     * @private
-     * @returns {void}
      */
-    _render() {
-        ReactDOM.render(this._getReactComponent(), this._container.getElement()[0]);
+    private _render(): void {
+        // probably wrong
+        ReactDOM.render(this._getReactComponent(), this._container.getContentElement());
+        // ReactDOM.render(this._getReactComponent(), this._container.getElement()[0]);
     }
 
     /**
@@ -48,13 +64,14 @@ export class ReactComponentHandler {
      * @arg {React.Ref} component The component instance created by the `ReactDOM.render` call in the `_render` method.
      * @returns {void}
      */
-    _gotReactComponent(component) {
+    private _gotReactComponent(component: React.Component | null): void {
         if (component !== null) {
             this._reactComponent = component;
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
             this._originalComponentWillUpdate = this._reactComponent.componentWillUpdate || function() {};
             this._reactComponent.componentWillUpdate = this._onUpdate.bind( this );
             if( this._container.getState() ) {
-                this._reactComponent.setState( this._container.getState() );
+                this._reactComponent.setState( this._container.getState() as Record<string, unknown> );
             }
         }
     }
@@ -65,10 +82,10 @@ export class ReactComponentHandler {
      * @private
      * @returns {void}
      */
-    _destroy() {
-        ReactDOM.unmountComponentAtNode(this._container.getElement()[0]);
-        this._container.off('open', this._render, this);
-        this._container.off('destroy', this._destroy, this);
+    _destroy(): void {
+        ReactDOM.unmountComponentAtNode(this._container.getContentElement());
+        this._container.on('open', this._containerOpenListener);
+        this._container.off('destroy', this._containerDestroyListener);
     }
 
     /**
@@ -78,9 +95,13 @@ export class ReactComponentHandler {
      * @private
      * @returns {void}
      */
-    _onUpdate(nextProps, nextState) {
+    _onUpdate(nextProps: unknown, nextState: JsonValue): void {
         this._container.setState(nextState);
-        this._originalComponentWillUpdate.call(this._reactComponent, nextProps, nextState);
+        if (this._originalComponentWillUpdate === null) {
+            throw new UnexpectedNullError('RCHOU11196');
+        } else {
+            this._originalComponentWillUpdate.call(this._reactComponent, nextProps, nextState);
+        }
     }
 
     /**
@@ -89,15 +110,16 @@ export class ReactComponentHandler {
      * @private
      * @returns {React.Class}
      */
-    _getReactClass() {
-        var componentName = this._container._config.component;
-        var reactClass;
+    // assume this is returning a constructor
+    private _getReactClass() {
+        const config = this._container.config as ReactComponentConfig;
+        const componentName = config;
 
         if (!componentName) {
             throw new Error('No react component name. type: react-component needs a field `component`');
         }
 
-        reactClass = this._container.layoutManager.getComponent(this._container._config);
+        const reactClass = this._container.layoutManager.getComponentConstructor(this._container.config);
 
         if (!reactClass) {
             throw new Error('React component "' + componentName + '" not found. ' +
@@ -113,13 +135,22 @@ export class ReactComponentHandler {
      * @private
      * @returns {React.Element}
      */
-    _getReactComponent() {
-        var defaultProps = {
+    // return type probably wrong
+    _getReactComponent(): React.ReactElement {
+        const defaultProps = {
             glEventHub: this._container.layoutManager.eventHub,
             glContainer: this._container,
             ref: this._gotReactComponent.bind(this),
         };
-        var props = $.extend(defaultProps, this._container._config.props);
-        return React.createElement(this._reactClass, props);
+        const config = this._container.config as ReactComponentConfig;
+        let props = config.props;
+        if (props === undefined) {
+            props = defaultProps;
+        } else {
+            props = extend(defaultProps, config.props as Record<string, unknown>);
+        }
+        // totally wrong - needs more work
+        return React.createElement(this._reactClass as unknown as string, props as null);
+        // return React.createElement(this._reactClass, props);
     }
 }

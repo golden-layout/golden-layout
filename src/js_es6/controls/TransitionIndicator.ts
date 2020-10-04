@@ -9,8 +9,8 @@ export class TransitionIndicator {
     private _animationStartTime: number | null;
 
     constructor() {
-        this._element = createTemplateHtmlElement('<div class="lm_transition_indicator"></div>', 'div');
-        $(document.body).append(this._element);
+        this._element = createTemplateHtmlElement('<div class="lm_transition_indicator"></div>');
+        $(document.body).appendChild(this._element);
 
         this._toElement = null;
         this._fromDimensions = null;

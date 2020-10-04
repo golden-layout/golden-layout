@@ -5,20 +5,21 @@ import { LayoutManager } from './LayoutManager';
 export class MainLayoutManager extends LayoutManager {
     private _mainConfig: Config;
 
-    constructor(userConfig: UserConfig, container?: Element | HTMLElement) {        
+    constructor(userConfig: UserConfig, container?: HTMLElement) {        
         super(false, MainLayoutManager.createConfig(userConfig), container);
 
         this._mainConfig = this.config as Config;
     }
 
-    protected createToConfig(content: ItemConfig[], openPopouts: PopoutManagerConfig[]): ManagerConfig {
+    protected createToConfig(content: ItemConfig[], openPopouts: PopoutManagerConfig[], maximisedItemId: string | null): ManagerConfig {
 
         const config: Config = {
             content,
             openPopouts,
             settings:  ManagerConfig.Settings.createCopy(this._mainConfig.settings),
             dimensions: ManagerConfig.Dimensions.createCopy(this._mainConfig.dimensions),
-            labels: ManagerConfig.Labels.createCopy(this._mainConfig.labels),
+            header: ManagerConfig.Header.createCopy(this._mainConfig.header),
+            maximisedItemId,
             resolved: true,
         }
 
@@ -48,7 +49,7 @@ export namespace MainLayoutManager {
 
         // nextNode(config);
 
-        if (config.settings !== undefined && config.settings.hasHeaders === false) {
+        if (!config.header.show) {
             if (config.dimensions === undefined) {
                 throw new Error('Undefined config dimensions');
             } else {

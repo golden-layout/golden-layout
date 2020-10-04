@@ -1,7 +1,7 @@
 import { Component } from 'src';
 import { ItemContainer } from '../container/ItemContainer';
 import { DragProxy } from '../controls/DragProxy';
-import { UnexpectedNullError, UnexpectedUndefinedError } from '../errors/error';
+import { UnexpectedNullError, UnexpectedUndefinedError } from '../errors/internal-error';
 import { AbstractContentItem } from '../items/AbstractContentItem';
 import { LayoutManager } from '../LayoutManager';
 import { DragListener } from '../utils/DragListener';
@@ -43,7 +43,7 @@ export class Tab implements ItemContainer.Tab {
     isActive: boolean;
 
     constructor(public header: Header, public component: Component, private _headerParent: Tab.HeaderParent) {
-        this.element = createTemplateHtmlElement(_template, 'li');
+        this.element = createTemplateHtmlElement(_template);
         const titleElement = this.element.querySelector<HTMLElement>('.lm_title');
         if (titleElement === null) {
             throw new UnexpectedNullError('Bad Tab Template');
@@ -88,14 +88,8 @@ export class Tab implements ItemContainer.Tab {
             this.closeElement = undefined;
         }
 
-        // this.contentItem.tab = this; // only Components have Tabs
-        // this.contentItem.emit('tab', this);
+        this.component.setTab(this);
         this.component.layoutManager.emit('tabCreated', this);
-
-        if (this.component.isComponent) {
-            const component = (this.component as Component);
-            component.setTab(this);
-        }
     }
 
 

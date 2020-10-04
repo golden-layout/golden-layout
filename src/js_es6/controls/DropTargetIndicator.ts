@@ -1,4 +1,4 @@
-import { LinkedRect } from '../utils/types';
+import { Area } from '../utils/types';
 import { createTemplateHtmlElement, numberToPixels, setElementVisibility } from '../utils/utils';
 
 const _template = '<div class="lm_dropTargetIndicator"><div class="lm_inner"></div></div>'
@@ -8,7 +8,7 @@ export class DropTargetIndicator {
 
     constructor() {
         // Maybe use container instead of Document Body?
-        this._element = createTemplateHtmlElement(_template, 'div');
+        this._element = createTemplateHtmlElement(_template);
         document.body.appendChild(this._element);
     }
 
@@ -25,11 +25,11 @@ export class DropTargetIndicator {
         });
     }
 
-    highlightArea(rectSegment: LinkedRect): void {
-        this._element.style.left = numberToPixels(rectSegment.x1);
-        this._element.style.top = numberToPixels(rectSegment.y1);
-        this._element.style.width = numberToPixels(rectSegment.x2 - rectSegment.x1);
-        this._element.style.height = numberToPixels(rectSegment.y2 - rectSegment.y1);
+    highlightArea(area: Area): void {
+        this._element.style.left = numberToPixels(area.x1);
+        this._element.style.top = numberToPixels(area.y1);
+        this._element.style.width = numberToPixels(area.x2 - area.x1);
+        this._element.style.height = numberToPixels(area.y2 - area.y1);
         this._element.style.display = '';
     }
 

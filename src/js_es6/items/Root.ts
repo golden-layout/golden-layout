@@ -2,7 +2,7 @@ import { HeaderedItemConfig, ItemConfig, StackItemConfig } from '../config/confi
 import { AbstractContentItem } from '../items/AbstractContentItem';
 import { RowOrColumn } from '../items/RowOrColumn';
 import { LayoutManager } from '../LayoutManager';
-import { LinkedRect } from '../utils/types';
+import { Area } from '../utils/types';
 import { createTemplateHtmlElement, getElementHeight, getElementWidth, setElementHeight, setElementWidth } from '../utils/utils';
 import { Component } from './Component';
 
@@ -15,10 +15,10 @@ export class Root extends AbstractContentItem {
         super(layoutManager, config, null);
 
         this.isRoot = true;
-        this.element = createTemplateHtmlElement('<div class="lm_goldenlayout lm_item lm_root"></div>', 'div');
+        this.element = createTemplateHtmlElement('<div class="lm_goldenlayout lm_item lm_root"></div>');
         this._childElementContainer = this.element;
         this._containerElement = containerElement;
-        this._containerElement.append(this.element);
+        this._containerElement.appendChild(this.element);
     }
 
     _$init(): void {
@@ -27,7 +27,7 @@ export class Root extends AbstractContentItem {
         this.setSize();
 
         for (let i = 0; i < this.contentItems.length; i++) {
-            this._childElementContainer.append(this.contentItems[i].element);
+            this._childElementContainer.appendChild(this.contentItems[i].element);
         }
 
         super._$init();
@@ -39,7 +39,7 @@ export class Root extends AbstractContentItem {
         }
 
         // contentItem = this.layoutManager._$normalizeContentItem(contentItem, this);
-        this._childElementContainer.append(contentItem.element);
+        this._childElementContainer.appendChild(contentItem.element);
         super.addChild(contentItem, index);
 
         this.callDownwards('setSize');
@@ -62,24 +62,19 @@ export class Root extends AbstractContentItem {
         }
     }
 
-    _$highlightDropZone(x: number, y: number, area: LinkedRect): void {
+    _$highlightDropZone(x: number, y: number, area: Area): void {
         this.layoutManager.tabDropPlaceholder.remove();
         super._$highlightDropZone(x, y, area);
     }
 
-    _$onDrop(contentItem: AbstractContentItem, area: AbstractContentItem.Area): void {
+    _$onDrop(contentItem: AbstractContentItem, area: Area): void {
 
         if (contentItem.isComponent) {
             const itemConfig = StackItemConfig.createDefault();
             // since ItemConfig.contentItems not set up, we need to add header from Component
             const component = contentItem as Component;
             itemConfig.header = HeaderedItemConfig.Header.createCopy(component.headerConfig);
-            const stack = this.layoutManager.createContentItem(itemConfig, this);
-            // const stack = this.layoutManager.createContentItem({
-            //     type: 'stack',
-            //     header: contentItem.config.header || {}
-            // }, this);
-            stack._$init();
+            const stack = this.layoutManager.createAndInitContentItem(itemConfig, this);
             stack.addChild(contentItem);
             contentItem = stack;
         }

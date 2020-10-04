@@ -7,11 +7,11 @@ export class HeaderButton {
 
     element: HTMLElement;
     constructor(private _header: Header, label: string, cssClass: string, private _pushEvent: HeaderButton.PushEvent) {
-        this.element = createTemplateHtmlElement('<li class="' + cssClass + '" title="' + label + '"></li>', 'li');
+        this.element = createTemplateHtmlElement('<li class="' + cssClass + '" title="' + label + '"></li>');
         this._header.on('destroy', this._$destroy);
         this.element.addEventListener('click', this._clickEventListener);
         this.element.addEventListener('touchstart', this._touchStartEventListener);
-        this._header.controlsContainerElement.append(this.element);
+        this._header.controlsContainerElement.appendChild(this.element);
     }
 
     _$destroy(): void {

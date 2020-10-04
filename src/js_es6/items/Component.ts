@@ -7,11 +7,13 @@ import { deepExtend, getElementHeight, getElementWidth } from '../utils/utils';
 
 export class Component extends AbstractContentItem implements ItemContainer.Parent {
     private _container: ItemContainer;
+    private _tab: ItemContainer.Tab;
     private _instance: unknown;
 
     readonly componentName: string;
 
     get headerConfig(): HeaderedItemConfig.Header | undefined { return this._componentConfig.header; }
+    get tab(): ItemContainer.Tab { return this._tab; }
 
     constructor(layoutManager: LayoutManager, private readonly _componentConfig: ComponentConfig, private _componentParent: AbstractContentItem) {
         super(layoutManager, _componentConfig, _componentParent);
@@ -70,6 +72,8 @@ export class Component extends AbstractContentItem implements ItemContainer.Pare
     }
 
     setTab(tab: ItemContainer.Tab): void {
+        this._tab = tab;
+        this.emit('tab', tab)
         this._container.setTab(tab);
     }
 
@@ -93,12 +97,13 @@ export class Component extends AbstractContentItem implements ItemContainer.Pare
      *
      * @returns null
      */
-    getArea(): AbstractContentItem.Area | null {
+    getArea(): AbstractContentItem.ExtendedArea | null {
         return null;
     }
 
-    protected setParent(parent: AbstractContentItem): void {
+    setParent(parent: AbstractContentItem): void {
         this._componentParent = parent;
+        super.setParent(parent);
     }
 }
 

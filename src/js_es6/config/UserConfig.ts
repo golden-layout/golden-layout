@@ -1,4 +1,5 @@
-import { ConfigurationError, UnreachableCaseError } from '../errors/error';
+import { ConfigurationError } from '../errors/external-error';
+import { UnreachableCaseError } from '../errors/internal-error';
 import { JsonValue, Side } from '../utils/types';
 import { Config, HeaderedItemConfig, ItemConfig, JsonComponentConfig, ManagerConfig, PopoutManagerConfig, ReactComponentConfig, StackItemConfig } from './config';
 
@@ -57,8 +58,6 @@ export interface UserItemConfig {
      * Default: true
      */
     reorderEnabled?: boolean;  // Takes precedence over UserManagerConfig.reorderEnabled. Should be settings.reorderEnabled
-
-    activeItemIndex?: number;
 }
 
 export namespace UserItemConfig {
@@ -79,7 +78,6 @@ export namespace UserItemConfig {
                     isClosable: user.isClosable ?? ItemConfig.defaults.isClosable,
                     reorderEnabled: user.reorderEnabled ?? ItemConfig.defaults.reorderEnabled,
                     title: user.title ?? ItemConfig.defaults.title,
-                    activeItemIndex: user.activeItemIndex ?? ItemConfig.defaults.activeItemIndex,
                 }
                 return result;
 
@@ -168,7 +166,10 @@ namespace UserHeaderedItemConfig {
     }
 }
 
-export type UserStackItemConfig = UserHeaderedItemConfig
+export interface UserStackItemConfig extends UserHeaderedItemConfig {
+    /** The index of the item in content which is to be active*/
+    activeItemIndex?: number;
+}
 
 export namespace UserStackItemConfig {
     export function resolve(user: UserStackItemConfig): StackItemConfig {
@@ -183,7 +184,7 @@ export namespace UserStackItemConfig {
             isClosable: user.isClosable ?? ItemConfig.defaults.isClosable,
             reorderEnabled: user.reorderEnabled ?? ItemConfig.defaults.reorderEnabled,
             title: user.title ?? ItemConfig.defaults.title,
-            activeItemIndex: user.activeItemIndex ?? ItemConfig.defaults.activeItemIndex,
+            activeItemIndex: user.activeItemIndex ?? StackItemConfig.defaultActiveItemIndex,
             header: UserHeaderedItemConfig.Header.resolve(user.header, user.hasHeaders),
         };
         return result;
@@ -221,7 +222,6 @@ export namespace UserJsonComponentConfig {
                 isClosable: user.isClosable ?? ItemConfig.defaults.isClosable,
                 reorderEnabled: user.reorderEnabled ?? ItemConfig.defaults.reorderEnabled,
                 title: user.title ?? user.componentName,
-                activeItemIndex: user.activeItemIndex ?? ItemConfig.defaults.activeItemIndex,
                 header: UserHeaderedItemConfig.Header.resolve(user.header, user.hasHeaders),
                 componentName: user.componentName,
                 componentState: user.componentState ?? {},
@@ -232,6 +232,7 @@ export namespace UserJsonComponentConfig {
 }
 
 export interface UserReactComponentConfig extends UserComponentConfig {
+    component?: string;
     /**
      * Properties that will be passed to the component and accessible using this.props.
      */
@@ -240,7 +241,7 @@ export interface UserReactComponentConfig extends UserComponentConfig {
 
 export namespace UserReactComponentConfig {
     export function resolve(user: UserReactComponentConfig): ReactComponentConfig {
-        if (user.componentName === undefined) {
+        if (user.component === undefined) {
             throw new Error('UserReactComponentConfig.componentName is undefined');
         } else {
             const result: ReactComponentConfig = {
@@ -254,9 +255,9 @@ export namespace UserReactComponentConfig {
                 isClosable: user.isClosable ?? ItemConfig.defaults.isClosable,
                 reorderEnabled: user.reorderEnabled ?? ItemConfig.defaults.reorderEnabled,
                 title: user.title ?? user.componentName,
-                activeItemIndex: user.activeItemIndex ?? ItemConfig.defaults.activeItemIndex,
                 header: UserHeaderedItemConfig.Header.resolve(user.header, user.hasHeaders),
                 componentName: ReactComponentConfig.REACT_COMPONENT_ID,
+                component: user.component,
                 props: user.props,
             };
             return result;
@@ -272,6 +273,8 @@ export interface UserManagerConfig {
     /** @deprecated use header instead */
     labels?: UserManagerConfig.Labels;
     header?: UserManagerConfig.Header;
+    /** @deprecated to be replaced in future (see comments in ManagerConfig) */
+    maximisedItemId?: string | null,
 }
 
 export namespace UserManagerConfig {
@@ -565,8 +568,6 @@ export interface UserPopoutManagerConfig extends UserManagerConfig {
     indexInParent: number;
     dimensions: UserPopoutManagerConfig.Dimensions; // for backwards compatibility
     window: UserPopoutManagerConfig.Window;
-    /** @ deprecated use Window.maximised */
-    maximisedItemId?: string | null,
 }
 
 export namespace UserPopoutManagerConfig {
@@ -593,8 +594,7 @@ export namespace UserPopoutManagerConfig {
 
     export namespace Window {
         export function resolve(userWindow: Window | undefined,
-            userDimensions: Dimensions | undefined,
-            maximisedItemId: string | null | undefined): PopoutManagerConfig.Window
+            userDimensions: Dimensions | undefined): PopoutManagerConfig.Window
         {
             let result: PopoutManagerConfig.Window;
             const defaults = PopoutManagerConfig.Window.defaults;
@@ -604,7 +604,6 @@ export namespace UserPopoutManagerConfig {
                     height: userWindow.height ?? defaults.height,
                     left: userWindow.left ?? defaults.left,
                     top: userWindow.top ?? defaults.top,
-                    maximised: userWindow.maximised ?? defaults.maximised,
                 }
             } else {
                 result = {
@@ -612,7 +611,6 @@ export namespace UserPopoutManagerConfig {
                     height: userDimensions?.height ?? defaults.height,
                     left: userDimensions?.left ?? defaults.left,
                     top: userDimensions?.top ?? defaults.top,
-                    maximised: maximisedItemId === undefined ? defaults.maximised : maximisedItemId === '__glMaximised',
                 }
             }
             return result;
@@ -626,9 +624,10 @@ export namespace UserPopoutManagerConfig {
             settings: UserManagerConfig.Settings.resolve(user.settings),
             dimensions: UserManagerConfig.Dimensions.resolve(user.dimensions),
             header: UserManagerConfig.Header.resolve(user.header, user.settings, user.labels),
+            maximisedItemId: user.maximisedItemId === undefined ? null : user.maximisedItemId,
             parentId: user.parentId,
             indexInParent: user.indexInParent,
-            window: UserPopoutManagerConfig.Window.resolve(user.window, user.dimensions, user.maximisedItemId),
+            window: UserPopoutManagerConfig.Window.resolve(user.window, user.dimensions),
         } 
         return config;
     }
@@ -651,6 +650,7 @@ export namespace UserConfig {
             dimensions: UserManagerConfig.Dimensions.resolve(user.dimensions),
             settings: UserManagerConfig.Settings.resolve(user.settings),
             header: UserManagerConfig.Header.resolve(user.header, user.settings, user.labels),
+            maximisedItemId: user.maximisedItemId === undefined ? null : user.maximisedItemId,
         } 
         return config;
     }
@@ -662,6 +662,7 @@ export namespace UserConfig {
         settings: ManagerConfig.Settings.defaults,
         dimensions: ManagerConfig.Dimensions.defaults,
         header: ManagerConfig.Header.defaults,
+        maximisedItemId: null,
     };
 
     /** Shallow transformation of Config to UserConfig */

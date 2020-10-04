@@ -1,10 +1,14 @@
-import { UnexpectedNullError } from '../errors/error';
+import { UnexpectedNullError } from '../errors/internal-error';
 import { AbstractContentItem } from '../items/AbstractContentItem';
+import { Stack } from '../items/Stack';
 import { LayoutManager } from '../LayoutManager';
 import { DragListener } from '../utils/DragListener';
 import { EventEmitter } from '../utils/EventEmitter';
+import { getJQueryOffset } from '../utils/jquery-legacy';
+import { Side } from '../utils/types';
 import {
     createTemplateHtmlElement,
+    getElementWidthAndHeight,
     numberToPixels,
     stripTags
 } from '../utils/utils';
@@ -36,12 +40,14 @@ const _template = '<div class="lm_dragProxy">' +
  * @param {AbstractContentItem} originalParent
  */
 export class DragProxy extends EventEmitter {
-    private _area: AbstractContentItem.Area | null;
-    private _lastValidArea: AbstractContentItem.Area | null;
+    private _area: AbstractContentItem.ExtendedArea | null;
+    private _lastValidArea: AbstractContentItem.ExtendedArea | null;
     private _minX: number;
     private _minY: number;
     private _maxX: number;
     private _maxY: number;
+    private _width: number;
+    private _height: number;
     private _contentItemParent: AbstractContentItem;
     private _sided: boolean;
     private _childElementContainer: HTMLElement;
@@ -63,38 +69,64 @@ export class DragProxy extends EventEmitter {
         this._dragListener.on('drag', (offsetX, offsetY, event) => this.onDrag(offsetX, offsetY, event));
         this._dragListener.on('dragStop', () => this.onDrop());
 
-        this._element = createTemplateHtmlElement(_template, 'div');
-        if (this._originalParent !== undefined && originalParent._side) {
-            this._sided = originalParent._sided;
-            this._element.addClass('lm_' + originalParent._side);
-            if (['right', 'bottom'].indexOf(originalParent._side) >= 0)
-                this._element.find('.lm_content').after(this._element.find('.lm_header'));
+        this._element = createTemplateHtmlElement(_template);
+        if (this._originalParent instanceof Stack && this._originalParent.headerShow) {
+            this._sided = this._originalParent.headerLeftRightSided;
+            this._element.classList.add('lm_' + this._originalParent.headerSide);
+            if ([Side.right, Side.bottom].indexOf(this._originalParent.headerSide) >= 0) {
+                const contentElement = this._element.querySelector('.lm_content');
+                if (contentElement === null) {
+                    throw new UnexpectedNullError('DPCCE88824');
+                } else {
+                    const headerElement = this._element.querySelector('.lm_header');
+                    if (headerElement === null) {
+                        throw new UnexpectedNullError('DPCHE90025');
+                    } else {
+                        contentElement.insertAdjacentElement('afterend', headerElement);
+                    }
+                }
+            }
         }
-        this._element.css({
-            left: x,
-            top: y
-        });
-        this._element.find('.lm_tab').attr('title', stripTags(this._contentItem.config.title));
-        this._element.find('.lm_title').html(this._contentItem.config.title);
-        this._childElementContainer = this._element.find('.lm_content');
-        this._childElementContainer.append(contentItem.element);
+        this._element.style.left = numberToPixels(x);
+        this._element.style.top = numberToPixels(y);
+        const tabElement = this._element.querySelector('.lm_tab');
+        if (tabElement === null) {
+            throw new UnexpectedNullError('DPCTE33245');
+        } else {
+            tabElement.setAttribute('title', stripTags(this._contentItem.config.title));
+            const titleElement = this._element.querySelector('.lm_title');
+            if (titleElement === null) {
+                throw new UnexpectedNullError('DPCTI98826');
+            } else {
+                titleElement.insertAdjacentText('afterbegin', this._contentItem.config.title);
+                const childElementContainer = this._element.querySelector('.lm_content') as HTMLElement;
+                if (childElementContainer === null) {
 
-        this._undisplayTree();
-        this._layoutManager.calculateItemAreas();
-        this.setDimensions();
+                } else {
+                    this._childElementContainer = childElementContainer;
+                    this._childElementContainer.appendChild(this._contentItem.element);
 
-        $(document.body).append(this._element);
+                    this._undisplayTree();
+                    this._layoutManager.calculateItemAreas();
+                    this.setDimensions();
 
-        var offset = this._layoutManager.container.offset();
+                    document.body.appendChild(this._element);
 
-        this._minX = offset.left;
-        this._minY = offset.top;
-        this._maxX = this._layoutManager.container.width() + this._minX;
-        this._maxY = this._layoutManager.container.height() + this._minY;
-        this._width = this._element.width();
-        this._height = this._element.height();
+                    const offset = getJQueryOffset(this._layoutManager.container);
 
-        this._setDropPosition(x, y);
+                    this._minX = offset.left;
+                    this._minY = offset.top;
+                    const { width: containerWidth, height: containerHeight } = getElementWidthAndHeight(this._layoutManager.container);
+                    this._maxX = containerWidth + this._minX;
+                    this._maxY = containerHeight + this._minY;
+                    const { width: elementWidth, height: elementHeight } = getElementWidthAndHeight(this._element);
+                    this._width = elementWidth;
+                    this._height = elementHeight;
+
+                    this._setDropPosition(x, y);
+                }
+            }
+        }
     }
 
     /**
@@ -102,11 +134,9 @@ export class DragProxy extends EventEmitter {
      * still within the valid drag area and calls the layoutManager to highlight the
      * current drop area
      *
-     * @param   {Number} offsetX The difference from the original x position in px
-     * @param   {Number} offsetY The difference from the original y position in px
-     * @param   {jQuery DOM event} event
-     *
-     * @returns {void}
+     * @param   offsetX The difference from the original x position in px
+     * @param   offsetY The difference from the original y position in px
+     * @param   event
      */
     private onDrag(offsetX: number, offsetY: number, event: EventEmitter.DragEvent) {
 
@@ -130,10 +160,8 @@ export class DragProxy extends EventEmitter {
      * @returns {void}
      */
     _setDropPosition(x: number, y: number): void {
-        this._element.css({
-            left: x,
-            top: y
-        });
+        this._element.style.left = numberToPixels(x);
+        this._element.style.top = numberToPixels(y);
         this._area = this._layoutManager.getArea(x, y);
 
         if (this._area !== null) {
@@ -207,12 +235,12 @@ export class DragProxy extends EventEmitter {
      * Removes the item from its original position within the tree
      */
     private updateTree() {
-        /**
-         * parent is null if the drag had been initiated by a external drag source
-         */
-        if (this._contentItem.parent !== null) {
-            this._contentItem.parent.removeChild(this._contentItem, true);
-        }
+        // Parent is NO LONGER null if the drag had been initiated by a external drag source
+        // If an external drag source initiated drag, then dummy parent will be used.  In this case
+        // still remove child from (dummy) parent
+        // if (this._contentItem.parent !== null) {
+        //     this._contentItem.parent.removeChild(this._contentItem, true);
+        // }
 
         this._contentItem.setParent(this._contentItemParent);
     }
@@ -234,10 +262,10 @@ export class DragProxy extends EventEmitter {
                 this._element.style.height = numberToPixels(height)
                 width -= (this._sided ? dimensions.headerHeight : 0);
                 height -= (!this._sided ? dimensions.headerHeight : 0);
-                this._childElementContainer.width(width);
-                this._childElementContainer.height(height);
-                this._contentItem.element.width(width);
-                this._contentItem.element.height(height);
+                this._childElementContainer.style.width = numberToPixels(width);
+                this._childElementContainer.style.height = numberToPixels(height);
+                this._contentItem.element.style.width = numberToPixels(width);
+                this._contentItem.element.style.height = numberToPixels(height);
                 this._contentItem.callDownwards('_$show');
                 this._contentItem.callDownwards('setSize');
             }

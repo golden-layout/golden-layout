@@ -1,10 +1,10 @@
 import { ComponentConfig, ItemConfig, ManagerConfig, PopoutManagerConfig, StackItemConfig } from './config/config'
-import { UserItemConfig } from './config/UserConfig'
 import { BrowserPopout } from './controls/BrowserPopout'
 import { DragSource } from './controls/DragSource'
 import { DropTargetIndicator } from './controls/DropTargetIndicator'
 import { TransitionIndicator } from './controls/TransitionIndicator'
-import { ConfigurationError, UnexpectedNullError, UnreachableCaseError } from './errors/error'
+import { ConfigurationError } from './errors/external-error'
+import { UnexpectedNullError, UnreachableCaseError } from './errors/internal-error'
 import { AbstractContentItem } from './items/AbstractContentItem'
 import { Component } from './items/Component'
 import { Root } from './items/Root'
@@ -18,16 +18,13 @@ import { Rect } from './utils/types'
 import {
     copy,
     createTemplateHtmlElement,
-    fnBind,
     getElementHeight,
     getElementWidth,
     getUniqueId,
-
-
-
+    pixelsToNumber,
     removeFromArray,
-
-
+    setElementHeight,
+    setElementWidth,
     stripTags
 } from './utils/utils'
 
@@ -54,9 +51,9 @@ export abstract class LayoutManager extends EventEmitter {
     private _isFullPage = false;
     private _resizeTimeoutId: NodeJS.Timeout | undefined;
     private _componentConstructors: Record<string, Component.InstanceConstructor> = {};
-    private _itemAreas: AbstractContentItem.Area[];
+    private _itemAreas: AbstractContentItem.ExtendedArea[];
     private _maximisedItem: AbstractContentItem | null;
-    private _maximisePlaceholder: JQuery<HTMLElement>;
+    private _maximisePlaceholder: HTMLElement;
     private _creationTimeoutPassed: boolean;
     private _subWindowsCreated = false;
     private _dragSources: DragSource[];
@@ -88,7 +85,7 @@ export abstract class LayoutManager extends EventEmitter {
 
         this._itemAreas = [];
         this._maximisedItem = null;
-        this._maximisePlaceholder = $('<div class="lm_maximise_place"></div>');
+        this._maximisePlaceholder = createTemplateHtmlElement('<div class="lm_maximise_place"></div>');
         this._creationTimeoutPassed = false;
         this._dragSources = [];
         this._updatingColumnsResponsive = false;
@@ -102,7 +99,7 @@ export abstract class LayoutManager extends EventEmitter {
         this.eventHub = new EventHub(this);
         this.dropTargetIndicator = null;
         this.transitionIndicator = null;
-        this.tabDropPlaceholder = $('<div class="lm_drop_tab_placeholder"></div>');
+        this.tabDropPlaceholder = createTemplateHtmlElement('<div class="lm_drop_tab_placeholder"></div>');
 
         // if (this.isSubWindow === true) {
         //     $('body').css('visibility', 'hidden');
@@ -207,7 +204,12 @@ export abstract class LayoutManager extends EventEmitter {
             openPopouts.push(this.openPopouts[i].toConfig());
         }
 
-        return this.createToConfig(content, openPopouts);
+        /*
+         * calculate maximisedItemId
+         */
+        const maximisedItemId = this._maximisedItem ? '__glMaximised' : null;
+
+        return this.createToConfig(content, openPopouts, maximisedItemId);
     }
 
     /**
@@ -259,7 +261,7 @@ export abstract class LayoutManager extends EventEmitter {
          * If the document isn't ready yet, wait for it.
          */
         if (document.readyState === 'loading' || document.body === null) {
-            $(document).ready(() => this.init());
+            document.addEventListener('addEventListener', () => this.init());
             return;
         }
 
@@ -303,8 +305,8 @@ export abstract class LayoutManager extends EventEmitter {
             this.root.callDownwards('setSize', [this.width, this.height]);
 
             if (this._maximisedItem) {
-                this._maximisedItem.element.width(this.container.width());
-                this._maximisedItem.element.height(this.container.height());
+                setElementWidth(this._maximisedItem.element, pixelsToNumber(this.container.style.width));
+                setElementHeight(this._maximisedItem.element, pixelsToNumber(this.container.style.height));
                 this._maximisedItem.callDownwards('setSize');
             }
 
@@ -355,11 +357,16 @@ export abstract class LayoutManager extends EventEmitter {
 
     getComponentNameFromConfig(config: ComponentConfig): string {
         if (ComponentConfig.isReact(config)) {
-            throw new Error('LayoutManager.getComponentNameFromConfig: Not implemented for React')
-            // return config.component // what should this be
+            return config.component;
         } else {
             return config.componentName;
         }
+    }
+
+    createAndInitContentItem(config: ItemConfig, parent: AbstractContentItem): AbstractContentItem {
+        const newItem = this.createContentItem(config, parent);
+        newItem._$init();
+        return newItem;
     }
 
     /**
@@ -398,7 +405,7 @@ export abstract class LayoutManager extends EventEmitter {
             // and it's not the topmost item in a new window
             !(this.isSubWindow === true && parent instanceof Root)
         ) {
-            config = {
+            const stackConfig: StackItemConfig = {
                 type: ItemConfig.Type.stack,
                 content: [config],
                 width: config.width,
@@ -409,8 +416,11 @@ export abstract class LayoutManager extends EventEmitter {
                 isClosable: config.isClosable,
                 title: config.title,
                 reorderEnabled: config.reorderEnabled,
-                activeItemIndex: config.activeItemIndex,
+                activeItemIndex: 0,
+                header: undefined,
             };
+
+            config = stackConfig;
         }
 
         const contentItem = this.createContentItemFromConfig(config, parent);
@@ -462,7 +472,6 @@ export abstract class LayoutManager extends EventEmitter {
                 top: windowTop + offsetTop,
                 width: getElementWidth(item.element),
                 height: getElementHeight(item.element),
-                maximised: false,
             };
 
             item.remove();
@@ -472,7 +481,8 @@ export abstract class LayoutManager extends EventEmitter {
                 openPopouts: [],
                 settings: managerConfig.settings,
                 dimensions: managerConfig.dimensions,
-                labels: managerConfig.labels,
+                header: managerConfig.header,
+                maximisedItemId: null,
                 window,
                 parentId,
                 indexInParent,
@@ -494,13 +504,8 @@ export abstract class LayoutManager extends EventEmitter {
 
         const browserPopout = new BrowserPopout(config, initialWindow, this);
 
-        browserPopout.on('initialised', function() {
-            self.emit('windowOpened', browserPopout);
-        });
-
-        browserPopout.on('closed', function() {
-            self.reconcilePopoutWindows();
-        });
+        browserPopout.on('initialised', () => this.emit('windowOpened', browserPopout));
+        browserPopout.on('closed', () => this.reconcilePopoutWindows());
 
         this.openPopouts.push(browserPopout);
 
@@ -593,19 +598,23 @@ export abstract class LayoutManager extends EventEmitter {
         contentItem.on('beforeItemDestroyed', (ev: EventEmitter.BubblingEvent) => this.cleanupBeforeMaximisedItemDestroyed(ev));
         this._maximisedItem.addId('__glMaximised');
         contentItem.element.classList.add('lm_maximised');
-        contentItem.element.after(this._maximisePlaceholder);
-        this.root.element.prepend(contentItem.element);
-        contentItem.element.width(this.container.width());
-        contentItem.element.height(this.container.height());
-        contentItem.callDownwards('setSize');
-        this._maximisedItem.emit('maximised');
-        this.emit('stateChanged');
+        contentItem.element.insertAdjacentElement('afterend', this._maximisePlaceholder);
+        if (this.root === null) {
+            throw new UnexpectedNullError('LMMXI19993');
+        } else {
+            this.root.element.prepend(contentItem.element);
+            setElementWidth(contentItem.element, pixelsToNumber(this.container.style.width));
+            setElementHeight(contentItem.element, pixelsToNumber(this.container.style.height));
+            contentItem.callDownwards('setSize');
+            this._maximisedItem.emit('maximised');
+            this.emit('stateChanged');
+        }
     }
 
     minimiseItem(contentItem: AbstractContentItem): void {
         contentItem.element.classList.remove('lm_maximised');
         contentItem.removeId('__glMaximised');
-        this._maximisePlaceholder.after(contentItem.element);
+        this._maximisePlaceholder.insertAdjacentElement('afterend', contentItem.element);
         this._maximisePlaceholder.remove();
         contentItem.parent.callDownwards('setSize');
         this._maximisedItem = null;
@@ -637,7 +646,7 @@ export abstract class LayoutManager extends EventEmitter {
         globalThis.setTimeout(() => globalThis.close(), 1);
     }
 
-    getArea(x: number, y: number): AbstractContentItem.Area | null {
+    getArea(x: number, y: number): AbstractContentItem.ExtendedArea | null {
         let mathingArea = null;
 
         for (let i = 0; i < this._itemAreas.length; i++) {
@@ -687,7 +696,7 @@ export abstract class LayoutManager extends EventEmitter {
         }
     }
 
-    calculateItemAreas() {
+    calculateItemAreas(): void {
         const allContentItems = this.getAllContentItems();
         this._itemAreas = [];
 
@@ -701,35 +710,36 @@ export abstract class LayoutManager extends EventEmitter {
         if (allContentItems.length === 1) {
             this._itemAreas.push(this.root.getArea());
             return;
-        }
-        this.createRootItemAreas();
+        } else {
+            this.createRootItemAreas();
 
-        for (let i = 0; i < allContentItems.length; i++) {
+            for (let i = 0; i < allContentItems.length; i++) {
 
-            if (!(allContentItems[i].isStack)) {
-                continue;
-            }
+                if (!(allContentItems[i].isStack)) {
+                    continue;
+                }
 
-            const area = allContentItems[i].getArea();
+                const area = allContentItems[i].getArea();
 
-            if (area === null) {
-                continue;
-            } else if (area instanceof Array) {
-                this._itemAreas = this._itemAreas.concat(area);
-            } else {
-                this._itemAreas.push(area);
-                const header: AbstractContentItem.Area = {
-                    x1: area.x1,
-                    x2: area.x2,
-                    y1: area.y1,
-                    y2: area.y2,
-                    contentItem: 1,
-                };
-                const h = area.contentItem._contentAreaDimensions.header.highlightArea
-                copy(header, area);
-                copy(header, area.contentItem._contentAreaDimensions.header.highlightArea);
-                header.surface = (header.x2 - header.x1) * (header.y2 - header.y1);
-                this._itemAreas.push(header);
+                if (area === null) {
+                    continue;
+                } else if (area instanceof Array) {
+                    this._itemAreas = this._itemAreas.concat(area);
+                } else {
+                    this._itemAreas.push(area);
+                    const header: AbstractContentItem.ExtendedArea = {
+                        x1: area.x1,
+                        x2: area.x2,
+                        y1: area.y1,
+                        y2: area.y2,
+                        contentItem: 1,
+                    };
+                    const h = area.contentItem._contentAreaDimensions.header.highlightArea
+                    copy(header, area);
+                    copy(header, area.contentItem._contentAreaDimensions.header.highlightArea);
+                    header.surface = (header.x2 - header.x1) * (header.y2 - header.y1);
+                    this._itemAreas.push(header);
+                }
             }
         }
     }
@@ -746,15 +756,15 @@ export abstract class LayoutManager extends EventEmitter {
      *
      * @returns {AbtractContentItem}
      */
-    _$normalizeContentItem(contentItemOrConfig: AbstractContentItem | ItemConfig, parent?: AbstractContentItem) {
-        if (contentItemOrConfig instanceof AbstractContentItem) {
-            return contentItemOrConfig;
-        } else {
-            const newContentItem = this.createContentItem(contentItemOrConfig, parent);
-            newContentItem.callDownwards('_$init');
-            return newContentItem;
-        }
-    }
+    // _$normalizeContentItem(contentItemOrConfig: AbstractContentItem | ItemConfig, parent?: AbstractContentItem) {
+    //     if (contentItemOrConfig instanceof AbstractContentItem) {
+    //         return contentItemOrConfig;
+    //     } else {
+    //         const newContentItem = this.createContentItem(contentItemOrConfig, parent);
+    //         newContentItem.callDownwards('_$init');
+    //         return newContentItem;
+    //     }
+    // }
 
     /**
      * Iterates through the array of open popout windows and removes the ones
@@ -762,10 +772,9 @@ export abstract class LayoutManager extends EventEmitter {
      * listening for window.close / unload events in a cross browser compatible fashion.
      */
     private reconcilePopoutWindows() {
-        var openPopouts = [],
-            i;
+        const openPopouts: BrowserPopout[] = [];
 
-        for (i = 0; i < this.openPopouts.length; i++) {
+        for (let i = 0; i < this.openPopouts.length; i++) {
             if (this.openPopouts[i].getWindow().closed === false) {
                 openPopouts.push(this.openPopouts[i]);
             } else {
@@ -780,7 +789,8 @@ export abstract class LayoutManager extends EventEmitter {
 
     }
 
-    protected abstract createToConfig(content: ItemConfig[], openPopouts: PopoutManagerConfig[]): ManagerConfig;
+    protected abstract createToConfig(content: ItemConfig[], openPopouts: PopoutManagerConfig[],
+        maximisedItemId: string | null): ManagerConfig;
 
     /***************************
      * PRIVATE
@@ -798,7 +808,7 @@ export abstract class LayoutManager extends EventEmitter {
             throw new UnexpectedNullError('LMGACI13130');
         } else {
             const allContentItems: AbstractContentItem[] = [this.root];
-            this.root.addChildContentItems(allContentItems);
+            this.root.deepAddChildContentItems(allContentItems);
             return allContentItems;
         }
     }
@@ -816,12 +826,8 @@ export abstract class LayoutManager extends EventEmitter {
 
     /**
      * Debounces resize events
-     *
-     * @private
-     *
-     * @returns {void}
      */
-    _onResize() {
+    private _onResize(): void {
         if (this._resizeTimeoutId !== undefined) {
             clearTimeout(this._resizeTimeoutId);
         }
@@ -840,7 +846,7 @@ export abstract class LayoutManager extends EventEmitter {
         const popInButton = createTemplateHtmlElement('<div class="lm_popin" title="' + this.config.header.dock + '">' +
             '<div class="lm_icon"></div>' +
             '<div class="lm_bg"></div>' +
-            '</div>', 'div');
+            '</div>');
 
         popInButton.click = () => this.emit('popIn');
 
@@ -858,14 +864,14 @@ export abstract class LayoutManager extends EventEmitter {
             const appendNodeList = appendNodeLists[listIdx];
             for (let nodeIdx = 0; nodeIdx < appendNodeList.length; nodeIdx++) {
                 const node = appendNodeList[nodeIdx];
-                headElement.append(node);
+                headElement.appendChild(node);
             }
         }
 
         const bodyElement = document.body;
         bodyElement.innerHTML = '';
         bodyElement.style.visibility = 'visible';
-        bodyElement.append(popInButton);
+        bodyElement.appendChild(popInButton);
 
         /*
         * This seems a bit pointless, but actually causes a reflow/re-evaluation getting around
@@ -901,25 +907,21 @@ export abstract class LayoutManager extends EventEmitter {
      * @returns {void}
      */
     private _setContainer() {
-        var container = $(this.container || 'body');
+        const bodyElement = document.body;
+        const container = this.container ?? bodyElement;
 
-        if (container.length === 0) {
-            throw new Error('GoldenLayout container not found');
-        }
-
-        if (container.length > 1) {
-            throw new Error('GoldenLayout more than one container element specified');
-        }
-
-        if (container[0] === document.body) {
+        if (container === bodyElement) {
             this._isFullPage = true;
 
-            $('html, body').css({
-                height: '100%',
-                margin: 0,
-                padding: 0,
-                overflow: 'hidden'
-            });
+            const documentElement = document.documentElement;
+            documentElement.style.height = '100%';
+            documentElement.style.margin = '0';
+            documentElement.style.padding = '0';
+            documentElement.style.overflow = 'hidden';
+            bodyElement.style.height = '100%';
+            bodyElement.style.margin = '0';
+            bodyElement.style.padding = '0';
+            bodyElement.style.overflow = 'hidden';
         }
 
         this.container = container;
@@ -931,9 +933,8 @@ export abstract class LayoutManager extends EventEmitter {
      * @param   managerConfig GoldenLayout Config
      */
     private create(managerConfig: ManagerConfig) {
-        var errorMsg;
-
         if (!(managerConfig.content instanceof Array)) {
+            let errorMsg: string;
             if (managerConfig.content === undefined) {
                 errorMsg = 'Missing setting \'content\' on top level of configuration';
             } else {
@@ -944,14 +945,8 @@ export abstract class LayoutManager extends EventEmitter {
         }
 
         if (managerConfig.content.length > 1) {
-            errorMsg = 'Top level content can\'t contain more then one element.';
+            const errorMsg = 'Top level content can\'t contain more then one element.';
             throw new ConfigurationError(errorMsg, managerConfig);
-        }
-
-        // convert config.content to an ItemConfig
-        const rootUserItemConfig: UserItemConfig = {
-            type: ItemConfig.Type.root,
-            content: managerConfig.content,
         }
 
         const rootConfig = ManagerConfig.createRootItemConfig(managerConfig);
@@ -960,19 +955,21 @@ export abstract class LayoutManager extends EventEmitter {
         this.root.callDownwards('_$init');
 
         if (managerConfig.maximisedItemId === '__glMaximised') {
-            this.root.getItemsById(managerConfig.maximisedItemId)[0].toggleMaximise();
+            const maximisedItems = this.root.getItemsById(managerConfig.maximisedItemId);
+            if (maximisedItems.length > 0) {
+                // should only be one - if more, just do first
+                maximisedItems[0].toggleMaximise();
+            }
         }
     }
 
     /**
      * Called when the window is closed or the user navigates away
      * from the page
-     *
-     * @returns {void}
      */
-    _onUnload() {
+    private _onUnload(): void {
         if (this.config.settings.closePopoutsOnUnload === true) {
-            for (var i = 0; i < this.openPopouts.length; i++) {
+            for (let i = 0; i < this.openPopouts.length; i++) {
                 this.openPopouts[i].close();
             }
         }
@@ -991,34 +988,38 @@ export abstract class LayoutManager extends EventEmitter {
         this._firstLoad = false;
 
         // If there is only one column, do nothing.
-        var columnCount = this.root.contentItems[0].contentItems.length;
-        if (columnCount <= 1) {
-            return;
+        if (this.root === null || this.width === null) {
+            throw new UnexpectedNullError('LMACR7741');
+        } else {
+            const columnCount = this.root.contentItems[0].contentItems.length;
+            if (columnCount <= 1) {
+                return;
+            } else {
+                // If they all still fit, do nothing.
+                const minItemWidth = this.config.dimensions.minItemWidth;
+                const totalMinWidth = columnCount * minItemWidth;
+                if (totalMinWidth <= this.width) {
+                    return;
+                } else {
+                    // Prevent updates while it is already happening.
+                    this._updatingColumnsResponsive = true;
+
+                    // Figure out how many columns to stack, and put them all in the first stack container.
+                    const finalColumnCount = Math.max(Math.floor(this.width / minItemWidth), 1);
+                    const stackColumnCount = columnCount - finalColumnCount;
+
+                    const rootContentItem = this.root.contentItems[0];
+                    const firstStackContainer = this.findAllStackContainers()[0];
+                    for (let i = 0; i < stackColumnCount; i++) {
+                        // Stack from right.
+                        const column = rootContentItem.contentItems[rootContentItem.contentItems.length - 1];
+                        this.addChildContentItemsToContainer(firstStackContainer, column);
+                    }
+
+                    this._updatingColumnsResponsive = false;
+                }
+            }
         }
-
-        // If they all still fit, do nothing.
-        var minItemWidth = this.config.dimensions.minItemWidth;
-        var totalMinWidth = columnCount * minItemWidth;
-        if (totalMinWidth <= this.width) {
-            return;
-        }
-
-        // Prevent updates while it is already happening.
-        this._updatingColumnsResponsive = true;
-
-        // Figure out how many columns to stack, and put them all in the first stack container.
-        var finalColumnCount = Math.max(Math.floor(this.width / minItemWidth), 1);
-        var stackColumnCount = columnCount - finalColumnCount;
-
-        var rootContentItem = this.root.contentItems[0];
-        var firstStackContainer = this._findAllStackContainers()[0];
-        for (var i = 0; i < stackColumnCount; i++) {
-            // Stack from right.
-            var column = rootContentItem.contentItems[rootContentItem.contentItems.length - 1];
-            this.addChildContentItemsToContainer(firstStackContainer, column);
-        }
-
-        this._updatingColumnsResponsive = false;
     }
 
     /**
@@ -1035,50 +1036,58 @@ export abstract class LayoutManager extends EventEmitter {
 
     /**
      * Adds all children of a node to another container recursively.
-     * @param {object} container - Container to add child content items to.
-     * @param {object} node - Node to search for content items.
-     * @returns {void}
+     * @param container - Container to add child content items to.
+     * @param node - Node to search for content items.
      */
-    private addChildContentItemsToContainer(container, node) {
-        if (node.type === 'stack') {
-            node.contentItems.forEach(function(item) {
+    private addChildContentItemsToContainer(container: AbstractContentItem, node: AbstractContentItem) {
+        const contentItems = node.contentItems;
+        if (node instanceof Stack) {
+            for (let i = 0; i < contentItems.length; i++) {
+                const item = contentItems[i];
                 container.addChild(item);
                 node.removeChild(item, true);
-            });
+            }
         } else {
-            node.contentItems.forEach(fnBind(function(item) {
-                this._addChildContentItemsToContainer(container, item);
-            }, this));
+            for (let i = 0; i < contentItems.length; i++) {
+                const item = contentItems[i];
+                this.addChildContentItemsToContainer(container, item);
+            }
         }
     }
 
     /**
      * Finds all the stack containers.
-     * @returns {array} - The found stack containers.
+     * @returns The found stack containers.
      */
-    _findAllStackContainers() {
-        var stackContainers = [];
-        this._findAllStackContainersRecursive(stackContainers, this.root);
+    private findAllStackContainers() {
+        if (this.root === null) {
+            throw new UnexpectedNullError('LMFASC52778');
+        } else {
+            const stackContainers: Stack[] = [];
+            this._findAllStackContainersRecursive(stackContainers, this.root);
 
-        return stackContainers;
+            return stackContainers;
+        }
     }
 
     /**
      * Finds all the stack containers.
      *
-     * @param {array} - Set of containers to populate.
-     * @param {object} - Current node to process.
-     *
-     * @returns {void}
+     * @param stackContainers Set of containers to populate.
+     * @param node Current node to process.
      */
-    _findAllStackContainersRecursive(stackContainers, node) {
-        node.contentItems.forEach(fnBind(function(item) {
-            if (item.type === ItemConfig.Type.stack) {
+    private _findAllStackContainersRecursive(stackContainers: Stack[], node: AbstractContentItem) {
+        const contentItems = node.contentItems;
+        for (let i = 0; i < contentItems.length; i++) {
+            const item = contentItems[i];
+            if (item instanceof Stack) {
                 stackContainers.push(item);
-            } else if (!item.isComponent) {
-                this._findAllStackContainersRecursive(stackContainers, item);
+            } else {
+                if (!item.isComponent) {
+                    this._findAllStackContainersRecursive(stackContainers, item);
+                }
             }
-        }, this));
+        }
     }
 }
 

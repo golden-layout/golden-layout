@@ -1,10 +1,10 @@
 import { HeaderedItemConfig, ItemConfig, StackItemConfig } from '../config/config';
 import { Header } from '../controls/Header';
-import { AssertError, UnexpectedNullError } from '../errors/error';
+import { AssertError, UnexpectedNullError } from '../errors/internal-error';
 import { AbstractContentItem } from '../items/AbstractContentItem';
 import { LayoutManager } from '../LayoutManager';
 import { getJQueryOffset } from '../utils/jquery-legacy';
-import { LinkedRect, Side } from '../utils/types';
+import { Area, Side } from '../utils/types';
 import {
     createTemplateHtmlElement,
     getElementHeight,
@@ -31,14 +31,16 @@ export class Stack extends AbstractContentItem implements Header.Parent {
 
     readonly childElementContainer: HTMLElement;
 
+    get headerShow(): boolean { return this._header.show; }
     get headerSide(): Side { return this._header.side; }
+    get headerLeftRightSided(): boolean { return this._header.leftRightSided; }
     get dockEnabled(): boolean { return this._header.dockEnabled; }
     get docker(): Stack.Docker { return this._docker; }
 
     constructor(layoutManager: LayoutManager, private readonly _stackConfig: StackItemConfig, private _stackParent: Stack.Parent) {
         super(layoutManager, _stackConfig, _stackParent);
 
-        this.element = createTemplateHtmlElement('<div class="lm_item lm_stack"></div>', 'div');
+        this.element = createTemplateHtmlElement('<div class="lm_item lm_stack"></div>');
         this._activeContentItem = null;
         const itemHeaderConfig = _stackConfig.header;
         const managerHeaderConfig = layoutManager.config.header;
@@ -86,12 +88,12 @@ export class Stack extends AbstractContentItem implements Header.Parent {
 
         this.isStack = true;
 
-        this.childElementContainer = createTemplateHtmlElement('<div class="lm_items"></div>', 'div');
+        this.childElementContainer = createTemplateHtmlElement('<div class="lm_items"></div>');
 
         this.element.addEventListener('mouseenter', this._elementMouseEnterEventListener);
         this.element.addEventListener('mouseleave', this._elementMouseLeaveEventListener);
-        this.element.append(this._header.element);
-        this.element.append(this.childElementContainer);
+        this.element.appendChild(this._header.element);
+        this.element.appendChild(this.childElementContainer);
 
         this.setUndocked();
         this.setupHeaderPosition();
@@ -140,7 +142,7 @@ export class Stack extends AbstractContentItem implements Header.Parent {
         this.setSize();
 
         for (let i = 0; i < this.contentItems.length; i++) {
-            this.childElementContainer.append(this.contentItems[i].element);
+            this.childElementContainer.appendChild(this.contentItems[i].element);
         }
 
         super._$init();
@@ -156,7 +158,7 @@ export class Stack extends AbstractContentItem implements Header.Parent {
         }
 
         if (this.contentItems.length > 0) {
-            const initialItem = this.contentItems[this.config.activeItemIndex || 0];
+            const initialItem = this.contentItems[this._stackConfig.activeItemIndex ?? 0];
 
             if (!initialItem) {
                 throw new Error('Configured activeItemIndex out of bounds');
@@ -236,7 +238,7 @@ export class Stack extends AbstractContentItem implements Header.Parent {
             throw new AssertError('SACC88532'); // Stacks can only have Component children
         } else {
             super.addChild(contentItem, index);
-            this.childElementContainer.append(contentItem.element);
+            this.childElementContainer.appendChild(contentItem.element);
             this._header.createTab(contentItem, index);
             this.setActiveContentItem(contentItem);
             this.callDownwards('setSize');
@@ -258,12 +260,12 @@ export class Stack extends AbstractContentItem implements Header.Parent {
             } else {
                 this._activeContentItem = null;
             }
-        } else if (this.config.activeItemIndex >= this.contentItems.length) {
+        } else if (this._stackConfig.activeItemIndex >= this.contentItems.length) {
 			if (this.contentItems.length > 0) {
                 const activeContentItem = this.getActiveContentItem();
                 if (activeContentItem !== null) {
                     const activeIndex = this.contentItems.indexOf(activeContentItem);
-                    this.config.activeItemIndex = Math.max(activeIndex, 0);
+                    this._stackConfig.activeItemIndex = Math.max(activeIndex, 0);
                 }
 			}
 		}
@@ -277,7 +279,7 @@ export class Stack extends AbstractContentItem implements Header.Parent {
 
     undisplayChild(contentItem: AbstractContentItem): void {
         if(this.contentItems.length > 1){
-            const index = this.contentItems.indexOf(contentItem)
+            const index = this.contentItems.indexOf(contentItem);
             contentItem._$hide && contentItem._$hide()
             this.setActiveContentItem(this.contentItems[index === 0 ? index+1 : index-1])
         } else {
@@ -351,7 +353,8 @@ export class Stack extends AbstractContentItem implements Header.Parent {
      * (left, top, right, bottom) * is child of the right parent (row, column) + header drop
      *
      */
-    _$onDrop(contentItem: AbstractContentItem): void {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _$onDrop(contentItem: AbstractContentItem, area: AbstractContentItem.ExtendedArea): void {
         /*
          * The item was dropped on the header area. Just add it as a child of this stack and
          * get the hell out of this logic
@@ -390,8 +393,7 @@ export class Stack extends AbstractContentItem implements Header.Parent {
         if (contentItem.isComponent) {
             const itemConfig = StackItemConfig.createDefault();
             itemConfig.header = this.createHeaderConfig();
-            const stack = this.layoutManager.createContentItem(itemConfig, this);
-            stack._$init();
+            const stack = this.layoutManager.createAndInitContentItem(itemConfig, this);
             stack.addChild(contentItem);
             contentItem = stack;
         }
@@ -599,7 +601,7 @@ export class Stack extends AbstractContentItem implements Header.Parent {
             throw new UnexpectedNullError('SHHDZDTI97110');
         }
 
-        let area: LinkedRect;
+        let area: Area;
 
         // Empty stack
         if (tabsLength === 0) {
@@ -650,7 +652,7 @@ export class Stack extends AbstractContentItem implements Header.Parent {
                 tabElement.insertAdjacentElement('beforebegin', this.layoutManager.tabDropPlaceholder);
             } else {
                 this._dropIndex = Math.min(tabIndex + 1, tabsLength);
-                tabElement.after(this.layoutManager.tabDropPlaceholder);
+                tabElement.insertAdjacentElement('afterend', this.layoutManager.tabDropPlaceholder);
             }
 
             const tabDropPlaceholderOffset = getJQueryOffset(this.layoutManager.tabDropPlaceholder);
@@ -734,8 +736,9 @@ export class Stack extends AbstractContentItem implements Header.Parent {
         }
     }
 
-    protected setParent(parent: AbstractContentItem): void {
+    setParent(parent: AbstractContentItem): void {
         this._stackParent = parent as Stack.Parent;
+        super.setParent(parent);
     }
 
     private onElementMouseEnter() {
@@ -787,8 +790,8 @@ export namespace Stack {
     }
 
     export interface ContentAreaDimension {
-        hoverArea: LinkedRect;
-        highlightArea: LinkedRect;
+        hoverArea: Area;
+        highlightArea: Area;
     }
 
     export type ContentAreaDimensions = {

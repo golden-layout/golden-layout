@@ -176,6 +176,7 @@ export namespace EventEmitter {
         "activeContentItemChanged": UnknownParam;
         "beforeItemDestroyed": BubblingEventParam;
         "close": NoParams;
+        "closed": NoParams;
         "destroy": NoParams;
         "drag": DragParams;
         "dragStart": DragStartParams;

@@ -1,16 +1,12 @@
-import $ from 'jquery';
-import { Config, ManagerConfig, PopoutManagerConfig } from '../config/config';
-import { UnexpectedNullError } from '../errors/error';
+import { ManagerConfig, PopoutManagerConfig } from '../config/config';
+import { PopoutBlockedError } from '../errors/external-error';
+import { AssertError, UnexpectedNullError } from '../errors/internal-error';
 import { AbstractContentItem } from '../items/AbstractContentItem';
 import { LayoutManager } from '../LayoutManager';
 import { ConfigMinifier } from '../utils/ConfigMinifier';
 import { EventEmitter } from '../utils/EventEmitter';
 import { Rect } from '../utils/types';
-import {
-    deepExtend,
-    fnBind,
-    getUniqueId
-} from '../utils/utils';
+import { deepExtend, getUniqueId } from '../utils/utils';
 
 /**
  * Pops a content item out into a new browser window.
@@ -21,28 +17,26 @@ import {
  *    - Opening the current window's URL with the configuration as a GET parameter
  *    - GoldenLayout when opened in the new window will look for the GET parameter
  *      and use it instead of the provided configuration
- *
- * @param {Object} config GoldenLayout item config
- * @param {Object} dimensions A map with width, height, top and left
- * @param {String} parentId The id of the element the item will be appended to on popIn
- * @param {Number} indexInParent The position of this element within its parent
- * @param {lm.LayoutManager} layoutManager
  */
-
 
 export class BrowserPopout extends EventEmitter {
     private _popoutWindow: Window | null;
     private _isInitialised;
     private _id: string | null;
+    private _checkReadyInterval: NodeJS.Timeout | undefined;
 
+    /**
+     * @param _config GoldenLayout item config
+     * @param _dimensions A map with width, height, top and left
+     * @param _layoutManager
+     */
     constructor(private _config: PopoutManagerConfig,
-        private _initialWindow: Rect,
+        private _initialWindowSize: Rect,
         private _layoutManager: LayoutManager
     ) {
         super();
         
         this._isInitialised = false;
-
         this._popoutWindow = null;
         this._id = null;
         this._createWindow();
@@ -79,7 +73,7 @@ export class BrowserPopout extends EventEmitter {
             openPopouts: glInstanceConfig.openPopouts,
             settings: glInstanceConfig.settings,
             dimensions: glInstanceConfig.dimensions,
-            labels: glInstanceConfig.labels,
+            header: glInstanceConfig.header,
             window,
             parentId: this._config.parentId,
             indexInParent: this._config.indexInParent
@@ -120,15 +114,14 @@ export class BrowserPopout extends EventEmitter {
      * Returns the popped out item to its original position. If the original
      * parent isn't available anymore it falls back to the layout's topmost element
      */
-    popIn() {
-        let copiedChildConfig: Config;
+    popIn(): void {
         let parentItem: AbstractContentItem;
-        let index = this._indexInParent;
+        let index = this._config.indexInParent;
 
-        if (this._parentId) {
+        if (this._config.parentId) {
 
             /*
-             * The $.extend call seems a bit pointless, but it's crucial to
+             * The deepExtend call seems a bit pointless, but it's crucial to
              * copy the config returned by this.getGlInstance().toConfig()
              * onto a new object. Internet Explorer keeps the references
              * to objects on the child window, resulting in the following error
@@ -139,15 +132,15 @@ export class BrowserPopout extends EventEmitter {
             const glInstanceConfig = this.getGlInstance().toConfig();
             const copiedGlInstanceConfig = deepExtend({}, glInstanceConfig) as ManagerConfig;
             const copiedContent = copiedGlInstanceConfig.content;
-            if (copiedContent === undefined || copiedContent.length === 0) {
-                throw new Error('BrowserPopout.popIn: child config not available');
+            if (copiedContent.length === 0) {
+                throw new AssertError('BPPICC13088');
             } else {
                 const copiedChildConfig = copiedContent[0];
                 const root = this._layoutManager.root;
                 if (root === null) {
-                    throw new Error('BrowserPopout.popIn: LayoutManager root not available');
+                    throw new UnexpectedNullError('BPPIR34972');
                 } else {
-                    parentItem = root.getItemsById(this._parentId)[0];
+                    parentItem = root.getItemsById(this._config.parentId)[0];
 
                     /*
                     * Fallback if parentItem is not available. Either add it to the topmost
@@ -161,65 +154,60 @@ export class BrowserPopout extends EventEmitter {
                         }
                         index = 0;
                     }
+
+                    const newContentItem = this._layoutManager.createAndInitContentItem(copiedChildConfig, parentItem);
+        
+                    parentItem.addChild(newContentItem, index);
+                    this.close();
                 }
             }
         }
-
-        parentItem.addChild(copiedChildConfig, this._indexInParent);
-        this.close();
     }
 
     /**
      * Creates the URL and window parameter
      * and opens a new window
-     *
-     * @private
-     *
-     * @returns {void}
      */
-    _createWindow() {
-        var checkReadyInterval,
-            url = this._createUrl(),
+    _createWindow(): void {
+        const url = this._createUrl();
 
-            /**
-             * Bogus title to prevent re-usage of existing window with the
-             * same title. The actual title will be set by the new window's
-             * GoldenLayout instance if it detects that it is in subWindowMode
-             */
-            title = Math.floor(Math.random() * 1000000).toString(36),
+        /**
+         * Bogus title to prevent re-usage of existing window with the
+         * same title. The actual title will be set by the new window's
+         * GoldenLayout instance if it detects that it is in subWindowMode
+         */
+        const target = Math.floor(Math.random() * 1000000).toString(36);
 
-            /**
-             * The options as used in the window.open string
-             */
-            options = this._serializeWindowOptions({
-                width: this._initialWindow.width,
-                height: this._initialWindow.height,
-                innerWidth: this._initialWindow.width,
-                innerHeight: this._initialWindow.height,
-                menubar: 'no',
-                toolbar: 'no',
-                location: 'no',
-                personalbar: 'no',
-                resizable: 'yes',
-                scrollbars: 'no',
-                status: 'no'
-            });
+        /**
+         * The options as used in the window.open string
+         */
+        const features = this._serializeWindowFeatures({
+            width: this._initialWindowSize.width,
+            height: this._initialWindowSize.height,
+            innerWidth: this._initialWindowSize.width,
+            innerHeight: this._initialWindowSize.height,
+            menubar: 'no',
+            toolbar: 'no',
+            location: 'no',
+            personalbar: 'no',
+            resizable: 'yes',
+            scrollbars: 'no',
+            status: 'no'
+        });
 
-        this._popoutWindow = window.open(url, title, options);
+        this._popoutWindow = globalThis.open(url, target, features);
 
         if (!this._popoutWindow) {
             if (this._layoutManager.config.settings.blockedPopoutsThrowError === true) {
-                var error = new Error('Popout blocked');
-                error.type = 'popoutBlocked';
+                const error = new PopoutBlockedError('Popout blocked');
                 throw error;
             } else {
                 return;
             }
         }
 
-        $(this._popoutWindow)
-            .on('load', fnBind(this.positionWindow, this))
-            .on('unload beforeunload', fnBind(this._onClose, this));
+        this._popoutWindow.addEventListener('load', () => this.positionWindow())
+        this._popoutWindow.addEventListener('beforeunload', () => this._onClose())
 
         /**
          * Polling the childwindow to find out if GoldenLayout has been initialised
@@ -227,12 +215,21 @@ export class BrowserPopout extends EventEmitter {
          * window or raising an event on the window object - both would introduce knowledge
          * about the parent to the child window which we'd rather avoid
          */
-        checkReadyInterval = setInterval(fnBind(function() {
+        this._checkReadyInterval = setInterval(() => this.checkReady(), 10);
+    }
+
+    private checkReady() {
+        if (this._popoutWindow === null) {
+            throw new UnexpectedNullError('BPCR01844');
+        } else {
             if (this._popoutWindow.__glInstance && this._popoutWindow.__glInstance.isInitialised) {
                 this._onInitialised();
-                clearInterval(checkReadyInterval);
+                if (this._checkReadyInterval !== undefined) {
+                    clearInterval(this._checkReadyInterval);
+                    this._checkReadyInterval = undefined;
+                }
             }
-        }, this), 10);
+        }
     }
 
     /**
@@ -242,12 +239,11 @@ export class BrowserPopout extends EventEmitter {
      *
      * @returns {String} serialised window options
      */
-    _serializeWindowOptions(windowOptions) {
-        var windowOptionsString = [],
-            key;
+    _serializeWindowFeatures(windowOptions: Record<string, string | number>): string {
+        const windowOptionsString: string[] = [];
 
-        for (key in windowOptions) {
-            windowOptionsString.push(key + '=' + windowOptions[key]);
+        for (const key in windowOptions) {
+            windowOptionsString.push(key + '=' + windowOptions[key].toString());
         }
 
         return windowOptionsString.join(',');
@@ -257,16 +253,11 @@ export class BrowserPopout extends EventEmitter {
      * Creates the URL for the new window, including the
      * config GET parameter
      *
-     * @returns {String} URL
+     * @returns URL
      */
-    _createUrl() {
-        var config = {
-                content: this._config
-            },
-            storageKey = 'gl-window-config-' + getUniqueId(),
-            urlParts;
-
-        config = (new ConfigMinifier()).minifyConfig(config);
+    _createUrl(): string {
+        const storageKey = 'gl-window-config-' + getUniqueId();
+        const config = (new ConfigMinifier()).minifyConfig(this._config);
 
         try {
             localStorage.setItem(storageKey, JSON.stringify(config));
@@ -274,7 +265,7 @@ export class BrowserPopout extends EventEmitter {
             throw new Error('Error while writing to localStorage ' + e.toString());
         }
 
-        urlParts = document.location.href.split('?');
+        const urlParts = document.location.href.split('?');
 
         // URL doesn't contain GET-parameters
         if (urlParts.length === 1) {
@@ -294,7 +285,7 @@ export class BrowserPopout extends EventEmitter {
         if (this._popoutWindow === null) {
             throw new Error('BrowserPopout.positionWindow: null popoutWindow');
         } else {
-            this._popoutWindow.moveTo(this._initialWindow.left, this._initialWindow.top);
+            this._popoutWindow.moveTo(this._initialWindowSize.left, this._initialWindowSize.top);
             this._popoutWindow.focus();
         }
     }
@@ -302,23 +293,17 @@ export class BrowserPopout extends EventEmitter {
     /**
      * Callback when the new window is opened and the GoldenLayout instance
      * within it is initialised
-     *
-     * @returns {void}
      */
-    _onInitialised() {
+    private _onInitialised(): void {
         this._isInitialised = true;
-        this.getGlInstance().on('popIn', this.popIn, this);
+        this.getGlInstance().on('popIn', () => this.popIn);
         this.emit('initialised');
     }
 
     /**
      * Invoked 50ms after the window unload event
-     *
-     * @private
-     *
-     * @returns {void}
      */
-    _onClose() {
-        setTimeout(fnBind(this.emit, this, ['closed']), 50);
+    private _onClose() {
+        setTimeout(() => this.emit('closed'), 50);
     }
 }

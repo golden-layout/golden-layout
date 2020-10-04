@@ -1,5 +1,5 @@
 import { ItemConfig, ManagerConfig, PopoutManagerConfig } from './config/config';
-import { UnexpectedNullError } from './errors/error';
+import { UnexpectedNullError } from './errors/internal-error';
 import { LayoutManager } from './LayoutManager';
 import { ConfigMinifier } from './utils/ConfigMinifier';
 import { getQueryStringParam } from './utils/utils';
@@ -7,23 +7,24 @@ import { getQueryStringParam } from './utils/utils';
 export class PopoutLayoutManager extends LayoutManager {
     private _popoutManagerConfig: PopoutManagerConfig;
 
-    constructor(container?: Element | HTMLElement) {        
+    constructor(container?: HTMLElement) {        
         super(true, PopoutLayoutManager.createConfig(), container);
 
         this._popoutManagerConfig = this.config as PopoutManagerConfig;
     }
 
-    protected createToConfig(content: ItemConfig[], openPopouts: PopoutManagerConfig[]): ManagerConfig {
+    protected createToConfig(content: ItemConfig[], openPopouts: PopoutManagerConfig[], maximisedItemId: string | null): ManagerConfig {
 
         const config: PopoutManagerConfig = {
             content,
             openPopouts,
             settings:  ManagerConfig.Settings.createCopy(this._popoutManagerConfig.settings),
             dimensions: ManagerConfig.Dimensions.createCopy(this._popoutManagerConfig.dimensions),
-            labels: ManagerConfig.Labels.createCopy(this._popoutManagerConfig.labels),
+            header: ManagerConfig.Header.createCopy(this._popoutManagerConfig.header),
+            maximisedItemId,
             parentId: this._popoutManagerConfig.parentId,
             indexInParent: this._popoutManagerConfig.indexInParent,
-            window: window,
+            window: this._popoutManagerConfig.window,
         }
 
         return config;

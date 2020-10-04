@@ -1,3 +1,13 @@
+export interface WidthAndHeight {
+    width: number;
+    height: number;    
+}
+
+export interface LeftAndTop {
+    left: number;
+    top: number;    
+}
+
 export const enum Side {
     'top',
     'left',
@@ -12,14 +22,14 @@ export interface Rect {
     height: number,
 }
 
-export interface LinkedRect {
+export interface Area {
     x1: number, // left
     x2: number, // nextLeft
     y1: number, // top
     y2: number, // nextTop
 }
 
-export type JsonValue = string | number | boolean | Json | JsonValueArray;
+export type JsonValue = string | number | boolean | null | undefined | Json | JsonValueArray;
 export interface Json {
     [name: string]: JsonValue;
 }
