@@ -6,7 +6,7 @@ import { LayoutManager } from '../LayoutManager'
 import { EventEmitter } from '../utils/EventEmitter'
 import { getJQueryOffset, getJQueryWidthAndHeight } from '../utils/jquery-legacy'
 import { AreaLinkedRect } from '../utils/types'
-import { animFrame, fnBind, setElementVisibility } from '../utils/utils'
+import { setElementDisplayVisibility } from '../utils/utils'
 import { Root } from './Root'
 
 /**
@@ -77,31 +77,9 @@ export abstract class AbstractContentItem extends EventEmitter {
     }
 
     /**
-     * Set the size of the component and its children, called recursively
+     * Updaters the size of the component and its children, called recursively
      */
-    abstract setSize(): void;
-
-    /**
-     * Calls a method recursively downwards on the tree
-     *
-     * @param   {String} functionName      the name of the function to be called
-     * @param   {[Array]}functionArguments optional arguments that are passed to every function
-     * @param   {[bool]} bottomUp          Call methods from bottom to top, defaults to false
-     * @param   {[bool]} skipSelf          Don't invoke the method on the class that calls it, defaults to false
-     */
-    callDownwards(functionName: string, functionArguments: unknown[] | undefined, bottomUp: boolean, skipSelf: boolean): void {
-
-        if (bottomUp !== true && skipSelf !== true) {
-            this[functionName](...(functionArguments ?? []));
-            this[functionName].apply(this, functionArguments || []);
-        }
-        for (let i = 0; i < this.contentItems.length; i++) {
-            this.contentItems[i].callDownwards(functionName, functionArguments, bottomUp);
-        }
-        if (bottomUp === true && skipSelf !== true) {
-            this[functionName].apply(this, functionArguments || []);
-        }
-    }
+    abstract updateSize(): void;
 
     /**
      * Removes a child node (and its children) from the tree
@@ -141,7 +119,7 @@ export abstract class AbstractContentItem extends EventEmitter {
          * If this node still contains other content items, adjust their size
          */
         if (this.contentItems.length > 0) {
-            this.callDownwards('setSize');
+            this.updateSize();
 
             /**
              * If this was the last content item, remove this node as well
@@ -261,7 +239,7 @@ export abstract class AbstractContentItem extends EventEmitter {
                     newChild._$init();
                 }
 
-                this.callDownwards('setSize');
+                this.updateSize();
             }
         }
     }
@@ -290,8 +268,6 @@ export abstract class AbstractContentItem extends EventEmitter {
 
     /**
      * Maximises the Item or minimises it if it is already maximised
-     *
-     * @returns {void}
      */
     toggleMaximise(/* e */): void {
         // e && e.preventDefault(); // not sure what this was here for
@@ -458,13 +434,13 @@ export abstract class AbstractContentItem extends EventEmitter {
 
     _$hide(): void {
         this.layoutManager.hideAllActiveContentItems(); // not sure why this is done. (Code moved to Layout manager)
-        setElementVisibility(this.element, false);
+        setElementDisplayVisibility(this.element, false);
         this.layoutManager.updateSizeFromContainer();
     }
 
     _$show(): void {
         this.layoutManager.showAllActiveContentItems(); // not sure why this is done. (Code moved to Layout manager)
-        setElementVisibility(this.element, true);
+        setElementDisplayVisibility(this.element, true);
         this.layoutManager.updateSizeFromContainer();
 
         for (let i = 0; i < this.contentItems.length; i++) {
@@ -540,6 +516,12 @@ export abstract class AbstractContentItem extends EventEmitter {
         }
     }
 
+    protected updateContentItemsSize(): void {
+        for (let i = 0; i < this.contentItems.length; i++) {
+            this.contentItems[i].updateSize();
+        }
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     protected processChildReplaced(index: number, newChild: AbstractContentItem): void {
         // virtual function to allow descendants to further process replaceChild()
@@ -602,7 +584,7 @@ export abstract class AbstractContentItem extends EventEmitter {
         } else {
             if (this._pendingEventPropagations[name] !== true) {
                 this._pendingEventPropagations[name] = true;
-                animFrame(fnBind(this.propagateEventToLayoutManager, this, [name, event]));
+                globalThis.requestAnimationFrame(() => this.propagateEventToLayoutManager(name, event));
             }
         }
 

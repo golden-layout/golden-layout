@@ -131,7 +131,7 @@ export class ItemContainer extends EventEmitter {
                         }
                     }
 
-                    ancestorItem.callDownwards('setSize');
+                    ancestorItem.updateSize();
 
                     return true;
                 }

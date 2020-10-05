@@ -30,8 +30,6 @@
     "clean:dist": "del-cli dist",
     "lint:autofix": "eslint src/js_es6 --fix",
     "lintts": "eslint -c .eslintrc.js --ext .ts src/js_es6",
-    "start-jquery": "cross-env JQUERY=true webpack-dev-server --env.dev --config ./webpack/demo/webpack.config.js",
-    "start-zepto": "cross-env ZEPTO=true webpack-dev-server --env.dev --config ./webpack/demo/webpack.config.js",
     "test": "cross-env JQUERY=true karma start",
     "coverage": "JQUERY=true karma start --single-run --no-auto-watch --coverage=true || echo done"
   },

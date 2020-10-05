@@ -50,11 +50,7 @@ export namespace MainLayoutManager {
         // nextNode(config);
 
         if (!config.header.show) {
-            if (config.dimensions === undefined) {
-                throw new Error('Undefined config dimensions');
-            } else {
-                config.dimensions.headerHeight = 0;
-            }
+            config.dimensions.headerHeight = 0;
         }
 
         return config;

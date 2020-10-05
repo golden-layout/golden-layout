@@ -1,50 +1,9 @@
 import { UnexpectedNullError } from '../errors/internal-error';
 import { WidthAndHeight } from './types';
 
-// eslint-disable-next-line @typescript-eslint/no-empty-function
-export function F(): void {}
-
-// export function extend(subClass, superClass) {
-//     subClass.prototype = createObject(superClass.prototype);
-//     subClass.prototype.contructor = subClass;
-// }
-
-// export function createObject(prototype) {
-//     if (typeof Object.create === 'function') {
-//         return Object.create(prototype);
-//     } else {
-//         F.prototype = prototype;
-//         return new F();
-//     }
-// }
-
-export function objectKeys(object: Record<string, unknown>): string[] {
-    let keys: string[];
-    let key: string;
-
-    if (typeof Object.keys === 'function') {
-        return Object.keys(object);
-    } else {
-        keys = [];
-        for (key in object) {
-            keys.push(key);
-        }
-        return keys;
-    }
-}
-
-export function getHashValue(key: string): string | null {
-    const matches = location.hash.match(new RegExp(key + '=([^&]*)'));
-    return matches ? matches[1] : null;
-}
-
-export function getQueryStringParam(param: string): string | null {
-    return getHashValue(param);
-}
-
 // Caution! Try not to use this function.  Converting text to HTML can have security implications
-// While the templateText is not user generated and should be safe, some security reviews may reject applications
-// which use this technique regardless
+// While the templateText is not user generated and should be safe, some security reviews may reject
+// applications which use this technique regardless
 // https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML
 // Try creating fragments using javascript without HTML text
 export function createTemplateHtmlElement(templateText: string): HTMLElement {
@@ -95,19 +54,12 @@ export function getElementWidthAndHeight(element: HTMLElement): WidthAndHeight {
     };
 }
 
-export function setElementVisibility(element: HTMLElement, visible: boolean): void {
+export function setElementDisplayVisibility(element: HTMLElement, visible: boolean): void {
     if (visible) {
         element.style.display = 'none';
     } else {
         element.style.display = '';
     }
-}
-
-export function copy(target: Record<string, unknown>, source: Record<string, unknown>): Record<string, unknown> {
-    for (const key in source) {
-        target[key] = source[key];
-    }
-    return target;
 }
 
 // replacement for JQuery $.extend(target, obj)
@@ -184,6 +136,9 @@ export function deepExtendValue(existingTarget: unknown, value: unknown): unknow
 }
 
 /**
+ * REPLACED with window.requestAnimationFrame using arrow function
+ * I do not think animFrame() is needed anymore
+ * 
  * This is based on Paul Irish's shim, but looks quite odd in comparison. Why?
  * Because
  * a) it shouldn't affect the global requestAnimationFrame function
@@ -193,40 +148,16 @@ export function deepExtendValue(existingTarget: unknown, value: unknown): unknow
  *
  * @returns {void}
  */
-export function animFrame(fn) {
-    return (window.requestAnimationFrame ||
-        window.webkitRequestAnimationFrame ||
-        window.mozRequestAnimationFrame ||
-        function(callback) {
-            window.setTimeout(callback, 1000 / 60);
-        })(function() {
-        fn();
-    });
-}
-
-export function fnBind(fn, context: unknown, boundArgs: [...unknown[]] | undefined): unknown {
-
-    if (Function.prototype.bind !== undefined) {
-        return Function.prototype.bind.apply(fn, [context].concat(boundArgs ?? []));
-    }
-
-    const bound = function(this: unknown, ...argsRest: unknown[]) {
-
-        // Join the already applied arguments to the now called ones (after converting to an array again).
-        const args = (boundArgs || []).concat(Array.prototype.slice.call(argsRest, 0));
-
-        // If not being called as a constructor
-        if (!(this instanceof bound)) {
-            // return the result of the function called bound to target and partially applied.
-            return fn.apply(context, args);
-        }
-        // If being called as a constructor, apply the function bound to self.
-        fn.apply(this, args);
-    };
-    // Attach the prototype of the function to our newly created function.
-    bound.prototype = fn.prototype;
-    return bound;
-}
+// export function animFrame(fn) {
+//     return (window.requestAnimationFrame ||
+//         window.webkitRequestAnimationFrame ||
+//         window.mozRequestAnimationFrame ||
+//         function(callback) {
+//             window.setTimeout(callback, 1000 / 60);
+//         })(function() {
+//         fn();
+//     });
+// }
 
 export function removeFromArray<T>(item: T, array: T[]): void {
     const index = array.indexOf(item);
@@ -238,14 +169,6 @@ export function removeFromArray<T>(item: T, array: T[]): void {
     array.splice(index, 1);
 }
 
-export function now(): number {
-    if (typeof Date.now === 'function') {
-        return Date.now();
-    } else {
-        return (new Date()).getTime();
-    }
-}
-
 export function getUniqueId(): string {
     return (Math.random() * 1000000000000000)
         .toString(36)
@@ -253,40 +176,13 @@ export function getUniqueId(): string {
 }
 
 /**
- * A basic XSS filter. It is ultimately up to the
- * implementing developer to make sure their particular
- * applications and usecases are save from cross site scripting attacks
- *
- * @param   {String} input
- * @param    {Boolean} keepTags
- *
- * @returns {String} filtered input
- */
-export function filterXss(input: string, keepTags: boolean): string {
-
-    const output = input
-        .replace(/javascript/gi, 'j&#97;vascript')
-        .replace(/expression/gi, 'expr&#101;ssion')
-        .replace(/onload/gi, 'onlo&#97;d')
-        .replace(/script/gi, '&#115;cript')
-        .replace(/onerror/gi, 'on&#101;rror');
-
-    if (keepTags === true) {
-        return output;
-    } else {
-        return output
-            .replace(/>/g, '&gt;')
-            .replace(/</g, '&lt;');
-    }
-}
-
-/**
  * Removes html tags from a string
  *
- * @param   {String} input
- *
- * @returns {String} input without tags
+ * @param   input
+ * 
+ * @returns input without tags
  */
 export function stripTags(input: string): string {
-    return $.trim(input.replace(/(<([^>]+)>)/ig, ''));
+    const strippedInput = input.replace(/(<([^>]+)>)/ig, '');
+    return strippedInput.trim();
 }

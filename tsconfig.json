@@ -39,6 +39,7 @@
     "src/**.ts",
   ],
   "exclude": [
+    "index.d.ts",
     "dist",
     "node_modules",
     "website",

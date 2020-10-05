@@ -1,5 +1,5 @@
 import { AreaLinkedRect } from '../utils/types';
-import { createTemplateHtmlElement, numberToPixels, setElementVisibility } from '../utils/utils';
+import { createTemplateHtmlElement, numberToPixels, setElementDisplayVisibility } from '../utils/utils';
 
 const _template = '<div class="lm_dropTargetIndicator"><div class="lm_inner"></div></div>'
 
@@ -34,6 +34,6 @@ export class DropTargetIndicator {
     }
 
     hide(): void {
-        setElementVisibility(this._element, false);
+        setElementDisplayVisibility(this._element, false);
     }
 }

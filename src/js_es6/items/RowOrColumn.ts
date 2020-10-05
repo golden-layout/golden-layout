@@ -6,13 +6,14 @@ import { Stack } from '../items/Stack'
 import { LayoutManager } from '../LayoutManager'
 import { Side } from '../utils/types'
 import {
-    animFrame, createTemplateHtmlElement, fnBind,
+    createTemplateHtmlElement,
     getElementHeight,
     getElementWidth,
     numberToPixels,
     pixelsToNumber,
-    setElementHeight,
-    setElementVisibility,
+
+    setElementDisplayVisibility, setElementHeight,
+
     setElementWidth
 } from '../utils/utils'
 
@@ -86,8 +87,8 @@ export class RowOrColumn extends AbstractContentItem {
                 this.contentItems[index - 1].element.insertAdjacentElement('afterend', splitterElement);
                 splitterElement.insertAdjacentElement('afterend', contentItem.element);
                 if (this.isDocked(index - 1)) {
-                    setElementVisibility(this._splitter[index - 1].element, false);
-                    setElementVisibility(this._splitter[index].element, true);
+                    setElementDisplayVisibility(this._splitter[index - 1].element, false);
+                    setElementDisplayVisibility(this._splitter[index].element, true);
                 }
             } else {
                 this.contentItems[0].element.insertAdjacentElement('beforebegin', splitterElement);
@@ -115,7 +116,7 @@ export class RowOrColumn extends AbstractContentItem {
             }
         }
 
-        this.callDownwards('setSize');
+        this.updateSize();
         this.emitBubblingEvent('stateChanged');
         this.validateDocking();
     }
@@ -138,12 +139,12 @@ export class RowOrColumn extends AbstractContentItem {
          * to be the first in the row/column
          */
         if (this._splitter[splitterIndex]) {
-            setElementVisibility(this._splitter[splitterIndex].element, false);
+            setElementDisplayVisibility(this._splitter[splitterIndex].element, false);
         }
 
         if (splitterIndex < this._splitter.length) {
             if (this.isDocked(splitterIndex))
-            setElementVisibility(this._splitter[splitterIndex].element, false);
+            setElementDisplayVisibility(this._splitter[splitterIndex].element, false);
         }
 
         /**
@@ -163,7 +164,7 @@ export class RowOrColumn extends AbstractContentItem {
             super.undisplayChild(contentItem);
         }
 
-        this.callDownwards('setSize');
+        this.updateSize();
         this.emitBubblingEvent('stateChanged');
     }
 
@@ -195,7 +196,7 @@ export class RowOrColumn extends AbstractContentItem {
 
         if (splitterIndex < this._splitter.length) {
             if (this.isDocked(splitterIndex))
-                setElementVisibility(this._splitter[splitterIndex].element, false);
+                setElementDisplayVisibility(this._splitter[splitterIndex].element, false);
         }
         /**
          * Allocate the space that the removed item occupied to the remaining items
@@ -220,7 +221,7 @@ export class RowOrColumn extends AbstractContentItem {
                 this._rowOrColumnParent.validateDocking();
             }
         } else {
-            this.callDownwards('setSize');
+            this.updateSize();
             this.emitBubblingEvent('stateChanged');
             this.validateDocking();
         }
@@ -233,16 +234,19 @@ export class RowOrColumn extends AbstractContentItem {
         const size = oldChild.config[this._dimension];
         super.replaceChild(oldChild, newChild);
         newChild.config[this._dimension] = size;
-        this.callDownwards('setSize');
+        this.updateSize();
         this.emitBubblingEvent('stateChanged');
     }
 
     /**
      * Called whenever the dimensions of this item or one of its parents change
-     *
-     * @returns {void}
      */
-    setSize(): void {
+    updateSize(): void {
+        this.updateNodeSize();
+        this.updateContentItemsSize();
+    }
+
+    private updateNodeSize(): void {
         if (this.contentItems.length > 0) {
             this.calculateRelativeSizes();
             this.setAbsoluteSizes();
@@ -303,7 +307,7 @@ export class RowOrColumn extends AbstractContentItem {
                 contentItem.positionHeader(required);
 
             if (this._splitter[splitterIndex]) {
-                setElementVisibility(this._splitter[splitterIndex].element, false);
+                setElementDisplayVisibility(this._splitter[splitterIndex].element, false);
             }
             const dockedCount = this.calculateDockedCount();
             for (let i = 0; i < this.contentItems.length; i++) {
@@ -324,7 +328,7 @@ export class RowOrColumn extends AbstractContentItem {
             }
         }
         contentItem.element.classList.toggle('lm_docked', contentItem.docker.docked);
-        this.callDownwards('setSize');
+        this.updateSize();
         this.emitBubblingEvent('stateChanged');
         this.validateDocking();
     }
@@ -341,7 +345,7 @@ export class RowOrColumn extends AbstractContentItem {
     _$init(): void {
         if (this.isInitialised === true) return;
 
-        this.setSize();
+        this.updateNodeSize();
 
         for (let i = 0; i < this.contentItems.length; i++) {
             this._childElementContainer.appendChild(this.contentItems[i].element);
@@ -526,7 +530,7 @@ export class RowOrColumn extends AbstractContentItem {
             width: number;
         }
 
-        const minItemWidth = this.layoutManager.config.dimensions ? (this.layoutManager.config.dimensions.minItemWidth || 0) : 0;
+        const minItemWidth = this.layoutManager.config.dimensions.minItemWidth;
         let totalOverMin = 0;
         let totalUnderMin = 0;
         const entriesOverMin: Entry[] = [];
@@ -754,7 +758,7 @@ export class RowOrColumn extends AbstractContentItem {
             splitter.element.style.top = numberToPixels(0);
             splitter.element.style.left = numberToPixels(0);
 
-            animFrame(fnBind(this.callDownwards, this, ['setSize']));
+            globalThis.requestAnimationFrame(() => this.updateSize());
         }
     }
 }

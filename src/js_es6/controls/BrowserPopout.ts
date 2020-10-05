@@ -1,10 +1,11 @@
-import { ManagerConfig, PopoutManagerConfig } from '../config/config';
+import { ItemConfig, ManagerConfig, PopoutManagerConfig } from '../config/config';
 import { PopoutBlockedError } from '../errors/external-error';
 import { AssertError, UnexpectedNullError } from '../errors/internal-error';
 import { AbstractContentItem } from '../items/AbstractContentItem';
-import { LayoutManager } from '../LayoutManager';
+import { Root } from '../items/Root';
 import { ConfigMinifier } from '../utils/ConfigMinifier';
 import { EventEmitter } from '../utils/EventEmitter';
+import { EventHub } from '../utils/EventHub';
 import { Rect } from '../utils/types';
 import { deepExtend, getUniqueId } from '../utils/utils';
 
@@ -22,23 +23,21 @@ import { deepExtend, getUniqueId } from '../utils/utils';
 export class BrowserPopout extends EventEmitter {
     private _popoutWindow: Window | null;
     private _isInitialised;
-    private _id: string | null;
     private _checkReadyInterval: NodeJS.Timeout | undefined;
 
     /**
      * @param _config GoldenLayout item config
-     * @param _dimensions A map with width, height, top and left
+     * @param _initialWindowSize A map with width, height, top and left
      * @param _layoutManager
      */
     constructor(private _config: PopoutManagerConfig,
         private _initialWindowSize: Rect,
-        private _layoutManager: LayoutManager
+        private _layoutManager: BrowserPopout.LayoutManager,
     ) {
         super();
         
         this._isInitialised = false;
         this._popoutWindow = null;
-        this._id = null;
         this._createWindow();
     }
 
@@ -65,7 +64,6 @@ export class BrowserPopout extends EventEmitter {
             height: this.getGlInstance().height,
             left,
             top,
-            maximised: false, // need to work out maximised properly
         };
 
         const config: PopoutManagerConfig = {
@@ -74,6 +72,7 @@ export class BrowserPopout extends EventEmitter {
             settings: glInstanceConfig.settings,
             dimensions: glInstanceConfig.dimensions,
             header: glInstanceConfig.header,
+            maximisedItemId: glInstanceConfig.maximisedItemId,
             window,
             parentId: this._config.parentId,
             indexInParent: this._config.indexInParent
@@ -82,7 +81,7 @@ export class BrowserPopout extends EventEmitter {
         return config;
     }
 
-    getGlInstance(): LayoutManager {
+    getGlInstance(): BrowserPopout.LayoutManager {
         if (this._popoutWindow === null) {
             throw new UnexpectedNullError('BPGGI24693');
         } else {
@@ -305,5 +304,19 @@ export class BrowserPopout extends EventEmitter {
      */
     private _onClose() {
         setTimeout(() => this.emit('closed'), 50);
+    }
+}
+
+export namespace BrowserPopout {
+    export interface LayoutManager {
+        readonly config: ManagerConfig;
+        readonly eventHub: EventHub;
+        readonly height: number | null;
+        readonly root: Root | null;       
+        readonly width: number | null;
+        closeWindow(): void;
+        createAndInitContentItem(config: ItemConfig, parent: AbstractContentItem): AbstractContentItem;
+        on<K extends keyof EventEmitter.EventParamsMap>(eventName: K, callback: EventEmitter.Callback<K>): void;
+        toConfig(root?: AbstractContentItem): ManagerConfig;
     }
 }

@@ -10,7 +10,7 @@ export class TransitionIndicator {
 
     constructor() {
         this._element = createTemplateHtmlElement('<div class="lm_transition_indicator"></div>');
-        $(document.body).appendChild(this._element);
+        document.body.appendChild(this._element);
 
         this._toElement = null;
         this._fromDimensions = null;

@@ -5,20 +5,10 @@ import { UnexpectedNullError, UnexpectedUndefinedError } from '../errors/interna
 import { AbstractContentItem } from '../items/AbstractContentItem';
 import { LayoutManager } from '../LayoutManager';
 import { DragListener } from '../utils/DragListener';
-import {
-    createTemplateHtmlElement,
-
-    stripTags
-} from '../utils/utils';
-import { Header } from './Header';
+import { createTemplateHtmlElement, stripTags } from '../utils/utils';
 
 /**
  * Represents an individual tab within a Stack's header
- *
- * @param {Header} header
- * @param {AbstractContentItem} contentItem
- *
- * @constructor
  */
 
 const _template = '<li class="lm_tab"><i class="lm_left"></i>' +
@@ -27,7 +17,11 @@ const _template = '<li class="lm_tab"><i class="lm_left"></i>' +
 
 export class Tab implements ItemContainer.Tab {
     private _layoutManager: LayoutManager;
+    private _element: HTMLElement;
     private _dragListener: DragListener | undefined;
+    private _titleElement: HTMLElement;
+    private _closeElement: HTMLElement | undefined;
+    private _isActive: boolean;
 
     private _tabMouseDownListener = (ev: MouseEvent) => this.onTabMouseDown(ev);
     private _tabTouchStartListener = () => this.onTabTouchStart();
@@ -37,31 +31,28 @@ export class Tab implements ItemContainer.Tab {
     private _dragStartListener = (x: number, y: number) => this._onDragStart(x, y);
     private _contentItemDestroyListener = () => this.onContentItemDestroy();
 
-    element: HTMLElement;
-    titleElement: HTMLElement;
-    closeElement: HTMLElement | undefined;
-    isActive: boolean;
+    get element(): HTMLElement { return this._element; }
 
-    constructor(public header: Header, public component: Component, private _headerParent: Tab.HeaderParent) {
-        this.element = createTemplateHtmlElement(_template);
-        const titleElement = this.element.querySelector<HTMLElement>('.lm_title');
+    constructor(public component: Component, private _header: Tab.Header) {
+        this._element = createTemplateHtmlElement(_template);
+        const titleElement = this._element.querySelector<HTMLElement>('.lm_title');
         if (titleElement === null) {
             throw new UnexpectedNullError('Bad Tab Template');
         } else {
-            this.titleElement = titleElement;
+            this._titleElement = titleElement;
         }
-        const closeElement = this.element.querySelector<HTMLElement>('.lm_close_tab');
+        const closeElement = this._element.querySelector<HTMLElement>('.lm_close_tab');
         if (closeElement === null) {
             throw new UnexpectedNullError('TCCEN08743');
         } else {
-            this.closeElement = closeElement;
+            this._closeElement = closeElement;
         }
         if (component.config.isClosable) {
-            this.closeElement.style.display = '';
+            this._closeElement.style.display = '';
         } else {
-            this.closeElement.style.display = 'none';
+            this._closeElement.style.display = 'none';
         }
-        this.isActive = false;
+        this._isActive = false;
 
         this.setTitle(component.config.title);
         this.component.on('titleChanged', (title) => this.setTitle(title));
@@ -71,21 +62,21 @@ export class Tab implements ItemContainer.Tab {
         const reorderEnabled = component.config.reorderEnabled ?? this._layoutManager.config.settings.reorderEnabled;
 
         if (reorderEnabled) {
-            this._dragListener = new DragListener(this.element);
+            this._dragListener = new DragListener(this._element);
             this._dragListener.on('dragStart', this._dragStartListener);
             this.component.on('destroy', this._contentItemDestroyListener);
         }
 
-        this.element.addEventListener('mousedown', this._tabMouseDownListener);
-        this.element.addEventListener('touchstart', this._tabTouchStartListener);
+        this._element.addEventListener('mousedown', this._tabMouseDownListener);
+        this._element.addEventListener('touchstart', this._tabTouchStartListener);
 
         if (this.component.config.isClosable) {
-            this.closeElement.addEventListener('click', this._closeClickListener);
-            this.closeElement.addEventListener('touchstart', this._closeTouchStartListener);
-            this.closeElement.addEventListener('mousedown', this._closeMouseDownListener);
+            this._closeElement.addEventListener('click', this._closeClickListener);
+            this._closeElement.addEventListener('touchstart', this._closeTouchStartListener);
+            this._closeElement.addEventListener('mousedown', this._closeMouseDownListener);
         } else {
-            this.closeElement.remove();
-            this.closeElement = undefined;
+            this._closeElement.remove();
+            this._closeElement = undefined;
         }
 
         this.component.setTab(this);
@@ -102,8 +93,8 @@ export class Tab implements ItemContainer.Tab {
      * @param {String} title can contain html
      */
     setTitle(title: string): void {
-        this.element.setAttribute('title', stripTags(title));
-        this.titleElement.innerHTML = title;
+        this._element.setAttribute('title', stripTags(title));
+        this._titleElement.innerHTML = title;
     }
 
     /**
@@ -111,15 +102,15 @@ export class Tab implements ItemContainer.Tab {
      * switch tabs, use header.setActiveContentItem( item ) instead.
      */
     setActive(isActive: boolean): void {
-        if (isActive === this.isActive) {
+        if (isActive === this._isActive) {
             return;
         }
-        this.isActive = isActive;
+        this._isActive = isActive;
 
         if (isActive) {
-            this.element.classList.add('lm_active');
+            this._element.classList.add('lm_active');
         } else {
-            this.element.classList.remove('lm_active');
+            this._element.classList.remove('lm_active');
         }
     }
 
@@ -127,17 +118,17 @@ export class Tab implements ItemContainer.Tab {
      * Destroys the tab
      */
     _$destroy(): void {
-        this.element.removeEventListener('mousedown', this._tabMouseDownListener);
-        this.element.removeEventListener('touchstart', this._tabTouchStartListener);
-        this.closeElement?.removeEventListener('click', this._closeClickListener);
-        this.closeElement?.removeEventListener('touchstart', this._closeTouchStartListener);
-        this.closeElement?.removeEventListener('mousedown', this._closeMouseDownListener);
+        this._element.removeEventListener('mousedown', this._tabMouseDownListener);
+        this._element.removeEventListener('touchstart', this._tabTouchStartListener);
+        this._closeElement?.removeEventListener('click', this._closeClickListener);
+        this._closeElement?.removeEventListener('touchstart', this._closeTouchStartListener);
+        this._closeElement?.removeEventListener('mousedown', this._closeMouseDownListener);
         if (this._dragListener !== undefined) {
             this.component.off('destroy', this._contentItemDestroyListener);
             this._dragListener.off('dragStart', this._dragStartListener);
             this._dragListener = undefined;
         }
-        this.element.remove();
+        this._element.remove();
     }
 
     /**
@@ -150,10 +141,10 @@ export class Tab implements ItemContainer.Tab {
         if (this._dragListener === undefined) {
             throw new UnexpectedUndefinedError('TODSDLU10093');
         } else {
-            if (!this.header.canDestroy) {
+            if (!this._header.canDestroy) {
                 return;
             } else {
-                const contentItemParent = this.component.parent;
+                const contentItemParent = this.component.componentParent;
                 if (contentItemParent === null) {
                     throw new UnexpectedNullError('TODSCIPN71115');
                 } else {
@@ -166,7 +157,7 @@ export class Tab implements ItemContainer.Tab {
                         this._dragListener,
                         this._layoutManager,
                         this.component,
-                        this._headerParent
+                        this._header.parent
                     );
                 }
             }
@@ -192,7 +183,7 @@ export class Tab implements ItemContainer.Tab {
     private onTabMouseDown(event: MouseEvent) {
         // left mouse button
         if (event.button === 0) {
-            this._headerParent.setActiveContentItem(this.component);
+            this._header.parent.setActiveContentItem(this.component);
 
             // middle mouse button
         } else if (event.button === 1 && this.component.config.isClosable) {
@@ -201,7 +192,7 @@ export class Tab implements ItemContainer.Tab {
     }
 
     private onTabTouchStart() {
-        this._headerParent.setActiveContentItem(this.component);
+        this._header.parent.setActiveContentItem(this.component);
     }
 
     /**
@@ -210,19 +201,19 @@ export class Tab implements ItemContainer.Tab {
      */
     private onCloseClick(event: MouseEvent) {
         event.stopPropagation();
-        if (!this.header.canDestroy) {
+        if (!this._header.canDestroy) {
             return;
         } else {
-            this._headerParent.removeChild(this.component);
+            this._header.parent.removeChild(this.component);
         }
     }
 
     private onCloseTouchStart(event: TouchEvent) {
         event.stopPropagation();
-        if (!this.header.canDestroy) {
+        if (!this._header.canDestroy) {
             return;
         } else {
-            this._headerParent.removeChild(this.component);
+            this._header.parent.removeChild(this.component);
         }
     }
 
@@ -241,7 +232,15 @@ export class Tab implements ItemContainer.Tab {
 }
 
 export namespace Tab {
-    export interface HeaderParent extends AbstractContentItem {
-        setActiveContentItem(component: Component): void;        
+    export interface Header {
+        readonly canDestroy: boolean;
+        readonly parent: Header.Parent;
+    }
+
+    export namespace Header {
+        // Stack
+        export interface Parent extends AbstractContentItem {
+            setActiveContentItem(component: Component): void;        
+        }
     }
 }

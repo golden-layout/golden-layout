@@ -10,7 +10,7 @@ import {
     getElementHeight,
     getElementWidth,
     numberToPixels,
-    setElementVisibility
+    setElementDisplayVisibility
 } from '../utils/utils';
 import { Component } from './Component';
 
@@ -31,6 +31,7 @@ export class Stack extends AbstractContentItem implements Header.Parent {
 
     readonly childElementContainer: HTMLElement;
 
+    get stackConfig(): StackItemConfig { return this._stackConfig; }
     get headerShow(): boolean { return this._header.show; }
     get headerSide(): Side { return this._header.side; }
     get headerLeftRightSided(): boolean { return this._header.leftRightSided; }
@@ -108,7 +109,12 @@ export class Stack extends AbstractContentItem implements Header.Parent {
             }
     }
 
-    setSize(): void {
+    updateSize(): void {
+        this.updateNodeSize();
+        this.updateContentItemsSize();
+    }
+
+    private updateNodeSize(): void {
         if (this.element.style.display === 'none') return;
         const isDocked = this._docker.docked,
             content = {
@@ -140,7 +146,7 @@ export class Stack extends AbstractContentItem implements Header.Parent {
     _$init(): void {
         if (this.isInitialised === true) return;
 
-        this.setSize();
+        this.updateNodeSize();
 
         for (let i = 0; i < this.contentItems.length; i++) {
             this.childElementContainer.appendChild(this.contentItems[i].element);
@@ -242,7 +248,7 @@ export class Stack extends AbstractContentItem implements Header.Parent {
             this.childElementContainer.appendChild(contentItem.element);
             this._header.createTab(contentItem, index);
             this.setActiveContentItem(contentItem);
-            this.callDownwards('setSize');
+            this.updateSize();
             this.validateClosability();
             if (this._stackParent.isRow || this._stackParent.isColumn) {
                 this._stackParent._validateDocking();
@@ -422,7 +428,7 @@ export class Stack extends AbstractContentItem implements Header.Parent {
             this._stackParent.addChild(contentItem, insertBefore ? index : index + 1, true);
             this.config[dimension] *= 0.5;
             contentItem.config[dimension] = this.config[dimension];
-            this._stackParent.callDownwards('setSize');
+            this._stackParent.updateSize();
             /*
              * This handles items that are dropped on top or bottom of a row or left / right of a column. We need
              * to create the appropriate contentItem for them to live in
@@ -438,7 +444,7 @@ export class Stack extends AbstractContentItem implements Header.Parent {
 
             this.config[dimension] = 50;
             contentItem.config[dimension] = 50;
-            rowOrColumn.callDownwards('setSize');
+            rowOrColumn.updateSize();
         }
         this._stackParent._validateDocking();
     }
@@ -470,7 +476,7 @@ export class Stack extends AbstractContentItem implements Header.Parent {
         }
     }
 
-    getArea() {
+    getArea(): AbstractContentItem.Area | null {
         if (this.element.style.display === 'none') {
             return null;
         }
@@ -693,7 +699,7 @@ export class Stack extends AbstractContentItem implements Header.Parent {
     }
 
     private setupHeaderPosition() {
-        setElementVisibility(this._header.element, this._header.show);
+        setElementDisplayVisibility(this._header.element, this._header.show);
         this.element.classList.remove('lm_left', 'lm_right', 'lm_bottom');
         if (this._header.leftRightSided) {
             this.element.classList.add('lm_' + this._header.side);
@@ -701,7 +707,7 @@ export class Stack extends AbstractContentItem implements Header.Parent {
 
         const adjacentPosition = [Side.right, Side.bottom].includes(this._header.side) ? 'beforeend' : 'afterend';
         this._header.element.insertAdjacentElement(adjacentPosition, this.childElementContainer); // move
-        this.callDownwards('setSize');
+        this.updateSize();
     }
 
     /**

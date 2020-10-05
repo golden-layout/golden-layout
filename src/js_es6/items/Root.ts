@@ -25,7 +25,7 @@ export class Root extends AbstractContentItem {
     _$init(): void {
         if (this.isInitialised === true) return;
 
-        this.setSize();
+        this.updateNodeSize();
 
         for (let i = 0; i < this.contentItems.length; i++) {
             this._childElementContainer.appendChild(this.contentItems[i].element);
@@ -45,13 +45,34 @@ export class Root extends AbstractContentItem {
         this._childElementContainer.appendChild(contentItem.element);
         super.addChild(contentItem, index);
 
-        this.callDownwards('setSize');
+        this.updateSize();
         this.emitBubblingEvent('stateChanged');
     }
 
-    setSize(width?: number, height?: number): void {
-        width = (width === undefined) ? getElementWidth(this._containerElement) : width;
-        height = (height === undefined) ? getElementHeight(this._containerElement) : height;
+    setSize(width: number, height: number): void {
+        setElementWidth(this.element, width);
+        setElementHeight(this.element, height);
+
+        /*
+         * Root can be empty
+         */
+        if (this.contentItems.length > 0) {
+            setElementWidth(this.contentItems[0].element, width);
+            setElementHeight(this.contentItems[0].element, height);
+        }
+
+        this.updateContentItemsSize();
+    }
+
+
+    updateSize(): void {
+        this.updateNodeSize();
+        this.updateContentItemsSize();
+    }
+
+    private updateNodeSize(): void {
+        const width = getElementWidth(this._containerElement);
+        const height = getElementHeight(this._containerElement);
 
         setElementWidth(this.element, width);
         setElementHeight(this.element, height);
@@ -135,13 +156,13 @@ export class Root extends AbstractContentItem {
                 rowOrColumn.addChild(column, insertBefore ? undefined : 0, true);
                 column.config[dimension] = 50;
                 contentItem.config[dimension] = 50;
-                rowOrColumn.callDownwards('setSize');
+                rowOrColumn.updateSize();
             } else {
                 const sibling = column.contentItems[insertBefore ? 0 : column.contentItems.length - 1]
                 column.addChild(contentItem, insertBefore ? 0 : undefined, true);
                 sibling.config[dimension] *= 0.5;
                 contentItem.config[dimension] = sibling.config[dimension];
-                column.callDownwards('setSize');
+                column.updateSize();
             }
         }
     }

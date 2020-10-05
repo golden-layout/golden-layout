@@ -13,11 +13,14 @@ export class Component extends AbstractContentItem implements ItemContainer.Pare
 
     get componentName(): string { return this._componentName; }
     get container(): ItemContainer { return this._container; }
+    get componentParent(): Component.Parent { return this._componentParent; } 
 
     get headerConfig(): HeaderedItemConfig.Header | undefined { return this._componentConfig.header; }
     get tab(): ItemContainer.Tab { return this._tab; }
 
-    constructor(layoutManager: LayoutManager, private readonly _componentConfig: ComponentConfig, private _componentParent: AbstractContentItem) {
+    constructor(layoutManager: LayoutManager, private readonly _componentConfig: ComponentConfig,
+        private _componentParent: Component.Parent
+    ) {
         super(layoutManager, _componentConfig, _componentParent);
 
         let instanceConstructor: Component.InstanceConstructor;
@@ -58,7 +61,12 @@ export class Component extends AbstractContentItem implements ItemContainer.Pare
         this._componentParent.removeChild(this);
     }
 
-    setSize(): void {
+    updateSize(): void {
+        this.updateNodeSize();
+        // ComponentItems do not have any ContentItems
+    }
+
+    private updateNodeSize(): void {
         if (this.element.style.display !== 'none') {
             // Do not update size of hidden components to prevent unwanted reflows
             this._container._$setSize(getElementWidth(this.element), getElementHeight(this.element));
@@ -66,7 +74,7 @@ export class Component extends AbstractContentItem implements ItemContainer.Pare
     }
 
     _$init(): void {
-        this.setSize();
+        this.updateNodeSize();
 
         super._$init();
         this._container.emit('open');
@@ -103,7 +111,7 @@ export class Component extends AbstractContentItem implements ItemContainer.Pare
         return null;
     }
 
-    setParent(parent: AbstractContentItem): void {
+    setParent(parent: Component.Parent): void {
         this._componentParent = parent;
         super.setParent(parent);
     }
@@ -111,4 +119,9 @@ export class Component extends AbstractContentItem implements ItemContainer.Pare
 
 export namespace Component {
     export type InstanceConstructor = new(container: ItemContainer, state: unknown) => unknown;
+
+    // Stack
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface Parent extends AbstractContentItem {
+    }
 }

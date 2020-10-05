@@ -7,25 +7,19 @@ import { Component } from '../items/Component';
 import { LayoutManager } from '../LayoutManager';
 import { EventEmitter } from '../utils/EventEmitter';
 import { Side } from '../utils/types';
-import {
-    createTemplateHtmlElement,
-    numberToPixels, pixelsToNumber, setElementVisibility
-} from '../utils/utils';
+import { createTemplateHtmlElement, numberToPixels, pixelsToNumber, setElementDisplayVisibility } from '../utils/utils';
 
 const _template = 
-        '<div class="lm_header"> ' +
-        '<ul class="lm_tabs"></ul> ' +
-        '<ul class="lm_controls"></ul> ' +
-        '<ul class="lm_tabdropdown_list"></ul> ' +
-        '</div>';
+    '<div class="lm_header"> ' +
+    '<ul class="lm_tabs"></ul> ' +
+    '<ul class="lm_controls"></ul> ' +
+    '<ul class="lm_tabdropdown_list"></ul> ' +
+    '</div>';
 
 /**
  * This class represents a header above a Stack ContentItem.
- *
- * @param {lm.LayoutManager} layoutManager
- * @param {AbstractContentItem} parent
  */
-export class Header extends EventEmitter {
+export class Header extends EventEmitter implements Tab.Header, HeaderButton.Header {
     private _element: HTMLElement;
     readonly tabs: Tab[];
     readonly tabsMarkedForRemoval: Tab[];
@@ -61,6 +55,7 @@ export class Header extends EventEmitter {
     readonly controlsContainerElement: HTMLElement;
     activeContentItem: Component | null;
 
+    get parent(): Header.Parent { return this._parent; }
     get canDestroy(): boolean { return this._canDestroy; }
     get element(): HTMLElement { return this._element; }
     get show(): boolean { return this._show; }
@@ -145,7 +140,7 @@ export class Header extends EventEmitter {
             }
         }
 
-        const tab = new Tab(this, component, this._parent);
+        const tab = new Tab(component, this);
 
         if (this.tabs.length === 0) {
             this.tabs.push(tab);
@@ -259,7 +254,7 @@ export class Header extends EventEmitter {
     setClosable(isClosable: boolean): boolean {
         this._canDestroy = isClosable || this.tabs.length > 1;
         if (this._closeButton !== null && this.isClosable()) {
-            setElementVisibility(this._closeButton.element, isClosable);
+            setElementDisplayVisibility(this._closeButton.element, isClosable);
             return true;
         }
 
@@ -283,7 +278,7 @@ export class Header extends EventEmitter {
      */
     setDockable(isDockable: boolean): boolean {
         if (this._dockButton !== null && this._dockEnabled) {
-            setElementVisibility(this._dockButton.element, isDockable);
+            setElementDisplayVisibility(this._dockButton.element, isDockable);
             return true;
         }
         return false;
@@ -310,7 +305,7 @@ export class Header extends EventEmitter {
          * Dropdown to show additional tabs.
          */
         this._tabDropdownButton = new HeaderButton(this, this._tabDropdownLabel, 'lm_tabdropdown', () => this.showAdditionalTabsDropdown);
-        setElementVisibility(this._tabDropdownButton.element, false);
+        setElementDisplayVisibility(this._tabDropdownButton.element, false);
 
         if (this._dockEnabled) {
             this._dockButton = new HeaderButton(this, this._dockLabel, 'lm_dock', () => this.onDockClick());
@@ -401,7 +396,7 @@ export class Header extends EventEmitter {
         if (this._tabDropdownButton === null) {
             throw new UnexpectedNullError('HUTSTN13311');
         }
-        setElementVisibility(this._tabDropdownButton.element, showTabMenu === true);
+        setElementDisplayVisibility(this._tabDropdownButton.element, showTabMenu === true);
 
         if (this._leftRightSided) {
             this._element.style.height = '';
@@ -520,8 +515,9 @@ export namespace Header {
     }
 
     // Stack
-    export interface Parent extends Tab.HeaderParent {
+    export interface Parent extends Tab.Header.Parent {
         readonly stackConfig: StackItemConfig;
         dock(): void;
+        toggleMaximise(): void;
     }
 }
