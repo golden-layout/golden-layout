@@ -1,11 +1,10 @@
-import { ItemConfig, ManagerConfig, PopoutManagerConfig } from '../config/config';
+import { ManagerConfig, PopoutManagerConfig } from '../config/config';
 import { PopoutBlockedError } from '../errors/external-error';
 import { AssertError, UnexpectedNullError } from '../errors/internal-error';
 import { AbstractContentItem } from '../items/AbstractContentItem';
-import { Root } from '../items/Root';
+import { LayoutManager } from '../LayoutManager';
 import { ConfigMinifier } from '../utils/ConfigMinifier';
 import { EventEmitter } from '../utils/EventEmitter';
-import { EventHub } from '../utils/EventHub';
 import { Rect } from '../utils/types';
 import { deepExtend, getUniqueId } from '../utils/utils';
 
@@ -32,7 +31,7 @@ export class BrowserPopout extends EventEmitter {
      */
     constructor(private _config: PopoutManagerConfig,
         private _initialWindowSize: Rect,
-        private _layoutManager: BrowserPopout.LayoutManager,
+        private _layoutManager: LayoutManager,
     ) {
         super();
         
@@ -81,7 +80,7 @@ export class BrowserPopout extends EventEmitter {
         return config;
     }
 
-    getGlInstance(): BrowserPopout.LayoutManager {
+    getGlInstance(): LayoutManager {
         if (this._popoutWindow === null) {
             throw new UnexpectedNullError('BPGGI24693');
         } else {
@@ -304,19 +303,5 @@ export class BrowserPopout extends EventEmitter {
      */
     private _onClose() {
         setTimeout(() => this.emit('closed'), 50);
-    }
-}
-
-export namespace BrowserPopout {
-    export interface LayoutManager {
-        readonly config: ManagerConfig;
-        readonly eventHub: EventHub;
-        readonly height: number | null;
-        readonly root: Root | null;       
-        readonly width: number | null;
-        closeWindow(): void;
-        createAndInitContentItem(config: ItemConfig, parent: AbstractContentItem): AbstractContentItem;
-        on<K extends keyof EventEmitter.EventParamsMap>(eventName: K, callback: EventEmitter.Callback<K>): void;
-        toConfig(root?: AbstractContentItem): ManagerConfig;
     }
 }

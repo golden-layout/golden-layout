@@ -38,7 +38,7 @@ declare global {
  * The main class that will be exposed as GoldenLayout.
  */
 
-export abstract class LayoutManager extends EventEmitter implements BrowserPopout.LayoutManager {
+export abstract class LayoutManager extends EventEmitter {
     private _container: HTMLElement;
     private _isFullPage = false;
     private _isInitialised = false;
@@ -596,7 +596,7 @@ export abstract class LayoutManager extends EventEmitter implements BrowserPopou
             case ItemConfig.Type.stack: return new Stack(this, config as StackItemConfig, parent as Stack.Parent);
             case ItemConfig.Type.component:
             case ItemConfig.Type.reactComponent:
-                return new Component(this, config as ComponentConfig, parent as Component.Parent);
+                return new Component(this, config as ComponentConfig, parent as Stack);
             default:
                 throw new UnreachableCaseError('CCC913564', config.type, 'Invalid Config Item type specified');
         }

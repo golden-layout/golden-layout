@@ -1,11 +1,10 @@
-import { Component } from 'src';
-import { ItemContainer } from '../container/ItemContainer';
 import { DragProxy } from '../controls/DragProxy';
 import { UnexpectedNullError, UnexpectedUndefinedError } from '../errors/internal-error';
-import { AbstractContentItem } from '../items/AbstractContentItem';
+import { Component } from '../items/Component';
 import { LayoutManager } from '../LayoutManager';
 import { DragListener } from '../utils/DragListener';
 import { createTemplateHtmlElement, stripTags } from '../utils/utils';
+import { Header } from './Header';
 
 /**
  * Represents an individual tab within a Stack's header
@@ -15,7 +14,7 @@ const _template = '<li class="lm_tab"><i class="lm_left"></i>' +
         '<span class="lm_title"></span><div class="lm_close_tab"></div>' +
         '<i class="lm_right"></i></li>'
 
-export class Tab implements ItemContainer.Tab {
+export class Tab {
     private _layoutManager: LayoutManager;
     private _element: HTMLElement;
     private _dragListener: DragListener | undefined;
@@ -33,7 +32,7 @@ export class Tab implements ItemContainer.Tab {
 
     get element(): HTMLElement { return this._element; }
 
-    constructor(public component: Component, private _header: Tab.Header) {
+    constructor(public component: Component, private _header: Header) {
         this._element = createTemplateHtmlElement(_template);
         const titleElement = this._element.querySelector<HTMLElement>('.lm_title');
         if (titleElement === null) {
@@ -204,7 +203,7 @@ export class Tab implements ItemContainer.Tab {
         if (!this._header.canDestroy) {
             return;
         } else {
-            this._header.parent.removeChild(this.component);
+            this._header.parent.removeChild(this.component, false);
         }
     }
 
@@ -213,7 +212,7 @@ export class Tab implements ItemContainer.Tab {
         if (!this._header.canDestroy) {
             return;
         } else {
-            this._header.parent.removeChild(this.component);
+            this._header.parent.removeChild(this.component, false);
         }
     }
 
@@ -228,19 +227,5 @@ export class Tab implements ItemContainer.Tab {
      */
     _onCloseMousedown(event: MouseEvent): void {
         event.stopPropagation();
-    }
-}
-
-export namespace Tab {
-    export interface Header {
-        readonly canDestroy: boolean;
-        readonly parent: Header.Parent;
-    }
-
-    export namespace Header {
-        // Stack
-        export interface Parent extends AbstractContentItem {
-            setActiveContentItem(component: Component): void;        
-        }
     }
 }

@@ -1,5 +1,5 @@
-import { EventEmitter } from '../utils/EventEmitter';
 import { createTemplateHtmlElement } from '../utils/utils';
+import { Header } from './Header';
 
 export class HeaderButton {
     private _element: HTMLElement;
@@ -8,7 +8,7 @@ export class HeaderButton {
 
     get element(): HTMLElement { return this._element; }
 
-    constructor(private _header: HeaderButton.Header, label: string, cssClass: string, private _pushEvent: HeaderButton.PushEvent) {
+    constructor(private _header: Header, label: string, cssClass: string, private _pushEvent: HeaderButton.PushEvent) {
         this._element = createTemplateHtmlElement('<li class="' + cssClass + '" title="' + label + '"></li>');
         this._header.on('destroy', this._$destroy);
         this._element.addEventListener('click', this._clickEventListener);
@@ -33,9 +33,4 @@ export class HeaderButton {
 
 export namespace HeaderButton {
     export type PushEvent = (this: void) => void;
-
-    export interface Header {
-        readonly controlsContainerElement: HTMLElement;
-        on<K extends keyof EventEmitter.EventParamsMap>(eventName: K, callback: EventEmitter.Callback<K>): void;
-    }
 }

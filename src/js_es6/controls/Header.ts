@@ -1,9 +1,9 @@
-import { StackItemConfig } from '../config/config';
 import { HeaderButton } from '../controls/HeaderButton';
 import { Tab } from '../controls/Tab';
 import { UnexpectedNullError } from '../errors/internal-error';
 import { AbstractContentItem } from '../items/AbstractContentItem';
 import { Component } from '../items/Component';
+import { Stack } from '../items/Stack';
 import { LayoutManager } from '../LayoutManager';
 import { EventEmitter } from '../utils/EventEmitter';
 import { Side } from '../utils/types';
@@ -19,7 +19,7 @@ const _template =
 /**
  * This class represents a header above a Stack ContentItem.
  */
-export class Header extends EventEmitter implements Tab.Header, HeaderButton.Header {
+export class Header extends EventEmitter {
     private _element: HTMLElement;
     readonly tabs: Tab[];
     readonly tabsMarkedForRemoval: Tab[];
@@ -55,7 +55,7 @@ export class Header extends EventEmitter implements Tab.Header, HeaderButton.Hea
     readonly controlsContainerElement: HTMLElement;
     activeContentItem: Component | null;
 
-    get parent(): Header.Parent { return this._parent; }
+    get parent(): Stack { return this._parent; }
     get canDestroy(): boolean { return this._canDestroy; }
     get element(): HTMLElement { return this._element; }
     get show(): boolean { return this._show; }
@@ -63,7 +63,7 @@ export class Header extends EventEmitter implements Tab.Header, HeaderButton.Hea
     get leftRightSided(): boolean { return this._leftRightSided; }
     get dockEnabled(): boolean { return this._dockEnabled; }
 
-    constructor(public layoutManager: LayoutManager, private _parent: Header.Parent,
+    constructor(public layoutManager: LayoutManager, private _parent: Stack,
         settings: Header.Settings, closeEvent: Header.CloseEvent) {
 
         super();
@@ -512,12 +512,5 @@ export namespace Header {
         closeLabel: string;
         tabDropdownEnabled: boolean;
         tabDropdownLabel: string;
-    }
-
-    // Stack
-    export interface Parent extends Tab.Header.Parent {
-        readonly stackConfig: StackItemConfig;
-        dock(): void;
-        toggleMaximise(): void;
     }
 }

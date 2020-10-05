@@ -1,26 +1,26 @@
 import { ComponentConfig, HeaderedItemConfig } from '../config/config';
 import { ItemContainer } from '../container/ItemContainer';
+import { Tab } from '../controls/Tab';
 import { AbstractContentItem } from '../items/AbstractContentItem';
 import { LayoutManager } from '../LayoutManager';
 import { ReactComponentHandler } from '../utils/ReactComponentHandler';
 import { deepExtend, getElementHeight, getElementWidth } from '../utils/utils';
+import { Stack } from './Stack';
 
-export class Component extends AbstractContentItem implements ItemContainer.Parent {
+export class Component extends AbstractContentItem {
     private readonly _componentName: string;
     private _container: ItemContainer;
-    private _tab: ItemContainer.Tab;
+    private _tab: Tab;
     private _instance: unknown;
 
     get componentName(): string { return this._componentName; }
     get container(): ItemContainer { return this._container; }
-    get componentParent(): Component.Parent { return this._componentParent; } 
+    get componentParent(): Stack { return this._componentParent; } 
 
     get headerConfig(): HeaderedItemConfig.Header | undefined { return this._componentConfig.header; }
-    get tab(): ItemContainer.Tab { return this._tab; }
+    get tab(): Tab { return this._tab; }
 
-    constructor(layoutManager: LayoutManager, private readonly _componentConfig: ComponentConfig,
-        private _componentParent: Component.Parent
-    ) {
+    constructor(layoutManager: LayoutManager, private readonly _componentConfig: ComponentConfig, private _componentParent: Stack) {
         super(layoutManager, _componentConfig, _componentParent);
 
         let instanceConstructor: Component.InstanceConstructor;
@@ -58,7 +58,7 @@ export class Component extends AbstractContentItem implements ItemContainer.Pare
     }
 
     close(): void {
-        this._componentParent.removeChild(this);
+        this._componentParent.removeChild(this, false);
     }
 
     updateSize(): void {
@@ -81,7 +81,7 @@ export class Component extends AbstractContentItem implements ItemContainer.Pare
         this.initContentItems();
     }
 
-    setTab(tab: ItemContainer.Tab): void {
+    setTab(tab: Tab): void {
         this._tab = tab;
         this.emit('tab', tab)
         this._container.setTab(tab);
@@ -111,7 +111,7 @@ export class Component extends AbstractContentItem implements ItemContainer.Pare
         return null;
     }
 
-    setParent(parent: Component.Parent): void {
+    setParent(parent: Stack): void {
         this._componentParent = parent;
         super.setParent(parent);
     }
@@ -119,9 +119,4 @@ export class Component extends AbstractContentItem implements ItemContainer.Pare
 
 export namespace Component {
     export type InstanceConstructor = new(container: ItemContainer, state: unknown) => unknown;
-
-    // Stack
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface Parent extends AbstractContentItem {
-    }
 }

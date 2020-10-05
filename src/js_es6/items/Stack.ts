@@ -16,7 +16,7 @@ import { Component } from './Component';
 
 
 
-export class Stack extends AbstractContentItem implements Header.Parent {
+export class Stack extends AbstractContentItem {
     private readonly _header: Header;
     private _activeContentItem: AbstractContentItem | null;
     private _dropSegment: Stack.Segment | null;

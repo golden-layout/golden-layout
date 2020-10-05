@@ -1,6 +1,8 @@
 import { ComponentConfig } from '../config/config';
+import { Tab } from '../controls/Tab';
 import { AssertError, UnexpectedNullError } from '../errors/internal-error';
 import { AbstractContentItem } from '../items/AbstractContentItem';
+import { Component } from '../items/Component';
 import { LayoutManager } from '../LayoutManager';
 import { EventEmitter } from '../utils/EventEmitter';
 import { JsonValue } from '../utils/types';
@@ -13,12 +15,12 @@ export class ItemContainer extends EventEmitter {
     isHidden;
     readonly element;
     private readonly _contentElement;
-    private _tab: ItemContainer.Tab;
+    private _tab: Tab;
 
     get config(): ComponentConfig { return this._config; }
-    get tab(): ItemContainer.Tab { return this._tab; }
+    get tab(): Tab { return this._tab; }
 
-    constructor(private readonly _config: ComponentConfig, public readonly parent: ItemContainer.Parent, public readonly layoutManager: LayoutManager) {
+    constructor(private readonly _config: ComponentConfig, public readonly parent: Component, public readonly layoutManager: LayoutManager) {
 
         super();
 
@@ -209,8 +211,8 @@ export class ItemContainer extends EventEmitter {
         this.parent.setTitle(title);
     }
 
-    setTab(tab: ItemContainer.Tab): void {
-        this._tab = tab;
+    setTab(tab: Tab): void {
+        this._tab = tab as Tab;
         this.emit('tab', tab)
     }
 
@@ -238,17 +240,5 @@ export class ItemContainer extends EventEmitter {
             setElementHeight(this._contentElement, height);
             this.emit('resize');
         }
-    }
-}
-
-export namespace ItemContainer {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface Tab {
-
-    }
-
-    export interface Parent extends AbstractContentItem {
-        close(): void;
-        setTitle(title: string): void;
     }
 }
