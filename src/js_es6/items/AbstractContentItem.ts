@@ -5,8 +5,8 @@ import { AssertError, UnexpectedNullError } from '../errors/internal-error'
 import { LayoutManager } from '../LayoutManager'
 import { EventEmitter } from '../utils/EventEmitter'
 import { getJQueryOffset, getJQueryWidthAndHeight } from '../utils/jquery-legacy'
-import { Area } from '../utils/types'
-import { animFrame, fnBind } from '../utils/utils'
+import { AreaLinkedRect } from '../utils/types'
+import { animFrame, fnBind, setElementVisibility } from '../utils/utils'
 import { Root } from './Root'
 
 /**
@@ -121,11 +121,10 @@ export abstract class AbstractContentItem extends EventEmitter {
 
         /**
 		 * Call ._$destroy on the content item. 
-		 * Then use 'callDownwards' to destroy any children
+		 * All children are destroyed as well
 		 */
         if (keepChild !== true) {
 			this.contentItems[index]._$destroy();
-			this.contentItems[index].callDownwards('_$destroy', [], true, true);
         }
 
         /**
@@ -240,7 +239,7 @@ export abstract class AbstractContentItem extends EventEmitter {
             */
             if (_$destroyOldChild === true) {
                 oldChild._parent = null;
-                oldChild._$destroy();
+                oldChild._$destroy(); // will now also destroy all children of oldChild
             }
 
             /*
@@ -319,7 +318,7 @@ export abstract class AbstractContentItem extends EventEmitter {
     /**
      * De-selects the item if it is selected
      */
-    deselect() {
+    deselect(): void {
         if (this.layoutManager.selectedItem === this) {
             this.layoutManager.selectedItem = null;
             this.element.classList.remove('lm_selected');
@@ -416,12 +415,6 @@ export abstract class AbstractContentItem extends EventEmitter {
         return result;
     }
 
-    getItemsByType(type: ItemConfig.Type): AbstractContentItem[] {
-        const result: AbstractContentItem[] = [];
-        this.deepFilterAddChildContentItems(result, (item) => (item.type === type));
-        return result;
-    }
-
     /****************************************
      * PACKAGE PRIVATE
      ****************************************/
@@ -449,7 +442,7 @@ export abstract class AbstractContentItem extends EventEmitter {
         }
     }
 
-    _$highlightDropZone(x: number, y: number, area: Area): void {
+    _$highlightDropZone(x: number, y: number, area: AreaLinkedRect): void {
         const dropTargetIndicator = this.layoutManager.dropTargetIndicator;
         if (dropTargetIndicator === null) {
             throw new UnexpectedNullError('ACIHDZ5593');
@@ -459,31 +452,23 @@ export abstract class AbstractContentItem extends EventEmitter {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _$onDrop(contentItem: AbstractContentItem, area: AbstractContentItem.ExtendedArea): void {
+    _$onDrop(contentItem: AbstractContentItem, area: AbstractContentItem.Area): void {
         this.addChild(contentItem);
     }
 
     _$hide(): void {
-        this._callOnActiveComponents('hide');
-        this.element.hide();
+        this.layoutManager.hideAllActiveContentItems(); // not sure why this is done. (Code moved to Layout manager)
+        setElementVisibility(this.element, false);
         this.layoutManager.updateSizeFromContainer();
     }
 
     _$show(): void {
-        this._callOnActiveComponents('show');
-        this.element.show();
+        this.layoutManager.showAllActiveContentItems(); // not sure why this is done. (Code moved to Layout manager)
+        setElementVisibility(this.element, true);
         this.layoutManager.updateSizeFromContainer();
-    }
 
-    _callOnActiveComponents(methodName: string): void {
-        const stacks = this.getItemsByType(ItemConfig.Type.stack);
-
-        for (let i = 0; i < stacks.length; i++) {
-            const activeContentItem = stacks[i].getActiveContentItem();
-
-            if (activeContentItem && activeContentItem.isComponent) {
-                activeContentItem.container[methodName]();
-            }
+        for (let i = 0; i < this.contentItems.length; i++) {
+            this.contentItems[i]._$show();
         }
     }
 
@@ -491,6 +476,11 @@ export abstract class AbstractContentItem extends EventEmitter {
      * Destroys this item ands its children
      */
     _$destroy(): void {
+        for (let i = 0; i < this.contentItems.length; i++) {
+            this.contentItems[i]._$destroy();
+        }
+        this.contentItems = [];
+
         this.emitBubblingEvent('beforeItemDestroyed');
         this.element.remove();
         this.emitBubblingEvent('itemDestroyed');
@@ -507,7 +497,7 @@ export abstract class AbstractContentItem extends EventEmitter {
      *		contentItem: contentItem
      * }
      */
-    getArea(element?: HTMLElement): AbstractContentItem.ExtendedArea | null {
+    getElementArea(element?: HTMLElement): AbstractContentItem.Area | null {
         element = element || this.element;
 
         const offset = getJQueryOffset(element);
@@ -571,24 +561,6 @@ export abstract class AbstractContentItem extends EventEmitter {
     }
 
     /**
-     * Extends an item configuration node with default settings
-     * @private
-     * @param   {configuration item node} config
-     *
-     * @returns {configuration item node} extended config
-     */
-    private extendItemNode(config: ItemConfig) {
-
-        for (const key in itemDefaultConfig) {
-            if (config[key] === undefined) {
-                config[key] = itemDefaultConfig[key];
-            }
-        }
-
-        return config;
-    }
-
-    /**
      * Called for every event on the item tree. Decides whether the event is a bubbling
      * event and propagates it to its parent
      *
@@ -648,7 +620,7 @@ export abstract class AbstractContentItem extends EventEmitter {
 }
 
 export namespace AbstractContentItem {
-    export interface ExtendedArea extends Area {
+    export interface Area extends AreaLinkedRect {
         surface: number;
         contentItem: AbstractContentItem;
     }

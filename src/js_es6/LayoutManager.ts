@@ -4,7 +4,7 @@ import { DragSource } from './controls/DragSource'
 import { DropTargetIndicator } from './controls/DropTargetIndicator'
 import { TransitionIndicator } from './controls/TransitionIndicator'
 import { ConfigurationError } from './errors/external-error'
-import { UnexpectedNullError, UnreachableCaseError } from './errors/internal-error'
+import { AssertError, UnexpectedNullError, UnreachableCaseError } from './errors/internal-error'
 import { AbstractContentItem } from './items/AbstractContentItem'
 import { Component } from './items/Component'
 import { Root } from './items/Root'
@@ -16,7 +16,6 @@ import { EventHub } from './utils/EventHub'
 import { getJQueryLeftAndTop } from './utils/jquery-legacy'
 import { Rect } from './utils/types'
 import {
-    copy,
     createTemplateHtmlElement,
     getElementHeight,
     getElementWidth,
@@ -51,7 +50,7 @@ export abstract class LayoutManager extends EventEmitter {
     private _isFullPage = false;
     private _resizeTimeoutId: NodeJS.Timeout | undefined;
     private _componentConstructors: Record<string, Component.InstanceConstructor> = {};
-    private _itemAreas: AbstractContentItem.ExtendedArea[];
+    private _itemAreas: AbstractContentItem.Area[];
     private _maximisedItem: AbstractContentItem | null;
     private _maximisePlaceholder: HTMLElement;
     private _creationTimeoutPassed: boolean;
@@ -333,8 +332,7 @@ export abstract class LayoutManager extends EventEmitter {
         globalThis.removeEventListener('unload', this._windowUnloadListener);
         globalThis.removeEventListener('beforeunload', this._windowUnloadListener);
         if (this.root !== null) {
-            this.root.callDownwards('_$destroy', [], true);
-            this.root.contentItems = [];
+            this.root._$destroy();
         }
         this.tabDropPlaceholder.remove();
         if (this.dropTargetIndicator !== null) {
@@ -581,7 +579,7 @@ export abstract class LayoutManager extends EventEmitter {
             case ItemConfig.Type.root: return new Root(this, config, this.container);
             case ItemConfig.Type.row: return new RowOrColumn(false, this, config, parent);
             case ItemConfig.Type.column: return new RowOrColumn(true, this, config, parent);
-            case ItemConfig.Type.stack: return new Stack(this, config as StackItemConfig, parent);
+            case ItemConfig.Type.stack: return new Stack(this, config as StackItemConfig, parent as Stack.Parent);
             case ItemConfig.Type.component:
             case ItemConfig.Type.reactComponent:
                 return new Component(this, config as ComponentConfig, parent);
@@ -623,6 +621,40 @@ export abstract class LayoutManager extends EventEmitter {
         this.emit('stateChanged');
     }
 
+    showAllActiveContentItems(): void {
+        const allStacks = this.getAllStacks();
+
+        for (let i = 0; i < allStacks.length; i++) {
+            const stack = allStacks[i];
+            const activeContentItem = stack.getActiveContentItem();
+
+            if (activeContentItem !== null) {
+                if (!(activeContentItem instanceof Component)) {
+                    throw new AssertError('LMSAACIS22298');
+                } else {
+                    activeContentItem.container.show();
+                }
+            }
+        }
+    }
+
+    hideAllActiveContentItems(): void {
+        const allStacks = this.getAllStacks();
+
+        for (let i = 0; i < allStacks.length; i++) {
+            const stack = allStacks[i];
+            const activeContentItem = stack.getActiveContentItem();
+
+            if (activeContentItem !== null) {
+                if (!(activeContentItem instanceof Component)) {
+                    throw new AssertError('LMSAACIH22298');
+                } else {
+                    activeContentItem.container.hide();
+                }
+            }
+        }
+    }
+
     private cleanupBeforeMaximisedItemDestroyed(event: EventEmitter.BubblingEvent) {
 		if (this._maximisedItem !== null && this._maximisedItem === event.origin) {
 			this._maximisedItem.off( 'beforeItemDestroyed', this._maximisedItemBeforeDestroyedListener);
@@ -646,7 +678,7 @@ export abstract class LayoutManager extends EventEmitter {
         globalThis.setTimeout(() => globalThis.close(), 1);
     }
 
-    getArea(x: number, y: number): AbstractContentItem.ExtendedArea | null {
+    getArea(x: number, y: number): AbstractContentItem.Area | null {
         let mathingArea = null;
 
         for (let i = 0; i < this._itemAreas.length; i++) {
@@ -668,77 +700,63 @@ export abstract class LayoutManager extends EventEmitter {
         return mathingArea;
     }
 
-    private createRootItemAreas() {
-        const areaSize = 50;
-        const sides = {
-            y2: 'y1',
-            x2: 'x1',
-            y1: 'y2',
-            x1: 'x2'
-        };
-        for (const side in sides) {
-            if (this.root === null) {
-                throw new UnexpectedNullError('LayoutManager.createRootItemAreas');
-            } else {
-                const area = this.root.getArea();
-                if (area === null) {
-                    throw new UnexpectedNullError('LMCRIA77553');
-                } else {
-                    area.side = side;
-                    if (sides[side][1] === '2' )
-                        area[side] = area[sides[side]] - areaSize;
-                    else
-                        area[side] = area[sides[side]] + areaSize;
-                    area.surface = (area.x2 - area.x1) * (area.y2 - area.y1);
-                    this._itemAreas.push(area);
-                }
-            }
-        }
-    }
-
     calculateItemAreas(): void {
-        const allContentItems = this.getAllContentItems();
-        this._itemAreas = [];
-
         /**
          * If the last item is dragged out, highlight the entire container size to
-         * allow to re-drop it. allContentItems[ 0 ] === this.root at this point
+         * allow to re-drop it. this.root.contentiItems.length === 0 at this point
          *
          * Don't include root into the possible drop areas though otherwise since it
          * will used for every gap in the layout, e.g. splitters
          */
-        if (allContentItems.length === 1) {
-            this._itemAreas.push(this.root.getArea());
-            return;
+        const root = this.root;
+        if (root === null) {
+            throw new UnexpectedNullError('LMCIAR44365');
         } else {
-            this.createRootItemAreas();
-
-            for (let i = 0; i < allContentItems.length; i++) {
-
-                if (!(allContentItems[i].isStack)) {
-                    continue;
-                }
-
-                const area = allContentItems[i].getArea();
-
-                if (area === null) {
-                    continue;
-                } else if (area instanceof Array) {
-                    this._itemAreas = this._itemAreas.concat(area);
+            if (root.contentItems.length === 0) {
+                const rootArea = root.getArea();
+                if (rootArea === null) {
+                    throw new UnexpectedNullError('LMCIARA44365')
                 } else {
-                    this._itemAreas.push(area);
-                    const header: AbstractContentItem.ExtendedArea = {
-                        x1: area.x1,
-                        x2: area.x2,
-                        y1: area.y1,
-                        y2: area.y2,
-                        contentItem: 1,
-                    };
-                    const h = area.contentItem._contentAreaDimensions.header.highlightArea
-                    copy(header, area);
-                    copy(header, area.contentItem._contentAreaDimensions.header.highlightArea);
-                    header.surface = (header.x2 - header.x1) * (header.y2 - header.y1);
-                    this._itemAreas.push(header);
+                    this._itemAreas = [rootArea];
+                }
+                return;
+            } else {
+                // sides of layout
+                this._itemAreas = root.createSideAreas();
+
+                const allStacks = this.getAllStacks();
+                
+                for (let i = 0; i < allStacks.length; i++) {
+                    const stack = allStacks[i];
+                    const area = stack.getArea();
+
+                    if (area === null) {
+                        continue;
+                    } else {
+                        // This does not look correct. Stack.getArea() never returns an array.  Needs review
+                        if (area instanceof Array) {
+                            this._itemAreas = this._itemAreas.concat(area);
+                        } else {
+                            this._itemAreas.push(area);
+                            const stackContentAreaDimensions = stack.contentAreaDimensions;
+                            if (stackContentAreaDimensions === null) {
+                                throw new UnexpectedNullError('LMCIASC45599');
+                            } else {
+                                const highlightArea = stackContentAreaDimensions.header.highlightArea
+                                const surface = (highlightArea.x2 - highlightArea.x1) * (highlightArea.y2 - highlightArea.y1);
+
+                                const header: AbstractContentItem.Area = {
+                                    x1: highlightArea.x1,
+                                    x2: highlightArea.x2,
+                                    y1: highlightArea.y1,
+                                    y2: highlightArea.y2,
+                                    contentItem: stack,
+                                    surface,
+                                };
+                                this._itemAreas.push(header);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -952,7 +970,7 @@ export abstract class LayoutManager extends EventEmitter {
         const rootConfig = ManagerConfig.createRootItemConfig(managerConfig);
 
         this.root = new Root(this, rootConfig, this.container);
-        this.root.callDownwards('_$init');
+        this.root._$init();
 
         if (managerConfig.maximisedItemId === '__glMaximised') {
             const maximisedItems = this.root.getItemsById(managerConfig.maximisedItemId);
@@ -989,7 +1007,7 @@ export abstract class LayoutManager extends EventEmitter {
 
         // If there is only one column, do nothing.
         if (this.root === null || this.width === null) {
-            throw new UnexpectedNullError('LMACR7741');
+            throw new UnexpectedNullError('LMACR77412');
         } else {
             const columnCount = this.root.contentItems[0].contentItems.length;
             if (columnCount <= 1) {
@@ -1009,14 +1027,19 @@ export abstract class LayoutManager extends EventEmitter {
                     const stackColumnCount = columnCount - finalColumnCount;
 
                     const rootContentItem = this.root.contentItems[0];
-                    const firstStackContainer = this.findAllStackContainers()[0];
-                    for (let i = 0; i < stackColumnCount; i++) {
-                        // Stack from right.
-                        const column = rootContentItem.contentItems[rootContentItem.contentItems.length - 1];
-                        this.addChildContentItemsToContainer(firstStackContainer, column);
-                    }
+                    const allStacks = this.getAllStacks();
+                    if (allStacks.length === 0) {
+                        throw new AssertError('LMACRS77413')
+                    } else {
+                        const firstStackContainer = allStacks[0];
+                        for (let i = 0; i < stackColumnCount; i++) {
+                            // Stack from right.
+                            const column = rootContentItem.contentItems[rootContentItem.contentItems.length - 1];
+                            this.addChildContentItemsToContainer(firstStackContainer, column);
+                        }
 
-                    this._updatingColumnsResponsive = false;
+                        this._updatingColumnsResponsive = false;
+                    }
                 }
             }
         }
@@ -1056,35 +1079,35 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /**
-     * Finds all the stack containers.
+     * Finds all the stacks.
      * @returns The found stack containers.
      */
-    private findAllStackContainers() {
+    private getAllStacks() {
         if (this.root === null) {
             throw new UnexpectedNullError('LMFASC52778');
         } else {
-            const stackContainers: Stack[] = [];
-            this._findAllStackContainersRecursive(stackContainers, this.root);
+            const stacks: Stack[] = [];
+            this._findAllStacksRecursive(stacks, this.root);
 
-            return stackContainers;
+            return stacks;
         }
     }
 
     /**
      * Finds all the stack containers.
      *
-     * @param stackContainers Set of containers to populate.
+     * @param stacks Set of containers to populate.
      * @param node Current node to process.
      */
-    private _findAllStackContainersRecursive(stackContainers: Stack[], node: AbstractContentItem) {
+    private _findAllStacksRecursive(stacks: Stack[], node: AbstractContentItem) {
         const contentItems = node.contentItems;
         for (let i = 0; i < contentItems.length; i++) {
             const item = contentItems[i];
             if (item instanceof Stack) {
-                stackContainers.push(item);
+                stacks.push(item);
             } else {
                 if (!item.isComponent) {
-                    this._findAllStackContainersRecursive(stackContainers, item);
+                    this._findAllStacksRecursive(stacks, item);
                 }
             }
         }

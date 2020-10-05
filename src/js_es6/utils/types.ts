@@ -22,7 +22,7 @@ export interface Rect {
     height: number,
 }
 
-export interface Area {
+export interface AreaLinkedRect {
     x1: number, // left
     x2: number, // nextLeft
     y1: number, // top

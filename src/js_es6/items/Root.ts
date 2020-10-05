@@ -1,8 +1,9 @@
 import { HeaderedItemConfig, ItemConfig, StackItemConfig } from '../config/config';
+import { UnexpectedNullError } from '../errors/internal-error';
 import { AbstractContentItem } from '../items/AbstractContentItem';
 import { RowOrColumn } from '../items/RowOrColumn';
 import { LayoutManager } from '../LayoutManager';
-import { Area } from '../utils/types';
+import { AreaLinkedRect } from '../utils/types';
 import { createTemplateHtmlElement, getElementHeight, getElementWidth, setElementHeight, setElementWidth } from '../utils/utils';
 import { Component } from './Component';
 
@@ -31,6 +32,8 @@ export class Root extends AbstractContentItem {
         }
 
         super._$init();
+
+        this.initContentItems();
     }
 
     addChild(contentItem: AbstractContentItem, index?: number): void {
@@ -62,12 +65,38 @@ export class Root extends AbstractContentItem {
         }
     }
 
-    _$highlightDropZone(x: number, y: number, area: Area): void {
+    createSideAreas(): Root.Area[] {
+        const areaSize = 50;
+
+        const oppositeSides = Root.Area.oppositeSides;
+        const result = new Array<Root.Area>(Object.keys(oppositeSides).length);
+        let idx = 0;
+
+        for (const key in oppositeSides) {
+            const side = key as keyof Root.Area.Sides;
+            const area = this.getElementArea() as Root.Area;
+            if (area === null) {
+                throw new UnexpectedNullError('RCSA77553');
+            } else {
+                area.side = side;
+                if (oppositeSides[side][1] === '2' )
+                    area[side] = area[oppositeSides[side]] - areaSize;
+                else
+                    area[side] = area[oppositeSides[side]] + areaSize;
+                area.surface = (area.x2 - area.x1) * (area.y2 - area.y1);
+                result[idx++] = area;
+            }
+        }
+
+        return result;
+    }
+
+    _$highlightDropZone(x: number, y: number, area: AreaLinkedRect): void {
         this.layoutManager.tabDropPlaceholder.remove();
         super._$highlightDropZone(x, y, area);
     }
 
-    _$onDrop(contentItem: AbstractContentItem, area: Area): void {
+    _$onDrop(contentItem: AbstractContentItem, area: Root.Area): void {
 
         if (contentItem.isComponent) {
             const itemConfig = StackItemConfig.createDefault();
@@ -115,5 +144,29 @@ export class Root extends AbstractContentItem {
                 column.callDownwards('setSize');
             }
         }
+    }
+}
+
+export namespace Root {
+    export interface Area extends AbstractContentItem.Area {
+        side: keyof typeof Area.Side;
+    }
+
+    export namespace Area {
+        export const enum Side {
+            y2,
+            x2,
+            y1,
+            x1,
+        }
+
+        export type Sides = { [side in keyof typeof Side]: keyof typeof Side; }
+
+        export const oppositeSides: Sides = {
+            y2: 'y1',
+            x2: 'x1',
+            y1: 'y2',
+            x1: 'x2',
+        };
     }
 }

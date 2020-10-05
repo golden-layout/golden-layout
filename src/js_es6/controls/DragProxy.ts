@@ -40,8 +40,8 @@ const _template = '<div class="lm_dragProxy">' +
  * @param {AbstractContentItem} originalParent
  */
 export class DragProxy extends EventEmitter {
-    private _area: AbstractContentItem.ExtendedArea | null;
-    private _lastValidArea: AbstractContentItem.ExtendedArea | null;
+    private _area: AbstractContentItem.Area | null;
+    private _lastValidArea: AbstractContentItem.Area | null;
     private _minX: number;
     private _minY: number;
     private _maxX: number;
@@ -210,7 +210,7 @@ export class DragProxy extends EventEmitter {
              * content item.
              */
         } else {
-            this._contentItem._$destroy();
+            this._contentItem._$destroy(); // contentItem children are now destroyed as well
         }
 
         this._element.remove();
@@ -266,7 +266,7 @@ export class DragProxy extends EventEmitter {
                 this._childElementContainer.style.height = numberToPixels(height);
                 this._contentItem.element.style.width = numberToPixels(width);
                 this._contentItem.element.style.height = numberToPixels(height);
-                this._contentItem.callDownwards('_$show');
+                this._contentItem._$show();
                 this._contentItem.callDownwards('setSize');
             }
         }

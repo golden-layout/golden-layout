@@ -1,4 +1,4 @@
-import { Area } from '../utils/types';
+import { AreaLinkedRect } from '../utils/types';
 import { createTemplateHtmlElement, numberToPixels, setElementVisibility } from '../utils/utils';
 
 const _template = '<div class="lm_dropTargetIndicator"><div class="lm_inner"></div></div>'
@@ -25,7 +25,7 @@ export class DropTargetIndicator {
         });
     }
 
-    highlightArea(area: Area): void {
+    highlightArea(area: AreaLinkedRect): void {
         this._element.style.left = numberToPixels(area.x1);
         this._element.style.top = numberToPixels(area.y1);
         this._element.style.width = numberToPixels(area.x2 - area.x1);

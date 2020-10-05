@@ -360,7 +360,7 @@ export class Header extends EventEmitter {
     }
 
     private onPopoutClick() {
-        if (this.layoutManager.config.settings.popoutWholeStack === true) {
+        if (this.layoutManager.config.settings.popoutWholeStack) {
             this._parent.popout();
         } else {
             if (this.activeContentItem === null) {
@@ -414,7 +414,7 @@ export class Header extends EventEmitter {
         let cumulativeTabWidth = 0;
         let tabOverlapAllowanceExceeded = false;
         const tabOverlapAllowance = this.layoutManager.config.settings.tabOverlapAllowance;
-        const activeIndex = (this.activeContentItem ? this.tabs.indexOf(this.activeContentItem.tab) : 0);
+        const activeIndex = (this.activeContentItem ? this.tabs.indexOf(this.activeContentItem.tab as Tab) : 0);
         const activeTab = this.tabs[activeIndex];
         if (this._leftRightSided) {
             availableWidth = this._element.offsetHeight - this.controlsContainerElement.offsetHeight - this._tabControlOffset;

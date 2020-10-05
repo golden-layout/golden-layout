@@ -1,6 +1,6 @@
 import { ItemConfig, ManagerConfig } from '../config/config';
 import { DragProxy } from '../controls/DragProxy';
-import { UnexpectedNullError, UnexpectedUndefinedError } from '../errors/internal-error';
+import { UnexpectedNullError } from '../errors/internal-error';
 import { Root } from '../items/Root';
 import { LayoutManager } from '../LayoutManager';
 import { DragListener } from '../utils/DragListener';
@@ -93,12 +93,12 @@ export class DragSource {
     }
 
     private onDragStop() {
-        if (this._dummyRootContentItem === undefined) {
-            throw new UnexpectedUndefinedError('DSODSDRU08116');
-        } else {
-            this._dummyRootContentItem._$destroy
-            this._dummyRootContentItem = undefined;
-        }
+        // if (this._dummyRootContentItem === undefined) {
+        //     throw new UnexpectedUndefinedError('DSODSDRU08116');
+        // } else {
+        //     this._dummyRootContentItem._$destroy
+        //     this._dummyRootContentItem = undefined;
+        // }
         this.createDragListener();
     }
 

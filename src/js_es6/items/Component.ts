@@ -6,11 +6,13 @@ import { ReactComponentHandler } from '../utils/ReactComponentHandler';
 import { deepExtend, getElementHeight, getElementWidth } from '../utils/utils';
 
 export class Component extends AbstractContentItem implements ItemContainer.Parent {
+    private readonly _componentName: string;
     private _container: ItemContainer;
     private _tab: ItemContainer.Tab;
     private _instance: unknown;
 
-    readonly componentName: string;
+    get componentName(): string { return this._componentName; }
+    get container(): ItemContainer { return this._container; }
 
     get headerConfig(): HeaderedItemConfig.Header | undefined { return this._componentConfig.header; }
     get tab(): ItemContainer.Tab { return this._tab; }
@@ -40,7 +42,7 @@ export class Component extends AbstractContentItem implements ItemContainer.Pare
             (instanceState as Record<string, unknown>).componentName = this._componentConfig.componentName;
         }
 
-        this.componentName = this._componentConfig.componentName;
+        this._componentName = this._componentConfig.componentName;
 
         if (this.config.title === '') {
             this.config.title = this._componentConfig.componentName;
@@ -97,7 +99,7 @@ export class Component extends AbstractContentItem implements ItemContainer.Pare
      *
      * @returns null
      */
-    getArea(): AbstractContentItem.ExtendedArea | null {
+    getArea(): AbstractContentItem.Area | null {
         return null;
     }
 

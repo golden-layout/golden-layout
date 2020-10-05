@@ -4,7 +4,7 @@ import { AssertError, UnexpectedNullError } from '../errors/internal-error';
 import { AbstractContentItem } from '../items/AbstractContentItem';
 import { LayoutManager } from '../LayoutManager';
 import { getJQueryOffset } from '../utils/jquery-legacy';
-import { Area, Side } from '../utils/types';
+import { AreaLinkedRect, Side } from '../utils/types';
 import {
     createTemplateHtmlElement,
     getElementHeight,
@@ -36,6 +36,7 @@ export class Stack extends AbstractContentItem implements Header.Parent {
     get headerLeftRightSided(): boolean { return this._header.leftRightSided; }
     get dockEnabled(): boolean { return this._header.dockEnabled; }
     get docker(): Stack.Docker { return this._docker; }
+    get contentAreaDimensions(): Stack.ContentAreaDimensions | null { return this._contentAreaDimensions; }
 
     constructor(layoutManager: LayoutManager, private readonly _stackConfig: StackItemConfig, private _stackParent: Stack.Parent) {
         super(layoutManager, _stackConfig, _stackParent);
@@ -164,7 +165,7 @@ export class Stack extends AbstractContentItem implements Header.Parent {
                 throw new Error('Configured activeItemIndex out of bounds');
             }
 
-            this.setActiveContentItem(initialItem);
+            this.setActiveContentItem(initialItem as Component);
         }
         this.validateClosability();		
 		if (this._stackParent.isRow || this._stackParent.isColumn) {
@@ -174,7 +175,7 @@ export class Stack extends AbstractContentItem implements Header.Parent {
         this.initContentItems();
     }
 
-    setActiveContentItem(contentItem: AbstractContentItem): void {
+    setActiveContentItem(contentItem: Component): void {
         if (this._activeContentItem === contentItem) return;
 
         if (this.contentItems.indexOf(contentItem) === -1) {
@@ -256,7 +257,7 @@ export class Stack extends AbstractContentItem implements Header.Parent {
         this._header.removeTab(contentItem);
         if (this._header.activeContentItem === contentItem) {
             if (this.contentItems.length > 0) {
-                this.setActiveContentItem(this.contentItems[Math.max(index - 1, 0)]);
+                this.setActiveContentItem(this.contentItems[Math.max(index - 1, 0)] as Component);
             } else {
                 this._activeContentItem = null;
             }
@@ -281,7 +282,7 @@ export class Stack extends AbstractContentItem implements Header.Parent {
         if(this.contentItems.length > 1){
             const index = this.contentItems.indexOf(contentItem);
             contentItem._$hide && contentItem._$hide()
-            this.setActiveContentItem(this.contentItems[index === 0 ? index+1 : index-1])
+            this.setActiveContentItem(this.contentItems[index === 0 ? index+1 : index-1] as Component)
         } else {
             this._header.hideTab(contentItem);
             contentItem._$hide && contentItem._$hide()
@@ -354,7 +355,7 @@ export class Stack extends AbstractContentItem implements Header.Parent {
      *
      */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _$onDrop(contentItem: AbstractContentItem, area: AbstractContentItem.ExtendedArea): void {
+    _$onDrop(contentItem: AbstractContentItem, area: AbstractContentItem.Area): void {
         /*
          * The item was dropped on the header area. Just add it as a child of this stack and
          * get the hell out of this logic
@@ -474,8 +475,8 @@ export class Stack extends AbstractContentItem implements Header.Parent {
             return null;
         }
 
-        const headerArea = super.getArea(this._header.element);
-        const contentArea = super.getArea(this.childElementContainer);
+        const headerArea = super.getElementArea(this._header.element);
+        const contentArea = super.getElementArea(this.childElementContainer);
         if (headerArea === null || contentArea === null) {
             throw new UnexpectedNullError('SGAHC13086');
         }
@@ -527,70 +528,70 @@ export class Stack extends AbstractContentItem implements Header.Parent {
                 }
             };
 
-            return super.getArea(this.element);
+            return super.getElementArea(this.element);
+        } else {
+            this._contentAreaDimensions.left = {
+                hoverArea: {
+                    x1: contentArea.x1,
+                    y1: contentArea.y1,
+                    x2: contentArea.x1 + contentWidth * 0.25,
+                    y2: contentArea.y2
+                },
+                highlightArea: {
+                    x1: contentArea.x1,
+                    y1: contentArea.y1,
+                    x2: contentArea.x1 + contentWidth * 0.5,
+                    y2: contentArea.y2
+                }
+            };
+
+            this._contentAreaDimensions.top = {
+                hoverArea: {
+                    x1: contentArea.x1 + contentWidth * 0.25,
+                    y1: contentArea.y1,
+                    x2: contentArea.x1 + contentWidth * 0.75,
+                    y2: contentArea.y1 + contentHeight * 0.5
+                },
+                highlightArea: {
+                    x1: contentArea.x1,
+                    y1: contentArea.y1,
+                    x2: contentArea.x2,
+                    y2: contentArea.y1 + contentHeight * 0.5
+                }
+            };
+
+            this._contentAreaDimensions.right = {
+                hoverArea: {
+                    x1: contentArea.x1 + contentWidth * 0.75,
+                    y1: contentArea.y1,
+                    x2: contentArea.x2,
+                    y2: contentArea.y2
+                },
+                highlightArea: {
+                    x1: contentArea.x1 + contentWidth * 0.5,
+                    y1: contentArea.y1,
+                    x2: contentArea.x2,
+                    y2: contentArea.y2
+                }
+            };
+
+            this._contentAreaDimensions.bottom = {
+                hoverArea: {
+                    x1: contentArea.x1 + contentWidth * 0.25,
+                    y1: contentArea.y1 + contentHeight * 0.5,
+                    x2: contentArea.x1 + contentWidth * 0.75,
+                    y2: contentArea.y2
+                },
+                highlightArea: {
+                    x1: contentArea.x1,
+                    y1: contentArea.y1 + contentHeight * 0.5,
+                    x2: contentArea.x2,
+                    y2: contentArea.y2
+                }
+            };
+
+            return super.getElementArea(this.element);
         }
-
-        this._contentAreaDimensions.left = {
-            hoverArea: {
-                x1: contentArea.x1,
-                y1: contentArea.y1,
-                x2: contentArea.x1 + contentWidth * 0.25,
-                y2: contentArea.y2
-            },
-            highlightArea: {
-                x1: contentArea.x1,
-                y1: contentArea.y1,
-                x2: contentArea.x1 + contentWidth * 0.5,
-                y2: contentArea.y2
-            }
-        };
-
-        this._contentAreaDimensions.top = {
-            hoverArea: {
-                x1: contentArea.x1 + contentWidth * 0.25,
-                y1: contentArea.y1,
-                x2: contentArea.x1 + contentWidth * 0.75,
-                y2: contentArea.y1 + contentHeight * 0.5
-            },
-            highlightArea: {
-                x1: contentArea.x1,
-                y1: contentArea.y1,
-                x2: contentArea.x2,
-                y2: contentArea.y1 + contentHeight * 0.5
-            }
-        };
-
-        this._contentAreaDimensions.right = {
-            hoverArea: {
-                x1: contentArea.x1 + contentWidth * 0.75,
-                y1: contentArea.y1,
-                x2: contentArea.x2,
-                y2: contentArea.y2
-            },
-            highlightArea: {
-                x1: contentArea.x1 + contentWidth * 0.5,
-                y1: contentArea.y1,
-                x2: contentArea.x2,
-                y2: contentArea.y2
-            }
-        };
-
-        this._contentAreaDimensions.bottom = {
-            hoverArea: {
-                x1: contentArea.x1 + contentWidth * 0.25,
-                y1: contentArea.y1 + contentHeight * 0.5,
-                x2: contentArea.x1 + contentWidth * 0.75,
-                y2: contentArea.y2
-            },
-            highlightArea: {
-                x1: contentArea.x1,
-                y1: contentArea.y1 + contentHeight * 0.5,
-                x2: contentArea.x2,
-                y2: contentArea.y2
-            }
-        };
-
-        return super.getArea(this.element);
     }
 
     _highlightHeaderDropZone(x: number): void {
@@ -601,7 +602,7 @@ export class Stack extends AbstractContentItem implements Header.Parent {
             throw new UnexpectedNullError('SHHDZDTI97110');
         }
 
-        let area: Area;
+        let area: AreaLinkedRect;
 
         // Empty stack
         if (tabsLength === 0) {
@@ -790,8 +791,8 @@ export namespace Stack {
     }
 
     export interface ContentAreaDimension {
-        hoverArea: Area;
-        highlightArea: Area;
+        hoverArea: AreaLinkedRect;
+        highlightArea: AreaLinkedRect;
     }
 
     export type ContentAreaDimensions = {

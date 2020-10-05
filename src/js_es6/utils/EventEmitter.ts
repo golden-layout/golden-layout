@@ -1,5 +1,3 @@
-import { isFunction } from '../utils/utils';
-
 /**
  * A generic and very fast EventEmitter
  * implementation. On top of emitting the
@@ -127,19 +125,15 @@ export class EventEmitter {
     }
 
     onUnknown(eventName: string, callback: EventEmitter.UnknownCallback): void {
-        if (!isFunction(callback)) {
-            throw new Error('Tried to listen to event ' + eventName + ' with non-function callback ' + callback);
+        if (eventName === EventEmitter.ALL_EVENT) {
+            this._allEventSubscriptions.push(callback);
         } else {
-            if (eventName === EventEmitter.ALL_EVENT) {
-                this._allEventSubscriptions.push(callback);
+            let subscriptions = this._subscriptionsMap.get(eventName);
+            if (subscriptions !== undefined) {
+                subscriptions.push(callback);
             } else {
-                let subscriptions = this._subscriptionsMap.get(eventName);
-                if (subscriptions !== undefined) {
-                    subscriptions.push(callback);
-                } else {
-                    subscriptions = [callback];
-                    this._subscriptionsMap.set(eventName, subscriptions);
-                }
+                subscriptions = [callback];
+                this._subscriptionsMap.set(eventName, subscriptions);
             }
         }
     }

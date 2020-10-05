@@ -1,4 +1,3 @@
-import $ from 'jquery';
 import { UnexpectedNullError } from '../errors/internal-error';
 import { WidthAndHeight } from './types';
 
@@ -204,13 +203,6 @@ export function animFrame(fn) {
         fn();
     });
 }
-
-export const isFunction = (typeof /./ != 'function' && typeof Int8Array != 'object') ? 
-    function isFunction(obj: unknown) {
-        return typeof obj == 'function' || false;
-    } : function isFunction(obj: unknown) {
-        return toString.call(obj) === '[object Function]';
-    }
 
 export function fnBind(fn, context: unknown, boundArgs: [...unknown[]] | undefined): unknown {
 
