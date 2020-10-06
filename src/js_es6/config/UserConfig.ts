@@ -1,7 +1,15 @@
 import { ConfigurationError } from '../errors/external-error';
 import { UnreachableCaseError } from '../errors/internal-error';
 import { JsonValue, Side } from '../utils/types';
-import { Config, HeaderedItemConfig, ItemConfig, SerialisableComponentConfig, ManagerConfig, PopoutManagerConfig, ReactComponentConfig, StackItemConfig } from './config';
+import { Config,
+    HeaderedItemConfig,
+    ItemConfig,
+    ManagerConfig,
+    PopoutManagerConfig,
+    ReactComponentConfig,
+    SerialisableComponentConfig,
+    StackItemConfig
+} from './config';
 
 export interface UserItemConfig {
     /**
@@ -589,7 +597,6 @@ export namespace UserPopoutManagerConfig {
         height?: number,
         left?: number,
         top?: number,
-        maximised?: boolean;
     }
 
     export namespace Window {
