@@ -1,6 +1,6 @@
 import { DragProxy } from '../controls/DragProxy';
 import { UnexpectedNullError, UnexpectedUndefinedError } from '../errors/internal-error';
-import { Component } from '../items/Component';
+import { ComponentItem } from '../items/ComponentItem';
 import { LayoutManager } from '../LayoutManager';
 import { DragListener } from '../utils/DragListener';
 import { createTemplateHtmlElement, stripTags } from '../utils/utils';
@@ -32,7 +32,7 @@ export class Tab {
 
     get element(): HTMLElement { return this._element; }
 
-    constructor(public component: Component, private _header: Header) {
+    constructor(public component: ComponentItem, private _header: Header) {
         this._element = createTemplateHtmlElement(_template);
         const titleElement = this._element.querySelector<HTMLElement>('.lm_title');
         if (titleElement === null) {
@@ -143,7 +143,7 @@ export class Tab {
             if (!this._header.canDestroy) {
                 return;
             } else {
-                const contentItemParent = this.component.componentParent;
+                const contentItemParent = this.component.stack;
                 if (contentItemParent === null) {
                     throw new UnexpectedNullError('TODSCIPN71115');
                 } else {

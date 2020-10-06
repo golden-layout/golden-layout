@@ -12,7 +12,7 @@ import {
     numberToPixels,
     setElementDisplayVisibility
 } from '../utils/utils';
-import { Component } from './Component';
+import { ComponentItem } from './ComponentItem';
 
 
 
@@ -156,7 +156,7 @@ export class Stack extends AbstractContentItem {
 
         for (let i = 0; i < this.contentItems.length; i++) {
             const contentItem = this.contentItems[i];
-            if (!(contentItem instanceof Component)) {
+            if (!(contentItem instanceof ComponentItem)) {
                 throw new AssertError('SICI72110'); // Stacks can only have Component children
             } else {
                 this._header.createTab(contentItem, i);
@@ -171,7 +171,7 @@ export class Stack extends AbstractContentItem {
                 throw new Error('Configured activeItemIndex out of bounds');
             }
 
-            this.setActiveContentItem(initialItem as Component);
+            this.setActiveContentItem(initialItem as ComponentItem);
         }
         this.validateClosability();		
 		if (this._stackParent.isRow || this._stackParent.isColumn) {
@@ -181,7 +181,7 @@ export class Stack extends AbstractContentItem {
         this.initContentItems();
     }
 
-    setActiveContentItem(contentItem: Component): void {
+    setActiveContentItem(contentItem: ComponentItem): void {
         if (this._activeContentItem === contentItem) return;
 
         if (this.contentItems.indexOf(contentItem) === -1) {
@@ -241,7 +241,7 @@ export class Stack extends AbstractContentItem {
             index -= 1
         }        
         // contentItem = this.layoutManager._$normalizeContentItem(contentItem, this);
-        if (!(contentItem instanceof Component)) {
+        if (!(contentItem instanceof ComponentItem)) {
             throw new AssertError('SACC88532'); // Stacks can only have Component children
         } else {
             super.addChild(contentItem, index);
@@ -263,7 +263,7 @@ export class Stack extends AbstractContentItem {
         this._header.removeTab(contentItem);
         if (this._header.activeContentItem === contentItem) {
             if (this.contentItems.length > 0) {
-                this.setActiveContentItem(this.contentItems[Math.max(index - 1, 0)] as Component);
+                this.setActiveContentItem(this.contentItems[Math.max(index - 1, 0)] as ComponentItem);
             } else {
                 this._activeContentItem = null;
             }
@@ -288,7 +288,7 @@ export class Stack extends AbstractContentItem {
         if(this.contentItems.length > 1){
             const index = this.contentItems.indexOf(contentItem);
             contentItem._$hide && contentItem._$hide()
-            this.setActiveContentItem(this.contentItems[index === 0 ? index+1 : index-1] as Component)
+            this.setActiveContentItem(this.contentItems[index === 0 ? index+1 : index-1] as ComponentItem)
         } else {
             this._header.hideTab(contentItem);
             contentItem._$hide && contentItem._$hide()
@@ -301,7 +301,7 @@ export class Stack extends AbstractContentItem {
     }
 
     protected processChildReplaced(index: number, newChild: AbstractContentItem): void {
-        if (!(newChild instanceof Component)) {
+        if (!(newChild instanceof ComponentItem)) {
             throw new AssertError('SPCR11056'); // Stacks can only have Component children
         } else {
             this._header.tabs[index].component = newChild;

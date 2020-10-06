@@ -5,7 +5,7 @@ import { RowOrColumn } from '../items/RowOrColumn';
 import { LayoutManager } from '../LayoutManager';
 import { AreaLinkedRect } from '../utils/types';
 import { createTemplateHtmlElement, getElementHeight, getElementWidth, setElementHeight, setElementWidth } from '../utils/utils';
-import { Component } from './Component';
+import { ComponentItem } from './ComponentItem';
 
 export class Root extends AbstractContentItem {
     private readonly _childElementContainer;
@@ -122,7 +122,7 @@ export class Root extends AbstractContentItem {
         if (contentItem.isComponent) {
             const itemConfig = StackItemConfig.createDefault();
             // since ItemConfig.contentItems not set up, we need to add header from Component
-            const component = contentItem as Component;
+            const component = contentItem as ComponentItem;
             itemConfig.header = HeaderedItemConfig.Header.createCopy(component.headerConfig);
             const stack = this.layoutManager.createAndInitContentItem(itemConfig, this);
             stack.addChild(contentItem);

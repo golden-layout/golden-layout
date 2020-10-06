@@ -7,7 +7,7 @@
 // Layout
 //
 // container
-export { ItemContainer } from './js_es6/container/ItemContainer'
+export { ComponentContainer as ItemContainer } from './js_es6/container/ComponentContainer'
 //
 // controls
 export { BrowserPopout } from './js_es6/controls/BrowserPopout'
@@ -16,7 +16,7 @@ export { HeaderButton } from './js_es6/controls/HeaderButton'
 export { Tab } from './js_es6/controls/Tab'
 //
 // items
-export { Component } from './js_es6/items/Component'
+export { ComponentItem as Component } from './js_es6/items/ComponentItem'
 export { Root } from './js_es6/items/Root'
 export { RowOrColumn } from './js_es6/items/RowOrColumn'
 export { Stack } from './js_es6/items/Stack'

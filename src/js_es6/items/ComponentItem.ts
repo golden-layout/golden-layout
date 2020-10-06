@@ -1,48 +1,48 @@
 import { ComponentConfig, HeaderedItemConfig } from '../config/config';
-import { ItemContainer } from '../container/ItemContainer';
+import { ComponentContainer } from '../container/ComponentContainer';
 import { Tab } from '../controls/Tab';
-import { AbstractContentItem } from '../items/AbstractContentItem';
+import { AbstractContentItem } from './AbstractContentItem';
 import { LayoutManager } from '../LayoutManager';
 import { ReactComponentHandler } from '../utils/ReactComponentHandler';
 import { deepExtend, getElementHeight, getElementWidth } from '../utils/utils';
 import { Stack } from './Stack';
 
-export class Component extends AbstractContentItem {
+export class ComponentItem extends AbstractContentItem {
     private readonly _componentName: string;
-    private _container: ItemContainer;
+    private _container: ComponentContainer;
     private _tab: Tab;
-    private _instance: unknown;
+    private _component: unknown; // this is the user component wrapped by this ComponentItem instance
 
     get componentName(): string { return this._componentName; }
-    get container(): ItemContainer { return this._container; }
-    get componentParent(): Stack { return this._componentParent; } 
+    get container(): ComponentContainer { return this._container; }
+    get stack(): Stack { return this._stack; } 
 
     get headerConfig(): HeaderedItemConfig.Header | undefined { return this._componentConfig.header; }
     get tab(): Tab { return this._tab; }
 
-    constructor(layoutManager: LayoutManager, private readonly _componentConfig: ComponentConfig, private _componentParent: Stack) {
-        super(layoutManager, _componentConfig, _componentParent);
+    constructor(layoutManager: LayoutManager, private readonly _componentConfig: ComponentConfig, private _stack: Stack) {
+        super(layoutManager, _componentConfig, _stack);
 
-        let instanceConstructor: Component.InstanceConstructor;
-        let instanceState: unknown;
-        if (ComponentConfig.isJson(this._componentConfig)) {
-            instanceConstructor = layoutManager.getComponentConstructor(this._componentConfig);
+        let componentConstructor: ComponentItem.ComponentConstructor;
+        let componentState: unknown;
+        if (ComponentConfig.isSerialisable(this._componentConfig)) {
+            componentConstructor = layoutManager.getComponentConstructor(this._componentConfig);
             if (this._componentConfig.componentState === undefined) {
-                instanceState = {};
+                componentState = {};
             } else {
-                instanceState = deepExtend({}, this._componentConfig.componentState as Record<string, unknown>); // make copy
+                componentState = deepExtend({}, this._componentConfig.componentState as Record<string, unknown>); // make copy
             }
         } else {
             if (ComponentConfig.isReact(this._componentConfig)) {
-                instanceConstructor = ReactComponentHandler;
-                instanceState = this._componentConfig.props;
+                componentConstructor = ReactComponentHandler;
+                componentState = this._componentConfig.props;
             } else {
                 throw new Error(`Component.constructor: unsupported Config type: ${this._componentConfig.type}`);
             }
         }
 
-        if (typeof instanceState === 'object' && instanceState !== null) {
-            (instanceState as Record<string, unknown>).componentName = this._componentConfig.componentName;
+        if (typeof componentState === 'object' && componentState !== null) {
+            (componentState as Record<string, unknown>).componentName = this._componentConfig.componentName;
         }
 
         this._componentName = this._componentConfig.componentName;
@@ -52,13 +52,13 @@ export class Component extends AbstractContentItem {
         }
 
         this.isComponent = true;
-        this._container = new ItemContainer(this._componentConfig, this, layoutManager);
-        this._instance = new instanceConstructor(this._container, instanceState);
+        this._container = new ComponentContainer(this._componentConfig, this, layoutManager);
+        this._component = new componentConstructor(this._container, componentState);
         this.element = this._container.element;
     }
 
     close(): void {
-        this._componentParent.removeChild(this, false);
+        this._stack.removeChild(this, false);
     }
 
     updateSize(): void {
@@ -112,11 +112,11 @@ export class Component extends AbstractContentItem {
     }
 
     setParent(parent: Stack): void {
-        this._componentParent = parent;
+        this._stack = parent;
         super.setParent(parent);
     }
 }
 
-export namespace Component {
-    export type InstanceConstructor = new(container: ItemContainer, state: unknown) => unknown;
+export namespace ComponentItem {
+    export type ComponentConstructor = new(container: ComponentContainer, state: unknown) => unknown;
 }

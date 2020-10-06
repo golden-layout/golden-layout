@@ -1,0 +1,23 @@
+// Color variables (appears count calculates by raw css)
+$color0: #000000; // Appears 7 times
+$color4: #cccccc; // Appears 1 time
+
+// Single Pane content during Drag (style of moving window following mouse)
+.lm_dragProxy {
+    .lm_content {
+        box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);
+    }
+}
+  
+// Placeholder Container of target position
+.lm_dropTargetIndicator {
+    box-shadow: inset 0 0 30px $color0;
+    outline: 1px dashed $color4;
+    transition: all 200ms ease;
+  
+    // Inner Placeholder
+    .lm_inner {
+        background: $color0;
+        opacity: 0.2;
+    }
+}

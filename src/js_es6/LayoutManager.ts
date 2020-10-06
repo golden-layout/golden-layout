@@ -6,7 +6,7 @@ import { TransitionIndicator } from './controls/TransitionIndicator'
 import { ConfigurationError } from './errors/external-error'
 import { AssertError, UnexpectedNullError, UnreachableCaseError } from './errors/internal-error'
 import { AbstractContentItem } from './items/AbstractContentItem'
-import { Component } from './items/Component'
+import { ComponentItem } from './items/ComponentItem'
 import { Root } from './items/Root'
 import { RowOrColumn } from './items/RowOrColumn'
 import { Stack } from './items/Stack'
@@ -47,7 +47,7 @@ export abstract class LayoutManager extends EventEmitter {
     private _dropTargetIndicator: DropTargetIndicator | null;
     private _transitionIndicator: TransitionIndicator | null;
     private _resizeTimeoutId: NodeJS.Timeout | undefined;
-    private _componentConstructors: Record<string, Component.InstanceConstructor> = {};
+    private _componentConstructors: Record<string, ComponentItem.ComponentConstructor> = {};
     private _itemAreas: AbstractContentItem.Area[];
     private _maximisedItem: AbstractContentItem | null;
     private _maximisePlaceholder: HTMLElement;
@@ -144,7 +144,7 @@ export abstract class LayoutManager extends EventEmitter {
      *  }
      *
      */
-    registerComponent(name: string, componentConstructor: Component.InstanceConstructor): void {
+    registerComponent(name: string, componentConstructor: ComponentItem.ComponentConstructor): void {
         if (typeof componentConstructor !== 'function') {
             throw new Error('Please register a constructor function');
         }
@@ -228,7 +228,7 @@ export abstract class LayoutManager extends EventEmitter {
      *
      * @param config - The item config
      */
-    getComponentConstructor(config: ComponentConfig): Component.InstanceConstructor {
+    getComponentConstructor(config: ComponentConfig): ComponentItem.ComponentConstructor {
         const name = this.getComponentNameFromConfig(config)
         let constructorToUse = this._componentConstructors[name]
         if (constructorToUse === undefined && this._getComponentConstructorFtn !== undefined) {
@@ -596,7 +596,7 @@ export abstract class LayoutManager extends EventEmitter {
             case ItemConfig.Type.stack: return new Stack(this, config as StackItemConfig, parent as Stack.Parent);
             case ItemConfig.Type.component:
             case ItemConfig.Type.reactComponent:
-                return new Component(this, config as ComponentConfig, parent as Stack);
+                return new ComponentItem(this, config as ComponentConfig, parent as Stack);
             default:
                 throw new UnreachableCaseError('CCC913564', config.type, 'Invalid Config Item type specified');
         }
@@ -647,7 +647,7 @@ export abstract class LayoutManager extends EventEmitter {
             const activeContentItem = stack.getActiveContentItem();
 
             if (activeContentItem !== null) {
-                if (!(activeContentItem instanceof Component)) {
+                if (!(activeContentItem instanceof ComponentItem)) {
                     throw new AssertError('LMSAACIS22298');
                 } else {
                     activeContentItem.container.show();
@@ -664,7 +664,7 @@ export abstract class LayoutManager extends EventEmitter {
             const activeContentItem = stack.getActiveContentItem();
 
             if (activeContentItem !== null) {
-                if (!(activeContentItem instanceof Component)) {
+                if (!(activeContentItem instanceof ComponentItem)) {
                     throw new AssertError('LMSAACIH22298');
                 } else {
                     activeContentItem.container.hide();
@@ -1142,5 +1142,5 @@ export abstract class LayoutManager extends EventEmitter {
 // LayoutManager.__lm = lm;
 
 export namespace LayoutManager {
-    export type GetComponentConstructorFtn = (this: void, config: ComponentConfig) => Component.InstanceConstructor
+    export type GetComponentConstructorFtn = (this: void, config: ComponentConfig) => ComponentItem.ComponentConstructor
 }

@@ -2,7 +2,7 @@ import { HeaderButton } from '../controls/HeaderButton';
 import { Tab } from '../controls/Tab';
 import { UnexpectedNullError } from '../errors/internal-error';
 import { AbstractContentItem } from '../items/AbstractContentItem';
-import { Component } from '../items/Component';
+import { ComponentItem } from '../items/ComponentItem';
 import { Stack } from '../items/Stack';
 import { LayoutManager } from '../LayoutManager';
 import { EventEmitter } from '../utils/EventEmitter';
@@ -53,7 +53,7 @@ export class Header extends EventEmitter {
     private _tabDropdownButton: HeaderButton | null;
 
     readonly controlsContainerElement: HTMLElement;
-    activeContentItem: Component | null;
+    activeContentItem: ComponentItem | null;
 
     get parent(): Stack { return this._parent; }
     get canDestroy(): boolean { return this._canDestroy; }
@@ -131,7 +131,7 @@ export class Header extends EventEmitter {
      * @param    component
      * @param    index The position of the tab
      */
-    createTab(component: Component, index: number): void {
+    createTab(component: ComponentItem, index: number): void {
         //If there's already a tab relating to the
         //content item, don't do anything
         for (let i = 0; i < this.tabs.length; i++) {
@@ -208,7 +208,7 @@ export class Header extends EventEmitter {
     /**
      * The programmatical equivalent of clicking a Tab.
      */
-    setActiveContentItem(contentItem: Component): void {
+    setActiveContentItem(contentItem: ComponentItem): void {
         if (this.activeContentItem === contentItem) return;
 
         for (let i = 0; i < this.tabs.length; i++) {

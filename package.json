@@ -1,6 +1,6 @@
 {
   "name": "golden-layout",
-  "version": "2.0.0-alpha.0",
+  "version": "2.0.0-alpha.1",
   "description": "A multi-screen javascript Layout manager \r https://golden-layout.com",
   "keywords": [
     "docking",
@@ -20,6 +20,7 @@
   "es2015": "dist/es2015/index.js",
   "typings": "./index.d.ts",
   "scripts": {
+    "build:ts": "node_modules/.bin/tsc -p tsconfig.json",
     "build:styles": "node ./scripts/css.js",
     "build:umd-dev": "webpack --mode development --config ./webpack/umd.webpack.config.js",
     "build:umd": "webpack --mode production --config ./webpack/umd.webpack.config.js",

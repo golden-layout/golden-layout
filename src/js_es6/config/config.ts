@@ -69,7 +69,7 @@ export namespace ItemConfig {
                 return StackItemConfig.createCopy(original as StackItemConfig);
 
             case ItemConfig.Type.component:
-                return JsonComponentConfig.createCopy(original as JsonComponentConfig);
+                return SerialisableComponentConfig.createCopy(original as SerialisableComponentConfig);
 
             case ItemConfig.Type.reactComponent:
                 return ReactComponentConfig.createCopy(original as ReactComponentConfig);
@@ -112,7 +112,7 @@ export namespace ItemConfig {
                 return StackItemConfig.createDefault();
 
             case ItemConfig.Type.component:
-                return JsonComponentConfig.createDefault();
+                return SerialisableComponentConfig.createDefault();
 
             case ItemConfig.Type.reactComponent:
                 return ReactComponentConfig.createDefault();
@@ -222,19 +222,19 @@ export namespace ComponentConfig {
     export function isReact(config: ComponentConfig): config is ReactComponentConfig {
         return config.type === ItemConfig.Type.reactComponent;
     }
-    export function isJson(config: ComponentConfig): config is JsonComponentConfig {
+    export function isSerialisable(config: ComponentConfig): config is SerialisableComponentConfig {
         return config.type === ItemConfig.Type.component;
     }
 }
 
-export interface JsonComponentConfig extends ComponentConfig {
+export interface SerialisableComponentConfig extends ComponentConfig {
     // see UserJsonComponentConfig for comments
     componentState: JsonValue;
 }
 
-export namespace JsonComponentConfig {
-    export function createCopy(original: JsonComponentConfig): JsonComponentConfig {
-        const result: JsonComponentConfig = {
+export namespace SerialisableComponentConfig {
+    export function createCopy(original: SerialisableComponentConfig): SerialisableComponentConfig {
+        const result: SerialisableComponentConfig = {
             type: original.type,
             content: ItemConfig.copyContent(original.content),
             width: original.width,
@@ -252,8 +252,8 @@ export namespace JsonComponentConfig {
         return result;
     }
 
-    export function createDefault(): JsonComponentConfig {
-        const result: JsonComponentConfig = {
+    export function createDefault(): SerialisableComponentConfig {
+        const result: SerialisableComponentConfig = {
             type: ItemConfig.Type.component,
             content: ItemConfig.defaults.content,
             width: ItemConfig.defaults.width,

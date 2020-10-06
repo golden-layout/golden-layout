@@ -1,7 +1,7 @@
 import { ConfigurationError } from '../errors/external-error';
 import { UnreachableCaseError } from '../errors/internal-error';
 import { JsonValue, Side } from '../utils/types';
-import { Config, HeaderedItemConfig, ItemConfig, JsonComponentConfig, ManagerConfig, PopoutManagerConfig, ReactComponentConfig, StackItemConfig } from './config';
+import { Config, HeaderedItemConfig, ItemConfig, SerialisableComponentConfig, ManagerConfig, PopoutManagerConfig, ReactComponentConfig, StackItemConfig } from './config';
 
 export interface UserItemConfig {
     /**
@@ -85,7 +85,7 @@ export namespace UserItemConfig {
                 return UserStackItemConfig.resolve(user as UserHeaderedItemConfig);
 
             case ItemConfig.Type.component:
-                return UserJsonComponentConfig.resolve(user as UserJsonComponentConfig);
+                return UserSerialisableComponentConfig.resolve(user as UserSerialisableComponentConfig);
 
             case ItemConfig.Type.reactComponent:
                 return UserReactComponentConfig.resolve(user as UserReactComponentConfig);
@@ -120,7 +120,7 @@ export namespace UserItemConfig {
     export function isStack(config: UserItemConfig): config is UserItemConfig {
         return config.type === ItemConfig.Type.stack;
     }
-    export function isJson(config: UserItemConfig): config is UserJsonComponentConfig {
+    export function isJson(config: UserItemConfig): config is UserSerialisableComponentConfig {
         return config.type === ItemConfig.Type.component;
     }
     export function isReact(config: UserItemConfig): config is UserReactComponentConfig {
@@ -198,7 +198,7 @@ export interface UserComponentConfig extends UserHeaderedItemConfig {
     componentName: string;
 }
 
-export interface UserJsonComponentConfig extends UserComponentConfig {
+export interface UserSerialisableComponentConfig extends UserComponentConfig {
     /**
      * A serialisable object. Will be passed to the component constructor function and will be the value returned by
      * container.getState().
@@ -206,12 +206,12 @@ export interface UserJsonComponentConfig extends UserComponentConfig {
     componentState?: JsonValue;
 }
 
-export namespace UserJsonComponentConfig {
-    export function resolve(user: UserJsonComponentConfig): JsonComponentConfig {
+export namespace UserSerialisableComponentConfig {
+    export function resolve(user: UserSerialisableComponentConfig): SerialisableComponentConfig {
         if (user.componentName === undefined) {
             throw new Error('UserJsonComponentConfig.componentName is undefined');
         } else {
-            const result: JsonComponentConfig = {
+            const result: SerialisableComponentConfig = {
                 type: user.type,
                 content: UserItemConfig.resolveContent(user.content),
                 width: user.width ?? ItemConfig.defaults.width,

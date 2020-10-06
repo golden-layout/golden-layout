@@ -1,9 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { ReactComponentConfig } from '../config/config';
-import { ItemContainer } from '../container/ItemContainer';
+import { ComponentContainer } from '../container/ComponentContainer';
 import { UnexpectedNullError } from '../errors/internal-error';
-import { Component } from '../items/Component';
+import { ComponentItem } from '../items/ComponentItem';
 import { JsonValue } from './types';
 import { extend } from './utils';
 
@@ -17,9 +17,9 @@ export class ReactComponentHandler {
     private _reactComponent: React.Component | null;
     // eslint-disable-next-line @typescript-eslint/ban-types
     private _originalComponentWillUpdate: Function | null;
-    private _container: ItemContainer;
+    private _container: ComponentContainer;
     private _initialState: unknown;
-    private _reactClass: Component.InstanceConstructor;
+    private _reactClass: ComponentItem.ComponentConstructor;
 
     private _containerOpenListener = () => this._render();
     private _containerDestroyListener = () => this._destroy();
@@ -28,7 +28,7 @@ export class ReactComponentHandler {
      * @param container
      * @param state state is not required for react components
      */
-    constructor(container: ItemContainer, state: unknown) {
+    constructor(container: ComponentContainer, state: unknown) {
         this._reactComponent = null;
         this._originalComponentWillUpdate = null;
         this._container = container;

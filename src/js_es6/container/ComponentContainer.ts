@@ -2,13 +2,13 @@ import { ComponentConfig } from '../config/config';
 import { Tab } from '../controls/Tab';
 import { AssertError, UnexpectedNullError } from '../errors/internal-error';
 import { AbstractContentItem } from '../items/AbstractContentItem';
-import { Component } from '../items/Component';
+import { ComponentItem } from '../items/ComponentItem';
 import { LayoutManager } from '../LayoutManager';
 import { EventEmitter } from '../utils/EventEmitter';
 import { JsonValue } from '../utils/types';
 import { createTemplateHtmlElement, deepExtend, setElementHeight, setElementWidth } from '../utils/utils';
 
-export class ItemContainer extends EventEmitter {
+export class ComponentContainer extends EventEmitter {
     width: number | null;
     height: number | null;
     readonly title;
@@ -20,7 +20,7 @@ export class ItemContainer extends EventEmitter {
     get config(): ComponentConfig { return this._config; }
     get tab(): Tab { return this._tab; }
 
-    constructor(private readonly _config: ComponentConfig, public readonly parent: Component, public readonly layoutManager: LayoutManager) {
+    constructor(private readonly _config: ComponentConfig, public readonly parent: ComponentItem, public readonly layoutManager: LayoutManager) {
 
         super();
 
@@ -36,7 +36,7 @@ export class ItemContainer extends EventEmitter {
 
         const contentElement = this.element.querySelector('.lm_content') as HTMLElement;
         if (contentElement === null) {
-            throw new Error('ItemContainer.constructor: contentElement not found')
+            throw new UnexpectedNullError('CCC11195');
         } else {
             this._contentElement = contentElement;
         }
@@ -45,13 +45,10 @@ export class ItemContainer extends EventEmitter {
     /**
      * Get the inner DOM element the container's content
      * is intended to live in
-     *
-     * @returns {DOM element}
      */
     getContentElement(): HTMLElement {
         return this._contentElement;
     }
-
 
     /**
      * Hide the container. Notifies the containers content first
@@ -65,7 +62,6 @@ export class ItemContainer extends EventEmitter {
         this.isHidden = true;
         this.element.style.display = 'none';
     }
-
 
     /**
      * Shows a previously hidden container. Notifies the
@@ -101,7 +97,7 @@ export class ItemContainer extends EventEmitter {
     setSize(width: number, height: number): boolean {
         let ancestorItem: AbstractContentItem | null = this.parent;
         if (ancestorItem.isColumn || ancestorItem.isRow || ancestorItem.parent === null) {
-            throw new AssertError('ICSSPRC', 'ItemContainer cannot have RowColumn Parent');
+            throw new AssertError('ICSSPRC', 'ComponentContainer cannot have RowColumn Parent');
         } else {
             let ancestorChildItem: AbstractContentItem;
             do {
@@ -163,7 +159,7 @@ export class ItemContainer extends EventEmitter {
      * @returns {Object} state
      */
     getState(): JsonValue {
-        if (ComponentConfig.isJson(this._config)) {
+        if (ComponentConfig.isSerialisable(this._config)) {
             return this._config.componentState;
         } else {
             if (ComponentConfig.isReact(this._config)) {
@@ -190,7 +186,7 @@ export class ItemContainer extends EventEmitter {
      * @param {serialisable} state
      */
     setState(state: JsonValue): void {
-        if (ComponentConfig.isJson(this._config)) {
+        if (ComponentConfig.isSerialisable(this._config)) {
             this._config.componentState = state;
             this.parent.emitBubblingEvent('stateChanged');
         } else {
