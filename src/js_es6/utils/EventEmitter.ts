@@ -23,12 +23,13 @@ export class EventEmitter {
      * @returns {void}
      */
     emit<K extends keyof EventEmitter.EventParamsMap>(eventName: K, ...args: EventEmitter.EventParamsMap[K]): void {
-        let subs = this._subscriptionsMap.get(eventName);
+        let subcriptions = this._subscriptionsMap.get(eventName);
 
-        if (subs !== undefined) {
-            subs = subs.slice();
-            for (let i = 0; i < subs.length; i++) {
-                subs[i](args);
+        if (subcriptions !== undefined) {
+            subcriptions = subcriptions.slice();
+            for (let i = 0; i < subcriptions.length; i++) {
+                const subscription = subcriptions[i];
+                subscription(args);
             }
         }
 

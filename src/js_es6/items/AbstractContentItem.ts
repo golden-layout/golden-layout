@@ -7,7 +7,6 @@ import { EventEmitter } from '../utils/EventEmitter'
 import { getJQueryOffset, getJQueryWidthAndHeight } from '../utils/jquery-legacy'
 import { AreaLinkedRect } from '../utils/types'
 import { setElementDisplayVisibility } from '../utils/utils'
-import { Root } from './Root'
 
 /**
  * This is the baseclass that all content items inherit from.
@@ -124,7 +123,7 @@ export abstract class AbstractContentItem extends EventEmitter {
             /**
              * If this was the last content item, remove this node as well
              */
-        } else if (!(this instanceof Root) && this._config.isClosable === true) {
+        } else if (!this.isRoot && this._config.isClosable === true) {
             if (this._parent === null) {
                 throw new UnexpectedNullError('CIUC00874');
             } else {
@@ -149,7 +148,7 @@ export abstract class AbstractContentItem extends EventEmitter {
             throw new Error('Can\'t remove child item. Unknown content item');
         }
 
-        if (!(this instanceof Root) && this._config.isClosable === true) {
+        if (!(this.isRoot) && this._config.isClosable === true) {
             if (this._parent === null) {
                 throw new UnexpectedNullError('CIUC00874');
             } else {
@@ -269,8 +268,10 @@ export abstract class AbstractContentItem extends EventEmitter {
     /**
      * Maximises the Item or minimises it if it is already maximised
      */
-    toggleMaximise(/* e */): void {
-        // e && e.preventDefault(); // not sure what this was here for
+    toggleMaximise(ev?: Event): void {
+        if (ev !== undefined) {
+            ev.preventDefault();
+        }
         if (this._isMaximised === true) {
             this.layoutManager.minimiseItem(this);
         } else {

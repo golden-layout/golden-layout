@@ -108,7 +108,7 @@ export class Header extends EventEmitter {
                 } else {
                     this.controlsContainerElement = controlsContainerElement as HTMLElement;
                     this._parent = _parent;
-                    this._parent.on('resize', this.updateTabSizes);
+                    this._parent.on('resize', () => this.updateTabSizes);
                     this.tabs = [];
                     this.tabsMarkedForRemoval = [];
                     this.activeContentItem = null;
@@ -322,7 +322,7 @@ export class Header extends EventEmitter {
          * Maximise control - set the component to the full size of the layout
          */
         if (this._maximiseEnabled) {
-            const maximiseButton = new HeaderButton(this, this._maximiseLabel, 'lm_maximise', () => this._parent.toggleMaximise());
+            const maximiseButton = new HeaderButton(this, this._maximiseLabel, 'lm_maximise', (ev) => this._parent.toggleMaximise(ev));
 
             this._parent.on('maximised', () => maximiseButton.element.setAttribute('title', this._minimiseLabel) );
             this._parent.on('minimised', () => maximiseButton.element.setAttribute('title', this._maximiseLabel) );

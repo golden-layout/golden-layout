@@ -1,7 +1,7 @@
 import { EventEmitter } from './EventEmitter';
 
 export class DragListener extends EventEmitter {
-    private _timeout: NodeJS.Timeout | undefined;
+    private _timeout: ReturnType<typeof setTimeout> | undefined;
     private _oDocument: Document;
     private _eBody: HTMLElement;
     private _nDelay: number;

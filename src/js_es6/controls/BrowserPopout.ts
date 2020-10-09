@@ -22,7 +22,7 @@ import { deepExtend, getUniqueId } from '../utils/utils';
 export class BrowserPopout extends EventEmitter {
     private _popoutWindow: Window | null;
     private _isInitialised;
-    private _checkReadyInterval: NodeJS.Timeout | undefined;
+    private _checkReadyInterval: ReturnType<typeof setTimeout> | undefined;
 
     /**
      * @param _config GoldenLayout item config

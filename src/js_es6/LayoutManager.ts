@@ -46,7 +46,7 @@ export abstract class LayoutManager extends EventEmitter {
     private _openPopouts: BrowserPopout[];
     private _dropTargetIndicator: DropTargetIndicator | null;
     private _transitionIndicator: TransitionIndicator | null;
-    private _resizeTimeoutId: NodeJS.Timeout | undefined;
+    private _resizeTimeoutId: ReturnType<typeof setTimeout> | undefined;
     private _componentConstructors: Record<string, ComponentItem.ComponentConstructor> = {};
     private _itemAreas: AbstractContentItem.Area[];
     private _maximisedItem: AbstractContentItem | null;

@@ -358,9 +358,12 @@ export class RowOrColumn extends AbstractContentItem {
         }
         for (let i = 0; i < this.contentItems.length; i++) {
             const contentItem = this.contentItems[i];
-            const stack = contentItem as Stack;
-            if (stack.dockEnabled)
-                this.dock(stack, true, true);
+            // was previously
+            // if (this.contentItems[i]._header && this.contentItems[i]._header.docked)
+            // I think this.contentItems[i]._header.docked did not exist (and was always undefined) so the below may be wrong
+            if (contentItem instanceof Stack && contentItem.docker.docked) {
+                this.dock(contentItem, true, true);
+            }
         }
 
         this.initContentItems();

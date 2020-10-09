@@ -175,7 +175,7 @@ export class Stack extends AbstractContentItem {
         }
         this.validateClosability();		
 		if (this._stackParent.isRow || this._stackParent.isColumn) {
-			this._stackParent._validateDocking();
+			this._stackParent.validateDocking();
         }
         
         this.initContentItems();
@@ -251,7 +251,7 @@ export class Stack extends AbstractContentItem {
             this.updateSize();
             this.validateClosability();
             if (this._stackParent.isRow || this._stackParent.isColumn) {
-                this._stackParent._validateDocking();
+                this._stackParent.validateDocking();
             }
             this.emitBubblingEvent('stateChanged');
         }
@@ -279,7 +279,7 @@ export class Stack extends AbstractContentItem {
 
         this.validateClosability();
 		if (this._stackParent.isRow || this._stackParent.isColumn) {
-			this._stackParent._validateDocking();
+			this._stackParent.validateDocking();
         }
         this.emitBubblingEvent('stateChanged');
     }
@@ -294,7 +294,7 @@ export class Stack extends AbstractContentItem {
             contentItem._$hide && contentItem._$hide()
             super.undisplayChild(contentItem);
             if (this._stackParent.isRow || this._stackParent.isColumn) {
-                this._stackParent._validateDocking();
+                this._stackParent.validateDocking();
             }
         }
         this.emitBubblingEvent('stateChanged');
@@ -446,7 +446,7 @@ export class Stack extends AbstractContentItem {
             contentItem.config[dimension] = 50;
             rowOrColumn.updateSize();
         }
-        this._stackParent._validateDocking();
+        this._stackParent.validateDocking();
     }
 
     /**
@@ -692,10 +692,10 @@ export class Stack extends AbstractContentItem {
         this.layoutManager.tabDropPlaceholder.remove();
     }
 
-    toggleMaximise(): void {
+    toggleMaximise(ev?: Event): void {
         if (!this.isMaximised)
             this.dock(false);
-        super.toggleMaximise();
+        super.toggleMaximise(ev);
     }
 
     private setupHeaderPosition() {
@@ -814,6 +814,6 @@ export namespace Stack {
 
     export interface Parent extends AbstractContentItem {
         dock(contentItem: Stack, mode?: boolean, collapsed?: boolean): void;
-        _validateDocking(): void;
+        validateDocking(): void;
     }
 }

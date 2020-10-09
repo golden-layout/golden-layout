@@ -1,5 +1,8 @@
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const webpack = require("webpack");
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const path = require("path");
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
@@ -8,14 +11,8 @@ module.exports = {
     ],
 
     output: {
-        filename: '[name].js',
-        path: path.resolve(__dirname, 'dist/demo'),
-    },
-
-    resolve: {
-        alias: {
-            "jquery": process.env.ZEPTO ? "zepto" : "jquery"
-        },
+        filename: '[name].bundle.js',
+        path: path.resolve(__dirname, 'dist/out-tsc'),
     },
 
     watch: true,
@@ -25,8 +22,19 @@ module.exports = {
         index: "./demo/index.html"
     },
 
+    devtool: 'inline-source-map',
+
+    resolve: {
+        extensions: ['.ts', '.js', '.json']
+    },
+
     module: {
         rules: [
+            {
+                test: /\.tsx?$/,
+                use: 'ts-loader',
+                exclude: /node_modules/,
+            },
             {
                 test: /\.js$/,
                 exclude: /node_modules/,
