@@ -502,10 +502,8 @@ export namespace ManagerConfig {
 }
 
 export interface PopoutManagerConfig extends ManagerConfig {
-    /** The id of the element the item will be appended to on popIn */
-    parentId: string;
-    /** The position of this element within its parent */
-    indexInParent: number;
+    parentId: string | null;
+    indexInParent: number | null;
     window: PopoutManagerConfig.Window;
 }
 

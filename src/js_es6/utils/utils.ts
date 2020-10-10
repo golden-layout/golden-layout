@@ -1,6 +1,11 @@
 import { UnexpectedNullError } from '../errors/internal-error';
 import { WidthAndHeight } from './types';
 
+export function getQueryStringParam(key: string): string | null {
+    const matches = location.hash.match(new RegExp(key + '=([^&]*)'));
+    return matches ? matches[1] : null;
+}
+
 // Caution! Try not to use this function.  Converting text to HTML can have security implications
 // While the templateText is not user generated and should be safe, some security reviews may reject
 // applications which use this technique regardless

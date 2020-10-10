@@ -6,14 +6,16 @@ import { LayoutManager } from '../LayoutManager';
 import { ReactComponentHandler } from '../utils/ReactComponentHandler';
 import { deepExtend, getElementHeight, getElementWidth } from '../utils/utils';
 import { Stack } from './Stack';
+import { UnexpectedUndefinedError } from '../errors/internal-error';
 
 export class ComponentItem extends AbstractContentItem {
     private readonly _componentName: string;
     private _container: ComponentContainer;
     private _tab: Tab;
-    private _component: unknown; // this is the user component wrapped by this ComponentItem instance
+    private _component: ComponentItem.Component; // this is the user component wrapped by this ComponentItem instance
 
     get componentName(): string { return this._componentName; }
+    get component(): ComponentItem.Component { return this._component; }
     get container(): ComponentContainer { return this._container; }
     get stack(): Stack { return this._stack; } 
 
@@ -23,10 +25,10 @@ export class ComponentItem extends AbstractContentItem {
     constructor(layoutManager: LayoutManager, private readonly _componentConfig: ComponentConfig, private _stack: Stack) {
         super(layoutManager, _componentConfig, _stack);
 
-        let componentConstructor: ComponentItem.ComponentConstructor;
+        let componentInstantiator: ComponentItem.ComponentInstantiator;
         let componentState: unknown;
         if (ComponentConfig.isSerialisable(this._componentConfig)) {
-            componentConstructor = layoutManager.getComponentConstructor(this._componentConfig);
+            componentInstantiator = layoutManager.getComponentInstantiator(this._componentConfig);
             if (this._componentConfig.componentState === undefined) {
                 componentState = {};
             } else {
@@ -34,7 +36,10 @@ export class ComponentItem extends AbstractContentItem {
             }
         } else {
             if (ComponentConfig.isReact(this._componentConfig)) {
-                componentConstructor = ReactComponentHandler;
+                componentInstantiator = {
+                    constructor: ReactComponentHandler,
+                    factoryFunction: undefined,
+                };
                 componentState = this._componentConfig.props;
             } else {
                 throw new Error(`Component.constructor: unsupported Config type: ${this._componentConfig.type}`);
@@ -53,7 +58,17 @@ export class ComponentItem extends AbstractContentItem {
 
         this.isComponent = true;
         this._container = new ComponentContainer(this._componentConfig, this, layoutManager);
-        this._component = new componentConstructor(this._container, componentState);
+        const componentConstructor = componentInstantiator.constructor;
+        if (componentConstructor !== undefined) {
+            this._component = new componentConstructor(this._container, componentState);
+        } else {
+            const factoryFunction = componentInstantiator.factoryFunction;
+            if (factoryFunction !== undefined) {
+                this._component = factoryFunction(this._container, componentState);
+            } else {
+                throw new UnexpectedUndefinedError('CIC10008');
+            }
+        }
         this.element = this._container.element;
     }
 
@@ -118,5 +133,11 @@ export class ComponentItem extends AbstractContentItem {
 }
 
 export namespace ComponentItem {
-    export type ComponentConstructor = new(container: ComponentContainer, state: unknown) => unknown;
+    export type Component = unknown;
+    export type ComponentConstructor = new(container: ComponentContainer, state: unknown) => Component;
+    export type ComponentFactoryFunction = (container: ComponentContainer, state: unknown) => Component;
+    export interface ComponentInstantiator {
+        constructor: ComponentConstructor | undefined;
+        factoryFunction: ComponentFactoryFunction | undefined;
+    }
 }

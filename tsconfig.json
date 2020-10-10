@@ -23,6 +23,7 @@
       "outDir": "./dist/out-tsc",
       "sourceMap": true,
       "declaration": true,
+      "stripInternal": true,
       "moduleResolution": "node",
       "emitDecoratorMetadata": true,
       "experimentalDecorators": true,

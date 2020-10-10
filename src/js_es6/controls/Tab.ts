@@ -31,6 +31,7 @@ export class Tab {
     private _contentItemDestroyListener = () => this.onContentItemDestroy();
 
     get element(): HTMLElement { return this._element; }
+    get titleElement(): HTMLElement { return this._titleElement; }
 
     constructor(public component: ComponentItem, private _header: Header) {
         this._element = createTemplateHtmlElement(_template);

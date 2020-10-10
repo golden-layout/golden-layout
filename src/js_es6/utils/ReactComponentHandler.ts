@@ -119,7 +119,7 @@ export class ReactComponentHandler {
             throw new Error('No react component name. type: react-component needs a field `component`');
         }
 
-        const reactClass = this._container.layoutManager.getComponentConstructor(this._container.config);
+        const reactClass = this._container.layoutManager.getComponentInstantiator(this._container.config).constructor;
 
         if (!reactClass) {
             throw new Error('React component "' + componentName + '" not found. ' +

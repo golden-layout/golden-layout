@@ -4,3 +4,4 @@ typings
 .vscode
 npm-debug.log
 dist
+/doc

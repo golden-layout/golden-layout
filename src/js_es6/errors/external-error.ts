@@ -20,3 +20,8 @@ export class PopoutBlockedError extends ExternalError {
     }    
 }
 
+export class ApiError extends ExternalError {
+    constructor(message: string) {
+        super('API', message);
+    }    
+}

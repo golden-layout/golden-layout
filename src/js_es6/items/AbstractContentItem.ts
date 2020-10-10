@@ -6,7 +6,7 @@ import { LayoutManager } from '../LayoutManager'
 import { EventEmitter } from '../utils/EventEmitter'
 import { getJQueryOffset, getJQueryWidthAndHeight } from '../utils/jquery-legacy'
 import { AreaLinkedRect } from '../utils/types'
-import { setElementDisplayVisibility } from '../utils/utils'
+import { getUniqueId, setElementDisplayVisibility } from '../utils/utils'
 
 /**
  * This is the baseclass that all content items inherit from.
@@ -100,7 +100,7 @@ export abstract class AbstractContentItem extends EventEmitter {
 		 * Call ._$destroy on the content item. 
 		 * All children are destroyed as well
 		 */
-        if (keepChild !== true) {
+        if (!keepChild) {
 			this.contentItems[index]._$destroy();
         }
 
@@ -167,10 +167,8 @@ export abstract class AbstractContentItem extends EventEmitter {
      * @param suspendResize Used by descendent implementations
      */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    addChild(contentItem: AbstractContentItem, index?: number, suspendResize?: boolean): void {
-        if (index === undefined) {
-            index = this.contentItems.length;
-        }
+    addChild(contentItem: AbstractContentItem, index?: number | null, suspendResize?: boolean): void {
+        index ??= this.contentItems.length;
 
         this.contentItems.splice(index, 0, contentItem);
 
@@ -260,7 +258,8 @@ export abstract class AbstractContentItem extends EventEmitter {
      * browser window with the component and its children inside
      */
     popout(): BrowserPopout {
-        const browserPopout = this.layoutManager.createPopoutFromContentItem(this);
+        const parentId = getUniqueId();
+        const browserPopout = this.layoutManager.createPopoutFromContentItem(this, undefined, parentId, undefined);
         this.emitBubblingEvent('stateChanged');
         return browserPopout;
     }
@@ -297,7 +296,7 @@ export abstract class AbstractContentItem extends EventEmitter {
      */
     deselect(): void {
         if (this.layoutManager.selectedItem === this) {
-            this.layoutManager.selectedItem = null;
+            this.layoutManager.clearSelectedItem();
             this.element.classList.remove('lm_selected');
         }
     }

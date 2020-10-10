@@ -3,7 +3,7 @@ import { BrowserPopout } from './controls/BrowserPopout'
 import { DragSource } from './controls/DragSource'
 import { DropTargetIndicator } from './controls/DropTargetIndicator'
 import { TransitionIndicator } from './controls/TransitionIndicator'
-import { ConfigurationError } from './errors/external-error'
+import { ApiError, ConfigurationError } from './errors/external-error'
 import { AssertError, UnexpectedNullError, UnreachableCaseError } from './errors/internal-error'
 import { AbstractContentItem } from './items/AbstractContentItem'
 import { ComponentItem } from './items/ComponentItem'
@@ -19,14 +19,12 @@ import {
     createTemplateHtmlElement,
     getElementHeight,
     getElementWidth,
-    getUniqueId,
     pixelsToNumber,
     removeFromArray,
     setElementHeight,
     setElementWidth,
     stripTags
 } from './utils/utils'
-
 
 declare global {
     interface Window {
@@ -47,10 +45,11 @@ export abstract class LayoutManager extends EventEmitter {
     private _dropTargetIndicator: DropTargetIndicator | null;
     private _transitionIndicator: TransitionIndicator | null;
     private _resizeTimeoutId: ReturnType<typeof setTimeout> | undefined;
-    private _componentConstructors: Record<string, ComponentItem.ComponentConstructor> = {};
+    private _componentConstructors: Record<string, ComponentItem.ComponentInstantiator> = {};
     private _itemAreas: AbstractContentItem.Area[];
     private _maximisedItem: AbstractContentItem | null;
     private _maximisePlaceholder: HTMLElement;
+    private _tabDropPlaceholder: HTMLElement;
     private _creationTimeoutPassed: boolean;
     private _subWindowsCreated = false;
     private _dragSources: DragSource[];
@@ -59,15 +58,13 @@ export abstract class LayoutManager extends EventEmitter {
     private _eventHub: EventHub;
     private _width: number | null;
     private _height: number | null;
+    private _selectedItem: AbstractContentItem | null;
 
     private _getComponentConstructorFtn: LayoutManager.GetComponentConstructorFtn;
 
     private _windowResizeListener = () => this._onResize();
     private _windowUnloadListener = () => this._onUnload();
     private _maximisedItemBeforeDestroyedListener = (ev: EventEmitter.BubblingEvent) => this.cleanupBeforeMaximisedItemDestroyed(ev);
-
-    selectedItem: AbstractContentItem | null;
-    tabDropPlaceholder: HTMLElement;
 
     protected get maximisedItem(): AbstractContentItem | null { return this._maximisedItem; }
 
@@ -80,6 +77,8 @@ export abstract class LayoutManager extends EventEmitter {
     get width(): number | null { return this._width; }
     get height(): number | null { return this._height; }
     get eventHub(): EventHub { return this._eventHub; }
+    get selectedItem(): AbstractContentItem | null { return this._selectedItem; }
+    get tabDropPlaceholder(): HTMLElement { return this._tabDropPlaceholder; }
 
     /**
     * @param config
@@ -100,11 +99,11 @@ export abstract class LayoutManager extends EventEmitter {
         this._height = null;
         this._root = null;
         this._openPopouts = [];
-        this.selectedItem = null;
+        this._selectedItem = null;
         this._eventHub = new EventHub(this);
         this._dropTargetIndicator = null;
         this._transitionIndicator = null;
-        this.tabDropPlaceholder = createTemplateHtmlElement('<div class="lm_drop_tab_placeholder"></div>');
+        this._tabDropPlaceholder = createTemplateHtmlElement('<div class="lm_drop_tab_placeholder"></div>');
 
         if (container !== undefined) {
             this._container = container;
@@ -137,6 +136,30 @@ export abstract class LayoutManager extends EventEmitter {
      * of type component is reached it will look up componentName and create the
      * associated component
      *
+     * @deprecated See https://stackoverflow.com/questions/40922531/how-to-check-if-a-javascript-function-is-a-constructor
+     * @see {@link registerComponentWithConstructor} or {@link registerComponentWithFactoryFunction}
+     */
+    registerComponent(name: string,
+        componentConstructorOrFactoryFtn: ComponentItem.ComponentConstructor | ComponentItem.ComponentFactoryFunction
+    ): void {
+        if (typeof componentConstructorOrFactoryFtn !== 'function') {
+            throw new ApiError('registerComponent() componentConstructorOrFactoryFtn parameter is not a function')
+        } else {
+            if (componentConstructorOrFactoryFtn.hasOwnProperty('prototype')) {
+                const componentConstructor = componentConstructorOrFactoryFtn as ComponentItem.ComponentConstructor;
+                this.registerComponentWithConstructor(name, componentConstructor);   
+            } else {
+                const componentFactoryFtn = componentConstructorOrFactoryFtn as ComponentItem.ComponentFactoryFunction;
+                this.registerComponentWithFactoryFunction(name, componentFactoryFtn);   
+            }
+        }
+    }
+
+    /**
+     * Register a component with the layout manager. If a configuration node
+     * of type component is reached it will look up componentName and create the
+     * associated component
+     *
      *  {
      *    type: "component",
      *    componentName: "EquityNewsFeed",
@@ -144,7 +167,7 @@ export abstract class LayoutManager extends EventEmitter {
      *  }
      *
      */
-    registerComponent(name: string, componentConstructor: ComponentItem.ComponentConstructor): void {
+    registerComponentWithConstructor(name: string, componentConstructor: ComponentItem.ComponentConstructor): void {
         if (typeof componentConstructor !== 'function') {
             throw new Error('Please register a constructor function');
         }
@@ -153,7 +176,37 @@ export abstract class LayoutManager extends EventEmitter {
             throw new Error('Component ' + name + ' is already registered');
         }
 
-        this._componentConstructors[name] = componentConstructor;
+        this._componentConstructors[name] = {
+            constructor: componentConstructor,
+            factoryFunction: undefined,
+        }
+    }
+
+    /**
+     * Register a component with the layout manager. If a configuration node
+     * of type component is reached it will look up componentName and create the
+     * associated component
+     *
+     *  {
+     *    type: "component",
+     *    componentName: "EquityNewsFeed",
+     *    componentState: { "feedTopic": "us-bluechips" }
+     *  }
+     *
+     */
+    registerComponentWithFactoryFunction(name: string, componentFactoryFunction: ComponentItem.ComponentFactoryFunction): void {
+        if (typeof componentFactoryFunction !== 'function') {
+            throw new Error('Please register a constructor function');
+        }
+
+        if (this._componentConstructors[name] !== undefined) {
+            throw new Error('Component ' + name + ' is already registered');
+        }
+
+        this._componentConstructors[name] = {
+            constructor: undefined,
+            factoryFunction: componentFactoryFunction,
+        }
     }
 
     /**
@@ -180,28 +233,24 @@ export abstract class LayoutManager extends EventEmitter {
      * @public
      * @returns {Object} GoldenLayout configuration
      */
-    toConfig(root?: AbstractContentItem): ManagerConfig {
+    toConfig(): ManagerConfig {
         if (this._isInitialised === false) {
             throw new Error('Can\'t create config, layout not yet initialised');
         }
 
-        if (root !== undefined && !(root instanceof AbstractContentItem)) {
-            throw new Error('Root must be a ContentItem');
-        }
+        // if (root !== undefined && !(root instanceof AbstractContentItem)) {
+        //     throw new Error('Root must be a ContentItem');
+        // }
 
         /*
          * Content
          */
         let content: ItemConfig[];
 
-        if (root !== undefined) {
-            content = root.calculateConfigContent();
+        if (this._root === null) {
+            throw new UnexpectedNullError('LMTC18244');
         } else {
-            if (this._root === null) {
-                throw new UnexpectedNullError('LMTC18244');
-            } else {
-                content = this._root.calculateConfigContent();
-            }
+            content = this._root.calculateConfigContent();
         }
 
         /*
@@ -227,12 +276,18 @@ export abstract class LayoutManager extends EventEmitter {
      * lack a response for what the component should be, it throws an error.
      *
      * @param config - The item config
+     * @internal
      */
-    getComponentConstructor(config: ComponentConfig): ComponentItem.ComponentConstructor {
+    getComponentInstantiator(config: ComponentConfig): ComponentItem.ComponentInstantiator {
         const name = this.getComponentNameFromConfig(config)
         let constructorToUse = this._componentConstructors[name]
-        if (constructorToUse === undefined && this._getComponentConstructorFtn !== undefined) {
-            constructorToUse = this._getComponentConstructorFtn(config)
+        if (constructorToUse === undefined) {
+            if (this._getComponentConstructorFtn !== undefined) {
+                constructorToUse = {
+                    constructor: this._getComponentConstructorFtn(config),
+                    factoryFunction: undefined,
+                }
+            }
         }
         if (constructorToUse === undefined) {
             throw new ConfigurationError('Unknown component constructor "' + name + '"', undefined);
@@ -348,7 +403,7 @@ export abstract class LayoutManager extends EventEmitter {
         if (this._root !== null) {
             this._root._$destroy();
         }
-        this.tabDropPlaceholder.remove();
+        this._tabDropPlaceholder.remove();
         if (this._dropTargetIndicator !== null) {
             this._dropTargetIndicator.destroy();
         }
@@ -440,20 +495,36 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /**
-     * Creates a popout window with the specified content and dimensions
+     * Creates a popout window with the specified content at the specified position
      *
-     * @param   {Object|lm.itemsAbstractContentItem} configOrContentItem
-     * @param   {[Object]} dimensions A map with width, height, left and top
-     * @param    {[String]} parentId the id of the element this item will be appended to
-     *                             when popIn is called
-     * @param    {[Number]} indexInParent The position of this item within its parent element
-     
-     * @returns {BrowserPopout}
+     * @param   itemConfigContentOrContentItem The root content of the popout window's layout manager derived from either
+     * a {@link AbstractContentItem ContentItem} or {@link ItemConfig} or ItemConfig content (array of {@link ItemConfig})
+     * @param   positionAndSize The width, height, left and top of Popout window
+     * @param   parentId The id of the element this item will be appended to when popIn is called
+     * @param   indexInParent The position of this item within its parent element
      */
-    createPopoutFromContentItem(item: AbstractContentItem): BrowserPopout {
-        const managerConfig = this.toConfig(item);
-        const parentId = getUniqueId();
 
+    createPopout(itemConfigContentOrContentItem: AbstractContentItem | ItemConfig | ItemConfig[],
+        positionAndSize: PopoutManagerConfig.Window,
+        parentId: string | null,
+        indexInParent: number | null
+    ): BrowserPopout {
+        if (itemConfigContentOrContentItem instanceof AbstractContentItem) {
+            return this.createPopoutFromContentItem(itemConfigContentOrContentItem, positionAndSize, parentId, indexInParent);
+        } else {
+            if (!(itemConfigContentOrContentItem instanceof Array)) {
+                itemConfigContentOrContentItem = [itemConfigContentOrContentItem]
+            }
+            return this.createPopoutFromItemConfig(itemConfigContentOrContentItem, positionAndSize, parentId, indexInParent);
+        }
+    }
+
+    /** @internal */
+    createPopoutFromContentItem(item: AbstractContentItem,
+        window: PopoutManagerConfig.Window | undefined,
+        parentId: string | null,
+        indexInParent: number | null | undefined,
+    ): BrowserPopout {
         /**
          * If the item is the only component within a stack or for some
          * other reason the only child of its parent the parent will be destroyed
@@ -472,39 +543,59 @@ export abstract class LayoutManager extends EventEmitter {
         if (parent === null) {
             throw new UnexpectedNullError('LMCPFCI00834');
         } else {
-            parent.addId(parentId);
-            const indexInParent = parent.contentItems.indexOf(child);
+            if (indexInParent === undefined) {
+                indexInParent = parent.contentItems.indexOf(child);
+            }
+            if (parentId !== null) {
+                parent.addId(parentId);
+            }
 
-            const windowLeft = globalThis.screenX || globalThis.screenLeft;
-            const windowTop = globalThis.screenY || globalThis.screenTop;
-            const { left: offsetLeft, top: offsetTop } = getJQueryLeftAndTop(item.element)
+            if (window === undefined) {
+                const windowLeft = globalThis.screenX || globalThis.screenLeft;
+                const windowTop = globalThis.screenY || globalThis.screenTop;
+                const { left: offsetLeft, top: offsetTop } = getJQueryLeftAndTop(item.element)
 
-            const window: PopoutManagerConfig.Window = {
-                left: windowLeft + offsetLeft,
-                top: windowTop + offsetTop,
-                width: getElementWidth(item.element),
-                height: getElementHeight(item.element),
-            };
+                window = {
+                    left: windowLeft + offsetLeft,
+                    top: windowTop + offsetTop,
+                    width: getElementWidth(item.element),
+                    height: getElementHeight(item.element),
+                };
+            }
+
+            const itemConfig = item.toConfig();
 
             item.remove();
 
-            const popoutManagerConfig: PopoutManagerConfig = {
-                content: managerConfig.content,
-                openPopouts: [],
-                settings: managerConfig.settings,
-                dimensions: managerConfig.dimensions,
-                header: managerConfig.header,
-                maximisedItemId: null,
-                window,
-                parentId,
-                indexInParent,
-            }
-
-            return this.createPopoutFromConfig(popoutManagerConfig);
+            return this.createPopoutFromItemConfig(itemConfig.content, window, parentId, indexInParent);
         }
     }
 
-    createPopoutFromConfig(config: PopoutManagerConfig): BrowserPopout {
+    /** @internal */
+    private createPopoutFromItemConfig(content: ItemConfig[],
+        window: PopoutManagerConfig.Window,
+        parentId: string | null,
+        indexInParent: number | null
+    ) {
+        const managerConfig = this.toConfig();
+
+        const popoutManagerConfig: PopoutManagerConfig = {
+            content: managerConfig.content,
+            openPopouts: [],
+            settings: managerConfig.settings,
+            dimensions: managerConfig.dimensions,
+            header: managerConfig.header,
+            maximisedItemId: null,
+            window,
+            parentId,
+            indexInParent,
+        }
+
+        return this.createPopoutFromPopoutManagerConfig(popoutManagerConfig);
+    }
+
+    /** @internal */
+    createPopoutFromPopoutManagerConfig(config: PopoutManagerConfig): BrowserPopout {
         const configWindow = config.window;
         const initialWindow: Rect = { 
             left: configWindow.left ?? (globalThis.screenX || globalThis.screenLeft + 20),
@@ -568,21 +659,26 @@ export abstract class LayoutManager extends EventEmitter {
             throw new Error('Please set selectionEnabled to true to use this feature');
         }
 
-        if (item === this.selectedItem) {
+        if (item === this._selectedItem) {
             return;
         }
 
-        if (this.selectedItem !== null) {
-            this.selectedItem.deselect();
+        if (this._selectedItem !== null) {
+            this._selectedItem.deselect();
         }
 
         if (item && _$silent !== true) {
             item.select();
         }
 
-        this.selectedItem = item;
+        this._selectedItem = item;
 
         this.emit('selectionChanged', item);
+    }
+
+    /** @Internal */
+    clearSelectedItem(): void {
+        this._selectedItem = null;
     }
 
     /*************************
@@ -931,7 +1027,7 @@ export abstract class LayoutManager extends EventEmitter {
     private createSubWindows() {
         for (let i = 0; i < this.config.openPopouts.length; i++) {
             const popoutConfig = this.config.openPopouts[i];
-            this.createPopoutFromConfig(popoutConfig);
+            this.createPopoutFromPopoutManagerConfig(popoutConfig);
         }
     }
 

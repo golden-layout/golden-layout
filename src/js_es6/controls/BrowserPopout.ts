@@ -154,7 +154,7 @@ export class BrowserPopout extends EventEmitter {
                     }
 
                     const newContentItem = this._layoutManager.createAndInitContentItem(copiedChildConfig, parentItem);
-        
+
                     parentItem.addChild(newContentItem, index);
                     this.close();
                 }

@@ -17,10 +17,8 @@ export class EventEmitter {
     /**
      * Emit an event and notify listeners
      *
-     * @param   {String} eventName The name of the event
-     * @param    {Mixed}  various additional arguments that will be passed to the listener
-     *
-     * @returns {void}
+     * @param   eventName The name of the event
+     * @param   args additional arguments that will be passed to the listener
      */
     emit<K extends keyof EventEmitter.EventParamsMap>(eventName: K, ...args: EventEmitter.EventParamsMap[K]): void {
         let subcriptions = this._subscriptionsMap.get(eventName);

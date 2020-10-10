@@ -1,7 +1,8 @@
 import { ConfigurationError } from '../errors/external-error';
 import { UnreachableCaseError } from '../errors/internal-error';
 import { JsonValue, Side } from '../utils/types';
-import { Config,
+import {
+    Config,
     HeaderedItemConfig,
     ItemConfig,
     ManagerConfig,
@@ -572,15 +573,22 @@ export namespace UserManagerConfig {
 }
 
 export interface UserPopoutManagerConfig extends UserManagerConfig {
-    parentId: string;
-    indexInParent: number;
-    dimensions: UserPopoutManagerConfig.Dimensions; // for backwards compatibility
-    window: UserPopoutManagerConfig.Window;
+    /** The id of the element the item will be appended to on popIn 
+    * If null, append to topmost layout element 
+    */
+    parentId: string | null | undefined;
+    /** The position of this element within its parent
+    * If null, position is last
+    */
+    indexInParent: number | null | undefined;
+    /** @deprecated use {@link window} */
+    dimensions: UserPopoutManagerConfig.Dimensions | undefined; // for backwards compatibility
+    window: UserPopoutManagerConfig.Window | undefined;
 }
 
 export namespace UserPopoutManagerConfig {
     // Previous versions kept window information in Dimensions key.  Only use for backwards compatibility
-    /** @deprecated use Window */
+    /** @deprecated use {@link Window} */
     export interface Dimensions extends UserManagerConfig.Dimensions {
         /** @deprecated use Window.width */
         width: number | null,
@@ -632,8 +640,8 @@ export namespace UserPopoutManagerConfig {
             dimensions: UserManagerConfig.Dimensions.resolve(user.dimensions),
             header: UserManagerConfig.Header.resolve(user.header, user.settings, user.labels),
             maximisedItemId: user.maximisedItemId === undefined ? null : user.maximisedItemId,
-            parentId: user.parentId,
-            indexInParent: user.indexInParent,
+            parentId: user.parentId ?? null,
+            indexInParent: user.indexInParent ?? null,
             window: UserPopoutManagerConfig.Window.resolve(user.window, user.dimensions),
         } 
         return config;
@@ -661,16 +669,6 @@ export namespace UserConfig {
         } 
         return config;
     }
-
-    export const defaultConfig: Config = {
-        resolved: true,
-        content: [],
-        openPopouts: [],
-        settings: ManagerConfig.Settings.defaults,
-        dimensions: ManagerConfig.Dimensions.defaults,
-        header: ManagerConfig.Header.defaults,
-        maximisedItemId: null,
-    };
 
     /** Shallow transformation of Config to UserConfig */
     export function fromConfig(config: Config): UserConfig {
