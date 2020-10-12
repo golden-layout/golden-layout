@@ -2,8 +2,12 @@
     "inputFiles": ["./src"],
     "mode": "modules",
     "out": "doc",
+    "readme": "none",
     "excludeNotExported": true,
-    "excludeNotDocumented": true,
     "excludePrivate": true,
-    "excludeProtected": true
+    "excludeProtected": true,
+    "exclude": [
+        "src/js_es6/utils/jquery-legacy",
+        "src/js_es6/utils/utils.ts"
+    ]
 }

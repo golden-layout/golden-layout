@@ -1,4 +1,4 @@
-import { ItemConfig, ManagerConfig, PopoutManagerConfig } from './config/config';
+import { ManagerConfig, PopoutManagerConfig, RowOrColumnOrStackParentItemConfig } from './config/config';
 import { UnexpectedNullError } from './errors/internal-error';
 import { LayoutManager } from './LayoutManager';
 import { ConfigMinifier } from './utils/ConfigMinifier';
@@ -13,8 +13,10 @@ export class PopoutLayoutManager extends LayoutManager {
         this._popoutManagerConfig = this.config as PopoutManagerConfig;
     }
 
-    protected createToConfig(content: ItemConfig[], openPopouts: PopoutManagerConfig[], maximisedItemId: string | null): ManagerConfig {
-
+    protected createToConfig(content: RowOrColumnOrStackParentItemConfig.ChildItemConfig[],
+        openPopouts: PopoutManagerConfig[],
+        maximisedItemId: string | null): ManagerConfig
+    {
         const config: PopoutManagerConfig = {
             content,
             openPopouts,
