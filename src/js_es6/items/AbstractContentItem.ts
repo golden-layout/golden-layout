@@ -18,6 +18,8 @@ import { getUniqueId, setElementDisplayVisibility } from '../utils/utils'
 
 export abstract class AbstractContentItem extends EventEmitter {
     /** @internal */
+    private _contentItems: AbstractContentItem[];
+    /** @internal */
     private _pendingEventPropagations: Record<string, unknown>;
     /** @internal */
     private _throttledEvents: string[];
@@ -26,7 +28,6 @@ export abstract class AbstractContentItem extends EventEmitter {
     /** @internal */
     private _isMaximised;
 
-    contentItems: AbstractContentItem[];
     isRoot: boolean
     isRow: boolean
     isColumn: boolean
@@ -36,6 +37,7 @@ export abstract class AbstractContentItem extends EventEmitter {
     get type(): ItemConfig.Type { return this._config.type; }
     get parent(): AbstractContentItem | null { return this._parent; }
     get config(): ItemConfig { return this._config; }
+    get contentItems(): AbstractContentItem[] { return this._contentItems; }
     get element(): HTMLElement { return this._element; }
     get isInitialised(): boolean { return this._isInitialised; }
     get isMaximised(): boolean { return this._isMaximised; }
@@ -47,8 +49,6 @@ export abstract class AbstractContentItem extends EventEmitter {
         private readonly _element: HTMLElement
     ) {
         super();
-
-        this.contentItems = [];
 
         this._isInitialised = false;
         this._isMaximised = false;
@@ -63,9 +63,7 @@ export abstract class AbstractContentItem extends EventEmitter {
 
         this.on(EventEmitter.ALL_EVENT, (name, ...args: unknown[]) => this.propagateEvent(name as string, args));
 
-        if (_config.content) {
-            this.createContentItems(_config);
-        }
+        this._contentItems = this.createContentItems(this._config);
     }
 
     /**
@@ -80,7 +78,7 @@ export abstract class AbstractContentItem extends EventEmitter {
         /*
          * Get the position of the item that's to be removed within all content items this node contains
          */
-        const index = this.contentItems.indexOf(contentItem);
+        const index = this._contentItems.indexOf(contentItem);
 
         /*
          * Make sure the content item to be removed is actually a child of this item
@@ -94,13 +92,13 @@ export abstract class AbstractContentItem extends EventEmitter {
 		 * All children are destroyed as well
 		 */
         if (!keepChild) {
-			this.contentItems[index]._$destroy();
+			this._contentItems[index]._$destroy();
         }
 
         /**
          * Remove the content item from this nodes array of children
          */
-        this.contentItems.splice(index, 1);
+        this._contentItems.splice(index, 1);
 
         /**
          * Remove the item from the configuration
@@ -110,7 +108,7 @@ export abstract class AbstractContentItem extends EventEmitter {
         /**
          * If this node still contains other content items, adjust their size
          */
-        if (this.contentItems.length > 0) {
+        if (this._contentItems.length > 0) {
             this.updateSize();
 
             /**
@@ -132,7 +130,7 @@ export abstract class AbstractContentItem extends EventEmitter {
         /*
          * Get the position of the item that's to be removed within all content items this node contains
          */
-        const index = this.contentItems.indexOf(contentItem);
+        const index = this._contentItems.indexOf(contentItem);
 
         /*
          * Make sure the content item to be removed is actually a child of this item
@@ -161,9 +159,9 @@ export abstract class AbstractContentItem extends EventEmitter {
      */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     addChild(contentItem: AbstractContentItem, index?: number | null, suspendResize?: boolean): void {
-        index ??= this.contentItems.length;
+        index ??= this._contentItems.length;
 
-        this.contentItems.splice(index, 0, contentItem);
+        this._contentItems.splice(index, 0, contentItem);
 
         if (this._config.content === undefined) {
             this._config.content = [];
@@ -190,7 +188,7 @@ export abstract class AbstractContentItem extends EventEmitter {
 
         // newChild = this.layoutManager._$normalizeContentItem(newChild);
 
-        const index = this.contentItems.indexOf(oldChild);
+        const index = this._contentItems.indexOf(oldChild);
         const parentNode = oldChild._element.parentNode;
 
         if (index === -1) {
@@ -213,7 +211,7 @@ export abstract class AbstractContentItem extends EventEmitter {
             /*
             * Wire the new contentItem into the tree
             */
-            this.contentItems[index] = newChild;
+            this._contentItems[index] = newChild;
             newChild.setParent(this);
 
             /*
@@ -369,8 +367,8 @@ export abstract class AbstractContentItem extends EventEmitter {
     private deepFilterAddChildContentItems(contentItems: AbstractContentItem[],
         checkAcceptFtn: ((this: void, item: AbstractContentItem) => boolean)
     ): void {
-        for (let i = 0; i < this.contentItems.length; i++) {
-            const contentItem = this.contentItems[i];
+        for (let i = 0; i < this._contentItems.length; i++) {
+            const contentItem = this._contentItems[i];
             if (checkAcceptFtn(contentItem)) {
                 contentItems.push(contentItem);
                 contentItem.deepFilterAddChildContentItems(contentItems, checkAcceptFtn);
@@ -393,7 +391,7 @@ export abstract class AbstractContentItem extends EventEmitter {
     }
 
     calculateConfigContent(): ItemConfig[] {
-        const contentItems = this.contentItems;
+        const contentItems = this._contentItems;
         const count = contentItems.length;
         const result = new Array<ItemConfig>(count);
         for (let i = 0; i < count; i++) {
@@ -404,8 +402,8 @@ export abstract class AbstractContentItem extends EventEmitter {
     }
 
     deepAddChildContentItems(contentItems: AbstractContentItem[]): void {
-        for (let i = 0; i < this.contentItems.length; i++) {
-            const contentItem = this.contentItems[i];
+        for (let i = 0; i < this._contentItems.length; i++) {
+            const contentItem = this._contentItems[i];
             contentItems.push(contentItem);
             contentItem.deepAddChildContentItems(contentItems);
         }
@@ -437,8 +435,8 @@ export abstract class AbstractContentItem extends EventEmitter {
         setElementDisplayVisibility(this._element, true);
         this.layoutManager.updateSizeFromContainer();
 
-        for (let i = 0; i < this.contentItems.length; i++) {
-            this.contentItems[i]._$show();
+        for (let i = 0; i < this._contentItems.length; i++) {
+            this._contentItems[i]._$show();
         }
     }
 
@@ -446,10 +444,10 @@ export abstract class AbstractContentItem extends EventEmitter {
      * Destroys this item ands its children
      */
     _$destroy(): void {
-        for (let i = 0; i < this.contentItems.length; i++) {
-            this.contentItems[i]._$destroy();
+        for (let i = 0; i < this._contentItems.length; i++) {
+            this._contentItems[i]._$destroy();
         }
-        this.contentItems = [];
+        this._contentItems = [];
 
         this.emitBubblingEvent('beforeItemDestroyed');
         this._element.remove();
@@ -495,14 +493,14 @@ export abstract class AbstractContentItem extends EventEmitter {
     }
 
     protected initContentItems(): void {
-        for (let i = 0; i < this.contentItems.length; i++) {
-            this.contentItems[i].init();
+        for (let i = 0; i < this._contentItems.length; i++) {
+            this._contentItems[i].init();
         }
     }
 
     protected updateContentItemsSize(): void {
-        for (let i = 0; i < this.contentItems.length; i++) {
-            this.contentItems[i].updateSize();
+        for (let i = 0; i < this._contentItems.length; i++) {
+            this._contentItems[i].updateSize();
         }
     }
 
@@ -512,17 +510,19 @@ export abstract class AbstractContentItem extends EventEmitter {
     }
 
     /**
-     * Private method, creates all content items for this node at initialisation time
-     * PLEASE NOTE, please see addChild for adding contentItems add runtime
+     * creates all content items for this node at initialisation time
+     * PLEASE NOTE, please see addChild for adding contentItems at runtime
      */
     private createContentItems(config: ItemConfig) {
         if (!(config.content instanceof Array)) {
             throw new ConfigurationError('content must be an Array', config);
-        }
-
-        for (let i = 0; i < config.content.length; i++) {
-            const oContentItem = this.layoutManager.createContentItem(config.content[i], this);
-            this.contentItems.push(oContentItem);
+        } else {
+            const count = config.content.length;
+            const result = new Array<AbstractContentItem>(count);
+            for (let i = 0; i < config.content.length; i++) {
+                result[i] = this.layoutManager.createContentItem(config.content[i], this);
+            }
+            return result;
         }
     }
 

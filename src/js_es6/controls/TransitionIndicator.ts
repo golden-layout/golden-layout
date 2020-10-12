@@ -1,6 +1,7 @@
 import { Rect } from '../utils/types';
 import { createTemplateHtmlElement } from '../utils/utils';
 
+/** @internal */
 export class TransitionIndicator {
     private _element: HTMLElement;
     private _toElement: HTMLElement | null;

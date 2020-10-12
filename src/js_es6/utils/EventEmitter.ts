@@ -1,17 +1,12 @@
 /**
- * A generic and very fast EventEmitter
- * implementation. On top of emitting the
- * actual event it emits an
- *
- * EventEmitter.ALL_EVENT
- *
- * event for every event triggered. This allows
- * to hook into it and proxy events forwards
- *
- * @constructor
+ * A generic and very fast EventEmitter implementation. On top of emitting the actual event it emits an
+ * {@link EventEmitter.ALL_EVENT }
+ * event for every event triggered. This allows to hook into it and proxy events forwards
  */
 export class EventEmitter {
+    /** @internal */
     private _allEventSubscriptions: EventEmitter.UnknownCallback[] = [];
+    /** @internal */
     private _subscriptionsMap = new Map<string, EventEmitter.UnknownCallback[]>();
 
     /**
@@ -41,6 +36,7 @@ export class EventEmitter {
         }
     }
 
+    /** @internal */
     emitUnknown(eventName: string, ...args: EventEmitter.UnknownParams): void {
         let subs = this._subscriptionsMap.get(eventName);
 
@@ -64,13 +60,14 @@ export class EventEmitter {
      * Emit an event that bubbles up the item tree.
      *
      * @param  eventName The name of the event
+     * @internal
      */
-
     emitBubblingEvent<K extends keyof EventEmitter.EventParamsMap>(eventName: K): void {
         const event = new EventEmitter.BubblingEvent(eventName, this);
         this.emitUnknown(eventName, event);
     }
 
+    /** @internal */
     emitUnknownBubblingEvent(eventName: string): void {
         const event = new EventEmitter.BubblingEvent(eventName, this);
         this.emitUnknown(eventName, event);
@@ -78,17 +75,15 @@ export class EventEmitter {
 
     /**
      * Removes a listener for an event, or all listeners if no callback and context is provided.
-     *
-     * @param   eventName    The name of the event
-     * @param   callback The previously registered callback method (optional)
-     *
-     * @returns {void}
+     * @param eventName The name of the event
+     * @param callback The previously registered callback method (optional)
      */
     off<K extends keyof EventEmitter.EventParamsMap>(eventName: K, callback: EventEmitter.Callback<K>): void {
         const unknownCallback = callback as EventEmitter.UnknownCallback;
         this.offUnknown(eventName, unknownCallback);
     }
 
+    /** @internal */
     offUnknown(eventName: string, callback: EventEmitter.UnknownCallback): void {
         if (eventName === EventEmitter.ALL_EVENT) {
             this.removeSubscription(eventName, this._allEventSubscriptions, callback);
@@ -123,6 +118,7 @@ export class EventEmitter {
         this.onUnknown(eventName, unknownCallback);
     }
 
+    /** @internal */
     onUnknown(eventName: string, callback: EventEmitter.UnknownCallback): void {
         if (eventName === EventEmitter.ALL_EVENT) {
             this._allEventSubscriptions.push(callback);
@@ -137,6 +133,7 @@ export class EventEmitter {
         }
     }
 
+    /** @internal */
     private removeSubscription(eventName: string, subscriptions: EventEmitter.UnknownCallback[], callback: EventEmitter.UnknownCallback) {
         const idx = subscriptions.indexOf(callback);
         if (idx < 0) {
@@ -159,8 +156,7 @@ export namespace EventEmitter {
      */
     export const ALL_EVENT = '__all';
 
-    // export type Callback = (this: void, ...args: readonly unknown[]) => void;
-
+    /** @internal */
     export type UnknownCallback = (this: void, ...args: UnknownParams) => void;
     export type Callback<K extends keyof EventEmitter.EventParamsMap> = (this: void, ...args: EventParamsMap[K]) => void;
 
@@ -204,6 +200,7 @@ export namespace EventEmitter {
     export type DragStopParams = [event: DragEvent];
     export type DragParams = [offsetX: number, offsetY: number, event: DragEvent];
 
+    /** @internal */
     export class BubblingEvent {
         name: string;
         isPropagationStopped: boolean;

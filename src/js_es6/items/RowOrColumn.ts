@@ -1,4 +1,4 @@
-import { ItemConfig } from '../config/config'
+import { ItemConfig, RowOrColumnItemConfig } from '../config/config'
 import { Splitter } from '../controls/Splitter'
 import { AssertError, UnexpectedNullError } from '../errors/internal-error'
 import { AbstractContentItem } from '../items/AbstractContentItem'
@@ -29,7 +29,7 @@ export class RowOrColumn extends AbstractContentItem {
     private _splitterMinPosition: number | null;
     private _splitterMaxPosition: number | null;
 
-    constructor(isColumn: boolean, layoutManager: LayoutManager, config: ItemConfig,
+    constructor(isColumn: boolean, layoutManager: LayoutManager, config: RowOrColumnItemConfig,
         private _rowOrColumnParent: AbstractContentItem
     ) {
         super(layoutManager, config, _rowOrColumnParent, createTemplateHtmlElement(RowOrColumn.createTemplateHtml(isColumn)));
@@ -211,7 +211,7 @@ export class RowOrColumn extends AbstractContentItem {
 
         if (this.contentItems.length === 1 && this.config.isClosable === true) {
             const childItem = this.contentItems[0];
-            this.contentItems = [];
+            this.contentItems.length = 0;
             this._rowOrColumnParent.replaceChild(this, childItem, true);
             if (this._rowOrColumnParent instanceof RowOrColumn) { // this check not included originally.
                 // If Root, then validateDocking not require

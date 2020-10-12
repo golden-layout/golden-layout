@@ -1,13 +1,16 @@
+/** @internal */
 export interface WidthAndHeight {
     width: number;
     height: number;    
 }
 
+/** @internal */
 export interface LeftAndTop {
     left: number;
     top: number;    
 }
 
+/** @internal */
 export const enum Side {
     'top',
     'left',
@@ -15,6 +18,7 @@ export const enum Side {
     'bottom',
 }
 
+/** @internal */
 export interface Rect {
     left: number,
     top: number,
@@ -22,6 +26,7 @@ export interface Rect {
     height: number,
 }
 
+/** @internal */
 export interface AreaLinkedRect {
     x1: number, // left
     x2: number, // nextLeft

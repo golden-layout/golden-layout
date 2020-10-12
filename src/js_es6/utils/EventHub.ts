@@ -15,12 +15,14 @@ import { EventEmitter } from '../utils/EventEmitter';
  */
 
 // Add our ChildEvent to WindowEventMap for type safety
+/** @internal */
 declare global {
     interface WindowEventMap {
         [EventHub.ChildEventName]: CustomEvent<EventHub.ChildEventDetail>;
     }
 }
 
+/** @internal */
 export class EventHub extends EventEmitter {
     private _childEventSource: LayoutManager | null;
     private _dontPropagateToParent: string | null;
@@ -112,6 +114,7 @@ export class EventHub extends EventEmitter {
     }
 }
 
+/** @internal */
 export namespace EventHub {
     export const ChildEventName = 'gl_child_event';
     export type ChildEventDetail = {

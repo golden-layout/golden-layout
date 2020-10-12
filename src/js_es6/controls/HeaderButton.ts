@@ -1,6 +1,7 @@
 import { createTemplateHtmlElement } from '../utils/utils';
 import { Header } from './Header';
 
+/** @internal */
 export class HeaderButton {
     private _element: HTMLElement;
     private _clickEventListener = (ev: MouseEvent) => this.onClick(ev);
@@ -31,6 +32,7 @@ export class HeaderButton {
     }
 }
 
+/** @internal */
 export namespace HeaderButton {
     export type PushEvent = (this: void, ev: Event) => void;
 }

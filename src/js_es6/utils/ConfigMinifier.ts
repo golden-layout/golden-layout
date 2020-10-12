@@ -4,10 +4,8 @@ import { ManagerConfig } from '../config/config';
  * Minifies and unminifies configs by replacing frequent keys
  * and values with one letter substitutes. Config options must
  * retain array position/index, add new options at the end.
- *
- * @constructor
- */
-
+ * @internal
+*/
 
 export class ConfigMinifier {
     _keys: readonly string[];

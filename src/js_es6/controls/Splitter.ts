@@ -2,6 +2,7 @@ import { DragListener } from '../utils/DragListener';
 import { EventEmitter } from '../utils/EventEmitter';
 import { createTemplateHtmlElement, numberToPixels } from '../utils/utils';
 
+/** @internal */
 export class Splitter {
     private _grabSize;
     private _dragListener;

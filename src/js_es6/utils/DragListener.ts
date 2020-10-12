@@ -1,5 +1,6 @@
 import { EventEmitter } from './EventEmitter';
 
+/** @internal */
 export class DragListener extends EventEmitter {
     private _timeout: ReturnType<typeof setTimeout> | undefined;
     private _oDocument: Document;
@@ -75,7 +76,7 @@ export class DragListener extends EventEmitter {
         }
     }
 
-    private processMouseDownTouchStart(coordinates: DragProxy.MouseTouchCoordinates) {
+    private processMouseDownTouchStart(coordinates: DragListener.MouseTouchCoordinates) {
         this._nOriginalX = coordinates.x;
         this._nOriginalY = coordinates.y;
 
@@ -196,7 +197,7 @@ export class DragListener extends EventEmitter {
     }
 
     private getMouseCoordinates(event: MouseEvent) {
-        const result: DragProxy.MouseTouchCoordinates = {
+        const result: DragListener.MouseTouchCoordinates = {
             x: event.pageX,
             y: event.pageY
         };
@@ -209,7 +210,7 @@ export class DragListener extends EventEmitter {
             return undefined;
         } else {
             const targetTouch = event.targetTouches[0]
-            const result: DragProxy.MouseTouchCoordinates = {
+            const result: DragListener.MouseTouchCoordinates = {
                 x: targetTouch.pageX,
                 y: targetTouch.pageY
             };
@@ -218,7 +219,8 @@ export class DragListener extends EventEmitter {
     }
 }
 
-export namespace DragProxy {
+/** @internal */
+export namespace DragListener {
     export interface MouseTouchCoordinates {
         x: number,
         y: number,

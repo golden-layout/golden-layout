@@ -33,7 +33,7 @@ export namespace ItemConfig {
     export type HeightOrWidthPropertyName = 'height' | 'width';
 
     export const defaults: ItemConfig = {
-        type: ItemConfig.Type.stack, // not really default but need something
+        type: ItemConfig.Type.root, // not really default but need something
         content: [],
         width: 50,
         minWidth: 0,
@@ -51,22 +51,11 @@ export namespace ItemConfig {
             case ItemConfig.Type.root:
             case ItemConfig.Type.row:
             case ItemConfig.Type.column:
-                const result: ItemConfig = {
-                    type: original.type,
-                    content: content ?? copyContent(original.content),
-                    width: original.width,
-                    minWidth: original.minWidth,
-                    height: original.height,
-                    minHeight: original.minHeight,
-                    id: original.id,
-                    isClosable: original.isClosable,
-                    reorderEnabled: original.reorderEnabled,
-                    title: original.title,
-                }
-                return result;
+                return RowOrColumnOrStackParentItemConfig.createCopy(original as RowOrColumnOrStackParentItemConfig,
+                    content as RowOrColumnOrStackParentItemConfig.ChildItemConfig[]);
 
             case ItemConfig.Type.stack:
-                return StackItemConfig.createCopy(original as StackItemConfig);
+                return StackItemConfig.createCopy(original as StackItemConfig, content as ComponentItemConfig[]);
 
             case ItemConfig.Type.component:
                 return SerialisableComponentConfig.createCopy(original as SerialisableComponentConfig);
@@ -79,34 +68,13 @@ export namespace ItemConfig {
         }
     }
 
-    export function copyContent(original: ItemConfig[]): ItemConfig[] {
-        const count = original.length;
-        const result = new Array<ItemConfig>(count);
-        for (let i = 0; i < count; i++) {
-            result[i] = ItemConfig.createCopy(original[i]);
-        }
-        return result;
-    }
-
     export function createDefault(type: Type): ItemConfig {
         switch (type) {
             case ItemConfig.Type.root:
                 throw new AssertError('CICCDR91562'); // Get default root from ManagerConfig
             case ItemConfig.Type.row:
             case ItemConfig.Type.column:
-                const result: ItemConfig = {
-                    type: defaults.type,
-                    content: defaults.content,
-                    width: defaults.width,
-                    minWidth: defaults.minWidth,
-                    height: defaults.height,
-                    minHeight: defaults.minHeight,
-                    id: defaults.id,
-                    isClosable: defaults.isClosable,
-                    reorderEnabled: defaults.reorderEnabled,
-                    title: defaults.title,
-                }
-                return result;
+                return RowOrColumnOrStackParentItemConfig.createDefault(type);
 
             case ItemConfig.Type.stack:
                 return StackItemConfig.createDefault();
@@ -128,6 +96,10 @@ export namespace ItemConfig {
         } else {
             return id === otherId;
         }
+    }
+
+    export function isComponentItem(itemConfig: ItemConfig): itemConfig is ComponentItemConfig {
+        return itemConfig.type === ItemConfig.Type.component || itemConfig.type === ItemConfig.Type.reactComponent;
     }
 }
 
@@ -168,16 +140,18 @@ export namespace HeaderedItemConfig {
 }
 
 export interface StackItemConfig extends HeaderedItemConfig {
+    type: ItemConfig.Type.stack;
+    content: ComponentItemConfig[];
     activeItemIndex: number;
 }
 
 export namespace StackItemConfig {
     export const defaultActiveItemIndex = 0;
 
-    export function createCopy(original: StackItemConfig): StackItemConfig {
+    export function createCopy(original: StackItemConfig, content?: ComponentItemConfig[]): StackItemConfig {
         const result: StackItemConfig = {
             type: original.type,
-            content: ItemConfig.copyContent(original.content),
+            content: content !== undefined ? copyContent(content) : copyContent(original.content),
             width: original.width,
             minWidth: original.minWidth,
             height: original.height,
@@ -192,10 +166,19 @@ export namespace StackItemConfig {
         return result;
     }
 
+    export function copyContent(original: ComponentItemConfig[]): ComponentItemConfig[] {
+        const count = original.length;
+        const result = new Array<ComponentItemConfig>(count);
+        for (let i = 0; i < count; i++) {
+            result[i] = ItemConfig.createCopy(original[i]) as ComponentItemConfig;
+        }
+        return result;
+    }
+
     export function createDefault(): StackItemConfig {
         const result: StackItemConfig = {
-            type: ItemConfig.Type.component,
-            content: ItemConfig.defaults.content,
+            type: ItemConfig.Type.stack,
+            content: [],
             width: ItemConfig.defaults.width,
             minWidth: ItemConfig.defaults.minWidth,
             height: ItemConfig.defaults.height,
@@ -211,24 +194,26 @@ export namespace StackItemConfig {
     }
 }
 
-export interface ComponentConfig extends HeaderedItemConfig {
+export interface ComponentItemConfig extends HeaderedItemConfig {
+    readonly content: [];
     /**
      * The name of the component as specified in layout.registerComponent. Mandatory if type is 'component'.
      */
     componentName: string;
 }
 
-export namespace ComponentConfig {
-    export function isReact(config: ComponentConfig): config is ReactComponentConfig {
+export namespace ComponentItemConfig {
+    export function isReact(config: ComponentItemConfig): config is ReactComponentConfig {
         return config.type === ItemConfig.Type.reactComponent;
     }
-    export function isSerialisable(config: ComponentConfig): config is SerialisableComponentConfig {
+    export function isSerialisable(config: ComponentItemConfig): config is SerialisableComponentConfig {
         return config.type === ItemConfig.Type.component;
     }
 }
 
-export interface SerialisableComponentConfig extends ComponentConfig {
+export interface SerialisableComponentConfig extends ComponentItemConfig {
     // see UserJsonComponentConfig for comments
+    type: ItemConfig.Type.component;
     componentState: JsonValue;
 }
 
@@ -236,7 +221,7 @@ export namespace SerialisableComponentConfig {
     export function createCopy(original: SerialisableComponentConfig): SerialisableComponentConfig {
         const result: SerialisableComponentConfig = {
             type: original.type,
-            content: ItemConfig.copyContent(original.content),
+            content: [],
             width: original.width,
             minWidth: original.minWidth,
             height: original.height,
@@ -255,7 +240,7 @@ export namespace SerialisableComponentConfig {
     export function createDefault(): SerialisableComponentConfig {
         const result: SerialisableComponentConfig = {
             type: ItemConfig.Type.component,
-            content: ItemConfig.defaults.content,
+            content: [],
             width: ItemConfig.defaults.width,
             minWidth: ItemConfig.defaults.minWidth,
             height: ItemConfig.defaults.height,
@@ -272,8 +257,9 @@ export namespace SerialisableComponentConfig {
     }
 }
 
-export interface ReactComponentConfig extends ComponentConfig {
+export interface ReactComponentConfig extends ComponentItemConfig {
     // see UserReactComponentConfig for comments
+    type: ItemConfig.Type.reactComponent;
     component: string;
     props?: unknown;
 }
@@ -284,7 +270,7 @@ export namespace ReactComponentConfig {
     export function createCopy(original: ReactComponentConfig): ReactComponentConfig {
         const result: ReactComponentConfig = {
             type: original.type,
-            content: ItemConfig.copyContent(original.content),
+            content: [],
             width: original.width,
             minWidth: original.minWidth,
             height: original.height,
@@ -296,7 +282,7 @@ export namespace ReactComponentConfig {
             header: HeaderedItemConfig.Header.createCopy(original.header),
             componentName: REACT_COMPONENT_ID,
             component: original.component,
-            props: deepExtendValue(undefined, original.props),
+            props: deepExtendValue(undefined, original.props) as JsonValue,
         }
         return result;
     }
@@ -304,7 +290,7 @@ export namespace ReactComponentConfig {
     export function createDefault(): ReactComponentConfig {
         const result: ReactComponentConfig = {
             type: ItemConfig.Type.reactComponent,
-            content: ItemConfig.defaults.content,
+            content: [],
             width: ItemConfig.defaults.width,
             minWidth: ItemConfig.defaults.minWidth,
             height: ItemConfig.defaults.height,
@@ -322,8 +308,81 @@ export namespace ReactComponentConfig {
     }
 }
 
+// Root or RowOrColumn
+export interface RowOrColumnOrStackParentItemConfig extends ItemConfig {
+    content: (RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig)[];
+}
+
+export namespace RowOrColumnOrStackParentItemConfig {
+    export type ChildItemConfig = RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig;
+
+    export function isChildItemConfig(itemConfig: ItemConfig): itemConfig is ChildItemConfig {
+        switch (itemConfig.type) {
+            case ItemConfig.Type.row:
+            case ItemConfig.Type.column:
+            case ItemConfig.Type.stack:
+            case ItemConfig.Type.reactComponent:
+            case ItemConfig.Type.component:
+                return true;
+            case ItemConfig.Type.root:
+                return false;
+            default:
+                throw new UnreachableCaseError('CROCOSPCICIC13687', itemConfig.type);
+        }
+    }
+
+    export function createCopy(original: RowOrColumnOrStackParentItemConfig, content?: ChildItemConfig[]): RowOrColumnOrStackParentItemConfig {
+        const result: RowOrColumnOrStackParentItemConfig = {
+            type: original.type,
+            content: content !== undefined ? copyContent(content) : copyContent(original.content),
+            width: original.width,
+            minWidth: original.minWidth,
+            height: original.height,
+            minHeight: original.minHeight,
+            id: original.id,
+            isClosable: original.isClosable,
+            reorderEnabled: original.reorderEnabled,
+            title: original.title,
+        }
+        return result;
+    }
+
+    export function copyContent(original: ChildItemConfig[]): ChildItemConfig[] {
+        const count = original.length;
+        const result = new Array<ChildItemConfig>(count);
+        for (let i = 0; i < count; i++) {
+            result[i] = ItemConfig.createCopy(original[i]) as ChildItemConfig;
+        }
+        return result;
+    }
+
+    export function createDefault(type: ItemConfig.Type): RowOrColumnOrStackParentItemConfig {
+        const result: RowOrColumnOrStackParentItemConfig = {
+            type,
+            content: [],
+            width: ItemConfig.defaults.width,
+            minWidth: ItemConfig.defaults.minWidth,
+            height: ItemConfig.defaults.height,
+            minHeight: ItemConfig.defaults.minHeight,
+            id: ItemConfig.defaults.id,
+            isClosable: ItemConfig.defaults.isClosable,
+            reorderEnabled: ItemConfig.defaults.reorderEnabled,
+            title: ItemConfig.defaults.title,
+        }
+        return result;
+    }
+}
+
+export interface RowOrColumnItemConfig extends RowOrColumnOrStackParentItemConfig {
+    type: ItemConfig.Type.row | ItemConfig.Type.column;
+}
+
+export interface RootItemConfig extends RowOrColumnOrStackParentItemConfig {
+    type: ItemConfig.Type.root;
+}
+
 export interface ManagerConfig {
-    content: ItemConfig[];
+    content: (RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig)[];
     openPopouts: PopoutManagerConfig[];
     dimensions: ManagerConfig.Dimensions;
     settings: ManagerConfig.Settings;
@@ -476,7 +535,7 @@ export namespace ManagerConfig {
         }
     }
 
-    export function createRootItemConfig(managerConfig: ManagerConfig): ItemConfig {
+    export function createRootItemConfig(managerConfig: ManagerConfig): RootItemConfig {
         return {
             type: ItemConfig.Type.root,
             content: managerConfig.content,
@@ -535,7 +594,7 @@ export namespace PopoutManagerConfig {
 
     export function createCopy(original: PopoutManagerConfig): PopoutManagerConfig {
         const result: PopoutManagerConfig = {
-            content: ItemConfig.copyContent(original.content),
+            content: RowOrColumnOrStackParentItemConfig.copyContent(original.content),
             openPopouts: ManagerConfig.copyOpenPopouts(original.openPopouts),
             settings: ManagerConfig.Settings.createCopy(original.settings),
             dimensions: ManagerConfig.Dimensions.createCopy(original.dimensions),
@@ -558,7 +617,7 @@ export namespace Config {
     export function createCopy(original: Config): Config {
         const result: Config = {
             resolved: original.resolved,
-            content: ItemConfig.copyContent(original.content),
+            content: RowOrColumnOrStackParentItemConfig.copyContent(original.content),
             openPopouts: ManagerConfig.copyOpenPopouts(original.openPopouts),
             settings: ManagerConfig.Settings.createCopy(original.settings),
             dimensions: ManagerConfig.Dimensions.createCopy(original.dimensions),

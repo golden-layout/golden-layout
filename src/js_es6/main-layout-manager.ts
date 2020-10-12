@@ -1,4 +1,4 @@
-import { Config, ItemConfig, ManagerConfig, PopoutManagerConfig } from './config/config';
+import { Config, ManagerConfig, PopoutManagerConfig, RowOrColumnOrStackParentItemConfig } from './config/config';
 import { UserConfig } from './config/UserConfig';
 import { LayoutManager } from './LayoutManager';
 
@@ -11,8 +11,10 @@ export class MainLayoutManager extends LayoutManager {
         this._mainConfig = this.config as Config;
     }
 
-    protected createToConfig(content: ItemConfig[], openPopouts: PopoutManagerConfig[], maximisedItemId: string | null): ManagerConfig {
-
+    protected createToConfig(content: RowOrColumnOrStackParentItemConfig.ChildItemConfig[], 
+        openPopouts: PopoutManagerConfig[],
+        maximisedItemId: string | null
+    ): ManagerConfig {
         const config: Config = {
             content,
             openPopouts,

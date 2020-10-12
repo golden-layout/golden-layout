@@ -1,4 +1,4 @@
-import { ComponentConfig, HeaderedItemConfig } from '../config/config';
+import { ComponentItemConfig, HeaderedItemConfig } from '../config/config';
 import { ComponentContainer } from '../container/ComponentContainer';
 import { Tab } from '../controls/Tab';
 import { UnexpectedUndefinedError } from '../errors/internal-error';
@@ -22,12 +22,12 @@ export class ComponentItem extends AbstractContentItem {
     get headerConfig(): HeaderedItemConfig.Header | undefined { return this._componentConfig.header; }
     get tab(): Tab { return this._tab; }
 
-    constructor(layoutManager: LayoutManager, private readonly _componentConfig: ComponentConfig, private _stack: Stack) {
+    constructor(layoutManager: LayoutManager, private readonly _componentConfig: ComponentItemConfig, private _stack: Stack) {
         super(layoutManager, _componentConfig, _stack, createTemplateHtmlElement(ComponentItem.templateHtml));
 
         let componentInstantiator: ComponentItem.ComponentInstantiator;
         let componentState: unknown;
-        if (ComponentConfig.isSerialisable(this._componentConfig)) {
+        if (ComponentItemConfig.isSerialisable(this._componentConfig)) {
             componentInstantiator = layoutManager.getComponentInstantiator(this._componentConfig);
             if (this._componentConfig.componentState === undefined) {
                 componentState = {};
@@ -35,7 +35,7 @@ export class ComponentItem extends AbstractContentItem {
                 componentState = deepExtend({}, this._componentConfig.componentState as Record<string, unknown>); // make copy
             }
         } else {
-            if (ComponentConfig.isReact(this._componentConfig)) {
+            if (ComponentItemConfig.isReact(this._componentConfig)) {
                 componentInstantiator = {
                     constructor: ReactComponentHandler,
                     factoryFunction: undefined,
@@ -83,7 +83,7 @@ export class ComponentItem extends AbstractContentItem {
     private updateNodeSize(): void {
         if (this.element.style.display !== 'none') {
             // Do not update size of hidden components to prevent unwanted reflows
-            this._container._$setSize(getElementWidth(this.element), getElementHeight(this.element));
+            this._container.setSizeToNodeSize(getElementWidth(this.element), getElementHeight(this.element));
         }
     }
 

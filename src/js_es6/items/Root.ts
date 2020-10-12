@@ -1,5 +1,5 @@
-import { HeaderedItemConfig, ItemConfig, StackItemConfig } from '../config/config';
-import { UnexpectedNullError } from '../errors/internal-error';
+import { HeaderedItemConfig, ItemConfig, RootItemConfig, RowOrColumnOrStackParentItemConfig, StackItemConfig } from '../config/config';
+import { AssertError, UnexpectedNullError } from '../errors/internal-error';
 import { AbstractContentItem } from '../items/AbstractContentItem';
 import { RowOrColumn } from '../items/RowOrColumn';
 import { LayoutManager } from '../LayoutManager';
@@ -14,7 +14,7 @@ export class Root extends AbstractContentItem {
     private readonly _containerElement: HTMLElement;
 
     /** @internal */
-    constructor(layoutManager: LayoutManager, config: ItemConfig, containerElement: HTMLElement) {
+    constructor(layoutManager: LayoutManager, config: RootItemConfig, containerElement: HTMLElement) {
       
         super(layoutManager, config, null, createTemplateHtmlElement(Root.templateHtml));
 
@@ -50,6 +50,22 @@ export class Root extends AbstractContentItem {
 
         this.updateSize();
         this.emitBubblingEvent('stateChanged');
+    }
+
+    calculateConfigContent(): RowOrColumnOrStackParentItemConfig.ChildItemConfig[] {
+        const contentItems = this.contentItems;
+        const count = contentItems.length;
+        const result = new Array<RowOrColumnOrStackParentItemConfig.ChildItemConfig>(count);
+        for (let i = 0; i < count; i++) {
+            const item = contentItems[i];
+            const itemConfig = item.toConfig();
+            if (RowOrColumnOrStackParentItemConfig.isChildItemConfig(itemConfig)) {
+                result[i] = itemConfig;
+            } else {
+                throw new AssertError('RCCC66832');
+            }
+        }
+        return result;
     }
 
     /** @internal */

@@ -12,6 +12,7 @@ import { extend } from './utils';
 /**
  * A specialised GoldenLayout component that binds GoldenLayout container
  * lifecycle events to react components
+ * @internal
  */
 export class ReactComponentHandler {
     private _reactComponent: React.Component | null;
@@ -49,7 +50,7 @@ export class ReactComponentHandler {
      */
     private _render(): void {
         // probably wrong
-        ReactDOM.render(this._getReactComponent(), this._container.getContentElement());
+        ReactDOM.render(this._getReactComponent(), this._container.contentElement);
         // ReactDOM.render(this._getReactComponent(), this._container.getElement()[0]);
     }
 
@@ -83,7 +84,7 @@ export class ReactComponentHandler {
      * @returns {void}
      */
     _destroy(): void {
-        ReactDOM.unmountComponentAtNode(this._container.getContentElement());
+        ReactDOM.unmountComponentAtNode(this._container.contentElement);
         this._container.on('open', this._containerOpenListener);
         this._container.off('destroy', this._containerDestroyListener);
     }

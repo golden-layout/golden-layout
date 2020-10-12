@@ -1,13 +1,16 @@
 import { ConfigurationError } from '../errors/external-error';
-import { UnreachableCaseError } from '../errors/internal-error';
+import { AssertError, UnreachableCaseError } from '../errors/internal-error';
 import { JsonValue, Side } from '../utils/types';
 import {
+    ComponentItemConfig,
     Config,
     HeaderedItemConfig,
     ItemConfig,
     ManagerConfig,
     PopoutManagerConfig,
     ReactComponentConfig,
+    RowOrColumnItemConfig,
+    RowOrColumnOrStackParentItemConfig,
     SerialisableComponentConfig,
     StackItemConfig
 } from './config';
@@ -76,22 +79,10 @@ export namespace UserItemConfig {
                 throw new ConfigurationError('UserItemConfig cannot specify type root', user);
             case ItemConfig.Type.row:
             case ItemConfig.Type.column:
-                const result: ItemConfig = {
-                    type: user.type,
-                    content: UserItemConfig.resolveContent(user.content),
-                    width: user.width ?? ItemConfig.defaults.width,
-                    minWidth: user.width ?? ItemConfig.defaults.minWidth,
-                    height: user.height ?? ItemConfig.defaults.height,
-                    minHeight: user.height ?? ItemConfig.defaults.minHeight,
-                    id: user.id ?? ItemConfig.defaults.id,
-                    isClosable: user.isClosable ?? ItemConfig.defaults.isClosable,
-                    reorderEnabled: user.reorderEnabled ?? ItemConfig.defaults.reorderEnabled,
-                    title: user.title ?? ItemConfig.defaults.title,
-                }
-                return result;
+                return UserRowOrColumnItemConfig.resolve(user as UserRowOrColumnItemConfig);
 
             case ItemConfig.Type.stack:
-                return UserStackItemConfig.resolve(user as UserHeaderedItemConfig);
+                return UserStackItemConfig.resolve(user as UserStackItemConfig);
 
             case ItemConfig.Type.component:
                 return UserSerialisableComponentConfig.resolve(user as UserSerialisableComponentConfig);
@@ -176,6 +167,8 @@ namespace UserHeaderedItemConfig {
 }
 
 export interface UserStackItemConfig extends UserHeaderedItemConfig {
+    type: ItemConfig.Type.stack;
+    content: UserComponentItemConfig[];
     /** The index of the item in content which is to be active*/
     activeItemIndex?: number;
 }
@@ -183,8 +176,8 @@ export interface UserStackItemConfig extends UserHeaderedItemConfig {
 export namespace UserStackItemConfig {
     export function resolve(user: UserStackItemConfig): StackItemConfig {
         const result: StackItemConfig = {
-            type: user.type,
-            content: UserItemConfig.resolveContent(user.content),
+            type: ItemConfig.Type.stack,
+            content: resolveContent(user.content),
             width: user.width ?? ItemConfig.defaults.width,
             minWidth: user.minWidth ?? ItemConfig.defaults.minWidth,
             height: user.height ?? ItemConfig.defaults.height,
@@ -198,16 +191,37 @@ export namespace UserStackItemConfig {
         };
         return result;
     }
+
+    export function resolveContent(content: UserComponentItemConfig[] | undefined): ComponentItemConfig[] {
+        if (content === undefined) {
+            return [];
+        } else {
+            const count = content.length;
+            const result = new Array<ComponentItemConfig>(count);
+            for (let i = 0; i < count; i++) {
+                const userChildItemConfig = content[i];
+                const itemConfig = UserItemConfig.resolve(userChildItemConfig);
+                if (!ItemConfig.isComponentItem(itemConfig)) {
+                    throw new AssertError('UCUSICRC91114', JSON.stringify(itemConfig));
+                } else {
+                    result[i] = itemConfig;
+                }
+            }
+            return result;
+        }
+    }
 }
 
-export interface UserComponentConfig extends UserHeaderedItemConfig {
+export interface UserComponentItemConfig extends UserHeaderedItemConfig {
+    readonly content: [];
     /**
      * The name of the component as specified in layout.registerComponent. Mandatory if type is 'component'.
      */
     componentName: string;
 }
 
-export interface UserSerialisableComponentConfig extends UserComponentConfig {
+export interface UserSerialisableComponentConfig extends UserComponentItemConfig {
+    type: ItemConfig.Type.component;
     /**
      * A serialisable object. Will be passed to the component constructor function and will be the value returned by
      * container.getState().
@@ -222,7 +236,7 @@ export namespace UserSerialisableComponentConfig {
         } else {
             const result: SerialisableComponentConfig = {
                 type: user.type,
-                content: UserItemConfig.resolveContent(user.content),
+                content: [],
                 width: user.width ?? ItemConfig.defaults.width,
                 minWidth: user.minWidth ?? ItemConfig.defaults.minWidth,
                 height: user.height ?? ItemConfig.defaults.height,
@@ -240,12 +254,13 @@ export namespace UserSerialisableComponentConfig {
     }
 }
 
-export interface UserReactComponentConfig extends UserComponentConfig {
+export interface UserReactComponentConfig extends UserComponentItemConfig {
+    type: ItemConfig.Type.reactComponent;
     component?: string;
     /**
      * Properties that will be passed to the component and accessible using this.props.
      */
-    props?: unknown;
+    props?: JsonValue;
 }
 
 export namespace UserReactComponentConfig {
@@ -255,7 +270,7 @@ export namespace UserReactComponentConfig {
         } else {
             const result: ReactComponentConfig = {
                 type: ItemConfig.Type.reactComponent,
-                content: UserItemConfig.resolveContent(user.content),
+                content: [],
                 width: user.width ?? ItemConfig.defaults.width,
                 minWidth: user.minWidth ?? ItemConfig.defaults.minWidth,
                 height: user.height ?? ItemConfig.defaults.height,
@@ -274,8 +289,77 @@ export namespace UserReactComponentConfig {
     }
 }
 
+// RowOrColumn
+export interface UserRowOrColumnOrStackParentItemConfig extends UserItemConfig {
+    content: (UserRowOrColumnItemConfig | UserStackItemConfig | UserComponentItemConfig)[];
+}
+
+export namespace UserRowOrColumnOrStackParentItemConfig {
+    export type ChildItemConfig = UserRowOrColumnItemConfig | UserStackItemConfig | UserComponentItemConfig;
+
+    export function isChildItemConfig(itemConfig: UserItemConfig): itemConfig is ChildItemConfig {
+        switch (itemConfig.type) {
+            case ItemConfig.Type.row:
+            case ItemConfig.Type.column:
+            case ItemConfig.Type.stack:
+            case ItemConfig.Type.reactComponent:
+            case ItemConfig.Type.component:
+                return true;
+            case ItemConfig.Type.root:
+                return false;
+            default:
+                throw new UnreachableCaseError('UROCOSPCICIC13687', itemConfig.type);
+        }
+    }
+
+    export function resolveContent(content: ChildItemConfig[] | undefined): RowOrColumnOrStackParentItemConfig.ChildItemConfig[] {
+        if (content === undefined) {
+            return [];
+        } else {
+            const count = content.length;
+            const result = new Array<RowOrColumnOrStackParentItemConfig.ChildItemConfig>(count);
+            for (let i = 0; i < count; i++) {
+                const userChildItemConfig = content[i];
+                if (!UserRowOrColumnOrStackParentItemConfig.isChildItemConfig(userChildItemConfig)) {
+                    throw new ConfigurationError('ItemConfig is not Row, Column or Stack', userChildItemConfig);
+                } else {
+                    const childItemConfig = UserItemConfig.resolve(userChildItemConfig);
+                    if (!RowOrColumnOrStackParentItemConfig.isChildItemConfig(childItemConfig)) {
+                        throw new AssertError('UROCOSPIC99512', JSON.stringify(childItemConfig));
+                    } else {
+                        result[i] = childItemConfig;
+                    }
+                }
+            }
+            return result;
+        }
+    }
+}
+
+export interface UserRowOrColumnItemConfig extends UserRowOrColumnOrStackParentItemConfig {
+    type: ItemConfig.Type.row | ItemConfig.Type.column;
+}
+
+export namespace UserRowOrColumnItemConfig {
+    export function resolve(user: UserRowOrColumnItemConfig): RowOrColumnItemConfig {
+        const result: RowOrColumnItemConfig = {
+            type: user.type,
+            content: UserRowOrColumnOrStackParentItemConfig.resolveContent(user.content),
+            width: user.width ?? ItemConfig.defaults.width,
+            minWidth: user.width ?? ItemConfig.defaults.minWidth,
+            height: user.height ?? ItemConfig.defaults.height,
+            minHeight: user.height ?? ItemConfig.defaults.minHeight,
+            id: user.id ?? ItemConfig.defaults.id,
+            isClosable: user.isClosable ?? ItemConfig.defaults.isClosable,
+            reorderEnabled: user.reorderEnabled ?? ItemConfig.defaults.reorderEnabled,
+            title: user.title ?? ItemConfig.defaults.title,
+        }
+        return result;
+    }
+}
+
 export interface UserManagerConfig {
-    content?: UserItemConfig[];
+    content?: (UserRowOrColumnItemConfig | UserStackItemConfig | UserComponentItemConfig)[];
     openPopouts?: UserPopoutManagerConfig[];
     dimensions?: UserManagerConfig.Dimensions;
     settings?: UserManagerConfig.Settings;
@@ -634,7 +718,7 @@ export namespace UserPopoutManagerConfig {
 
     export function resolve(user: UserPopoutManagerConfig): PopoutManagerConfig {
         const config: PopoutManagerConfig = {
-            content: UserItemConfig.resolveContent(user.content),
+            content: UserRowOrColumnOrStackParentItemConfig.resolveContent(user.content),
             openPopouts: UserManagerConfig.resolveOpenPopouts(user.openPopouts),
             settings: UserManagerConfig.Settings.resolve(user.settings),
             dimensions: UserManagerConfig.Dimensions.resolve(user.dimensions),
@@ -660,7 +744,7 @@ export namespace UserConfig {
     export function resolve(user: UserConfig): Config {
         const config: Config = {
             resolved: true,
-            content: UserItemConfig.resolveContent(user.content),
+            content: UserRowOrColumnOrStackParentItemConfig.resolveContent(user.content),
             openPopouts: UserManagerConfig.resolveOpenPopouts(user.openPopouts),
             dimensions: UserManagerConfig.Dimensions.resolve(user.dimensions),
             settings: UserManagerConfig.Settings.resolve(user.settings),

@@ -1,4 +1,13 @@
-import { ComponentConfig, ItemConfig, ManagerConfig, PopoutManagerConfig, StackItemConfig } from './config/config'
+import {
+    ComponentItemConfig,
+    ItemConfig,
+    ManagerConfig,
+    PopoutManagerConfig,
+    RootItemConfig,
+    RowOrColumnItemConfig,
+    RowOrColumnOrStackParentItemConfig,
+    StackItemConfig
+} from './config/config'
 import { BrowserPopout } from './controls/BrowserPopout'
 import { DragSource } from './controls/DragSource'
 import { DropTargetIndicator } from './controls/DropTargetIndicator'
@@ -14,7 +23,7 @@ import { ConfigMinifier } from './utils/ConfigMinifier'
 import { EventEmitter } from './utils/EventEmitter'
 import { EventHub } from './utils/EventHub'
 import { getJQueryLeftAndTop } from './utils/jquery-legacy'
-import { Rect } from './utils/types'
+import { Json, Rect } from './utils/types'
 import {
     createTemplateHtmlElement,
     getElementHeight,
@@ -236,38 +245,37 @@ export abstract class LayoutManager extends EventEmitter {
     toConfig(): ManagerConfig {
         if (this._isInitialised === false) {
             throw new Error('Can\'t create config, layout not yet initialised');
-        }
-
-        // if (root !== undefined && !(root instanceof AbstractContentItem)) {
-        //     throw new Error('Root must be a ContentItem');
-        // }
-
-        /*
-         * Content
-         */
-        let content: ItemConfig[];
-
-        if (this._root === null) {
-            throw new UnexpectedNullError('LMTC18244');
         } else {
-            content = this._root.calculateConfigContent();
+
+            // if (root !== undefined && !(root instanceof AbstractContentItem)) {
+            //     throw new Error('Root must be a ContentItem');
+            // }
+
+            /*
+            * Content
+            */
+            if (this._root === null) {
+                throw new UnexpectedNullError('LMTC18244');
+            } else {
+                const content = this._root.calculateConfigContent();
+
+                /*
+                * Retrieve config for subwindows
+                */
+                this.reconcilePopoutWindows();
+                const openPopouts: PopoutManagerConfig[] = [];
+                for (let i = 0; i < this._openPopouts.length; i++) {
+                    openPopouts.push(this._openPopouts[i].toConfig());
+                }
+
+                /*
+                * calculate maximisedItemId
+                */
+                const maximisedItemId = this._maximisedItem ? '__glMaximised' : null;
+
+                return this.createToConfig(content, openPopouts, maximisedItemId);
+            }
         }
-
-        /*
-         * Retrieve config for subwindows
-         */
-        this.reconcilePopoutWindows();
-        const openPopouts: PopoutManagerConfig[] = [];
-        for (let i = 0; i < this._openPopouts.length; i++) {
-            openPopouts.push(this._openPopouts[i].toConfig());
-        }
-
-        /*
-         * calculate maximisedItemId
-         */
-        const maximisedItemId = this._maximisedItem ? '__glMaximised' : null;
-
-        return this.createToConfig(content, openPopouts, maximisedItemId);
     }
 
     /**
@@ -278,7 +286,7 @@ export abstract class LayoutManager extends EventEmitter {
      * @param config - The item config
      * @internal
      */
-    getComponentInstantiator(config: ComponentConfig): ComponentItem.ComponentInstantiator {
+    getComponentInstantiator(config: ComponentItemConfig): ComponentItem.ComponentInstantiator {
         const name = this.getComponentNameFromConfig(config)
         let constructorToUse = this._componentConstructors[name]
         if (constructorToUse === undefined) {
@@ -427,8 +435,8 @@ export abstract class LayoutManager extends EventEmitter {
      * Returns the name of the component for the config, taking into account whether it's a react component or not.
      */
 
-    getComponentNameFromConfig(config: ComponentConfig): string {
-        if (ComponentConfig.isReact(config)) {
+    getComponentNameFromConfig(config: ComponentItemConfig): string {
+        if (ComponentItemConfig.isReact(config)) {
             return config.component;
         } else {
             return config.componentName;
@@ -466,7 +474,7 @@ export abstract class LayoutManager extends EventEmitter {
          */
         if (
             // If this is a component
-            config.type === ItemConfig.Type.component &&
+            ItemConfig.isComponentItem(config) &&
 
             // and it's not already within a stack
             !(parent instanceof Stack) &&
@@ -691,13 +699,13 @@ export abstract class LayoutManager extends EventEmitter {
      *************************/
     private createContentItemFromConfig(config: ItemConfig, parent: AbstractContentItem): AbstractContentItem {
         switch (config.type) {
-            case ItemConfig.Type.root: return new Root(this, config, this._container);
-            case ItemConfig.Type.row: return new RowOrColumn(false, this, config, parent);
-            case ItemConfig.Type.column: return new RowOrColumn(true, this, config, parent);
+            case ItemConfig.Type.root: return new Root(this, config as RootItemConfig, this._container);
+            case ItemConfig.Type.row: return new RowOrColumn(false, this, config as RowOrColumnItemConfig, parent);
+            case ItemConfig.Type.column: return new RowOrColumn(true, this, config as RowOrColumnItemConfig, parent);
             case ItemConfig.Type.stack: return new Stack(this, config as StackItemConfig, parent as Stack.Parent);
             case ItemConfig.Type.component:
             case ItemConfig.Type.reactComponent:
-                return new ComponentItem(this, config as ComponentConfig, parent as Stack);
+                return new ComponentItem(this, config as ComponentItemConfig, parent as Stack);
             default:
                 throw new UnreachableCaseError('CCC913564', config.type, 'Invalid Config Item type specified');
         }
@@ -926,7 +934,7 @@ export abstract class LayoutManager extends EventEmitter {
 
     }
 
-    protected abstract createToConfig(content: ItemConfig[], openPopouts: PopoutManagerConfig[],
+    protected abstract createToConfig(content: RowOrColumnOrStackParentItemConfig.ChildItemConfig[], openPopouts: PopoutManagerConfig[],
         maximisedItemId: string | null): ManagerConfig;
 
     /***************************
@@ -1078,12 +1086,12 @@ export abstract class LayoutManager extends EventEmitter {
                 errorMsg = 'Configuration parameter \'content\' must be an array';
             }
 
-            throw new ConfigurationError(errorMsg, managerConfig);
+            throw new ConfigurationError(errorMsg, managerConfig as Json);
         }
 
         if (managerConfig.content.length > 1) {
             const errorMsg = 'Top level content can\'t contain more then one element.';
-            throw new ConfigurationError(errorMsg, managerConfig);
+            throw new ConfigurationError(errorMsg, managerConfig as Json);
         }
 
         const rootConfig = ManagerConfig.createRootItemConfig(managerConfig);
@@ -1243,5 +1251,5 @@ export abstract class LayoutManager extends EventEmitter {
 // LayoutManager.__lm = lm;
 
 export namespace LayoutManager {
-    export type GetComponentConstructorFtn = (this: void, config: ComponentConfig) => ComponentItem.ComponentConstructor
+    export type GetComponentConstructorFtn = (this: void, config: ComponentItemConfig) => ComponentItem.ComponentConstructor
 }

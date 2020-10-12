@@ -7,10 +7,8 @@ export abstract class ExternalError extends Error {
 }
 
 export class ConfigurationError extends ExternalError {
-    constructor(message: string, public node: Json | undefined) {
+    constructor(message: string, public readonly node?: Json) {
         super('Configuration', message);
-
-        this.node = node;
     }
 }
 

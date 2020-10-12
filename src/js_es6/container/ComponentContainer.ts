@@ -1,4 +1,4 @@
-import { ComponentConfig } from '../config/config';
+import { ComponentItemConfig } from '../config/config';
 import { Tab } from '../controls/Tab';
 import { AssertError, UnexpectedNullError } from '../errors/internal-error';
 import { AbstractContentItem } from '../items/AbstractContentItem';
@@ -8,25 +8,39 @@ import { EventEmitter } from '../utils/EventEmitter';
 import { JsonValue } from '../utils/types';
 import { deepExtend, setElementHeight, setElementWidth } from '../utils/utils';
 
+/** @deprecated use {@link ComponentContainer} */
+export type Container = ComponentContainer;
+
 export class ComponentContainer extends EventEmitter {
+    /** @internal */
     private _width: number | null;
+    /** @internal */
     private _height: number | null;
+    /** @internal */
     private readonly _title;
+    /** @internal */
     private _isHidden;
+    /** @internal */
     private readonly _contentElement;
+    /** @internal */
     private _tab: Tab;
 
-    get config(): ComponentConfig { return this._config; }
-    get tab(): Tab { return this._tab; }
     get width(): number | null { return this._width; }
     get height(): number | null { return this._height; }
+    get parent(): ComponentItem { return this._parent; }
+    get config(): ComponentItemConfig { return this._config; }
+    get tab(): Tab { return this._tab; }
     get title(): string { return this._title; }
+    get layoutManager(): LayoutManager { return this._layoutManager; }
     get isHidden(): boolean { return this._isHidden; }
+    /** The inner DOM element where the container's content is intended to live in */
+    get contentElement(): HTMLElement { return this._contentElement; }
 
-    constructor(private readonly _config: ComponentConfig,
-        public readonly parent: ComponentItem,
-        public readonly layoutManager: LayoutManager,
-        private readonly element: HTMLElement
+    /** @internal */
+    constructor(private readonly _config: ComponentItemConfig,
+        private readonly _parent: ComponentItem,
+        private readonly _layoutManager: LayoutManager,
+        private readonly _element: HTMLElement
     ) {
         super();
 
@@ -35,7 +49,7 @@ export class ComponentContainer extends EventEmitter {
         this._title = this._config.componentName;
         this._isHidden = false;
 
-        const contentElement = this.element.querySelector('.lm_content') as HTMLElement;
+        const contentElement = this._element.querySelector('.lm_content') as HTMLElement;
         if (contentElement === null) {
             throw new UnexpectedNullError('CCC11195');
         } else {
@@ -43,11 +57,8 @@ export class ComponentContainer extends EventEmitter {
         }
     }
 
-    /**
-     * Get the inner DOM element the container's content
-     * is intended to live in
-     */
-    getContentElement(): HTMLElement {
+    /** @deprecated use {@link contentElement } */
+    getElement(): HTMLElement {
         return this._contentElement;
     }
 
@@ -55,26 +66,22 @@ export class ComponentContainer extends EventEmitter {
      * Hide the container. Notifies the containers content first
      * and then hides the DOM node. If the container is already hidden
      * this should have no effect
-     *
-     * @returns {void}
      */
     hide(): void {
         this.emit('hide');
         this._isHidden = true;
-        this.element.style.display = 'none';
+        this._element.style.display = 'none';
     }
 
     /**
      * Shows a previously hidden container. Notifies the
      * containers content first and then shows the DOM element.
      * If the container is already visible this has no effect.
-     *
-     * @returns {void}
      */
     show(): void {
         this.emit('show');
         this._isHidden = false;
-        this.element.style.display = '';
+        this._element.style.display = '';
         // emit shown only if the container has a valid size
         if (this._height != 0 || this._width != 0) {
             this.emit('shown');
@@ -89,14 +96,13 @@ export class ComponentContainer extends EventEmitter {
      *
      * If this container isn't a descendant of a row or column
      * it returns false
-     * @todo  Rework!!!
      * @param width  The new width in pixel
      * @param height The new height in pixel
      *
      * @returns resizeSuccesful
      */
     setSize(width: number, height: number): boolean {
-        let ancestorItem: AbstractContentItem | null = this.parent;
+        let ancestorItem: AbstractContentItem | null = this._parent;
         if (ancestorItem.isColumn || ancestorItem.isRow || ancestorItem.parent === null) {
             throw new AssertError('ICSSPRC', 'ComponentContainer cannot have RowColumn Parent');
         } else {
@@ -143,27 +149,24 @@ export class ComponentContainer extends EventEmitter {
      * Closes the container if it is closable. Can be called by
      * both the component within at as well as the contentItem containing
      * it. Emits a close event before the container itself is closed.
-     *
-     * @returns {void}
      */
     close(): void {
         if (this._config.isClosable) {
             this.emit('close');
-            this.parent.close();
+            this._parent.close();
         }
     }
 
 
     /**
      * Returns the current state object
-     *
-     * @returns {Object} state
+     * @returns state
      */
     getState(): JsonValue {
-        if (ComponentConfig.isSerialisable(this._config)) {
+        if (ComponentItemConfig.isSerialisable(this._config)) {
             return this._config.componentState;
         } else {
-            if (ComponentConfig.isReact(this._config)) {
+            if (ComponentItemConfig.isReact(this._config)) {
                 return this._config.props as JsonValue;
             } else {
                 throw new AssertError('ICGS25546');
@@ -187,13 +190,13 @@ export class ComponentContainer extends EventEmitter {
      * @param {serialisable} state
      */
     setState(state: JsonValue): void {
-        if (ComponentConfig.isSerialisable(this._config)) {
+        if (ComponentItemConfig.isSerialisable(this._config)) {
             this._config.componentState = state;
-            this.parent.emitBubblingEvent('stateChanged');
+            this._parent.emitBubblingEvent('stateChanged');
         } else {
-            if (ComponentConfig.isReact(this._config)) {
+            if (ComponentItemConfig.isReact(this._config)) {
                 this._config.props = state;
-                this.parent.emitBubblingEvent('stateChanged');
+                this._parent.emitBubblingEvent('stateChanged');
             } else {
                 throw new AssertError('ICSS25546');
             }
@@ -205,9 +208,10 @@ export class ComponentContainer extends EventEmitter {
      * Set's the components title
      */
     setTitle(title: string): void {
-        this.parent.setTitle(title);
+        this._parent.setTitle(title);
     }
 
+    /** @internal */
     setTab(tab: Tab): void {
         this._tab = tab as Tab;
         this.emit('tab', tab)
@@ -218,13 +222,11 @@ export class ComponentContainer extends EventEmitter {
      * Set's the containers size. Called by the container's component.
      * To set the size programmatically from within the container please
      * use the public setSize method
-     *
-     * @param {[Int]} width  in px
-     * @param {[Int]} height in px
-     *
-     * @returns {void}
+     * @param width  in px
+     * @param height in px
+     * @internal
      */
-    _$setSize(width: number, height: number): void {
+    setSizeToNodeSize(width: number, height: number): void {
         if (width !== this._width || height !== this._height) {
             this._width = width;
             this._height = height;

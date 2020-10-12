@@ -1,11 +1,13 @@
 import { LeftAndTop, WidthAndHeight } from './types';
 import { pixelsToNumber } from './utils';
 
+/** @internal */
 export interface JQueryOffset {
     top: number;
     left: number;    
 }
 
+/** @internal */
 export function getJQueryOffset(element: HTMLElement): JQueryOffset {
     const rect = element.getBoundingClientRect();
     return {
@@ -14,6 +16,7 @@ export function getJQueryOffset(element: HTMLElement): JQueryOffset {
     }
 }
 
+/** @internal */
 export function getJQueryWidthAndHeight(element: HTMLElement): WidthAndHeight {
     const style = getComputedStyle(element, null);
     const widthAndHeight: WidthAndHeight = {
@@ -23,6 +26,7 @@ export function getJQueryWidthAndHeight(element: HTMLElement): WidthAndHeight {
     return widthAndHeight;
 }
 
+/** @internal */
 export function getJQueryLeftAndTop(element: HTMLElement): LeftAndTop {
     const style = getComputedStyle(element, null);
     const leftAndTop: LeftAndTop = {

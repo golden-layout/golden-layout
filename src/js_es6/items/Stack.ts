@@ -303,7 +303,7 @@ export class Stack extends AbstractContentItem {
         if (!(newChild instanceof ComponentItem)) {
             throw new AssertError('SPCR11056'); // Stacks can only have Component children
         } else {
-            this._header.tabs[index].component = newChild;
+            this._header.tabs[index].componentItem = newChild;
         }
     }
 
