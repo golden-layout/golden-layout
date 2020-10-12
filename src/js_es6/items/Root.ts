@@ -8,21 +8,24 @@ import { createTemplateHtmlElement, getElementHeight, getElementWidth, setElemen
 import { ComponentItem } from './ComponentItem';
 
 export class Root extends AbstractContentItem {
+    /** @internal */
     private readonly _childElementContainer;
-    private _containerElement: HTMLElement;
+    /** @internal */
+    private readonly _containerElement: HTMLElement;
 
+    /** @internal */
     constructor(layoutManager: LayoutManager, config: ItemConfig, containerElement: HTMLElement) {
       
-        super(layoutManager, config, null);
+        super(layoutManager, config, null, createTemplateHtmlElement(Root.templateHtml));
 
         this.isRoot = true;
-        this.element = createTemplateHtmlElement('<div class="lm_goldenlayout lm_item lm_root"></div>');
         this._childElementContainer = this.element;
         this._containerElement = containerElement;
         this._containerElement.appendChild(this.element);
     }
 
-    _$init(): void {
+    /** @internal */
+    init(): void {
         if (this.isInitialised === true) return;
 
         this.updateNodeSize();
@@ -31,7 +34,7 @@ export class Root extends AbstractContentItem {
             this._childElementContainer.appendChild(this.contentItems[i].element);
         }
 
-        super._$init();
+        super.init();
 
         this.initContentItems();
     }
@@ -49,21 +52,23 @@ export class Root extends AbstractContentItem {
         this.emitBubblingEvent('stateChanged');
     }
 
+    /** @internal */
     setSize(width: number, height: number): void {
-        setElementWidth(this.element, width);
-        setElementHeight(this.element, height);
+        if (width === undefined || height === undefined) {
+            this.updateSize(); // For backwards compatibility with v1.x API
+        } else {
+            setElementWidth(this.element, width);
+            setElementHeight(this.element, height);
 
-        /*
-         * Root can be empty
-         */
-        if (this.contentItems.length > 0) {
-            setElementWidth(this.contentItems[0].element, width);
-            setElementHeight(this.contentItems[0].element, height);
+            // Root can be empty
+            if (this.contentItems.length > 0) {
+                setElementWidth(this.contentItems[0].element, width);
+                setElementHeight(this.contentItems[0].element, height);
+            }
+
+            this.updateContentItemsSize();
         }
-
-        this.updateContentItemsSize();
     }
-
 
     updateSize(): void {
         this.updateNodeSize();
@@ -86,6 +91,7 @@ export class Root extends AbstractContentItem {
         }
     }
 
+    /** @internal */
     createSideAreas(): Root.Area[] {
         const areaSize = 50;
 
@@ -112,12 +118,14 @@ export class Root extends AbstractContentItem {
         return result;
     }
 
-    _$highlightDropZone(x: number, y: number, area: AreaLinkedRect): void {
+    /** @internal */
+    highlightDropZone(x: number, y: number, area: AreaLinkedRect): void {
         this.layoutManager.tabDropPlaceholder.remove();
-        super._$highlightDropZone(x, y, area);
+        super.highlightDropZone(x, y, area);
     }
 
-    _$onDrop(contentItem: AbstractContentItem, area: Root.Area): void {
+    /** @internal */
+    onDrop(contentItem: AbstractContentItem, area: Root.Area): void {
 
         if (contentItem.isComponent) {
             const itemConfig = StackItemConfig.createDefault();
@@ -168,6 +176,7 @@ export class Root extends AbstractContentItem {
     }
 }
 
+/** @internal */
 export namespace Root {
     export interface Area extends AbstractContentItem.Area {
         side: keyof typeof Area.Side;
@@ -190,4 +199,6 @@ export namespace Root {
             x1: 'x2',
         };
     }
+
+    export const templateHtml = '<div class="lm_goldenlayout lm_item lm_root"></div>';
 }

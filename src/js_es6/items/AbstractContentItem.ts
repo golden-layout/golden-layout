@@ -17,13 +17,16 @@ import { getUniqueId, setElementDisplayVisibility } from '../utils/utils'
 
 
 export abstract class AbstractContentItem extends EventEmitter {
+    /** @internal */
     private _pendingEventPropagations: Record<string, unknown>;
+    /** @internal */
     private _throttledEvents: string[];
+    /** @internal */
     private _isInitialised;
+    /** @internal */
     private _isMaximised;
 
     contentItems: AbstractContentItem[];
-    element: HTMLElement;
     isRoot: boolean
     isRow: boolean
     isColumn: boolean
@@ -33,26 +36,16 @@ export abstract class AbstractContentItem extends EventEmitter {
     get type(): ItemConfig.Type { return this._config.type; }
     get parent(): AbstractContentItem | null { return this._parent; }
     get config(): ItemConfig { return this._config; }
+    get element(): HTMLElement { return this._element; }
     get isInitialised(): boolean { return this._isInitialised; }
     get isMaximised(): boolean { return this._isMaximised; }
 
-    /**
-    *
-    * @param {lm.LayoutManager} layoutManager
-    * @param {item node configuration} config
-    * @param {lm.item} _parent
-    *
-    * @event stateChanged
-    * @event beforeItemDestroyed
-    * @event itemDestroyed
-    * @event itemCreated
-    * @event componentCreated
-    * @event rowCreated
-    * @event columnCreated
-    * @event stackCreated
-    */
-    constructor(readonly layoutManager: LayoutManager, private _config: ItemConfig, private _parent: AbstractContentItem | null) {
-
+    /** @internal */
+    constructor(readonly layoutManager: LayoutManager,
+        private _config: ItemConfig,
+        private _parent: AbstractContentItem | null,
+        private readonly _element: HTMLElement
+    ) {
         super();
 
         this.contentItems = [];
@@ -180,7 +173,7 @@ export abstract class AbstractContentItem extends EventEmitter {
         contentItem.setParent(this);
 
         if (this._isInitialised === true && contentItem._isInitialised === false) {
-            contentItem._$init();
+            contentItem.init();
         }
     }
 
@@ -198,7 +191,7 @@ export abstract class AbstractContentItem extends EventEmitter {
         // newChild = this.layoutManager._$normalizeContentItem(newChild);
 
         const index = this.contentItems.indexOf(oldChild);
-        const parentNode = oldChild.element.parentNode;
+        const parentNode = oldChild._element.parentNode;
 
         if (index === -1) {
             throw new AssertError('CIRCI23232', 'Can\'t replace child. oldChild is not child of this');
@@ -207,7 +200,7 @@ export abstract class AbstractContentItem extends EventEmitter {
         if (parentNode === null) {
             throw new UnexpectedNullError('CIRCP23232');
         } else {
-            parentNode.replaceChild(newChild.element, oldChild.element);
+            parentNode.replaceChild(newChild._element, oldChild._element);
 
             /*
             * Optionally destroy the old content item
@@ -233,7 +226,7 @@ export abstract class AbstractContentItem extends EventEmitter {
                 throw new UnexpectedNullError('CIRCNC45699');
             } else {
                 if (newChild._parent._isInitialised === true && newChild._isInitialised === false) {
-                    newChild._$init();
+                    newChild.init();
                 }
 
                 this.updateSize();
@@ -287,7 +280,7 @@ export abstract class AbstractContentItem extends EventEmitter {
     select(): void {
         if (this.layoutManager.selectedItem !== this) {
             this.layoutManager.selectItem(this, true);
-            this.element.classList.add('lm_selected');
+            this._element.classList.add('lm_selected');
         }
     }
 
@@ -297,7 +290,7 @@ export abstract class AbstractContentItem extends EventEmitter {
     deselect(): void {
         if (this.layoutManager.selectedItem === this) {
             this.layoutManager.clearSelectedItem();
-            this.element.classList.remove('lm_selected');
+            this._element.classList.remove('lm_selected');
         }
     }
 
@@ -418,7 +411,7 @@ export abstract class AbstractContentItem extends EventEmitter {
         }
     }
 
-    _$highlightDropZone(x: number, y: number, area: AreaLinkedRect): void {
+    highlightDropZone(x: number, y: number, area: AreaLinkedRect): void {
         const dropTargetIndicator = this.layoutManager.dropTargetIndicator;
         if (dropTargetIndicator === null) {
             throw new UnexpectedNullError('ACIHDZ5593');
@@ -427,20 +420,21 @@ export abstract class AbstractContentItem extends EventEmitter {
         }
     }
 
+    /** @internal */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _$onDrop(contentItem: AbstractContentItem, area: AbstractContentItem.Area): void {
+    onDrop(contentItem: AbstractContentItem, area: AbstractContentItem.Area): void {
         this.addChild(contentItem);
     }
 
     _$hide(): void {
         this.layoutManager.hideAllActiveContentItems(); // not sure why this is done. (Code moved to Layout manager)
-        setElementDisplayVisibility(this.element, false);
+        setElementDisplayVisibility(this._element, false);
         this.layoutManager.updateSizeFromContainer();
     }
 
     _$show(): void {
         this.layoutManager.showAllActiveContentItems(); // not sure why this is done. (Code moved to Layout manager)
-        setElementDisplayVisibility(this.element, true);
+        setElementDisplayVisibility(this._element, true);
         this.layoutManager.updateSizeFromContainer();
 
         for (let i = 0; i < this.contentItems.length; i++) {
@@ -458,23 +452,16 @@ export abstract class AbstractContentItem extends EventEmitter {
         this.contentItems = [];
 
         this.emitBubblingEvent('beforeItemDestroyed');
-        this.element.remove();
+        this._element.remove();
         this.emitBubblingEvent('itemDestroyed');
     }
 
     /**
-     * Returns the area the component currently occupies in the format
-     *
-     * {
-     *		x1: int
-     *		xy: int
-     *		y1: int
-     *		y2: int
-     *		contentItem: contentItem
-     * }
+     * Returns the area the component currently occupies
+     * @internal
      */
     getElementArea(element?: HTMLElement): AbstractContentItem.Area | null {
-        element = element || this.element;
+        element = element ?? this._element;
 
         const offset = getJQueryOffset(element);
         const widthAndHeight = getJQueryWidthAndHeight(element);
@@ -495,12 +482,9 @@ export abstract class AbstractContentItem extends EventEmitter {
      * it can be used, extended or overwritten by the content items
      *
      * Its behaviour depends on the content item
-     *
-     * @package private
-     *
-     * @returns {void}
+     * @internal
      */
-    _$init(): void {
+    init(): void {
         this._isInitialised = true;
         this.emitBubblingEvent('itemCreated');
         this.emitUnknownBubblingEvent(this.type + 'Created');
@@ -512,7 +496,7 @@ export abstract class AbstractContentItem extends EventEmitter {
 
     protected initContentItems(): void {
         for (let i = 0; i < this.contentItems.length; i++) {
-            this.contentItems[i]._$init();
+            this.contentItems[i].init();
         }
     }
 

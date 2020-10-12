@@ -6,33 +6,34 @@ import { ComponentItem } from '../items/ComponentItem';
 import { LayoutManager } from '../LayoutManager';
 import { EventEmitter } from '../utils/EventEmitter';
 import { JsonValue } from '../utils/types';
-import { createTemplateHtmlElement, deepExtend, setElementHeight, setElementWidth } from '../utils/utils';
+import { deepExtend, setElementHeight, setElementWidth } from '../utils/utils';
 
 export class ComponentContainer extends EventEmitter {
-    width: number | null;
-    height: number | null;
-    readonly title;
-    isHidden;
-    readonly element;
+    private _width: number | null;
+    private _height: number | null;
+    private readonly _title;
+    private _isHidden;
     private readonly _contentElement;
     private _tab: Tab;
 
     get config(): ComponentConfig { return this._config; }
     get tab(): Tab { return this._tab; }
+    get width(): number | null { return this._width; }
+    get height(): number | null { return this._height; }
+    get title(): string { return this._title; }
+    get isHidden(): boolean { return this._isHidden; }
 
-    constructor(private readonly _config: ComponentConfig, public readonly parent: ComponentItem, public readonly layoutManager: LayoutManager) {
-
+    constructor(private readonly _config: ComponentConfig,
+        public readonly parent: ComponentItem,
+        public readonly layoutManager: LayoutManager,
+        private readonly element: HTMLElement
+    ) {
         super();
 
-        this.width = null;
-        this.height = null;
-        this.title = this._config.componentName;
-        this.isHidden = false;
-
-        this.element = createTemplateHtmlElement(
-            '<div class="lm_item_container"> ' +
-            '  <div class="lm_content"></div>' +
-            '</div>');
+        this._width = null;
+        this._height = null;
+        this._title = this._config.componentName;
+        this._isHidden = false;
 
         const contentElement = this.element.querySelector('.lm_content') as HTMLElement;
         if (contentElement === null) {
@@ -59,7 +60,7 @@ export class ComponentContainer extends EventEmitter {
      */
     hide(): void {
         this.emit('hide');
-        this.isHidden = true;
+        this._isHidden = true;
         this.element.style.display = 'none';
     }
 
@@ -72,10 +73,10 @@ export class ComponentContainer extends EventEmitter {
      */
     show(): void {
         this.emit('show');
-        this.isHidden = false;
+        this._isHidden = false;
         this.element.style.display = '';
         // emit shown only if the container has a valid size
-        if (this.height != 0 || this.width != 0) {
+        if (this._height != 0 || this._width != 0) {
             this.emit('shown');
         }
     }
@@ -224,9 +225,9 @@ export class ComponentContainer extends EventEmitter {
      * @returns {void}
      */
     _$setSize(width: number, height: number): void {
-        if (width !== this.width || height !== this.height) {
-            this.width = width;
-            this.height = height;
+        if (width !== this._width || height !== this._height) {
+            this._width = width;
+            this._height = height;
             // Previously tried to set offsetWidth and offsetHeight if full jQuery was available
             // There is no simple alternative for setting offsetWidth/offsetHeight
             // See if just setting width and height suffices.  If not, needs more work

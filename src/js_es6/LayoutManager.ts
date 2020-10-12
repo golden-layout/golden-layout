@@ -355,13 +355,18 @@ export abstract class LayoutManager extends EventEmitter {
         this.emit('initialised');
     }
 
+    /** @deprecated Use {@link setSize()} */
+    updateSize(width: number, height: number): void {
+        this.setSize(width, height);
+    }
+
     /**
      * Updates the layout managers size
      *
      * @param width  width in pixels
      * @param height height in pixels
      */
-    updateSize(width: number, height: number): void {
+    setSize(width: number, height: number): void {
         this._width = width;
         this._height = height;
 
@@ -385,7 +390,7 @@ export abstract class LayoutManager extends EventEmitter {
     updateSizeFromContainer(): void {
         const width = getElementWidth(this._container);
         const height = getElementWidth(this._container);
-        this.updateSize(width, height);
+        this.setSize(width, height);
     }
 
     /**
@@ -432,7 +437,7 @@ export abstract class LayoutManager extends EventEmitter {
 
     createAndInitContentItem(config: ItemConfig, parent: AbstractContentItem): AbstractContentItem {
         const newItem = this.createContentItem(config, parent);
-        newItem._$init();
+        newItem.init();
         return newItem;
     }
 
@@ -1084,7 +1089,7 @@ export abstract class LayoutManager extends EventEmitter {
         const rootConfig = ManagerConfig.createRootItemConfig(managerConfig);
 
         this._root = new Root(this, rootConfig, this._container);
-        this._root._$init();
+        this._root.init();
 
         if (managerConfig.maximisedItemId === '__glMaximised') {
             const maximisedItems = this._root.getItemsById(managerConfig.maximisedItemId);

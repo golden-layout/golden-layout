@@ -20,11 +20,11 @@ import {
 export class RowOrColumn extends AbstractContentItem {
     private readonly _childElementContainer: HTMLElement;
     private readonly _configType: ItemConfig.Type.row | ItemConfig.Type.column;
-    private _splitterSize: number;
-    private _splitterGrabSize: number;
-    private _isColumn: boolean;
-    private _dimension: ItemConfig.HeightOrWidthPropertyName;
-    private _splitter: Splitter[];
+    private readonly _isColumn: boolean;
+    private readonly _splitterSize: number;
+    private readonly _splitterGrabSize: number;
+    private readonly _dimension: ItemConfig.HeightOrWidthPropertyName;
+    private readonly _splitter: Splitter[] = [];
     private _splitterPosition: number | null;
     private _splitterMinPosition: number | null;
     private _splitterMaxPosition: number | null;
@@ -32,19 +32,16 @@ export class RowOrColumn extends AbstractContentItem {
     constructor(isColumn: boolean, layoutManager: LayoutManager, config: ItemConfig,
         private _rowOrColumnParent: AbstractContentItem
     ) {
-      
-        super(layoutManager, config, _rowOrColumnParent);
+        super(layoutManager, config, _rowOrColumnParent, createTemplateHtmlElement(RowOrColumn.createTemplateHtml(isColumn)));
 
         this.isRow = !isColumn;
         this.isColumn = isColumn;
 
-        this.element = createTemplateHtmlElement('<div class="lm_item lm_' + (isColumn ? 'column' : 'row') + '"></div>');
         this._childElementContainer = this.element;
         this._splitterSize = layoutManager.config.dimensions.borderWidth;
         this._splitterGrabSize = layoutManager.config.dimensions.borderGrabWidth;
         this._isColumn = isColumn;
         this._dimension = isColumn ? 'height' : 'width';
-        this._splitter = [];
         this._splitterPosition = null;
         this._splitterMinPosition = null;
         this._splitterMaxPosition = null;
@@ -337,12 +334,9 @@ export class RowOrColumn extends AbstractContentItem {
      * Invoked recursively by the layout manager. AbstractContentItem.init appends
      * the contentItem's DOM elements to the container, RowOrColumn init adds splitters
      * in between them
-     *
-     * @package private
-     * @override AbstractContentItem._$init
-     * @returns {void}
+     * @internal
      */
-    _$init(): void {
+    init(): void {
         if (this.isInitialised === true) return;
 
         this.updateNodeSize();
@@ -351,7 +345,7 @@ export class RowOrColumn extends AbstractContentItem {
             this._childElementContainer.appendChild(this.contentItems[i].element);
         }
 
-        super._$init();
+        super.init();
 
         for (let i = 0; i < this.contentItems.length - 1; i++) {
             this.contentItems[i].element.insertAdjacentElement('afterend', this.createSplitter(i).element);
@@ -781,5 +775,9 @@ export namespace RowOrColumn {
         } else {
             return setElementHeight(element, value);
         }
+    }
+
+    export function createTemplateHtml(isColumn: boolean): string {
+        return '<div class="lm_item lm_' + (isColumn ? 'column' : 'row') + '"></div>'
     }
 }

@@ -1,16 +1,20 @@
 import { UnexpectedNullError } from '../errors/internal-error';
 import { WidthAndHeight } from './types';
 
+/** @internal */
 export function getQueryStringParam(key: string): string | null {
     const matches = location.hash.match(new RegExp(key + '=([^&]*)'));
     return matches ? matches[1] : null;
 }
 
-// Caution! Try not to use this function.  Converting text to HTML can have security implications
-// While the templateText is not user generated and should be safe, some security reviews may reject
-// applications which use this technique regardless
-// https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML
-// Try creating fragments using javascript without HTML text
+/** @deprecated
+ * Caution! Try not to use this function.  Converting text to HTML can have security implications
+ * While the templateText is not user generated and should be safe, some security reviews may reject
+ * applications which use this technique regardless
+ * https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML
+ * Try creating fragments using javascript without HTML text
+ * @internal
+ */
 export function createTemplateHtmlElement(templateText: string): HTMLElement {
     const template = document.createElement('template')
     template.insertAdjacentHTML('afterbegin', templateText);
@@ -22,35 +26,42 @@ export function createTemplateHtmlElement(templateText: string): HTMLElement {
     }
 }
 
+/** @internal */
 export function numberToPixels(value: number): string {
     return value.toString(10) + 'px';
 }
 
+/** @internal */
 export function pixelsToNumber(value: string): number {
     const numberStr = value.replace("px", "");
     return parseFloat(numberStr);
 }
 
+/** @internal */
 export function getElementWidth(element: HTMLElement): number {
     const widthAsPixels = getComputedStyle(element).width;
     return pixelsToNumber(widthAsPixels);
 }
 
+/** @internal */
 export function setElementWidth(element: HTMLElement, width: number): void {
     const widthAsPixels = numberToPixels(width);
     element.style.width = widthAsPixels;
 }
 
+/** @internal */
 export function getElementHeight(element: HTMLElement): number {
     const heightAsPixels = getComputedStyle(element).height;
     return pixelsToNumber(heightAsPixels);
 }
 
+/** @internal */
 export function setElementHeight(element: HTMLElement, height: number): void {
     const heightAsPixels = numberToPixels(height);
     element.style.height = heightAsPixels;
 }
 
+/** @internal */
 export function getElementWidthAndHeight(element: HTMLElement): WidthAndHeight {
     const computedStyle = getComputedStyle(element);
     return {
@@ -59,6 +70,7 @@ export function getElementWidthAndHeight(element: HTMLElement): WidthAndHeight {
     };
 }
 
+/** @internal */
 export function setElementDisplayVisibility(element: HTMLElement, visible: boolean): void {
     if (visible) {
         element.style.display = 'none';
@@ -67,7 +79,10 @@ export function setElementDisplayVisibility(element: HTMLElement, visible: boole
     }
 }
 
-// replacement for JQuery $.extend(target, obj)
+/**
+ * Replacement for JQuery $.extend(target, obj)
+ * @internal
+*/
 export function extend(target: Record<string, unknown>, obj: Record<string, unknown>): Record<string, unknown> {
     for (const key in obj) {
         if (obj.hasOwnProperty(key)) {
@@ -77,7 +92,10 @@ export function extend(target: Record<string, unknown>, obj: Record<string, unkn
     return target;
 }
 
-// replacement for JQuery $.extend(true, target, ...objs)
+/**
+ * Replacement for JQuery $.extend(true, target, ...objs)
+ * @internal
+*/
 export function multiDeepExtend(target: Record<string, unknown>, ...objs: Record<string, unknown>[]): Record<string, unknown> {
     for (const obj of objs) {
         target = deepExtend(target, obj);
@@ -86,6 +104,10 @@ export function multiDeepExtend(target: Record<string, unknown>, ...objs: Record
     return target;
 }
 
+/**
+ * Replacement for JQuery $.extend(true, target, obj)
+ * @internal
+*/
 export function deepExtend(target: Record<string, unknown>, obj: Record<string, unknown> | undefined): Record<string, unknown> {
     if (obj !== undefined) {
         for (const key in obj) {
@@ -100,6 +122,7 @@ export function deepExtend(target: Record<string, unknown>, obj: Record<string, 
     return target;
 }
 
+/** @internal */
 export function deepExtendValue(existingTarget: unknown, value: unknown): unknown {
     if (typeof value !== 'object') {
         return value;
@@ -140,19 +163,16 @@ export function deepExtendValue(existingTarget: unknown, value: unknown): unknow
     }
 }
 
-/**
- * REPLACED with window.requestAnimationFrame using arrow function
- * I do not think animFrame() is needed anymore
- * 
- * This is based on Paul Irish's shim, but looks quite odd in comparison. Why?
- * Because
- * a) it shouldn't affect the global requestAnimationFrame function
- * b) it shouldn't pass on the time that has passed
- *
- * @param   {Function} fn
- *
- * @returns {void}
- */
+// REPLACED with window.requestAnimationFrame using arrow function
+// I do not think animFrame() is needed anymore
+// 
+// This is based on Paul Irish's shim, but looks quite odd in comparison. Why?
+// Because
+// a) it shouldn't affect the global requestAnimationFrame function
+// b) it shouldn't pass on the time that has passed
+//
+// @param   {Function} fn
+// @returns {void}
 // export function animFrame(fn) {
 //     return (window.requestAnimationFrame ||
 //         window.webkitRequestAnimationFrame ||
@@ -164,6 +184,7 @@ export function deepExtendValue(existingTarget: unknown, value: unknown): unknow
 //     });
 // }
 
+/** @internal */
 export function removeFromArray<T>(item: T, array: T[]): void {
     const index = array.indexOf(item);
 
@@ -174,6 +195,7 @@ export function removeFromArray<T>(item: T, array: T[]): void {
     array.splice(index, 1);
 }
 
+/** @internal */
 export function getUniqueId(): string {
     return (Math.random() * 1000000000000000)
         .toString(36)
@@ -182,11 +204,9 @@ export function getUniqueId(): string {
 
 /**
  * Removes html tags from a string
- *
- * @param   input
- * 
  * @returns input without tags
- */
+ * @internal
+*/
 export function stripTags(input: string): string {
     const strippedInput = input.replace(/(<([^>]+)>)/ig, '');
     return strippedInput.trim();

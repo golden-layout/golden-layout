@@ -1,12 +1,12 @@
 import { ComponentConfig, HeaderedItemConfig } from '../config/config';
 import { ComponentContainer } from '../container/ComponentContainer';
 import { Tab } from '../controls/Tab';
-import { AbstractContentItem } from './AbstractContentItem';
+import { UnexpectedUndefinedError } from '../errors/internal-error';
 import { LayoutManager } from '../LayoutManager';
 import { ReactComponentHandler } from '../utils/ReactComponentHandler';
-import { deepExtend, getElementHeight, getElementWidth } from '../utils/utils';
+import { createTemplateHtmlElement, deepExtend, getElementHeight, getElementWidth } from '../utils/utils';
+import { AbstractContentItem } from './AbstractContentItem';
 import { Stack } from './Stack';
-import { UnexpectedUndefinedError } from '../errors/internal-error';
 
 export class ComponentItem extends AbstractContentItem {
     private readonly _componentName: string;
@@ -23,7 +23,7 @@ export class ComponentItem extends AbstractContentItem {
     get tab(): Tab { return this._tab; }
 
     constructor(layoutManager: LayoutManager, private readonly _componentConfig: ComponentConfig, private _stack: Stack) {
-        super(layoutManager, _componentConfig, _stack);
+        super(layoutManager, _componentConfig, _stack, createTemplateHtmlElement(ComponentItem.templateHtml));
 
         let componentInstantiator: ComponentItem.ComponentInstantiator;
         let componentState: unknown;
@@ -57,7 +57,7 @@ export class ComponentItem extends AbstractContentItem {
         }
 
         this.isComponent = true;
-        this._container = new ComponentContainer(this._componentConfig, this, layoutManager);
+        this._container = new ComponentContainer(this._componentConfig, this, layoutManager, this.element);
         const componentConstructor = componentInstantiator.constructor;
         if (componentConstructor !== undefined) {
             this._component = new componentConstructor(this._container, componentState);
@@ -69,7 +69,6 @@ export class ComponentItem extends AbstractContentItem {
                 throw new UnexpectedUndefinedError('CIC10008');
             }
         }
-        this.element = this._container.element;
     }
 
     close(): void {
@@ -88,10 +87,11 @@ export class ComponentItem extends AbstractContentItem {
         }
     }
 
-    _$init(): void {
+    /** @internal */
+    init(): void {
         this.updateNodeSize();
 
-        super._$init();
+        super.init();
         this._container.emit('open');
         this.initContentItems();
     }
@@ -140,4 +140,9 @@ export namespace ComponentItem {
         constructor: ComponentConstructor | undefined;
         factoryFunction: ComponentFactoryFunction | undefined;
     }
+
+    export const templateHtml =
+        '<div class="lm_item_container"> ' +
+        '  <div class="lm_content"></div>' +
+        '</div>';
 }

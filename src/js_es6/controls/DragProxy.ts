@@ -166,7 +166,7 @@ export class DragProxy extends EventEmitter {
 
         if (this._area !== null) {
             this._lastValidArea = this._area;
-            this._area.contentItem._$highlightDropZone(x, y, this._area);
+            this._area.contentItem.highlightDropZone(x, y, this._area);
         }
     }
 
@@ -187,14 +187,14 @@ export class DragProxy extends EventEmitter {
          * Valid drop area found
          */
         if (this._area !== null) {
-            this._area.contentItem._$onDrop(this._contentItem, this._area);
+            this._area.contentItem.onDrop(this._contentItem, this._area);
 
             /**
              * No valid drop area available at present, but one has been found before.
              * Use it
              */
         } else if (this._lastValidArea !== null) {
-            this._lastValidArea.contentItem._$onDrop(this._contentItem, this._lastValidArea);
+            this._lastValidArea.contentItem.onDrop(this._contentItem, this._lastValidArea);
 
             /**
              * No valid drop area found during the duration of the drag. Return
