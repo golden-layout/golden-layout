@@ -1,0 +1,12 @@
+{
+    "extends": "./tsconfig.base.json",
+    "compilerOptions": {
+      "outDir": "dist/module",
+      "module": "es2015",
+      "declaration": true,
+      "declarationDir": "dist/types",
+      "sourceMap": true,
+      "inlineSourceMap": false
+    },
+    "include": [ "src" ]
+  }

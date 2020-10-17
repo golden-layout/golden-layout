@@ -12,7 +12,7 @@ module.exports = {
 
     output: {
         filename: '[name].bundle.js',
-        path: path.resolve(__dirname, 'dist/out-tsc'),
+        path: path.resolve(__dirname, 'dist/demo'),
     },
 
     watch: true,
@@ -32,7 +32,12 @@ module.exports = {
         rules: [
             {
                 test: /\.tsx?$/,
-                use: 'ts-loader',
+                use: {
+                    loader: 'ts-loader',
+                    options: {
+                        "configFile": "tsconfig.cjs.json",
+                    },
+                },
                 exclude: /node_modules/,
             },
             {
