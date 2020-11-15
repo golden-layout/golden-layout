@@ -30,7 +30,7 @@ export class DropTargetIndicator {
         this._element.style.top = numberToPixels(area.y1);
         this._element.style.width = numberToPixels(area.x2 - area.x1);
         this._element.style.height = numberToPixels(area.y2 - area.y1);
-        this._element.style.display = '';
+        this._element.style.display = 'block';
     }
 
     hide(): void {

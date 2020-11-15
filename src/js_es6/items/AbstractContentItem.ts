@@ -7,6 +7,7 @@ import { EventEmitter } from '../utils/EventEmitter'
 import { getJQueryOffset, getJQueryWidthAndHeight } from '../utils/jquery-legacy'
 import { AreaLinkedRect } from '../utils/types'
 import { getUniqueId, setElementDisplayVisibility } from '../utils/utils'
+import { Stack } from './Stack'
 
 /**
  * This is the baseclass that all content items inherit from.
@@ -41,6 +42,10 @@ export abstract class AbstractContentItem extends EventEmitter {
     get element(): HTMLElement { return this._element; }
     get isInitialised(): boolean { return this._isInitialised; }
     get isMaximised(): boolean { return this._isMaximised; }
+
+    static isStack(item: AbstractContentItem): item is Stack {
+        return item.isStack;
+    }
 
     /** @internal */
     constructor(readonly layoutManager: LayoutManager,

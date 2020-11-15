@@ -294,7 +294,7 @@ export class BrowserPopout extends EventEmitter {
      */
     private _onInitialised(): void {
         this._isInitialised = true;
-        this.getGlInstance().on('popIn', () => this.popIn);
+        this.getGlInstance().on('popIn', () => this.popIn());
         this.emit('initialised');
     }
 

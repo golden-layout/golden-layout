@@ -47,7 +47,7 @@ export class DragListener extends EventEmitter {
 
         this._bDragging = false;
 
-        this._eElement.addEventListener('mousedown', this._mouseUpEventListener);
+        this._eElement.addEventListener('mousedown', this._mouseDownEventListener);
         this._eElement.addEventListener('touchstart', this._touchStartEventListener);
     }
 
@@ -82,8 +82,8 @@ export class DragListener extends EventEmitter {
 
         this._oDocument.addEventListener('mousemove', this._mouseMoveEventListener);
         this._oDocument.addEventListener('touchmove', this._touchMoveEventListener);
-        this._eElement.addEventListener('mouseup', this._mouseUpEventListener);
-        this._eElement.addEventListener('touchend', this._touchEndEventListener);
+        this._oDocument.addEventListener('mouseup', this._mouseUpEventListener);
+        this._oDocument.addEventListener('touchend', this._touchEndEventListener);
 
         this._timeout = setTimeout(() => this.startDrag(), this._nDelay);
     }
@@ -131,6 +131,7 @@ export class DragListener extends EventEmitter {
             ) {
                 if (this._timeout !== undefined) {
                     clearTimeout(this._timeout);
+                    this._timeout = undefined;
                 }
                 this.startDrag();
             }
@@ -171,13 +172,14 @@ export class DragListener extends EventEmitter {
     }
 
     private processDragStop(dragEvent: EventEmitter.DragEvent) {
-        if (this._timeout != null) {
+        if (this._timeout !== undefined) {
             clearTimeout(this._timeout);
+            this._timeout = undefined;
             this._eBody.classList.remove('lm_dragging');
             this._eElement.classList.remove('lm_dragging');
             this._oDocument.querySelector('iframe')?.style.setProperty('pointer-events', '');
-            this._eElement.removeEventListener('mousemove', this._mouseMoveEventListener);
-            this._eElement.removeEventListener('touchmove', this._touchMoveEventListener);
+            this._oDocument.removeEventListener('mousemove', this._mouseMoveEventListener);
+            this._oDocument.removeEventListener('touchmove', this._touchMoveEventListener);
             this._oDocument.removeEventListener('mouseup', this._mouseUpEventListener);
             this._oDocument.removeEventListener('touchend', this._touchEndEventListener);
     

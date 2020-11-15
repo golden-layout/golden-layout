@@ -140,8 +140,9 @@ export class RowOrColumn extends AbstractContentItem {
         }
 
         if (splitterIndex < this._splitter.length) {
-            if (this.isDocked(splitterIndex))
-            setElementDisplayVisibility(this._splitter[splitterIndex].element, false);
+            if (this.isDocked(splitterIndex)) {
+                setElementDisplayVisibility(this._splitter[splitterIndex].element, false);
+            }
         }
 
         /**
@@ -157,7 +158,7 @@ export class RowOrColumn extends AbstractContentItem {
             }
         }
 
-        if(this.contentItems.length === 1){
+        if (this.contentItems.length === 1) {
             super.undisplayChild(contentItem);
         }
 

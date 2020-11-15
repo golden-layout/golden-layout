@@ -157,7 +157,7 @@ export class Header extends EventEmitter {
                 } else {
                     this._controlsContainerElement = controlsContainerElement as HTMLElement;
                     this._parent = _parent;
-                    this._parent.on('resize', () => this.updateTabSizes);
+                    this._parent.on('resize', () => this.updateTabSizes());
                     globalThis.document.addEventListener('mouseup', this._documentMouseUpListener);
 
                     this._tabControlOffset = this._layoutManager.config.settings.tabControlOffset;
@@ -347,7 +347,7 @@ export class Header extends EventEmitter {
         /**
          * Dropdown to show additional tabs.
          */
-        this._tabDropdownButton = new HeaderButton(this, this._tabDropdownLabel, 'lm_tabdropdown', () => this.showAdditionalTabsDropdown);
+        this._tabDropdownButton = new HeaderButton(this, this._tabDropdownLabel, 'lm_tabdropdown', () => this.showAdditionalTabsDropdown());
         setElementDisplayVisibility(this._tabDropdownButton.element, false);
 
         if (this._dockEnabled) {

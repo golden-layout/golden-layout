@@ -5,7 +5,7 @@ import { createTemplateHtmlElement, numberToPixels } from '../utils/utils';
 /** @internal */
 export class Splitter {
     private _grabSize;
-    private _dragListener;
+    private _dragListener: DragListener;
 
     readonly element;
 

@@ -101,7 +101,7 @@ export class DragProxy extends EventEmitter {
                 titleElement.insertAdjacentText('afterbegin', this._contentItem.config.title);
                 const childElementContainer = this._element.querySelector('.lm_content') as HTMLElement;
                 if (childElementContainer === null) {
-
+                    throw new UnexpectedNullError('DPCCC98826');
                 } else {
                     this._childElementContainer = childElementContainer;
                     this._childElementContainer.appendChild(this._contentItem.element);
@@ -238,9 +238,9 @@ export class DragProxy extends EventEmitter {
         // Parent is NO LONGER null if the drag had been initiated by a external drag source
         // If an external drag source initiated drag, then dummy parent will be used.  In this case
         // still remove child from (dummy) parent
-        // if (this._contentItem.parent !== null) {
-        //     this._contentItem.parent.removeChild(this._contentItem, true);
-        // }
+        if (this._contentItem.parent !== null) {
+            this._contentItem.parent.removeChild(this._contentItem, true);
+        }
 
         this._contentItem.setParent(this._contentItemParent);
     }

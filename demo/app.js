@@ -30,7 +30,7 @@ function run() {
   //
   // set layout type
   //
-  var layout = 'responsive'
+  var layout =  'mini'
 
   //
   // init
@@ -53,7 +53,12 @@ function run() {
 
   window.myLayout = GoldenLayout ? new GoldenLayout( config ) : new window.GoldenLayout( config )
 
-  myLayout.registerComponent( 'html', function( container, state ) {} )
+  myLayout.registerComponent( 'html', function( container, state ) {
+    var paraElement = document.createElement('p');
+    var title = container.config.title;
+    paraElement.innerHTML = (title ?? 'unknown') + ' component';
+    container.contentElement.appendChild(paraElement);
+  } )
 
   myLayout.init()
 

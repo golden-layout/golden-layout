@@ -308,8 +308,11 @@ export namespace ReactComponentConfig {
     }
 }
 
-// Root or RowOrColumn
+/** Base for Root or RowOrColumn ItemConfigs */
 export interface RowOrColumnOrStackParentItemConfig extends ItemConfig {
+    /** Note that Root and RowOrColumn ItemConfig contents, can contain ComponentItem itemConfigs.  However
+     * when ContentItems are created, these ComponentItem itemConfigs will create a Stack with a child ComponentItem.
+     */
     content: (RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig)[];
 }
 
@@ -414,9 +417,9 @@ export namespace ManagerConfig {
 
     export namespace Settings {
         export const enum ResponsiveMode {
-            'none',
-            'always',
-            'onload',
+            none = 'none',
+            always = 'always',
+            onload = 'onload',
         }
 
         export const defaults: ManagerConfig.Settings = {

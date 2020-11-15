@@ -152,7 +152,7 @@ namespace UserHeaderedItemConfig {
                 return undefined;
             } else {
                 const result: HeaderedItemConfig.Header = {
-                    show: userHeader?.show ?? hasHeaders === undefined ? undefined : hasHeaders ? ManagerConfig.Header.defaults.show : false,
+                    show: userHeader?.show ?? (hasHeaders === undefined ? undefined : hasHeaders ? ManagerConfig.Header.defaults.show : false),
                     popout: userHeader?.popout,
                     dock: userHeader?.dock,
                     maximise: userHeader?.maximise,
@@ -631,12 +631,12 @@ export namespace UserManagerConfig {
             }
             const result: ManagerConfig.Header = {
                 show,
-                popout: userHeader?.popout ?? userLabels?.popout ?? ManagerConfig.Header.defaults.popout,
-                dock: userHeader?.popin ?? userLabels?.popin ?? ManagerConfig.Header.defaults.dock,
-                maximise: userHeader?.maximise ?? userLabels?.maximise ?? ManagerConfig.Header.defaults.maximise,
-                close: userHeader?.close ?? userLabels?.close ?? ManagerConfig.Header.defaults.close,
-                minimise: userHeader?.minimise ?? userLabels?.minimise ?? ManagerConfig.Header.defaults.minimise,
-                tabDropdown: userHeader?.tabDropdown ?? userLabels?.tabDropdown ?? ManagerConfig.Header.defaults.tabDropdown,
+                popout: userHeader?.popout ?? (userLabels?.popout ?? ManagerConfig.Header.defaults.popout),
+                dock: userHeader?.popin ?? (userLabels?.popin ?? ManagerConfig.Header.defaults.dock),
+                maximise: userHeader?.maximise ?? (userLabels?.maximise ?? ManagerConfig.Header.defaults.maximise),
+                close: userHeader?.close ?? (userLabels?.close ?? ManagerConfig.Header.defaults.close),
+                minimise: userHeader?.minimise ?? (userLabels?.minimise ?? ManagerConfig.Header.defaults.minimise),
+                tabDropdown: userHeader?.tabDropdown ?? (userLabels?.tabDropdown ?? ManagerConfig.Header.defaults.tabDropdown),
             }
             return result;
         }

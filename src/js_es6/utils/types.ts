@@ -12,10 +12,10 @@ export interface LeftAndTop {
 
 /** @internal */
 export const enum Side {
-    'top',
-    'left',
-    'right',
-    'bottom',
+    top = 'top',
+    left = 'left',
+    right = 'right',
+    bottom = 'bottom',
 }
 
 /** @internal */

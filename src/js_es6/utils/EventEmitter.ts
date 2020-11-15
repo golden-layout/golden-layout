@@ -22,7 +22,7 @@ export class EventEmitter {
             subcriptions = subcriptions.slice();
             for (let i = 0; i < subcriptions.length; i++) {
                 const subscription = subcriptions[i];
-                subscription(args);
+                subscription(...args);
             }
         }
 
@@ -43,7 +43,7 @@ export class EventEmitter {
         if (subs !== undefined) {
             subs = subs.slice();
             for (let i = 0; i < subs.length; i++) {
-                subs[i](args);
+                subs[i](...args);
             }
         }
 
@@ -52,7 +52,7 @@ export class EventEmitter {
         const allEventSubs = this._allEventSubscriptions.slice();
 
         for (let i = 0; i < allEventSubs.length; i++) {
-            allEventSubs[i](args);
+            allEventSubs[i](...args);
         }
     }
 

@@ -113,32 +113,33 @@ export class Stack extends AbstractContentItem {
     }
 
     private updateNodeSize(): void {
-        if (this.element.style.display === 'none') return;
-        const isDocked = this._docker.docked,
-            content = {
+        if (this.element.style.display !== 'none') {
+            const isDocked = this._docker.docked;
+            const content = {
                 width: getElementWidth(this.element),
                 height: getElementHeight(this.element),
             };
 
-        if (this._header.show) {
-            content[this._header.leftRightSided ? 'width' : 'height'] -= this.layoutManager.config.dimensions.headerHeight;
-        }
-        if (isDocked) {
-            content[this._docker.dimension] = this._docker.realSize;
-        }
-        if (!isDocked || this._docker.dimension === 'height') {
-            this._childElementContainer.style.width = numberToPixels(content.width);
-        }
-        if (!isDocked || this._docker.dimension === 'width') {
-            this._childElementContainer.style.height = numberToPixels(content.height);
-        }
+            if (this._header.show) {
+                content[this._header.leftRightSided ? 'width' : 'height'] -= this.layoutManager.config.dimensions.headerHeight;
+            }
+            if (isDocked) {
+                content[this._docker.dimension] = this._docker.realSize;
+            }
+            if (!isDocked || this._docker.dimension === 'height') {
+                this._childElementContainer.style.width = numberToPixels(content.width);
+            }
+            if (!isDocked || this._docker.dimension === 'width') {
+                this._childElementContainer.style.height = numberToPixels(content.height);
+            }
 
-        for (let i = 0; i < this.contentItems.length; i++) {
-            this.contentItems[i].element.style.width = numberToPixels(content.width);
-            this.contentItems[i].element.style.height = numberToPixels(content.height);
+            for (let i = 0; i < this.contentItems.length; i++) {
+                this.contentItems[i].element.style.width = numberToPixels(content.width);
+                this.contentItems[i].element.style.height = numberToPixels(content.height);
+            }
+            this.emit('resize');
+            this.emitBubblingEvent('stateChanged');
         }
-        this.emit('resize');
-        this.emitBubblingEvent('stateChanged');
     }
 
     /** @internal */
@@ -290,7 +291,8 @@ export class Stack extends AbstractContentItem {
             this.setActiveContentItem(this.contentItems[index === 0 ? index+1 : index-1] as ComponentItem)
         } else {
             this._header.hideTab(contentItem);
-            contentItem._$hide && contentItem._$hide()
+            contentItem._$hide();
+            this._$hide();
             super.undisplayChild(contentItem);
             if (this._stackParent.isRow || this._stackParent.isColumn) {
                 this._stackParent.validateDocking();

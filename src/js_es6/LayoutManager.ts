@@ -397,7 +397,7 @@ export abstract class LayoutManager extends EventEmitter {
 
     updateSizeFromContainer(): void {
         const width = getElementWidth(this._container);
-        const height = getElementWidth(this._container);
+        const height = getElementHeight(this._container);
         this.setSize(width, height);
     }
 
@@ -807,11 +807,11 @@ export abstract class LayoutManager extends EventEmitter {
 
     getArea(x: number, y: number): AbstractContentItem.Area | null {
         let mathingArea = null;
+        let smallestSurface = Infinity;
 
         for (let i = 0; i < this._itemAreas.length; i++) {
             const area = this._itemAreas[i];
 
-            let smallestSurface = Infinity;
             if (
                 x > area.x1 &&
                 x < area.x2 &&
@@ -828,6 +828,7 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     calculateItemAreas(): void {
+        const allContentItems = this.getAllContentItems();
         /**
          * If the last item is dragged out, highlight the entire container size to
          * allow to re-drop it. this.root.contentiItems.length === 0 at this point
@@ -839,7 +840,7 @@ export abstract class LayoutManager extends EventEmitter {
         if (root === null) {
             throw new UnexpectedNullError('LMCIAR44365');
         } else {
-            if (root.contentItems.length === 0) {
+            if (allContentItems.length === 1) {
                 const rootArea = root.getElementArea();
                 if (rootArea === null) {
                     throw new UnexpectedNullError('LMCIARA44365')
@@ -851,36 +852,36 @@ export abstract class LayoutManager extends EventEmitter {
                 // sides of layout
                 this._itemAreas = root.createSideAreas();
 
-                const allStacks = this.getAllStacks();
-                
-                for (let i = 0; i < allStacks.length; i++) {
-                    const stack = allStacks[i];
-                    const area = stack.getArea();
+                for (let i = 0; i < allContentItems.length; i++) {
+                    const stack = allContentItems[i];
+                    if (AbstractContentItem.isStack(stack)) {
+                        const area = stack.getArea();
 
-                    if (area === null) {
-                        continue;
-                    } else {
-                        // This does not look correct. Stack.getArea() never returns an array.  Needs review
-                        if (area instanceof Array) {
-                            this._itemAreas = this._itemAreas.concat(area);
+                        if (area === null) {
+                            continue;
                         } else {
-                            this._itemAreas.push(area);
-                            const stackContentAreaDimensions = stack.contentAreaDimensions;
-                            if (stackContentAreaDimensions === null) {
-                                throw new UnexpectedNullError('LMCIASC45599');
+                            // This does not look correct. Stack.getArea() never returns an array.  Needs review
+                            if (area instanceof Array) {
+                                this._itemAreas = this._itemAreas.concat(area);
                             } else {
-                                const highlightArea = stackContentAreaDimensions.header.highlightArea
-                                const surface = (highlightArea.x2 - highlightArea.x1) * (highlightArea.y2 - highlightArea.y1);
+                                this._itemAreas.push(area);
+                                const stackContentAreaDimensions = stack.contentAreaDimensions;
+                                if (stackContentAreaDimensions === null) {
+                                    throw new UnexpectedNullError('LMCIASC45599');
+                                } else {
+                                    const highlightArea = stackContentAreaDimensions.header.highlightArea
+                                    const surface = (highlightArea.x2 - highlightArea.x1) * (highlightArea.y2 - highlightArea.y1);
 
-                                const header: AbstractContentItem.Area = {
-                                    x1: highlightArea.x1,
-                                    x2: highlightArea.x2,
-                                    y1: highlightArea.y1,
-                                    y2: highlightArea.y2,
-                                    contentItem: stack,
-                                    surface,
-                                };
-                                this._itemAreas.push(header);
+                                    const header: AbstractContentItem.Area = {
+                                        x1: highlightArea.x1,
+                                        x2: highlightArea.x2,
+                                        y1: highlightArea.y1,
+                                        y2: highlightArea.y2,
+                                        contentItem: stack,
+                                        surface,
+                                    };
+                                    this._itemAreas.push(header);
+                                }
                             }
                         }
                     }
@@ -943,10 +944,6 @@ export abstract class LayoutManager extends EventEmitter {
     /**
      * Returns a flattened array of all content items,
      * regardles of level or type
-     *
-     * @private
-     *
-     * @returns {void}
      */
     private getAllContentItems() {
         if (this._root === null) {

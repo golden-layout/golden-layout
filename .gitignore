@@ -5,3 +5,4 @@ typings
 npm-debug.log
 dist
 /doc
+debug.log
