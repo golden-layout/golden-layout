@@ -1,10 +1,9 @@
 import { HeaderedItemConfig, ItemConfig, StackItemConfig } from '../config/config';
-import { DragProxy } from '../controls/DragProxy';
-import { Header } from '../controls/Header';
+import { DragProxy } from '../controls/drag-proxy';
+import { Header } from '../controls/header';
 import { AssertError, UnexpectedNullError } from '../errors/internal-error';
-import { AbstractContentItem } from '../items/AbstractContentItem';
-import { LayoutManager } from '../LayoutManager';
-import { DragListener } from '../utils/DragListener';
+import { LayoutManager } from '../layout-manager';
+import { DragListener } from '../utils/drag-listener';
 import { getJQueryOffset } from '../utils/jquery-legacy';
 import { AreaLinkedRect, Side, WidthAndHeight } from '../utils/types';
 import {
@@ -15,11 +14,12 @@ import {
     numberToPixels,
     setElementDisplayVisibility
 } from '../utils/utils';
-import { ComponentItem } from './ComponentItem';
+import { ComponentItem } from './component-item';
+import { ContentItem } from './content-item';
 
 
 
-export class Stack extends AbstractContentItem {
+export class Stack extends ContentItem {
     /** @internal */
     private readonly _header: Header;
     /** @internal */
@@ -195,8 +195,8 @@ export class Stack extends AbstractContentItem {
     }
 
     /** @deprecated Use {@link setActiveComponentItem} */
-    setActiveContentItem(item: AbstractContentItem): void {
-        if (!AbstractContentItem.isComponentItem(item)) {
+    setActiveContentItem(item: ContentItem): void {
+        if (!ContentItem.isComponentItem(item)) {
             throw new Error('Stack.setActiveContentItem: item is not a ComponentItem');
         } else {
             this.setActiveComponentItem(item);
@@ -222,8 +222,8 @@ export class Stack extends AbstractContentItem {
     }
 
     /** @deprecated Use {@link getActiveComponentItem} */
-    getActiveContentItem(): AbstractContentItem | null {
-        let result: AbstractContentItem | null;
+    getActiveContentItem(): ContentItem | null {
+        let result: ContentItem | null;
         result = this.getActiveComponentItem();
         if (result === undefined) {
             result = null;
@@ -264,7 +264,7 @@ export class Stack extends AbstractContentItem {
         this._header.setRowColumnClosable(value);
     }
 
-    addChild(contentItem: AbstractContentItem, index: number): void {
+    addChild(contentItem: ContentItem, index: number): void {
         if(index > this.contentItems.length){
             /* 
              * UGLY PATCH: PR #428, commit a4e84ec5 fixed a bug appearing on touchscreens during the drag of a panel. 
@@ -296,7 +296,7 @@ export class Stack extends AbstractContentItem {
         }
     }
 
-    removeChild(contentItem: AbstractContentItem, keepChild: boolean): void {
+    removeChild(contentItem: ContentItem, keepChild: boolean): void {
         const index = this.contentItems.indexOf(contentItem);
         this._header.removeTab(contentItem);
         const stackWillBeDeleted = this.contentItems.length === 1;
@@ -315,7 +315,7 @@ export class Stack extends AbstractContentItem {
         }
     }
 
-    // undisplayChild(contentItem: AbstractContentItem): void {
+    // undisplayChild(contentItem: ContentItem): void {
     //     if(this.contentItems.length > 1){
     //         const index = this.contentItems.indexOf(contentItem);
     //         contentItem._$hide && contentItem._$hide()
@@ -377,7 +377,7 @@ export class Stack extends AbstractContentItem {
      * @internal
      */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    onDrop(contentItem: AbstractContentItem, area: AbstractContentItem.Area): void {
+    onDrop(contentItem: ContentItem, area: ContentItem.Area): void {
         /*
          * The item was dropped on the header area. Just add it as a child of this stack and
          * get the hell out of this logic
@@ -494,7 +494,7 @@ export class Stack extends AbstractContentItem {
     }
 
     /** @internal */
-    getArea(): AbstractContentItem.Area | null {
+    getArea(): ContentItem.Area | null {
         if (this.element.style.display === 'none') {
             return null;
         }
@@ -637,7 +637,7 @@ export class Stack extends AbstractContentItem {
     }
 
     /** @internal */
-    protected processChildReplaced(index: number, newChild: AbstractContentItem): void {
+    protected processChildReplaced(index: number, newChild: ContentItem): void {
         if (!(newChild instanceof ComponentItem)) {
             throw new AssertError('SPCR11056'); // Stacks can only have Component children
         } else {
@@ -797,7 +797,7 @@ export class Stack extends AbstractContentItem {
     }
 
     /** @internal */
-    setParent(parent: AbstractContentItem): void {
+    setParent(parent: ContentItem): void {
         this._stackParent = parent as Stack.Parent;
         super.setParent(parent);
     }
@@ -928,7 +928,7 @@ export namespace Stack {
         realSize: number;
     }
 
-    export interface Parent extends AbstractContentItem {
+    export interface Parent extends ContentItem {
         dock(contentItem: Stack, mode?: boolean, collapsed?: boolean): void;
         validateDocking(): void;
     }

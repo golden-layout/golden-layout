@@ -1,9 +1,9 @@
 import { UnexpectedNullError } from '../errors/internal-error';
-import { AbstractContentItem } from '../items/AbstractContentItem';
-import { Stack } from '../items/Stack';
-import { LayoutManager } from '../LayoutManager';
-import { DragListener } from '../utils/DragListener';
-import { EventEmitter } from '../utils/EventEmitter';
+import { ContentItem } from '../items/content-item';
+import { Stack } from '../items/stack';
+import { LayoutManager } from '../layout-manager';
+import { DragListener } from '../utils/drag-listener';
+import { EventEmitter } from '../utils/event-emitter';
 import { getJQueryOffset } from '../utils/jquery-legacy';
 import { Side } from '../utils/types';
 import {
@@ -31,15 +31,15 @@ const _template = '<div class="lm_dragProxy">' +
  * and handles drag events
  */
 export class DragProxy extends EventEmitter {
-    private _area: AbstractContentItem.Area | null;
-    private _lastValidArea: AbstractContentItem.Area | null;
+    private _area: ContentItem.Area | null;
+    private _lastValidArea: ContentItem.Area | null;
     private _minX: number;
     private _minY: number;
     private _maxX: number;
     private _maxY: number;
     private _width: number;
     private _height: number;
-    private _contentItemParent: AbstractContentItem;
+    private _contentItemParent: ContentItem;
     private _sided: boolean;
     private _childElementContainer: HTMLElement;
     private _element: HTMLElement;
@@ -54,8 +54,8 @@ export class DragProxy extends EventEmitter {
     constructor(x: number, y: number,
         private readonly _dragListener: DragListener,
         private readonly _layoutManager: LayoutManager,
-        private readonly _contentItem: AbstractContentItem,
-        private readonly _originalParent: AbstractContentItem) {
+        private readonly _contentItem: ContentItem,
+        private readonly _originalParent: ContentItem) {
 
         super();
 

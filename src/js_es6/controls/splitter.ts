@@ -1,5 +1,5 @@
-import { DragListener } from '../utils/DragListener';
-import { EventEmitter } from '../utils/EventEmitter';
+import { DragListener } from '../utils/drag-listener';
+import { EventEmitter } from '../utils/event-emitter';
 import { createTemplateHtmlElement, numberToPixels } from '../utils/utils';
 
 /** @internal */

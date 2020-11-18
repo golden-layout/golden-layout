@@ -1,13 +1,13 @@
 import { HeaderedItemConfig, ItemConfig, RootItemConfig, RowOrColumnOrStackParentItemConfig, StackItemConfig } from '../config/config';
 import { AssertError, UnexpectedNullError } from '../errors/internal-error';
-import { AbstractContentItem } from '../items/AbstractContentItem';
-import { RowOrColumn } from '../items/RowOrColumn';
-import { LayoutManager } from '../LayoutManager';
+import { LayoutManager } from '../layout-manager';
 import { AreaLinkedRect } from '../utils/types';
 import { createTemplateHtmlElement, getElementWidthAndHeight, setElementHeight, setElementWidth } from '../utils/utils';
-import { ComponentItem } from './ComponentItem';
+import { ComponentItem } from './component-item';
+import { ContentItem } from './content-item';
+import { RowOrColumn } from './row-or-column';
 
-export class Root extends AbstractContentItem {
+export class Root extends ContentItem {
     /** @internal */
     private readonly _childElementContainer;
     /** @internal */
@@ -39,7 +39,7 @@ export class Root extends AbstractContentItem {
         this.initContentItems();
     }
 
-    addChild(contentItem: AbstractContentItem, index?: number): void {
+    addChild(contentItem: ContentItem, index?: number): void {
         if (this.contentItems.length > 0) {
             throw new Error('Root node can only have a single child');
         }
@@ -126,7 +126,7 @@ export class Root extends AbstractContentItem {
     }
 
     /** @internal */
-    onDrop(contentItem: AbstractContentItem, area: Root.Area): void {
+    onDrop(contentItem: ContentItem, area: Root.Area): void {
 
         if (contentItem.isComponent) {
             const itemConfig = StackItemConfig.createDefault();
@@ -195,7 +195,7 @@ export class Root extends AbstractContentItem {
 
 /** @internal */
 export namespace Root {
-    export interface Area extends AbstractContentItem.Area {
+    export interface Area extends ContentItem.Area {
         side: keyof typeof Area.Side;
     }
 

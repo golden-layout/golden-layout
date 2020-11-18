@@ -1,10 +1,10 @@
 import { ManagerConfig, PopoutManagerConfig } from '../config/config';
 import { PopoutBlockedError } from '../errors/external-error';
 import { AssertError, UnexpectedNullError } from '../errors/internal-error';
-import { AbstractContentItem } from '../items/AbstractContentItem';
-import { LayoutManager } from '../LayoutManager';
-import { ConfigMinifier } from '../utils/ConfigMinifier';
-import { EventEmitter } from '../utils/EventEmitter';
+import { ContentItem } from '../items/content-item';
+import { LayoutManager } from '../layout-manager';
+import { ConfigMinifier } from '../utils/config-minifier';
+import { EventEmitter } from '../utils/event-emitter';
 import { Rect } from '../utils/types';
 import { deepExtend, getUniqueId } from '../utils/utils';
 
@@ -117,7 +117,7 @@ export class BrowserPopout extends EventEmitter {
      * parent isn't available anymore it falls back to the layout's topmost element
      */
     popIn(): void {
-        let parentItem: AbstractContentItem;
+        let parentItem: ContentItem;
         let index = this._config.indexInParent;
 
         if (this._config.parentId) {

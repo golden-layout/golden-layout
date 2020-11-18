@@ -1,5 +1,5 @@
-import { LayoutManager } from '../LayoutManager';
-import { EventEmitter } from '../utils/EventEmitter';
+import { LayoutManager } from '../layout-manager';
+import { EventEmitter } from './event-emitter';
 
 /**
  * An EventEmitter singleton that propagates events

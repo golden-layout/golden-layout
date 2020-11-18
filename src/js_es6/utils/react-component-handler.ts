@@ -1,9 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { ReactComponentConfig } from '../config/config';
-import { ComponentContainer } from '../container/ComponentContainer';
+import { ComponentContainer } from '../container/component-container';
 import { UnexpectedNullError } from '../errors/internal-error';
-import { ComponentItem } from '../items/ComponentItem';
+import { ComponentItem } from '../items/component-item';
 import { JsonValue } from './types';
 import { extend } from './utils';
 

@@ -1,9 +1,9 @@
 import { ItemConfig, ManagerConfig } from '../config/config';
-import { DragProxy } from '../controls/DragProxy';
 import { UnexpectedNullError } from '../errors/internal-error';
-import { Root } from '../items/Root';
-import { LayoutManager } from '../LayoutManager';
-import { DragListener } from '../utils/DragListener';
+import { Root } from '../items/root';
+import { LayoutManager } from '../layout-manager';
+import { DragListener } from '../utils/drag-listener';
+import { DragProxy } from './drag-proxy';
 
 /**
  * Allows for any DOM item to create a component on drag

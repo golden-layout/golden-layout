@@ -8,20 +8,20 @@ import {
     RowOrColumnItemConfig,
     StackItemConfig
 } from './config/config'
-import { BrowserPopout } from './controls/BrowserPopout'
-import { DragSource } from './controls/DragSource'
-import { DropTargetIndicator } from './controls/DropTargetIndicator'
-import { TransitionIndicator } from './controls/TransitionIndicator'
+import { BrowserPopout } from './controls/browser-popout'
+import { DragSource } from './controls/drag-source'
+import { DropTargetIndicator } from './controls/drop-target-indicator'
+import { TransitionIndicator } from './controls/transition-indicator'
 import { ApiError, ConfigurationError } from './errors/external-error'
 import { AssertError, UnexpectedNullError, UnreachableCaseError } from './errors/internal-error'
-import { AbstractContentItem } from './items/AbstractContentItem'
-import { ComponentItem } from './items/ComponentItem'
-import { Root } from './items/Root'
-import { RowOrColumn } from './items/RowOrColumn'
-import { Stack } from './items/Stack'
-import { ConfigMinifier } from './utils/ConfigMinifier'
-import { EventEmitter } from './utils/EventEmitter'
-import { EventHub } from './utils/EventHub'
+import { ComponentItem } from './items/component-item'
+import { ContentItem } from './items/content-item'
+import { Root } from './items/root'
+import { RowOrColumn } from './items/row-or-column'
+import { Stack } from './items/stack'
+import { ConfigMinifier } from './utils/config-minifier'
+import { EventEmitter } from './utils/event-emitter'
+import { EventHub } from './utils/event-hub'
 import { I18nStringId, I18nStrings, i18nStrings } from './utils/i18n-strings'
 import { getJQueryLeftAndTop } from './utils/jquery-legacy'
 import { Rect } from './utils/types'
@@ -64,9 +64,9 @@ export abstract class LayoutManager extends EventEmitter {
     /** @internal */
     private _componentConstructors: Record<string, ComponentItem.ComponentInstantiator> = {};
     /** @internal */
-    private _itemAreas: AbstractContentItem.Area[] = [];
+    private _itemAreas: ContentItem.Area[] = [];
     /** @internal */
-    private _maximisedItem: AbstractContentItem | null = null;
+    private _maximisedItem: ContentItem | null = null;
     /** @internal */
     private _maximisePlaceholder = createTemplateHtmlElement('<div class="lm_maximise_place"></div>');
     /** @internal */
@@ -84,7 +84,7 @@ export abstract class LayoutManager extends EventEmitter {
     /** @internal */
     private _height: number | null = null;
     /** @internal */
-    private _selectedItem: AbstractContentItem | null = null;
+    private _selectedItem: ContentItem | null = null;
 
     /** @internal */
     private _getComponentConstructorFtn: LayoutManager.GetComponentConstructorFtn;
@@ -97,7 +97,7 @@ export abstract class LayoutManager extends EventEmitter {
     private _maximisedItemBeforeDestroyedListener = (ev: EventEmitter.BubblingEvent) => this.cleanupBeforeMaximisedItemDestroyed(ev);
 
     /** @internal */
-    protected get maximisedItem(): AbstractContentItem | null { return this._maximisedItem; }
+    protected get maximisedItem(): ContentItem | null { return this._maximisedItem; }
 
     public isSubWindow: boolean;
     public managerConfig: ManagerConfig;
@@ -114,7 +114,7 @@ export abstract class LayoutManager extends EventEmitter {
     get height(): number | null { return this._height; }
     /** @internal */
     get eventHub(): EventHub { return this._eventHub; }
-    get selectedItem(): AbstractContentItem | null { return this._selectedItem; }
+    get selectedItem(): ContentItem | null { return this._selectedItem; }
     /** @internal */
     get tabDropPlaceholder(): HTMLElement { return this._tabDropPlaceholder; }
 
@@ -261,7 +261,7 @@ export abstract class LayoutManager extends EventEmitter {
             throw new Error('Can\'t create config, layout not yet initialised');
         } else {
 
-            // if (root !== undefined && !(root instanceof AbstractContentItem)) {
+            // if (root !== undefined && !(root instanceof ContentItem)) {
             //     throw new Error('Root must be a ContentItem');
             // }
 
@@ -426,7 +426,7 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /** @internal */
-    createAndInitContentItem(config: ItemConfig, parent: AbstractContentItem): AbstractContentItem {
+    createAndInitContentItem(config: ItemConfig, parent: ContentItem): ContentItem {
         const newItem = this.createContentItem(config, parent);
         newItem.init();
         return newItem;
@@ -440,7 +440,7 @@ export abstract class LayoutManager extends EventEmitter {
      * @param   parent The item the newly created item should be a child of
      * @internal
      */
-    createContentItem(config: ItemConfig, parent: AbstractContentItem): AbstractContentItem {
+    createContentItem(config: ItemConfig, parent: ContentItem): ContentItem {
         if (typeof config.type !== 'string') {
             throw new ConfigurationError('Missing parameter \'type\'', JSON.stringify(config));
         }
@@ -492,18 +492,18 @@ export abstract class LayoutManager extends EventEmitter {
      * Creates a popout window with the specified content at the specified position
      *
      * @param   itemConfigContentOrContentItem The content of the popout window's layout manager derived from either
-     * a {@link AbstractContentItem ContentItem} or {@link ItemConfig} or ItemConfig content (array of {@link ItemConfig})
+     * a {@link ContentItem ContentItem} or {@link ItemConfig} or ItemConfig content (array of {@link ItemConfig})
      * @param   positionAndSize The width, height, left and top of Popout window
      * @param   parentId The id of the element this item will be appended to when popIn is called
      * @param   indexInParent The position of this item within its parent element
      */
 
-    createPopout(itemConfigContentOrContentItem: AbstractContentItem | ItemConfig | ItemConfig[],
+    createPopout(itemConfigContentOrContentItem: ContentItem | ItemConfig | ItemConfig[],
         positionAndSize: PopoutManagerConfig.Window,
         parentId: string | null,
         indexInParent: number | null
     ): BrowserPopout {
-        if (itemConfigContentOrContentItem instanceof AbstractContentItem) {
+        if (itemConfigContentOrContentItem instanceof ContentItem) {
             return this.createPopoutFromContentItem(itemConfigContentOrContentItem, positionAndSize, parentId, indexInParent);
         } else {
             let itemConfigArray: readonly (RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig)[];
@@ -529,7 +529,7 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /** @internal */
-    createPopoutFromContentItem(item: AbstractContentItem,
+    createPopoutFromContentItem(item: ContentItem,
         window: PopoutManagerConfig.Window | undefined,
         parentId: string | null,
         indexInParent: number | null | undefined,
@@ -675,7 +675,7 @@ export abstract class LayoutManager extends EventEmitter {
      * @param   silent Wheather to notify the item of its selection
      * @event   selectionChanged
      */
-    selectItem(item: AbstractContentItem, silent: boolean): void {
+    selectItem(item: ContentItem, silent: boolean): void {
 
         if (this.managerConfig.settings.selectionEnabled !== true) {
             throw new Error('Please set selectionEnabled to true to use this feature');
@@ -704,7 +704,7 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /** @internal */
-    private createContentItemFromConfig(config: ItemConfig, parent: AbstractContentItem): AbstractContentItem {
+    private createContentItemFromConfig(config: ItemConfig, parent: ContentItem): ContentItem {
         switch (config.type) {
             case ItemConfig.Type.root: return new Root(this, config as RootItemConfig, this._container);
             case ItemConfig.Type.row: return new RowOrColumn(false, this, config as RowOrColumnItemConfig, parent);
@@ -719,7 +719,7 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /** @internal */
-    maximiseItem(contentItem: AbstractContentItem): void {
+    maximiseItem(contentItem: ContentItem): void {
         if (this._maximisedItem !== null) {
             this.minimiseItem(this._maximisedItem);
         }
@@ -742,7 +742,7 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /** @internal */
-    minimiseItem(contentItem: AbstractContentItem): void {
+    minimiseItem(contentItem: ContentItem): void {
         if (contentItem.parent === null) {
             throw new UnexpectedNullError('LMMI13668');
         } else {
@@ -819,7 +819,7 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /** @internal */
-    getArea(x: number, y: number): AbstractContentItem.Area | null {
+    getArea(x: number, y: number): ContentItem.Area | null {
         let mathingArea = null;
         let smallestSurface = Infinity;
 
@@ -869,7 +869,7 @@ export abstract class LayoutManager extends EventEmitter {
 
                 for (let i = 0; i < allContentItems.length; i++) {
                     const stack = allContentItems[i];
-                    if (AbstractContentItem.isStack(stack)) {
+                    if (ContentItem.isStack(stack)) {
                         const area = stack.getArea();
 
                         if (area === null) {
@@ -887,7 +887,7 @@ export abstract class LayoutManager extends EventEmitter {
                                     const highlightArea = stackContentAreaDimensions.header.highlightArea
                                     const surface = (highlightArea.x2 - highlightArea.x1) * (highlightArea.y2 - highlightArea.y1);
 
-                                    const header: AbstractContentItem.Area = {
+                                    const header: ContentItem.Area = {
                                         x1: highlightArea.x1,
                                         x2: highlightArea.x2,
                                         y1: highlightArea.y1,
@@ -938,7 +938,7 @@ export abstract class LayoutManager extends EventEmitter {
         if (this._root === null) {
             throw new UnexpectedNullError('LMGACI13130');
         } else {
-            const allContentItems: AbstractContentItem[] = [this._root];
+            const allContentItems: ContentItem[] = [this._root];
             this._root.deepAddChildContentItems(allContentItems);
             return allContentItems;
         }
@@ -1118,7 +1118,7 @@ export abstract class LayoutManager extends EventEmitter {
      * @param node - Node to search for content items.
      * @internal
      */
-    private addChildContentItemsToContainer(container: AbstractContentItem, node: AbstractContentItem) {
+    private addChildContentItemsToContainer(container: ContentItem, node: ContentItem) {
         const contentItems = node.contentItems;
         if (node instanceof Stack) {
             for (let i = 0; i < contentItems.length; i++) {
@@ -1157,7 +1157,7 @@ export abstract class LayoutManager extends EventEmitter {
      * @param node Current node to process.
      * @internal
      */
-    private findAllStacksRecursive(stacks: Stack[], node: AbstractContentItem) {
+    private findAllStacksRecursive(stacks: Stack[], node: ContentItem) {
         const contentItems = node.contentItems;
         for (let i = 0; i < contentItems.length; i++) {
             const item = contentItems[i];

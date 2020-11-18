@@ -1,14 +1,14 @@
 import { ComponentItemConfig, HeaderedItemConfig } from '../config/config';
-import { ComponentContainer } from '../container/ComponentContainer';
-import { Tab } from '../controls/Tab';
+import { ComponentContainer } from '../container/component-container';
+import { Tab } from '../controls/tab';
 import { UnexpectedUndefinedError } from '../errors/internal-error';
-import { LayoutManager } from '../LayoutManager';
-import { ReactComponentHandler } from '../utils/ReactComponentHandler';
+import { LayoutManager } from '../layout-manager';
+import { ReactComponentHandler } from '../utils/react-component-handler';
 import { createTemplateHtmlElement, deepExtend, getElementWidthAndHeight } from '../utils/utils';
-import { AbstractContentItem } from './AbstractContentItem';
-import { Stack } from './Stack';
+import { ContentItem } from './content-item';
+import { Stack } from './stack';
 
-export class ComponentItem extends AbstractContentItem {
+export class ComponentItem extends ContentItem {
     /** @internal */
     private readonly _componentName: string;
     /** @internal */

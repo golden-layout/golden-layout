@@ -1,14 +1,14 @@
 import { ItemConfig } from '../config/config'
-import { BrowserPopout } from '../controls/BrowserPopout'
+import { BrowserPopout } from '../controls/browser-popout'
 import { ConfigurationError } from '../errors/external-error'
 import { AssertError, UnexpectedNullError } from '../errors/internal-error'
-import { LayoutManager } from '../LayoutManager'
-import { EventEmitter } from '../utils/EventEmitter'
+import { LayoutManager } from '../layout-manager'
+import { EventEmitter } from '../utils/event-emitter'
 import { getJQueryOffset, getJQueryWidthAndHeight } from '../utils/jquery-legacy'
 import { AreaLinkedRect } from '../utils/types'
 import { getUniqueId, setElementDisplayVisibility } from '../utils/utils'
-import { ComponentItem } from './ComponentItem'
-import { Stack } from './Stack'
+import { ComponentItem } from './component-item'
+import { Stack } from './stack'
 
 /**
  * This is the baseclass that all content items inherit from.
@@ -17,9 +17,9 @@ import { Stack } from './Stack'
  * It also provides a number of functions for tree traversal
  */
 
-export abstract class AbstractContentItem extends EventEmitter {
+export abstract class ContentItem extends EventEmitter {
     /** @internal */
-    private _contentItems: AbstractContentItem[];
+    private _contentItems: ContentItem[];
     /** @internal */
     private _pendingEventPropagations: Record<string, unknown>;
     /** @internal */
@@ -36,25 +36,25 @@ export abstract class AbstractContentItem extends EventEmitter {
     isComponent: boolean
 
     get type(): ItemConfig.Type { return this._config.type; }
-    get parent(): AbstractContentItem | null { return this._parent; }
+    get parent(): ContentItem | null { return this._parent; }
     get config(): ItemConfig { return this._config; }
-    get contentItems(): AbstractContentItem[] { return this._contentItems; }
+    get contentItems(): ContentItem[] { return this._contentItems; }
     get element(): HTMLElement { return this._element; }
     get isInitialised(): boolean { return this._isInitialised; }
     get isMaximised(): boolean { return this._isMaximised; }
 
-    static isStack(item: AbstractContentItem): item is Stack {
+    static isStack(item: ContentItem): item is Stack {
         return item.isStack;
     }
 
-    static isComponentItem(item: AbstractContentItem): item is ComponentItem {
+    static isComponentItem(item: ContentItem): item is ComponentItem {
         return item.isComponent;
     }
 
     /** @internal */
     constructor(readonly layoutManager: LayoutManager,
         private _config: ItemConfig,
-        private _parent: AbstractContentItem | null,
+        private _parent: ContentItem | null,
         private readonly _element: HTMLElement
     ) {
         super();
@@ -84,7 +84,7 @@ export abstract class AbstractContentItem extends EventEmitter {
     /**
      * Removes a child node (and its children) from the tree
      */
-    removeChild(contentItem: AbstractContentItem, keepChild = false): void {
+    removeChild(contentItem: ContentItem, keepChild = false): void {
         /*
          * Get the position of the item that's to be removed within all content items this node contains
          */
@@ -149,7 +149,7 @@ export abstract class AbstractContentItem extends EventEmitter {
      * @param suspendResize Used by descendent implementations
      */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    addChild(contentItem: AbstractContentItem, index?: number | null, suspendResize?: boolean): void {
+    addChild(contentItem: ContentItem, index?: number | null, suspendResize?: boolean): void {
         index ??= this._contentItems.length;
 
         this._contentItems.splice(index, 0, contentItem);
@@ -176,12 +176,12 @@ export abstract class AbstractContentItem extends EventEmitter {
      * Replaces oldChild with newChild. This used to use jQuery.replaceWith... which for
      * some reason removes all event listeners, so isn't really an option.
      *
-     * @param   {AbstractContentItem} oldChild
-     * @param   {AbstractContentItem} newChild
+     * @param   {ContentItem} oldChild
+     * @param   {ContentItem} newChild
      *
      * @returns {void}
      */
-    replaceChild(oldChild: AbstractContentItem, newChild: AbstractContentItem, _$destroyOldChild = false): void {
+    replaceChild(oldChild: ContentItem, newChild: ContentItem, _$destroyOldChild = false): void {
 
         // newChild = this.layoutManager._$normalizeContentItem(newChild);
 
@@ -357,8 +357,8 @@ export abstract class AbstractContentItem extends EventEmitter {
         }
     }
 
-    getItemsById(id: string): AbstractContentItem[] {
-        const result: AbstractContentItem[] = [];
+    getItemsById(id: string): ContentItem[] {
+        const result: ContentItem[] = [];
         this.deepFilterAddChildContentItems(result, (item) => ItemConfig.idEqualsOrContainsId(item._config.id, id));
         return result;
     }
@@ -381,7 +381,7 @@ export abstract class AbstractContentItem extends EventEmitter {
     }
 
     /** @internal */
-    deepAddChildContentItems(contentItems: AbstractContentItem[]): void {
+    deepAddChildContentItems(contentItems: ContentItem[]): void {
         for (let i = 0; i < this._contentItems.length; i++) {
             const contentItem = this._contentItems[i];
             contentItems.push(contentItem);
@@ -401,7 +401,7 @@ export abstract class AbstractContentItem extends EventEmitter {
 
     /** @internal */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    onDrop(contentItem: AbstractContentItem, area: AbstractContentItem.Area): void {
+    onDrop(contentItem: ContentItem, area: ContentItem.Area): void {
         this.addChild(contentItem);
     }
 
@@ -435,7 +435,7 @@ export abstract class AbstractContentItem extends EventEmitter {
      * Returns the area the component currently occupies
      * @internal
      */
-    getElementArea(element?: HTMLElement): AbstractContentItem.Area | null {
+    getElementArea(element?: HTMLElement): ContentItem.Area | null {
         element = element ?? this._element;
 
         const offset = getJQueryOffset(element);
@@ -466,7 +466,7 @@ export abstract class AbstractContentItem extends EventEmitter {
     }
 
     /** @internal */
-    setParent(parent: AbstractContentItem): void {
+    setParent(parent: ContentItem): void {
         this._parent = parent;
     }
 
@@ -493,7 +493,7 @@ export abstract class AbstractContentItem extends EventEmitter {
 
     /** @internal */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    protected processChildReplaced(index: number, newChild: AbstractContentItem): void {
+    protected processChildReplaced(index: number, newChild: ContentItem): void {
         // virtual function to allow descendants to further process replaceChild()
     }
 
@@ -507,7 +507,7 @@ export abstract class AbstractContentItem extends EventEmitter {
             throw new ConfigurationError('content must be an Array', JSON.stringify(config));
         } else {
             const count = config.content.length;
-            const result = new Array<AbstractContentItem>(count);
+            const result = new Array<ContentItem>(count);
             for (let i = 0; i < config.content.length; i++) {
                 result[i] = this.layoutManager.createContentItem(config.content[i], this);
             }
@@ -516,8 +516,8 @@ export abstract class AbstractContentItem extends EventEmitter {
     }
 
     /** @internal */
-    private deepFilterAddChildContentItems(contentItems: AbstractContentItem[],
-        checkAcceptFtn: ((this: void, item: AbstractContentItem) => boolean)
+    private deepFilterAddChildContentItems(contentItems: ContentItem[],
+        checkAcceptFtn: ((this: void, item: ContentItem) => boolean)
     ): void {
         for (let i = 0; i < this._contentItems.length; i++) {
             const contentItem = this._contentItems[i];
@@ -591,9 +591,12 @@ export abstract class AbstractContentItem extends EventEmitter {
 }
 
 /** @internal */
-export namespace AbstractContentItem {
+export namespace ContentItem {
     export interface Area extends AreaLinkedRect {
         surface: number;
-        contentItem: AbstractContentItem;
+        contentItem: ContentItem;
     }
 }
+
+/** @deprecated Use {@link ContentItem} */
+export type AbstractContentItem = ContentItem;

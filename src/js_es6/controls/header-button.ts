@@ -1,5 +1,5 @@
 import { createTemplateHtmlElement } from '../utils/utils';
-import { Header } from './Header';
+import { Header } from './header';
 
 /** @internal */
 export class HeaderButton {

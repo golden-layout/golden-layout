@@ -1,9 +1,7 @@
 import { ItemConfig, RowOrColumnItemConfig } from '../config/config'
-import { Splitter } from '../controls/Splitter'
+import { Splitter } from '../controls/splitter'
 import { AssertError, UnexpectedNullError } from '../errors/internal-error'
-import { AbstractContentItem } from '../items/AbstractContentItem'
-import { Stack } from '../items/Stack'
-import { LayoutManager } from '../LayoutManager'
+import { LayoutManager } from '../layout-manager'
 import { Side } from '../utils/types'
 import {
     createTemplateHtmlElement,
@@ -17,8 +15,10 @@ import {
 
     setElementWidth
 } from '../utils/utils'
+import { ContentItem } from './content-item'
+import { Stack } from './stack'
 
-export class RowOrColumn extends AbstractContentItem {
+export class RowOrColumn extends ContentItem {
     /** @internal */
     private readonly _childElementContainer: HTMLElement;
     /** @internal */
@@ -42,7 +42,7 @@ export class RowOrColumn extends AbstractContentItem {
 
     /** @internal */
     constructor(isColumn: boolean, layoutManager: LayoutManager, config: RowOrColumnItemConfig,
-        private _rowOrColumnParent: AbstractContentItem
+        private _rowOrColumnParent: ContentItem
     ) {
         super(layoutManager, config, _rowOrColumnParent, createTemplateHtmlElement(RowOrColumn.createTemplateHtml(isColumn)));
 
@@ -72,7 +72,7 @@ export class RowOrColumn extends AbstractContentItem {
     /**
      * Add a new contentItem to the Row or Column
      *
-     * @param {AbstractContentItem} contentItem
+     * @param {ContentItem} contentItem
      * @param {[int]} index The position of the new item within the Row or Column.
      *                      If no index is provided the item will be added to the end
      * @param {[bool]} _$suspendResize If true the items won't be resized. This will leave the item in
@@ -81,7 +81,7 @@ export class RowOrColumn extends AbstractContentItem {
      *
      * @returns {void}
      */
-    addChild(contentItem: AbstractContentItem, index: number | undefined, _$suspendResize: boolean): void {
+    addChild(contentItem: ContentItem, index: number | undefined, _$suspendResize: boolean): void {
 
         // contentItem = this.layoutManager._$normalizeContentItem(contentItem, this);
 
@@ -134,7 +134,7 @@ export class RowOrColumn extends AbstractContentItem {
     // /**
     //  * Undisplays a child of this element
     //  */
-    // undisplayChild(contentItem: AbstractContentItem): void {
+    // undisplayChild(contentItem: ContentItem): void {
     //     const undisplayedItemSize = contentItem.config[this._dimension];
     //     const index = this.contentItems.indexOf(contentItem);
     //     const splitterIndex = Math.max(index - 1, 0);
@@ -186,7 +186,7 @@ export class RowOrColumn extends AbstractContentItem {
      * @param   keepChild   If true the child will be removed, but not destroyed
      *
      */
-    removeChild(contentItem: AbstractContentItem, keepChild: boolean): void {
+    removeChild(contentItem: ContentItem, keepChild: boolean): void {
         const removedItemSize = contentItem.config[this._dimension];
         const index = this.contentItems.indexOf(contentItem);
         const splitterIndex = Math.max(index - 1, 0);
@@ -240,7 +240,7 @@ export class RowOrColumn extends AbstractContentItem {
     /**
      * Replaces a child of this Row or Column with another contentItem
      */
-    replaceChild(oldChild: AbstractContentItem, newChild: AbstractContentItem): void {
+    replaceChild(oldChild: ContentItem, newChild: ContentItem): void {
         const size = oldChild.config[this._dimension];
         super.replaceChild(oldChild, newChild);
         newChild.config[this._dimension] = size;
@@ -259,7 +259,7 @@ export class RowOrColumn extends AbstractContentItem {
     /**
      * Dock or undock a child if it posiible
      *
-     * @param   {AbstractContentItem} contentItem
+     * @param   {ContentItem} contentItem
      * @param   {Boolean} mode or toggle if undefined
      * @param   {Boolean} collapsed after docking
      */
@@ -335,7 +335,7 @@ export class RowOrColumn extends AbstractContentItem {
     }
 
     /**
-     * Invoked recursively by the layout manager. AbstractContentItem.init appends
+     * Invoked recursively by the layout manager. ContentItem.init appends
      * the contentItem's DOM elements to the container, RowOrColumn init adds splitters
      * in between them
      * @internal
@@ -368,7 +368,7 @@ export class RowOrColumn extends AbstractContentItem {
     }
 
     /** @internal */
-    setParent(parent: AbstractContentItem): void {
+    setParent(parent: ContentItem): void {
         this._rowOrColumnParent = parent;
         super.setParent(parent);
     }
@@ -483,7 +483,7 @@ export class RowOrColumn extends AbstractContentItem {
     private calculateRelativeSizes() {
 
         let total = 0;
-        const itemsWithoutSetDimension: AbstractContentItem[] = [];
+        const itemsWithoutSetDimension: ContentItem[] = [];
 
         for (let i = 0; i < this.contentItems.length; i++) {
             if (this.contentItems[i].config[this._dimension] !== undefined) {

@@ -1,14 +1,14 @@
-import { HeaderButton } from '../controls/HeaderButton';
-import { Tab } from '../controls/Tab';
 import { AssertError, UnexpectedNullError, UnexpectedUndefinedError } from '../errors/internal-error';
-import { AbstractContentItem } from '../items/AbstractContentItem';
-import { ComponentItem } from '../items/ComponentItem';
-import { Stack } from '../items/Stack';
-import { LayoutManager } from '../LayoutManager';
-import { DragListener } from '../utils/DragListener';
-import { EventEmitter } from '../utils/EventEmitter';
+import { ComponentItem } from '../items/component-item';
+import { ContentItem } from '../items/content-item';
+import { Stack } from '../items/stack';
+import { LayoutManager } from '../layout-manager';
+import { DragListener } from '../utils/drag-listener';
+import { EventEmitter } from '../utils/event-emitter';
 import { Side } from '../utils/types';
 import { createTemplateHtmlElement, numberToPixels, pixelsToNumber, setElementDisplayVisibility } from '../utils/utils';
+import { HeaderButton } from './header-button';
+import { Tab } from './tab';
 
 /** @internal */
 const _template = 
@@ -107,7 +107,7 @@ export class Header extends EventEmitter {
      * Caution: Returns active Tab but not necessarily Stack.activeComponentItem
      * Active Tab may not equal Stack.activeContentItem if Header.setActiveContentItem() is used
      * @deprecated use {@link Stack.getActiveComponentItem} */
-    get activeContentItem(): AbstractContentItem | null {
+    get activeContentItem(): ContentItem | null {
         if (this._activeComponentItem === undefined) {
             return null;
         } else {
@@ -254,7 +254,7 @@ export class Header extends EventEmitter {
      * Finds a tab based on the contentItem its associated with and removes it.
      * @param    componentItem
      */
-    removeTab(componentItem: AbstractContentItem): void {
+    removeTab(componentItem: ContentItem): void {
         for (let i = 0; i < this._tabs.length; i++) {
             if (this._tabs[i].componentItem === componentItem) {
                 const tab = this._tabs[i];
@@ -275,8 +275,8 @@ export class Header extends EventEmitter {
      * Caution: Will not change Stack ActiveContentItem
      * @deprecated use {@link Stack.setActiveComponentItem}
      */
-    setActiveContentItem(item: AbstractContentItem): void {
-        if (!AbstractContentItem.isComponentItem(item)) {
+    setActiveContentItem(item: ContentItem): void {
+        if (!ContentItem.isComponentItem(item)) {
             throw new Error('Header.setActiveContentItem: item is not a ComponentItem');
         } else {
             this.setActiveComponentItem(item);

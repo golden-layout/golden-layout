@@ -1,7 +1,7 @@
 import { Config, ManagerConfig, PopoutManagerConfig } from './config/config';
-import { UserConfig } from './config/UserConfig';
-import { LayoutManager } from './LayoutManager';
-import { ConfigMinifier } from './utils/ConfigMinifier';
+import { UserConfig } from './config/user-config';
+import { LayoutManager } from './layout-manager';
+import { ConfigMinifier } from './utils/config-minifier';
 import { createTemplateHtmlElement, getQueryStringParam, stripTags } from './utils/utils';
 
 export class GoldenLayout extends LayoutManager {

@@ -1,10 +1,10 @@
 import { ComponentItemConfig } from '../config/config';
-import { Tab } from '../controls/Tab';
+import { Tab } from '../controls/tab';
 import { AssertError, UnexpectedNullError } from '../errors/internal-error';
-import { AbstractContentItem } from '../items/AbstractContentItem';
-import { ComponentItem } from '../items/ComponentItem';
-import { LayoutManager } from '../LayoutManager';
-import { EventEmitter } from '../utils/EventEmitter';
+import { ComponentItem } from '../items/component-item';
+import { ContentItem } from '../items/content-item';
+import { LayoutManager } from '../layout-manager';
+import { EventEmitter } from '../utils/event-emitter';
 import { JsonValue } from '../utils/types';
 import { deepExtend, setElementHeight, setElementWidth } from '../utils/utils';
 
@@ -99,11 +99,11 @@ export class ComponentContainer extends EventEmitter {
      * @returns resizeSuccesful
      */
     setSize(width: number, height: number): boolean {
-        let ancestorItem: AbstractContentItem | null = this._parent;
+        let ancestorItem: ContentItem | null = this._parent;
         if (ancestorItem.isColumn || ancestorItem.isRow || ancestorItem.parent === null) {
             throw new AssertError('ICSSPRC', 'ComponentContainer cannot have RowColumn Parent');
         } else {
-            let ancestorChildItem: AbstractContentItem;
+            let ancestorChildItem: ContentItem;
             do {
                 ancestorChildItem = ancestorItem;
                 ancestorItem = ancestorItem.parent;

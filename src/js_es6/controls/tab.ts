@@ -1,7 +1,7 @@
 import { UnexpectedNullError, UnexpectedUndefinedError } from '../errors/internal-error';
-import { ComponentItem } from '../items/ComponentItem';
-import { LayoutManager } from '../LayoutManager';
-import { DragListener } from '../utils/DragListener';
+import { ComponentItem } from '../items/component-item';
+import { LayoutManager } from '../layout-manager';
+import { DragListener } from '../utils/drag-listener';
 import { createTemplateHtmlElement, stripTags } from '../utils/utils';
 
 /** @internal */
