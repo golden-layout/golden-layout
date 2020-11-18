@@ -1,7 +1,6 @@
 /**
  * A generic and very fast EventEmitter implementation. On top of emitting the actual event it emits an
- * {@link EventEmitter.ALL_EVENT }
- * event for every event triggered. This allows to hook into it and proxy events forwards
+ * ALL_EVENT event for every event triggered. This allows to hook into it and proxy events forwards
  */
 export class EventEmitter {
     /** @internal */
@@ -200,7 +199,6 @@ export namespace EventEmitter {
     export type DragStopParams = [event: DragEvent];
     export type DragParams = [offsetX: number, offsetY: number, event: DragEvent];
 
-    /** @internal */
     export class BubblingEvent {
         name: string;
         isPropagationStopped: boolean;

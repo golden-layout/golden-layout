@@ -23,7 +23,6 @@
     "baseUrl": "./",
     "sourceMap": true,
     "declaration": true,
-    "stripInternal": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "typeRoots": [

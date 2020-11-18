@@ -4,20 +4,20 @@ import { deepExtendValue } from '../utils/utils';
 
 export interface ItemConfig {
     // see UserItemConfig for comments
-    type: ItemConfig.Type;
-    content: ItemConfig[];
+    readonly type: ItemConfig.Type;
+    content: readonly ItemConfig[];
     width: number;
-    minWidth: number;
+    readonly minWidth: number;
     height: number;
-    minHeight: number;
+    readonly minHeight: number;
     // Currently id has 2 purposes. It can be used by user to identify Items and it is also used to track which Item is maximised
     // This is confusing
     // It should be refactored to only exist for User purposes
     // A new property "maximised: true | undefined" should be added to track which Item is maximised
     id: string | string[];
-    isClosable: boolean;
+    readonly isClosable: boolean;
     title: string;
-    reorderEnabled: boolean; // Takes precedence over ManagerConfig.reorderEnabled. Should be settings.reorderEnabled
+    readonly reorderEnabled: boolean; // Takes precedence over ManagerConfig.reorderEnabled. Should be settings.reorderEnabled
 }
 
 export namespace ItemConfig {
@@ -43,7 +43,7 @@ export namespace ItemConfig {
         isClosable: true,
         reorderEnabled: true,
         title: '',
-    }
+    } as const;
 
     /** Creates a copy of the original ItemConfig using an alternative content if specified */
     export function createCopy(original: ItemConfig, content?: ItemConfig[]): ItemConfig {
@@ -98,6 +98,10 @@ export namespace ItemConfig {
         }
     }
 
+    export function isRoot(itemConfig: ItemConfig): itemConfig is RootItemConfig {
+        return itemConfig.type === ItemConfig.Type.root;
+    }
+
     export function isComponentItem(itemConfig: ItemConfig): itemConfig is ComponentItemConfig {
         return itemConfig.type === ItemConfig.Type.component || itemConfig.type === ItemConfig.Type.reactComponent;
     }
@@ -111,22 +115,22 @@ export interface HeaderedItemConfig extends ItemConfig {
 export namespace HeaderedItemConfig {
     export interface Header {
         // undefined means get property value from ManagerConfig
-        show: false | Side | undefined;
-        popout: false | string | undefined;
-        dock: false | string | undefined;
-        maximise: false | string | undefined;
-        close: string | undefined;
-        minimise: string | undefined;
-        tabDropdown: false | string | undefined;
+        readonly show: false | Side | undefined;
+        readonly popout: false | string | undefined;
+        readonly dock: false | string | undefined;
+        readonly maximise: false | string | undefined;
+        readonly close: string | undefined;
+        readonly minimise: string | undefined;
+        readonly tabDropdown: false | string | undefined;
     }
 
     export namespace Header {
-        export function createCopy(original: Header | undefined): Header | undefined {
+        export function createCopy(original: Header | undefined, show?: false | Side): Header | undefined {
             if (original === undefined) {
                 return undefined;
             } else {
                 return {
-                    show: original.show,
+                    show: show ?? original.show,
                     popout: original.popout,
                     dock: original.dock,
                     close: original.close,
@@ -140,8 +144,8 @@ export namespace HeaderedItemConfig {
 }
 
 export interface StackItemConfig extends HeaderedItemConfig {
-    type: ItemConfig.Type.stack;
-    content: ComponentItemConfig[];
+    readonly type: ItemConfig.Type.stack;
+    readonly content: ComponentItemConfig[];
     activeItemIndex: number;
 }
 
@@ -199,7 +203,7 @@ export interface ComponentItemConfig extends HeaderedItemConfig {
     /**
      * The name of the component as specified in layout.registerComponent. Mandatory if type is 'component'.
      */
-    componentName: string;
+    readonly componentName: string;
 }
 
 export namespace ComponentItemConfig {
@@ -213,7 +217,7 @@ export namespace ComponentItemConfig {
 
 export interface SerialisableComponentConfig extends ComponentItemConfig {
     // see UserJsonComponentConfig for comments
-    type: ItemConfig.Type.component;
+    readonly type: ItemConfig.Type.component;
     componentState: JsonValue;
 }
 
@@ -259,8 +263,8 @@ export namespace SerialisableComponentConfig {
 
 export interface ReactComponentConfig extends ComponentItemConfig {
     // see UserReactComponentConfig for comments
-    type: ItemConfig.Type.reactComponent;
-    component: string;
+    readonly type: ItemConfig.Type.reactComponent;
+    readonly component: string;
     props?: unknown;
 }
 
@@ -313,7 +317,7 @@ export interface RowOrColumnOrStackParentItemConfig extends ItemConfig {
     /** Note that Root and RowOrColumn ItemConfig contents, can contain ComponentItem itemConfigs.  However
      * when ContentItems are created, these ComponentItem itemConfigs will create a Stack with a child ComponentItem.
      */
-    content: (RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig)[];
+    readonly content: readonly (RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig)[];
 }
 
 export namespace RowOrColumnOrStackParentItemConfig {
@@ -350,7 +354,7 @@ export namespace RowOrColumnOrStackParentItemConfig {
         return result;
     }
 
-    export function copyContent(original: ChildItemConfig[]): ChildItemConfig[] {
+    export function copyContent(original: readonly ChildItemConfig[]): ChildItemConfig[] {
         const count = original.length;
         const result = new Array<ChildItemConfig>(count);
         for (let i = 0; i < count; i++) {
@@ -377,42 +381,42 @@ export namespace RowOrColumnOrStackParentItemConfig {
 }
 
 export interface RowOrColumnItemConfig extends RowOrColumnOrStackParentItemConfig {
-    type: ItemConfig.Type.row | ItemConfig.Type.column;
+    readonly type: ItemConfig.Type.row | ItemConfig.Type.column;
 }
 
 export interface RootItemConfig extends RowOrColumnOrStackParentItemConfig {
-    type: ItemConfig.Type.root;
+    readonly type: ItemConfig.Type.root;
 }
 
 export interface ManagerConfig {
-    content: (RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig)[];
-    openPopouts: PopoutManagerConfig[];
-    dimensions: ManagerConfig.Dimensions;
-    settings: ManagerConfig.Settings;
-    header: ManagerConfig.Header;
+    readonly content: readonly (RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig)[];
+    readonly openPopouts: PopoutManagerConfig[];
+    readonly dimensions: ManagerConfig.Dimensions;
+    readonly settings: ManagerConfig.Settings;
+    readonly header: ManagerConfig.Header;
     // maximisedItemId should be removed in future
     // Instead LayoutManager should scan Config Items for first Item with property maximised = true
     // when it first loads config
     // See comments on property "id" in ItemConfig
-    maximisedItemId: string | null;
+    readonly maximisedItemId: string | null;
 }
 
 export namespace ManagerConfig {
     export interface Settings {
         // see UserConfig.Settings for comments
-        constrainDragToContainer: boolean;
-        reorderEnabled: boolean; // also in ItemConfig which takes precedence
-        selectionEnabled: boolean;
-        popoutWholeStack: boolean;
-        blockedPopoutsThrowError: boolean;
-        closePopoutsOnUnload: boolean;
-        showPopoutIcon: boolean;
-        showMaximiseIcon: boolean;
-        showCloseIcon: boolean;
-        responsiveMode: Settings.ResponsiveMode;
-        tabOverlapAllowance: number;
-        reorderOnTabMenuClick: boolean;
-        tabControlOffset: number;
+        readonly constrainDragToContainer: boolean;
+        readonly reorderEnabled: boolean; // also in ItemConfig which takes precedence
+        readonly selectionEnabled: boolean;
+        readonly popoutWholeStack: boolean;
+        readonly blockedPopoutsThrowError: boolean;
+        readonly closePopoutsOnUnload: boolean;
+        readonly showPopoutIcon: boolean;
+        readonly showMaximiseIcon: boolean;
+        readonly showCloseIcon: boolean;
+        readonly responsiveMode: Settings.ResponsiveMode;
+        readonly tabOverlapAllowance: number;
+        readonly reorderOnTabMenuClick: boolean;
+        readonly tabControlOffset: number;
     }
 
     export namespace Settings {
@@ -436,7 +440,7 @@ export namespace ManagerConfig {
             tabOverlapAllowance: 0,
             reorderOnTabMenuClick: true,
             tabControlOffset: 10
-        }
+        } as const;
 
         export function createCopy(original: Settings): Settings {
             return {
@@ -459,13 +463,13 @@ export namespace ManagerConfig {
 
     export interface Dimensions {
         // see UserConfig.Dimensions for comments
-        borderWidth: number;
-        borderGrabWidth: number,
-        minItemHeight: number;
-        minItemWidth: number;
-        headerHeight: number;
-        dragProxyWidth: number;
-        dragProxyHeight: number;
+        readonly borderWidth: number;
+        readonly borderGrabWidth: number,
+        readonly minItemHeight: number;
+        readonly minItemWidth: number;
+        readonly headerHeight: number;
+        readonly dragProxyWidth: number;
+        readonly dragProxyHeight: number;
     }
 
     export namespace Dimensions {
@@ -489,17 +493,17 @@ export namespace ManagerConfig {
             headerHeight: 20,
             dragProxyWidth: 300,
             dragProxyHeight: 200
-        }
+        } as const;
     }
 
     export interface Header {
-        show: false | Side;
-        popout: false | string;
-        dock: string;
-        maximise: false | string;
-        minimise: string;
-        close: string;
-        tabDropdown: string;
+        readonly show: false | Side;
+        readonly popout: false | string;
+        readonly dock: string;
+        readonly maximise: false | string;
+        readonly minimise: string;
+        readonly close: string;
+        readonly tabDropdown: string;
     }
 
     export namespace Header {
@@ -523,7 +527,7 @@ export namespace ManagerConfig {
             minimise: 'minimise',
             close: 'close',
             tabDropdown: 'additional tabs'
-        }
+        } as const;
     }
 
     export function isPopout(config: ManagerConfig): config is PopoutManagerConfig {
@@ -538,10 +542,12 @@ export namespace ManagerConfig {
         }
     }
 
-    export function createRootItemConfig(managerConfig: ManagerConfig): RootItemConfig {
+    export function createRootItemConfig(managerConfig: ManagerConfig, 
+        content?: RowOrColumnOrStackParentItemConfig.ChildItemConfig[]
+    ): RootItemConfig {
         return {
             type: ItemConfig.Type.root,
-            content: managerConfig.content,
+            content: content ?? managerConfig.content,
             width: 100,
             minWidth: 0,
             height: 100,
@@ -564,17 +570,17 @@ export namespace ManagerConfig {
 }
 
 export interface PopoutManagerConfig extends ManagerConfig {
-    parentId: string | null;
-    indexInParent: number | null;
-    window: PopoutManagerConfig.Window;
+    readonly parentId: string | null;
+    readonly indexInParent: number | null;
+    readonly window: PopoutManagerConfig.Window;
 }
 
 export namespace PopoutManagerConfig {
     export interface Window {
-        width: number | null,
-        height: number | null,
-        left: number | null,
-        top: number | null,
+        readonly width: number | null,
+        readonly height: number | null,
+        readonly left: number | null,
+        readonly top: number | null,
     }
 
     export namespace Window {
@@ -592,7 +598,7 @@ export namespace PopoutManagerConfig {
             height: null,
             left: null,
             top: null,
-        }
+        } as const;
     }
 
     export function createCopy(original: PopoutManagerConfig): PopoutManagerConfig {
@@ -612,7 +618,7 @@ export namespace PopoutManagerConfig {
 }
 
 export interface Config extends ManagerConfig {
-    resolved: true,
+    readonly resolved: true,
 }
 
 export namespace Config {

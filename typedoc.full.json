@@ -1,0 +1,10 @@
+{
+    "tsconfig": "./tsconfig.module.full.json",
+    "inputFiles": ["./src"],
+    "mode": "modules",
+    "out": "doc/full",
+    "readme": "README.md",
+    "excludeNotExported": true,
+    "excludePrivate": true,
+    "excludeProtected": true
+}

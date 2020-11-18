@@ -4,14 +4,18 @@ import { Tab } from '../controls/Tab';
 import { UnexpectedUndefinedError } from '../errors/internal-error';
 import { LayoutManager } from '../LayoutManager';
 import { ReactComponentHandler } from '../utils/ReactComponentHandler';
-import { createTemplateHtmlElement, deepExtend, getElementHeight, getElementWidth } from '../utils/utils';
+import { createTemplateHtmlElement, deepExtend, getElementWidthAndHeight } from '../utils/utils';
 import { AbstractContentItem } from './AbstractContentItem';
 import { Stack } from './Stack';
 
 export class ComponentItem extends AbstractContentItem {
+    /** @internal */
     private readonly _componentName: string;
+    /** @internal */
     private _container: ComponentContainer;
+    /** @internal */
     private _tab: Tab;
+    /** @internal */
     private _component: ComponentItem.Component; // this is the user component wrapped by this ComponentItem instance
 
     get componentName(): string { return this._componentName; }
@@ -22,6 +26,7 @@ export class ComponentItem extends AbstractContentItem {
     get headerConfig(): HeaderedItemConfig.Header | undefined { return this._componentConfig.header; }
     get tab(): Tab { return this._tab; }
 
+    /** @internal */
     constructor(layoutManager: LayoutManager, private readonly _componentConfig: ComponentItemConfig, private _stack: Stack) {
         super(layoutManager, _componentConfig, _stack, createTemplateHtmlElement(ComponentItem.templateHtml));
 
@@ -75,16 +80,10 @@ export class ComponentItem extends AbstractContentItem {
         this._stack.removeChild(this, false);
     }
 
+    /** @internal */
     updateSize(): void {
         this.updateNodeSize();
         // ComponentItems do not have any ContentItems
-    }
-
-    private updateNodeSize(): void {
-        if (this.element.style.display !== 'none') {
-            // Do not update size of hidden components to prevent unwanted reflows
-            this._container.setSizeToNodeSize(getElementWidth(this.element), getElementHeight(this.element));
-        }
     }
 
     /** @internal */
@@ -102,45 +101,54 @@ export class ComponentItem extends AbstractContentItem {
         this._container.setTab(tab);
     }
 
-    _$hide(): void {
+    /** @internal */
+    hide(): void {
         this._container.hide();
-        super._$hide();
+        super.hide();
     }
 
-    _$show(): void {
+    /** @internal */
+    show(): void {
         this._container.show();
-        super._$show();
+        super.show();
     }
 
-    _$destroy(): void {
+    /** @internal */
+    destroy(): void {
         this._container.emit('destroy');
-        super._$destroy();
+        super.destroy();
     }
 
-    /**
-     * Dragging onto a component directly is not an option
-     *
-     * @returns null
-     */
-    getArea(): AbstractContentItem.Area | null {
-        return null;
-    }
-
+    /** @internal */
     setParent(parent: Stack): void {
         this._stack = parent;
         super.setParent(parent);
     }
+
+    /** @internal */
+    private updateNodeSize(): void {
+        if (this.element.style.display !== 'none') {
+            // Do not update size of hidden components to prevent unwanted reflows
+            const { width, height } = getElementWidthAndHeight(this.element);
+            this._container.setSizeToNodeSize(width, height);
+        }
+    }
 }
+
+/** @deprecated use {@link ComponentItem} */
+export type Component = ComponentItem;
 
 export namespace ComponentItem {
     export type Component = unknown;
     export type ComponentConstructor = new(container: ComponentContainer, state: unknown) => Component;
     export type ComponentFactoryFunction = (container: ComponentContainer, state: unknown) => Component;
+    /** @internal */
     export interface ComponentInstantiator {
         constructor: ComponentConstructor | undefined;
         factoryFunction: ComponentFactoryFunction | undefined;
     }
 
+    /** @internal */
     export const templateHtml =
         '<div class="lm_item_container"> ' +
         '  <div class="lm_content"></div>' +

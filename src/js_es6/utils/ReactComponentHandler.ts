@@ -22,8 +22,8 @@ export class ReactComponentHandler {
     private _initialState: unknown;
     private _reactClass: ComponentItem.ComponentConstructor;
 
-    private _containerOpenListener = () => this._render();
-    private _containerDestroyListener = () => this._destroy();
+    private _containerOpenListener = () => this.render();
+    private _containerDestroyListener = () => this.destroy();
 
     /**
      * @param container
@@ -34,7 +34,7 @@ export class ReactComponentHandler {
         this._originalComponentWillUpdate = null;
         this._container = container;
         this._initialState = state;
-        this._reactClass = this._getReactClass();
+        this._reactClass = this.getReactClass();
 
         this._container.on('open', this._containerOpenListener);
         this._container.on('destroy', this._containerDestroyListener);
@@ -48,9 +48,9 @@ export class ReactComponentHandler {
      *
      * By default, react's getInitialState will be used
      */
-    private _render(): void {
+    private render(): void {
         // probably wrong
-        ReactDOM.render(this._getReactComponent(), this._container.contentElement);
+        ReactDOM.render(this.getReactComponent(), this._container.contentElement);
         // ReactDOM.render(this._getReactComponent(), this._container.getElement()[0]);
     }
 
@@ -61,16 +61,14 @@ export class ReactComponentHandler {
      *	   of https://github.com/facebook/react/issues/10309.
      * </p>
      *
-     * @private
      * @arg {React.Ref} component The component instance created by the `ReactDOM.render` call in the `_render` method.
-     * @returns {void}
      */
-    private _gotReactComponent(component: React.Component | null): void {
+    private gotReactComponent(component: React.Component | null): void {
         if (component !== null) {
             this._reactComponent = component;
             // eslint-disable-next-line @typescript-eslint/no-empty-function
             this._originalComponentWillUpdate = this._reactComponent.componentWillUpdate || function() {};
-            this._reactComponent.componentWillUpdate = this._onUpdate.bind( this );
+            this._reactComponent.componentWillUpdate = this.onUpdate.bind( this );
             if( this._container.getState() ) {
                 this._reactComponent.setState( this._container.getState() as Record<string, unknown> );
             }
@@ -79,11 +77,8 @@ export class ReactComponentHandler {
     
     /**
      * Removes the component from the DOM and thus invokes React's unmount lifecycle
-     *
-     * @private
-     * @returns {void}
      */
-    _destroy(): void {
+    private destroy(): void {
         ReactDOM.unmountComponentAtNode(this._container.contentElement);
         this._container.on('open', this._containerOpenListener);
         this._container.off('destroy', this._containerDestroyListener);
@@ -92,11 +87,8 @@ export class ReactComponentHandler {
     /**
      * Hooks into React's state management and applies the componentstate
      * to GoldenLayout
-     *
-     * @private
-     * @returns {void}
      */
-    _onUpdate(nextProps: unknown, nextState: JsonValue): void {
+    private onUpdate(nextProps: unknown, nextState: JsonValue): void {
         this._container.setState(nextState);
         if (this._originalComponentWillUpdate === null) {
             throw new UnexpectedNullError('RCHOU11196');
@@ -107,12 +99,10 @@ export class ReactComponentHandler {
 
     /**
      * Retrieves the react class from GoldenLayout's registry
-     *
-     * @private
      * @returns {React.Class}
      */
     // assume this is returning a constructor
-    private _getReactClass() {
+    private getReactClass() {
         const config = this._container.config as ReactComponentConfig;
         const componentName = config;
 
@@ -132,16 +122,14 @@ export class ReactComponentHandler {
 
     /**
      * Copies and extends the properties array and returns the React element
-     *
-     * @private
      * @returns {React.Element}
      */
     // return type probably wrong
-    _getReactComponent(): React.ReactElement {
+    private getReactComponent(): React.ReactElement {
         const defaultProps = {
             glEventHub: this._container.layoutManager.eventHub,
             glContainer: this._container,
-            ref: this._gotReactComponent.bind(this),
+            ref: this.gotReactComponent.bind(this),
         };
         const config = this._container.config as ReactComponentConfig;
         let props = config.props;

@@ -1,0 +1,25 @@
+{
+    "tsconfig": "./tsconfig.module.strip.json",
+    "inputFiles": ["./src"],
+    "mode": "modules",
+    "stripInternal": true,
+    "out": "doc/strip",
+    "readme": "README.md",
+    "excludeNotExported": true,
+    "excludePrivate": true,
+    "excludeProtected": true,
+    "exclude": [
+        "./src/js_es6/utils/jquery-legacy.ts",
+        "./src/js_es6/utils/utils.ts.ts",
+        "./src/js_es6/controls/DragSource.ts",
+        "./src/js_es6/controls/DropTargetIndicator.ts",
+        "./src/js_es6/controls/HeaderButton.ts",
+        "./src/js_es6/controls/Splitter.ts",
+        "./src/js_es6/controls/TransitionIndicator.ts",
+        "./src/js_es6/errors/internal-error.ts",
+        "./src/js_es6/utils/ConfigMinifier.ts",
+        "./src/js_es6/utils/DragListener.ts",
+        "./src/js_es6/utils/EventHub.ts",
+        "./src/js_es6/utils/ReactComponentHandler.ts"
+    ]
+}

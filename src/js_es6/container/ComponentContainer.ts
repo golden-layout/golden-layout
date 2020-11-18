@@ -8,9 +8,6 @@ import { EventEmitter } from '../utils/EventEmitter';
 import { JsonValue } from '../utils/types';
 import { deepExtend, setElementHeight, setElementWidth } from '../utils/utils';
 
-/** @deprecated use {@link ComponentContainer} */
-export type Container = ComponentContainer;
-
 export class ComponentContainer extends EventEmitter {
     /** @internal */
     private _width: number | null;
@@ -241,3 +238,6 @@ export class ComponentContainer extends EventEmitter {
         }
     }
 }
+
+/** @deprecated use {@link ComponentContainer} */
+export type ItemContainer = ComponentContainer;

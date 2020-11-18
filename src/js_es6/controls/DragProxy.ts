@@ -13,6 +13,7 @@ import {
     stripTags
 } from '../utils/utils';
 
+/** @internal */
 const _template = '<div class="lm_dragProxy">' +
     '<div class="lm_header">' +
     '<ul class="lm_tabs">' +
@@ -28,16 +29,6 @@ const _template = '<div class="lm_dragProxy">' +
  * This class creates a temporary container
  * for the component whilst it is being dragged
  * and handles drag events
- *
- * @constructor
- * @private
- *
- * @param {Number} x              The initial x position
- * @param {Number} y              The initial y position
- * @param {DragListener} dragListener
- * @param {lm.LayoutManager} layoutManager
- * @param {AbstractContentItem} contentItem
- * @param {AbstractContentItem} originalParent
  */
 export class DragProxy extends EventEmitter {
     private _area: AbstractContentItem.Area | null;
@@ -55,6 +46,11 @@ export class DragProxy extends EventEmitter {
 
     get element(): HTMLElement { return this._element; }
 
+    /** 
+     * @param x              The initial x position
+     * @param y              The initial y position
+     * @internal
+     */
     constructor(x: number, y: number,
         private readonly _dragListener: DragListener,
         private readonly _layoutManager: LayoutManager,
@@ -106,24 +102,30 @@ export class DragProxy extends EventEmitter {
                     this._childElementContainer = childElementContainer;
                     this._childElementContainer.appendChild(this._contentItem.element);
 
-                    this._undisplayTree();
-                    this._layoutManager.calculateItemAreas();
-                    this.setDimensions();
+                    if (this._contentItem.parent === null) {
+                        // Note that _contentItem will have dummy root as parent if initiated by a external drag source
+                        throw new UnexpectedNullError('DPC10097');
+                    } else {
+                        this._contentItem.parent.removeChild(this._contentItem, true);
 
-                    document.body.appendChild(this._element);
+                        this._layoutManager.calculateItemAreas();
+                        this.setDimensions();
 
-                    const offset = getJQueryOffset(this._layoutManager.container);
+                        document.body.appendChild(this._element);
 
-                    this._minX = offset.left;
-                    this._minY = offset.top;
-                    const { width: containerWidth, height: containerHeight } = getElementWidthAndHeight(this._layoutManager.container);
-                    this._maxX = containerWidth + this._minX;
-                    this._maxY = containerHeight + this._minY;
-                    const { width: elementWidth, height: elementHeight } = getElementWidthAndHeight(this._element);
-                    this._width = elementWidth;
-                    this._height = elementHeight;
+                        const offset = getJQueryOffset(this._layoutManager.container);
 
-                    this._setDropPosition(x, y);
+                        this._minX = offset.left;
+                        this._minY = offset.top;
+                        const { width: containerWidth, height: containerHeight } = getElementWidthAndHeight(this._layoutManager.container);
+                        this._maxX = containerWidth + this._minX;
+                        this._maxY = containerHeight + this._minY;
+                        const { width: elementWidth, height: elementHeight } = getElementWidthAndHeight(this._element);
+                        this._width = elementWidth;
+                        this._height = elementHeight;
+
+                        this.setDropPosition(x, y);
+                    }
                 }
             }
         }
@@ -137,6 +139,7 @@ export class DragProxy extends EventEmitter {
      * @param   offsetX The difference from the original x position in px
      * @param   offsetY The difference from the original y position in px
      * @param   event
+     * @internal
      */
     private onDrag(offsetX: number, offsetY: number, event: EventEmitter.DragEvent) {
 
@@ -144,11 +147,11 @@ export class DragProxy extends EventEmitter {
         const y = event.pageY;
         const isWithinContainer = x > this._minX && x < this._maxX && y > this._minY && y < this._maxY;
 
-        if (!isWithinContainer && this._layoutManager.config.settings?.constrainDragToContainer === true) {
+        if (!isWithinContainer && this._layoutManager.managerConfig.settings?.constrainDragToContainer === true) {
             return;
         }
 
-        this._setDropPosition(x, y);
+        this.setDropPosition(x, y);
     }
 
     /**
@@ -158,8 +161,9 @@ export class DragProxy extends EventEmitter {
      * @param   {Number} y The y position in px
      *
      * @returns {void}
+     * @internal
      */
-    _setDropPosition(x: number, y: number): void {
+    private setDropPosition(x: number, y: number): void {
         this._element.style.left = numberToPixels(x);
         this._element.style.top = numberToPixels(y);
         this._area = this._layoutManager.getArea(x, y);
@@ -173,9 +177,11 @@ export class DragProxy extends EventEmitter {
     /**
      * Callback when the drag has finished. Determines the drop area
      * and adds the child to it
+     * @internal
      */
-    onDrop(): void {
-        this.updateTree()
+    private onDrop(): void {
+        this._contentItem.setParent(this._contentItemParent);
+
         const dropTargetIndicator = this._layoutManager.dropTargetIndicator;
         if (dropTargetIndicator === null) {
             throw new UnexpectedNullError('DPOD30011');
@@ -210,7 +216,7 @@ export class DragProxy extends EventEmitter {
              * content item.
              */
         } else {
-            this._contentItem._$destroy(); // contentItem children are now destroyed as well
+            this._contentItem.destroy(); // contentItem children are now destroyed as well
         }
 
         this._element.remove();
@@ -219,37 +225,11 @@ export class DragProxy extends EventEmitter {
     }
 
     /**
-     * Undisplays the item from its original position within the tree
-     */
-    private _undisplayTree() {
-
-        /**
-         * parent is null if the drag had been initiated by a external drag source
-         */
-        if (this._contentItem.parent !== null) {
-            this._contentItem.parent.undisplayChild(this._contentItem);
-        }
-    }
-
-    /**
-     * Removes the item from its original position within the tree
-     */
-    private updateTree() {
-        // Parent is NO LONGER null if the drag had been initiated by a external drag source
-        // If an external drag source initiated drag, then dummy parent will be used.  In this case
-        // still remove child from (dummy) parent
-        if (this._contentItem.parent !== null) {
-            this._contentItem.parent.removeChild(this._contentItem, true);
-        }
-
-        this._contentItem.setParent(this._contentItemParent);
-    }
-
-    /**
-     * Updates the Drag Proxie's dimensions
+     * Updates the Drag Proxy's dimensions
+     * @internal
      */
     private setDimensions() {
-        const dimensions = this._layoutManager.config.dimensions;
+        const dimensions = this._layoutManager.managerConfig.dimensions;
         if (dimensions === undefined) {
             throw new Error('DragProxy.setDimensions: dimensions undefined');
         } else {
@@ -258,15 +238,16 @@ export class DragProxy extends EventEmitter {
             if (width === undefined || height === undefined) {
                 throw new Error('DragProxy.setDimensions: width and/or height undefined');
             } else {
+                const headerHeight = this._layoutManager.managerConfig.header.show === false ? 0 : dimensions.headerHeight;
                 this._element.style.width = numberToPixels(width);
                 this._element.style.height = numberToPixels(height)
-                width -= (this._sided ? dimensions.headerHeight : 0);
-                height -= (!this._sided ? dimensions.headerHeight : 0);
+                width -= (this._sided ? headerHeight : 0);
+                height -= (!this._sided ? headerHeight : 0);
                 this._childElementContainer.style.width = numberToPixels(width);
                 this._childElementContainer.style.height = numberToPixels(height);
                 this._contentItem.element.style.width = numberToPixels(width);
                 this._contentItem.element.style.height = numberToPixels(height);
-                this._contentItem._$show();
+                this._contentItem.show();
                 this._contentItem.updateSize();
             }
         }

@@ -76,7 +76,7 @@ export namespace UserItemConfig {
     export function resolve(user: UserItemConfig): ItemConfig {
         switch (user.type) {
             case ItemConfig.Type.root:
-                throw new ConfigurationError('UserItemConfig cannot specify type root', user);
+                throw new ConfigurationError('UserItemConfig cannot specify type root', JSON.stringify(user));
             case ItemConfig.Type.row:
             case ItemConfig.Type.column:
                 return UserRowOrColumnItemConfig.resolve(user as UserRowOrColumnItemConfig);
@@ -756,8 +756,9 @@ export namespace UserConfig {
 
     /** Shallow transformation of Config to UserConfig */
     export function fromConfig(config: Config): UserConfig {
+        const content = config.content.slice() as (UserRowOrColumnItemConfig | UserStackItemConfig | UserComponentItemConfig)[];
         const userConfig: UserConfig = {
-            content: config.content,
+            content,
             openPopouts: config.openPopouts as unknown as UserPopoutManagerConfig[],
             dimensions: config.dimensions,
             settings: config.settings,

@@ -1,4 +1,3 @@
-import { Json } from '../utils/types';
 
 export abstract class ExternalError extends Error {
     constructor(public readonly type: string, message: string) {
@@ -7,7 +6,7 @@ export abstract class ExternalError extends Error {
 }
 
 export class ConfigurationError extends ExternalError {
-    constructor(message: string, public readonly node?: Json) {
+    constructor(message: string, public readonly node?: string) {
         super('Configuration', message);
     }
 }

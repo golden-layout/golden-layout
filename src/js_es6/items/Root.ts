@@ -4,7 +4,7 @@ import { AbstractContentItem } from '../items/AbstractContentItem';
 import { RowOrColumn } from '../items/RowOrColumn';
 import { LayoutManager } from '../LayoutManager';
 import { AreaLinkedRect } from '../utils/types';
-import { createTemplateHtmlElement, getElementHeight, getElementWidth, setElementHeight, setElementWidth } from '../utils/utils';
+import { createTemplateHtmlElement, getElementWidthAndHeight, setElementHeight, setElementWidth } from '../utils/utils';
 import { ComponentItem } from './ComponentItem';
 
 export class Root extends AbstractContentItem {
@@ -52,6 +52,7 @@ export class Root extends AbstractContentItem {
         this.emitBubblingEvent('stateChanged');
     }
 
+    /** @internal */
     calculateConfigContent(): RowOrColumnOrStackParentItemConfig.ChildItemConfig[] {
         const contentItems = this.contentItems;
         const count = contentItems.length;
@@ -89,22 +90,6 @@ export class Root extends AbstractContentItem {
     updateSize(): void {
         this.updateNodeSize();
         this.updateContentItemsSize();
-    }
-
-    private updateNodeSize(): void {
-        const width = getElementWidth(this._containerElement);
-        const height = getElementHeight(this._containerElement);
-
-        setElementWidth(this.element, width);
-        setElementHeight(this.element, height);
-
-        /*
-         * Root can be empty
-         */
-        if (this.contentItems.length > 0) {
-            setElementWidth(this.contentItems[0].element, width);
-            setElementHeight(this.contentItems[0].element, height);
-        }
     }
 
     /** @internal */
@@ -188,6 +173,22 @@ export class Root extends AbstractContentItem {
                 contentItem.config[dimension] = sibling.config[dimension];
                 column.updateSize();
             }
+        }
+    }
+
+    /** @internal */
+    private updateNodeSize(): void {
+        const { width, height } = getElementWidthAndHeight(this._containerElement);
+
+        setElementWidth(this.element, width);
+        setElementHeight(this.element, height);
+
+        /*
+         * Root can be empty
+         */
+        if (this.contentItems.length > 0) {
+            setElementWidth(this.contentItems[0].element, width);
+            setElementHeight(this.contentItems[0].element, height);
         }
     }
 }

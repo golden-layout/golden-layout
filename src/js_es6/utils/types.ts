@@ -5,6 +5,12 @@ export interface WidthAndHeight {
 }
 
 /** @internal */
+export namespace WidthAndHeight {
+    export const widthPropertyName = 'width';
+    export const heightPropertyName = 'height';
+}
+
+/** @internal */
 export interface LeftAndTop {
     left: number;
     top: number;    

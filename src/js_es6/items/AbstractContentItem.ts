@@ -7,6 +7,7 @@ import { EventEmitter } from '../utils/EventEmitter'
 import { getJQueryOffset, getJQueryWidthAndHeight } from '../utils/jquery-legacy'
 import { AreaLinkedRect } from '../utils/types'
 import { getUniqueId, setElementDisplayVisibility } from '../utils/utils'
+import { ComponentItem } from './ComponentItem'
 import { Stack } from './Stack'
 
 /**
@@ -15,7 +16,6 @@ import { Stack } from './Stack'
  *
  * It also provides a number of functions for tree traversal
  */
-
 
 export abstract class AbstractContentItem extends EventEmitter {
     /** @internal */
@@ -47,6 +47,10 @@ export abstract class AbstractContentItem extends EventEmitter {
         return item.isStack;
     }
 
+    static isComponentItem(item: AbstractContentItem): item is ComponentItem {
+        return item.isComponent;
+    }
+
     /** @internal */
     constructor(readonly layoutManager: LayoutManager,
         private _config: ItemConfig,
@@ -73,6 +77,7 @@ export abstract class AbstractContentItem extends EventEmitter {
 
     /**
      * Updaters the size of the component and its children, called recursively
+     * @internal
      */
     abstract updateSize(): void;
 
@@ -97,7 +102,7 @@ export abstract class AbstractContentItem extends EventEmitter {
 		 * All children are destroyed as well
 		 */
         if (!keepChild) {
-			this._contentItems[index]._$destroy();
+			this._contentItems[index].destroy();
         }
 
         /**
@@ -108,7 +113,13 @@ export abstract class AbstractContentItem extends EventEmitter {
         /**
          * Remove the item from the configuration
          */
-        this._config.content.splice(index, 1);
+        const content = this._config.content;
+        const contentCount = content.length;
+        if (contentCount === 1) {
+            this._config.content = [];
+        } else {
+            this._config.content = [...content.slice(0, index), ...content.slice(index + 1, contentCount)];
+        }
 
         /**
          * If this node still contains other content items, adjust their size
@@ -124,31 +135,6 @@ export abstract class AbstractContentItem extends EventEmitter {
                 throw new UnexpectedNullError('CIUC00874');
             } else {
                 this._parent.removeChild(this);
-            }
-        }
-    }
-
-    /**
-     * Hides a child node (and its children) from the tree reclaiming its space in the layout
-     */
-    undisplayChild(contentItem: AbstractContentItem): void {
-        /*
-         * Get the position of the item that's to be removed within all content items this node contains
-         */
-        const index = this._contentItems.indexOf(contentItem);
-
-        /*
-         * Make sure the content item to be removed is actually a child of this item
-         */
-        if (index === -1) {
-            throw new Error('Can\'t remove child item. Unknown content item');
-        }
-
-        if (!(this.isRoot) && this._config.isClosable === true) {
-            if (this._parent === null) {
-                throw new UnexpectedNullError('CIUC00874');
-            } else {
-                this._parent.undisplayChild(this);
             }
         }
     }
@@ -172,7 +158,13 @@ export abstract class AbstractContentItem extends EventEmitter {
             this._config.content = [];
         }
 
-        this._config.content.splice(index, 0, contentItem._config);
+        const content = this._config.content;
+        const contentCount = content.length;
+        if (contentCount === 0) {
+            this._config.content = [contentItem._config];
+        } else {
+            this._config.content = [...content.slice(0, index), contentItem._config, ...content.slice(index, contentCount)];
+        }
         contentItem.setParent(this);
 
         if (this._isInitialised === true && contentItem._isInitialised === false) {
@@ -210,7 +202,7 @@ export abstract class AbstractContentItem extends EventEmitter {
             */
             if (_$destroyOldChild === true) {
                 oldChild._parent = null;
-                oldChild._$destroy(); // will now also destroy all children of oldChild
+                oldChild.destroy(); // will now also destroy all children of oldChild
             }
 
             /*
@@ -365,36 +357,18 @@ export abstract class AbstractContentItem extends EventEmitter {
         }
     }
 
-    /****************************************
-     * SELECTOR
-     ****************************************/
-
-    private deepFilterAddChildContentItems(contentItems: AbstractContentItem[],
-        checkAcceptFtn: ((this: void, item: AbstractContentItem) => boolean)
-    ): void {
-        for (let i = 0; i < this._contentItems.length; i++) {
-            const contentItem = this._contentItems[i];
-            if (checkAcceptFtn(contentItem)) {
-                contentItems.push(contentItem);
-                contentItem.deepFilterAddChildContentItems(contentItems, checkAcceptFtn);
-            }
-        }
-    }
-
     getItemsById(id: string): AbstractContentItem[] {
         const result: AbstractContentItem[] = [];
         this.deepFilterAddChildContentItems(result, (item) => ItemConfig.idEqualsOrContainsId(item._config.id, id));
         return result;
     }
 
-    /****************************************
-     * PACKAGE PRIVATE
-     ****************************************/
     toConfig(): ItemConfig {
         const content = this.calculateConfigContent();
         return ItemConfig.createCopy(this._config, content);
     }
 
+    /** @internal */
     calculateConfigContent(): ItemConfig[] {
         const contentItems = this._contentItems;
         const count = contentItems.length;
@@ -406,6 +380,7 @@ export abstract class AbstractContentItem extends EventEmitter {
         return result;
     }
 
+    /** @internal */
     deepAddChildContentItems(contentItems: AbstractContentItem[]): void {
         for (let i = 0; i < this._contentItems.length; i++) {
             const contentItem = this._contentItems[i];
@@ -414,6 +389,7 @@ export abstract class AbstractContentItem extends EventEmitter {
         }
     }
 
+    /** @internal */
     highlightDropZone(x: number, y: number, area: AreaLinkedRect): void {
         const dropTargetIndicator = this.layoutManager.dropTargetIndicator;
         if (dropTargetIndicator === null) {
@@ -429,28 +405,24 @@ export abstract class AbstractContentItem extends EventEmitter {
         this.addChild(contentItem);
     }
 
-    _$hide(): void {
-        this.layoutManager.hideAllActiveContentItems(); // not sure why this is done. (Code moved to Layout manager)
-        setElementDisplayVisibility(this._element, false);
-        this.layoutManager.updateSizeFromContainer();
-    }
-
-    _$show(): void {
+    /** @internal */
+    show(): void {
         this.layoutManager.showAllActiveContentItems(); // not sure why this is done. (Code moved to Layout manager)
         setElementDisplayVisibility(this._element, true);
         this.layoutManager.updateSizeFromContainer();
 
         for (let i = 0; i < this._contentItems.length; i++) {
-            this._contentItems[i]._$show();
+            this._contentItems[i].show();
         }
     }
 
     /**
      * Destroys this item ands its children
+     * @internal
      */
-    _$destroy(): void {
+    destroy(): void {
         for (let i = 0; i < this._contentItems.length; i++) {
-            this._contentItems[i]._$destroy();
+            this._contentItems[i].destroy();
         }
         this._contentItems = [];
 
@@ -493,22 +465,33 @@ export abstract class AbstractContentItem extends EventEmitter {
         this.emitUnknownBubblingEvent(this.type + 'Created');
     }
 
+    /** @internal */
     setParent(parent: AbstractContentItem): void {
         this._parent = parent;
     }
 
+    /** @internal */
     protected initContentItems(): void {
         for (let i = 0; i < this._contentItems.length; i++) {
             this._contentItems[i].init();
         }
     }
 
+    /** @internal */
+    protected hide(): void {
+        this.layoutManager.hideAllActiveContentItems(); // not sure why this is done. (Code moved to Layout manager)
+        setElementDisplayVisibility(this._element, false);
+        this.layoutManager.updateSizeFromContainer();
+    }
+
+    /** @internal */
     protected updateContentItemsSize(): void {
         for (let i = 0; i < this._contentItems.length; i++) {
             this._contentItems[i].updateSize();
         }
     }
 
+    /** @internal */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     protected processChildReplaced(index: number, newChild: AbstractContentItem): void {
         // virtual function to allow descendants to further process replaceChild()
@@ -517,10 +500,11 @@ export abstract class AbstractContentItem extends EventEmitter {
     /**
      * creates all content items for this node at initialisation time
      * PLEASE NOTE, please see addChild for adding contentItems at runtime
+     * @internal
      */
     private createContentItems(config: ItemConfig) {
         if (!(config.content instanceof Array)) {
-            throw new ConfigurationError('content must be an Array', config);
+            throw new ConfigurationError('content must be an Array', JSON.stringify(config));
         } else {
             const count = config.content.length;
             const result = new Array<AbstractContentItem>(count);
@@ -531,12 +515,26 @@ export abstract class AbstractContentItem extends EventEmitter {
         }
     }
 
+    /** @internal */
+    private deepFilterAddChildContentItems(contentItems: AbstractContentItem[],
+        checkAcceptFtn: ((this: void, item: AbstractContentItem) => boolean)
+    ): void {
+        for (let i = 0; i < this._contentItems.length; i++) {
+            const contentItem = this._contentItems[i];
+            if (checkAcceptFtn(contentItem)) {
+                contentItems.push(contentItem);
+                contentItem.deepFilterAddChildContentItems(contentItems, checkAcceptFtn);
+            }
+        }
+    }
+
     /**
      * Called for every event on the item tree. Decides whether the event is a bubbling
      * event and propagates it to its parent
      *
      * @param    name the name of the event
      * @param   event
+     * @internal
      */
     private propagateEvent(name: string, args: unknown[]) {
         if (args.length === 1) {
@@ -566,6 +564,7 @@ export abstract class AbstractContentItem extends EventEmitter {
      * only string-based, batched and sanitized to make them more usable
      *
      * @param {String} name the name of the event
+     * @internal
      */
     private scheduleEventPropagationToLayoutManager(name: string, event: EventEmitter.BubblingEvent) {
         if (this._throttledEvents.indexOf(name) === -1) {
@@ -583,6 +582,7 @@ export abstract class AbstractContentItem extends EventEmitter {
      * Callback for events scheduled by _scheduleEventPropagationToLayoutManager
      *
      * @param name the name of the event
+     * @internal
      */
     private propagateEventToLayoutManager(name: string, event: EventEmitter.BubblingEvent) {
         this._pendingEventPropagations[name] = false;
@@ -590,6 +590,7 @@ export abstract class AbstractContentItem extends EventEmitter {
     }
 }
 
+/** @internal */
 export namespace AbstractContentItem {
     export interface Area extends AreaLinkedRect {
         surface: number;

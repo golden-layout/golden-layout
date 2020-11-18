@@ -20,14 +20,17 @@ import { deepExtend, getUniqueId } from '../utils/utils';
  */
 
 export class BrowserPopout extends EventEmitter {
+    /** @internal */
     private _popoutWindow: Window | null;
+    /** @internal */
     private _isInitialised;
+    /** @internal */
     private _checkReadyInterval: ReturnType<typeof setTimeout> | undefined;
 
     /**
      * @param _config GoldenLayout item config
      * @param _initialWindowSize A map with width, height, top and left
-     * @param _layoutManager
+     * @internal
      */
     constructor(private _config: PopoutManagerConfig,
         private _initialWindowSize: Rect,
@@ -37,7 +40,7 @@ export class BrowserPopout extends EventEmitter {
         
         this._isInitialised = false;
         this._popoutWindow = null;
-        this._createWindow();
+        this.createWindow();
     }
 
     toConfig(): PopoutManagerConfig {
@@ -88,6 +91,7 @@ export class BrowserPopout extends EventEmitter {
         }
     }
 
+    /** @internal */
     getWindow(): Window {
         if (this._popoutWindow === null) {
             throw new UnexpectedNullError('BPGW087215');
@@ -165,9 +169,10 @@ export class BrowserPopout extends EventEmitter {
     /**
      * Creates the URL and window parameter
      * and opens a new window
+     * @internal
      */
-    _createWindow(): void {
-        const url = this._createUrl();
+    private createWindow(): void {
+        const url = this.createUrl();
 
         /**
          * Bogus title to prevent re-usage of existing window with the
@@ -179,7 +184,7 @@ export class BrowserPopout extends EventEmitter {
         /**
          * The options as used in the window.open string
          */
-        const features = this._serializeWindowFeatures({
+        const features = this.serializeWindowFeatures({
             width: this._initialWindowSize.width,
             height: this._initialWindowSize.height,
             innerWidth: this._initialWindowSize.width,
@@ -196,7 +201,7 @@ export class BrowserPopout extends EventEmitter {
         this._popoutWindow = globalThis.open(url, target, features);
 
         if (!this._popoutWindow) {
-            if (this._layoutManager.config.settings.blockedPopoutsThrowError === true) {
+            if (this._layoutManager.managerConfig.settings.blockedPopoutsThrowError === true) {
                 const error = new PopoutBlockedError('Popout blocked');
                 throw error;
             } else {
@@ -216,12 +221,13 @@ export class BrowserPopout extends EventEmitter {
         this._checkReadyInterval = setInterval(() => this.checkReady(), 10);
     }
 
+    /** @internal */
     private checkReady() {
         if (this._popoutWindow === null) {
             throw new UnexpectedNullError('BPCR01844');
         } else {
             if (this._popoutWindow.__glInstance && this._popoutWindow.__glInstance.isInitialised) {
-                this._onInitialised();
+                this.onInitialised();
                 if (this._checkReadyInterval !== undefined) {
                     clearInterval(this._checkReadyInterval);
                     this._checkReadyInterval = undefined;
@@ -233,11 +239,12 @@ export class BrowserPopout extends EventEmitter {
     /**
      * Serialises a map of key:values to a window options string
      *
-     * @param   {Object} windowOptions
+     * @param   windowOptions
      *
-     * @returns {String} serialised window options
+     * @returns serialised window options
+     * @internal
      */
-    _serializeWindowFeatures(windowOptions: Record<string, string | number>): string {
+    private serializeWindowFeatures(windowOptions: Record<string, string | number>): string {
         const windowOptionsString: string[] = [];
 
         for (const key in windowOptions) {
@@ -252,8 +259,9 @@ export class BrowserPopout extends EventEmitter {
      * config GET parameter
      *
      * @returns URL
+     * @internal
      */
-    _createUrl(): string {
+    private createUrl(): string {
         const storageKey = 'gl-window-config-' + getUniqueId();
         const config = (new ConfigMinifier()).minifyConfig(this._config);
 
@@ -278,6 +286,7 @@ export class BrowserPopout extends EventEmitter {
     /**
      * Move the newly created window roughly to
      * where the component used to be.
+     * @internal
      */
     private positionWindow() {
         if (this._popoutWindow === null) {
@@ -291,8 +300,9 @@ export class BrowserPopout extends EventEmitter {
     /**
      * Callback when the new window is opened and the GoldenLayout instance
      * within it is initialised
+     * @internal
      */
-    private _onInitialised(): void {
+    private onInitialised(): void {
         this._isInitialised = true;
         this.getGlInstance().on('popIn', () => this.popIn());
         this.emit('initialised');
@@ -300,6 +310,7 @@ export class BrowserPopout extends EventEmitter {
 
     /**
      * Invoked 50ms after the window unload event
+     * @internal
      */
     private _onClose() {
         setTimeout(() => this.emit('closed'), 50);
