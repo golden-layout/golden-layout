@@ -1,4 +1,4 @@
-import { ManagerConfig } from '../config/config';
+import { LayoutConfig } from '../config/config';
 
 /**
  * Minifies and unminifies configs by replacing frequent keys
@@ -74,16 +74,16 @@ export class ConfigMinifier {
      * replaces its keys and values recursively with
      * one letter counterparts
      */
-    minifyConfig(config: ManagerConfig): ManagerConfig {
-        return this.translateObject(config, true) as ManagerConfig;
+    minifyConfig(config: LayoutConfig): LayoutConfig {
+        return this.translateObject(config, true) as LayoutConfig;
     }
 
     /**
      * Takes a configuration Object that was previously minified
      * using minifyConfig and returns its original version
      */
-    unminifyConfig(minifiedConfig: ManagerConfig): ManagerConfig {
-        return this.translateObject(minifiedConfig, false) as ManagerConfig;
+    unminifyConfig(minifiedConfig: LayoutConfig): LayoutConfig {
+        return this.translateObject(minifiedConfig, false) as LayoutConfig;
     }
 
     private translateObject(from: Record<string, unknown>, minify: boolean) {

@@ -1,8 +1,7 @@
-// most of this below is only relevant to golden-layout-host.component.  However when dragging windows, the
-// dragged parts are under <body>.  Some of these classes are applicable to dragged windows
+@use "../goldenlayout-base.scss";
 
-@import "~golden-layout/src/css/goldenlayout-base.css";
-// @import "~golden-layout/src/css/goldenlayout-dark-theme.css";
+// TODO
+// Images should be changed to SVG sprites so that colors can be changed
 
 // Color variables (appears count calculates by raw css)
 $baseBkgdColor: var(--color-layout-base-bkgd, #000000); // Appears 7 times

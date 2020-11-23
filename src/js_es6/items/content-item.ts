@@ -15,6 +15,7 @@ import { Stack } from './stack'
  * Most methods provide a subset of what the sub-classes do.
  *
  * It also provides a number of functions for tree traversal
+ * @public
  */
 
 export abstract class ContentItem extends EventEmitter {
@@ -26,10 +27,8 @@ export abstract class ContentItem extends EventEmitter {
     private _throttledEvents: string[];
     /** @internal */
     private _isInitialised;
-    /** @internal */
-    private _isMaximised;
 
-    isRoot: boolean
+    isGround: boolean
     isRow: boolean
     isColumn: boolean
     isStack: boolean
@@ -41,7 +40,6 @@ export abstract class ContentItem extends EventEmitter {
     get contentItems(): ContentItem[] { return this._contentItems; }
     get element(): HTMLElement { return this._element; }
     get isInitialised(): boolean { return this._isInitialised; }
-    get isMaximised(): boolean { return this._isMaximised; }
 
     static isStack(item: ContentItem): item is Stack {
         return item.isStack;
@@ -60,8 +58,7 @@ export abstract class ContentItem extends EventEmitter {
         super();
 
         this._isInitialised = false;
-        this._isMaximised = false;
-        this.isRoot = false;
+        this.isGround = false;
         this.isRow = false;
         this.isColumn = false;
         this.isStack = false;
@@ -130,7 +127,7 @@ export abstract class ContentItem extends EventEmitter {
             /**
              * If this was the last content item, remove this node as well
              */
-        } else if (!this.isRoot && this._config.isClosable === true) {
+        } else if (!this.isGround && this._config.isClosable === true) {
             if (this._parent === null) {
                 throw new UnexpectedNullError('CIUC00874');
             } else {
@@ -144,12 +141,12 @@ export abstract class ContentItem extends EventEmitter {
      * The responsibility for the actual DOM manipulations lies
      * with the concrete item
      *
-     * @param contentItem
-     * @param index If omitted item will be appended
-     * @param suspendResize Used by descendent implementations
+     * @param contentItem -
+     * @param index - If omitted item will be appended
+     * @param suspendResize - Used by descendent implementations
      */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    addChild(contentItem: ContentItem, index?: number | null, suspendResize?: boolean): void {
+    addChild(contentItem: ContentItem, index?: number | null, suspendResize?: boolean): number {
         index ??= this._contentItems.length;
 
         this._contentItems.splice(index, 0, contentItem);
@@ -170,16 +167,16 @@ export abstract class ContentItem extends EventEmitter {
         if (this._isInitialised === true && contentItem._isInitialised === false) {
             contentItem.init();
         }
+
+        return index;
     }
 
     /**
      * Replaces oldChild with newChild. This used to use jQuery.replaceWith... which for
      * some reason removes all event listeners, so isn't really an option.
      *
-     * @param   {ContentItem} oldChild
-     * @param   {ContentItem} newChild
-     *
-     * @returns {void}
+     * @param oldChild -
+     * @param newChild -
      */
     replaceChild(oldChild: ContentItem, newChild: ContentItem, _$destroyOldChild = false): void {
 
@@ -253,23 +250,6 @@ export abstract class ContentItem extends EventEmitter {
     }
 
     /**
-     * Maximises the Item or minimises it if it is already maximised
-     */
-    toggleMaximise(ev?: Event): void {
-        if (ev !== undefined) {
-            ev.preventDefault();
-        }
-        if (this._isMaximised === true) {
-            this.layoutManager.minimiseItem(this);
-        } else {
-            this.layoutManager.maximiseItem(this);
-        }
-
-        this._isMaximised = !this._isMaximised;
-        this.emitBubblingEvent('stateChanged');
-    }
-
-    /**
      * Selects the item if it is not already selected
      */
     select(): void {
@@ -293,9 +273,7 @@ export abstract class ContentItem extends EventEmitter {
      * Set this component's title
      *
      * @public
-     * @param {String} title
-     *
-     * @returns {void}
+     * @param title -
      */
     setTitle(title: string): void {
         this._config.title = title;
@@ -306,7 +284,7 @@ export abstract class ContentItem extends EventEmitter {
     /**
      * Checks whether a provided id is present
      *
-     * @param   id
+     * @param id -
      *
      * @returns isPresent
      */
@@ -379,6 +357,26 @@ export abstract class ContentItem extends EventEmitter {
         }
         return result;
     }
+
+
+    getConfigMaximisedItems(): ContentItem[] {
+        const result: ContentItem[] = [];
+        this.deepFilterAddChildContentItems(result, (item) => {
+            const config = item._config;
+            if (ItemConfig.isStackItem(config) && config.maximised) {
+                return true;
+            } else {
+                if (ItemConfig.isComponentItem(config) && config.maximised) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        });
+
+        return result;
+    }
+
 
     /** @internal */
     deepAddChildContentItems(contentItems: ContentItem[]): void {
@@ -523,8 +521,8 @@ export abstract class ContentItem extends EventEmitter {
             const contentItem = this._contentItems[i];
             if (checkAcceptFtn(contentItem)) {
                 contentItems.push(contentItem);
-                contentItem.deepFilterAddChildContentItems(contentItems, checkAcceptFtn);
             }
+            contentItem.deepFilterAddChildContentItems(contentItems, checkAcceptFtn);
         }
     }
 
@@ -532,8 +530,8 @@ export abstract class ContentItem extends EventEmitter {
      * Called for every event on the item tree. Decides whether the event is a bubbling
      * event and propagates it to its parent
      *
-     * @param    name the name of the event
-     * @param   event
+     * @param name - The name of the event
+     * @param event -
      * @internal
      */
     private propagateEvent(name: string, args: unknown[]) {
@@ -545,11 +543,11 @@ export abstract class ContentItem extends EventEmitter {
 
                 /**
                  * In some cases (e.g. if an element is created from a DragSource) it
-                 * doesn't have a parent and is not below root. If that's the case
+                 * doesn't have a parent and is not a child of GroundItem. If that's the case
                  * propagate the bubbling event from the top level of the substree directly
                  * to the layoutManager
                  */
-                if (this.isRoot === false && this._parent) {
+                if (this.isGround === false && this._parent) {
                     this._parent.emitUnknown(name, event);
                 } else {
                     this.scheduleEventPropagationToLayoutManager(name, event);
@@ -559,11 +557,11 @@ export abstract class ContentItem extends EventEmitter {
     }
 
     /**
-     * All raw events bubble up to the root element. Some events that
+     * All raw events bubble up to the Ground element. Some events that
      * are propagated to - and emitted by - the layoutManager however are
      * only string-based, batched and sanitized to make them more usable
      *
-     * @param {String} name the name of the event
+     * @param name - The name of the event
      * @internal
      */
     private scheduleEventPropagationToLayoutManager(name: string, event: EventEmitter.BubblingEvent) {
@@ -581,7 +579,7 @@ export abstract class ContentItem extends EventEmitter {
     /**
      * Callback for events scheduled by _scheduleEventPropagationToLayoutManager
      *
-     * @param name the name of the event
+     * @param name - The name of the event
      * @internal
      */
     private propagateEventToLayoutManager(name: string, event: EventEmitter.BubblingEvent) {
@@ -590,13 +588,14 @@ export abstract class ContentItem extends EventEmitter {
     }
 }
 
-/** @internal */
+/** @public */
 export namespace ContentItem {
+    /** @internal */
     export interface Area extends AreaLinkedRect {
         surface: number;
         contentItem: ContentItem;
     }
 }
 
-/** @deprecated Use {@link ContentItem} */
+/** @public @deprecated Use {@link (ContentItem:class)} */
 export type AbstractContentItem = ContentItem;

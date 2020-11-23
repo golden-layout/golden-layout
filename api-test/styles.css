@@ -1,0 +1,40 @@
+body {
+    margin: 0;
+    overflow: hidden;
+}
+
+#bodySection {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+    width: 100%;
+}
+
+#layoutContainer {
+    height: 100%;
+    width: 100%;
+}
+
+#controls {
+    display: flex;
+    flex-direction: column;
+}
+
+.control {
+    margin: 2px;    
+}
+
+#addComponentSection {
+    display: flex;
+    flex-direction: row;
+}
+
+#predefinedLayoutsSection {
+    display: flex;
+    flex-direction: row;
+}
+
+#saveAndReloadLayoutSection {
+    display: flex;
+    flex-direction: row;
+}

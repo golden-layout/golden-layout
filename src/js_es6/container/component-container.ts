@@ -8,6 +8,7 @@ import { EventEmitter } from '../utils/event-emitter';
 import { JsonValue } from '../utils/types';
 import { deepExtend, setElementHeight, setElementWidth } from '../utils/utils';
 
+/** @public */
 export class ComponentContainer extends EventEmitter {
     /** @internal */
     private _width: number | null;
@@ -21,6 +22,9 @@ export class ComponentContainer extends EventEmitter {
     private readonly _contentElement;
     /** @internal */
     private _tab: Tab;
+
+    stateRequestEvent: ComponentContainer.StateRequestEventHandler | undefined;
+    beforeDestroyEvent: ComponentContainer.BeforeDestroyEventHandler | undefined;
 
     get width(): number | null { return this._width; }
     get height(): number | null { return this._height; }
@@ -54,7 +58,16 @@ export class ComponentContainer extends EventEmitter {
         }
     }
 
-    /** @deprecated use {@link contentElement } */
+    destroy(): void {
+        if (this.beforeDestroyEvent !== undefined) {
+            this.beforeDestroyEvent();
+        }
+        this.stateRequestEvent = undefined;
+        this.beforeDestroyEvent = undefined;
+        this.emit('destroy');
+    }
+
+    /** @deprecated use {@link (ComponentContainer:class).contentElement } */
     getElement(): HTMLElement {
         return this._contentElement;
     }
@@ -93,8 +106,8 @@ export class ComponentContainer extends EventEmitter {
      *
      * If this container isn't a descendant of a row or column
      * it returns false
-     * @param width  The new width in pixel
-     * @param height The new height in pixel
+     * @param width - The new width in pixel
+     * @param height - The new height in pixel
      *
      * @returns resizeSuccesful
      */
@@ -154,12 +167,11 @@ export class ComponentContainer extends EventEmitter {
         }
     }
 
-
     /**
      * Returns the current state object
      * @returns state
      */
-    getState(): JsonValue {
+    getState(): JsonValue | undefined {
         if (ComponentItemConfig.isSerialisable(this._config)) {
             return this._config.componentState;
         } else {
@@ -171,7 +183,6 @@ export class ComponentContainer extends EventEmitter {
         }
     }
 
-
     /**
      * Merges the provided state into the current one
      */
@@ -180,11 +191,8 @@ export class ComponentContainer extends EventEmitter {
         this.setState(extendedState as JsonValue);
     }
 
-
     /**
      * Notifies the layout manager of a stateupdate
-     *
-     * @param {serialisable} state
      */
     setState(state: JsonValue): void {
         if (ComponentItemConfig.isSerialisable(this._config)) {
@@ -200,7 +208,6 @@ export class ComponentContainer extends EventEmitter {
         }
     }
 
-
     /**
      * Set's the components title
      */
@@ -214,13 +221,12 @@ export class ComponentContainer extends EventEmitter {
         this.emit('tab', tab)
     }
 
-
     /**
      * Set's the containers size. Called by the container's component.
      * To set the size programmatically from within the container please
      * use the public setSize method
-     * @param width  in px
-     * @param height in px
+     * @param width - in px
+     * @param height - in px
      * @internal
      */
     setSizeToNodeSize(width: number, height: number): void {
@@ -239,5 +245,11 @@ export class ComponentContainer extends EventEmitter {
     }
 }
 
-/** @deprecated use {@link ComponentContainer} */
+/** @public @deprecated use {@link ComponentContainer} */
 export type ItemContainer = ComponentContainer;
+
+/** @public */
+export namespace ComponentContainer {
+    export type StateRequestEventHandler = (this: void) => JsonValue | undefined;
+    export type BeforeDestroyEventHandler = (this: void) => void;
+}

@@ -16,12 +16,13 @@ export interface LeftAndTop {
     top: number;    
 }
 
-/** @internal */
-export const enum Side {
-    top = 'top',
-    left = 'left',
-    right = 'right',
-    bottom = 'bottom',
+/** @public */
+export type Side = 'top' | 'left' | 'right' | 'bottom';
+export namespace Side {
+    export const top = 'top';
+    export const left = 'left';
+    export const right = 'right';
+    export const bottom = 'bottom';
 }
 
 /** @internal */
@@ -40,8 +41,17 @@ export interface AreaLinkedRect {
     y2: number, // nextTop
 }
 
-export type JsonValue = string | number | boolean | null | undefined | Json | JsonValueArray;
+/** @public */
+export type JsonValue = string | number | boolean | null | Json | JsonValueArray;
+/** @public */
 export interface Json {
     [name: string]: JsonValue;
 }
+/** @public */
 export type JsonValueArray = Array<JsonValue>
+/** @public */
+export namespace JsonValue {
+    export function isJson(value: JsonValue): value is Json {
+        return !Array.isArray(value) && value !== null && typeof value === 'object';
+    }
+}

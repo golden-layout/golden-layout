@@ -1,13 +1,15 @@
 import { ComponentItemConfig, HeaderedItemConfig } from '../config/config';
 import { ComponentContainer } from '../container/component-container';
 import { Tab } from '../controls/tab';
-import { UnexpectedUndefinedError } from '../errors/internal-error';
+import { AssertError, UnexpectedUndefinedError } from '../errors/internal-error';
 import { LayoutManager } from '../layout-manager';
 import { ReactComponentHandler } from '../utils/react-component-handler';
-import { createTemplateHtmlElement, deepExtend, getElementWidthAndHeight } from '../utils/utils';
+import { JsonValue } from '../utils/types';
+import { createTemplateHtmlElement, deepExtendValue, getElementWidthAndHeight } from '../utils/utils';
 import { ContentItem } from './content-item';
 import { Stack } from './stack';
 
+/** @public */
 export class ComponentItem extends ContentItem {
     /** @internal */
     private readonly _componentName: string;
@@ -31,13 +33,14 @@ export class ComponentItem extends ContentItem {
         super(layoutManager, _componentConfig, _stack, createTemplateHtmlElement(ComponentItem.templateHtml));
 
         let componentInstantiator: ComponentItem.ComponentInstantiator;
-        let componentState: unknown;
+        let componentState: JsonValue | undefined;
         if (ComponentItemConfig.isSerialisable(this._componentConfig)) {
             componentInstantiator = layoutManager.getComponentInstantiator(this._componentConfig);
             if (this._componentConfig.componentState === undefined) {
-                componentState = {};
+                componentState = undefined;
             } else {
-                componentState = deepExtend({}, this._componentConfig.componentState as Record<string, unknown>); // make copy
+                 // make copy
+                componentState = deepExtendValue({}, this._componentConfig.componentState as Record<string, unknown>) as JsonValue;
             }
         } else {
             if (ComponentItemConfig.isReact(this._componentConfig)) {
@@ -45,7 +48,7 @@ export class ComponentItem extends ContentItem {
                     constructor: ReactComponentHandler,
                     factoryFunction: undefined,
                 };
-                componentState = this._componentConfig.props;
+                componentState = this._componentConfig.props as JsonValue;
             } else {
                 throw new Error(`Component.constructor: unsupported Config type: ${this._componentConfig.type}`);
             }
@@ -74,6 +77,39 @@ export class ComponentItem extends ContentItem {
                 throw new UnexpectedUndefinedError('CIC10008');
             }
         }
+    }
+
+    /** @internal */
+    destroy(): void {
+        this._container.destroy()
+        super.destroy();
+    }
+
+    /** @internal */
+    setParent(parent: Stack): void {
+        this._stack = parent;
+        super.setParent(parent);
+    }
+
+    /** @internal */
+    toConfig(): ComponentItemConfig {
+        // cannot rely on ItemConfig.createCopy() to create StackItemConfig as header may have changed
+        const result = super.toConfig() as ComponentItemConfig;
+        const stateRequestEvent = this._container.stateRequestEvent;
+        if (stateRequestEvent !== undefined) {
+            const state = stateRequestEvent();
+            if (ComponentItemConfig.isSerialisable(result)) {
+                result.componentState = state;
+            } else {
+                if (ComponentItemConfig.isReact(result)) {
+                    result.props = state; // is this correct? Needs review.
+                } else {
+                    throw new AssertError('CITC75335');
+                }
+            }
+        }
+
+        return result;
     }
 
     close(): void {
@@ -114,18 +150,6 @@ export class ComponentItem extends ContentItem {
     }
 
     /** @internal */
-    destroy(): void {
-        this._container.emit('destroy');
-        super.destroy();
-    }
-
-    /** @internal */
-    setParent(parent: Stack): void {
-        this._stack = parent;
-        super.setParent(parent);
-    }
-
-    /** @internal */
     private updateNodeSize(): void {
         if (this.element.style.display !== 'none') {
             // Do not update size of hidden components to prevent unwanted reflows
@@ -135,13 +159,14 @@ export class ComponentItem extends ContentItem {
     }
 }
 
-/** @deprecated use {@link ComponentItem} */
+/** @public @deprecated use {@link (ComponentItem:class)} */
 export type Component = ComponentItem;
 
+/** @public */
 export namespace ComponentItem {
     export type Component = unknown;
-    export type ComponentConstructor = new(container: ComponentContainer, state: unknown) => Component;
-    export type ComponentFactoryFunction = (container: ComponentContainer, state: unknown) => Component;
+    export type ComponentConstructor = new(container: ComponentContainer, state: JsonValue | undefined) => Component;
+    export type ComponentFactoryFunction = (container: ComponentContainer, state: JsonValue | undefined) => Component;
     /** @internal */
     export interface ComponentInstantiator {
         constructor: ComponentConstructor | undefined;

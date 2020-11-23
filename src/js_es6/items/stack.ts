@@ -1,11 +1,12 @@
 import { HeaderedItemConfig, ItemConfig, StackItemConfig } from '../config/config';
+import { UserComponentItemConfig, UserItemConfig, UserSerialisableComponentConfig } from '../config/user-config';
 import { DragProxy } from '../controls/drag-proxy';
 import { Header } from '../controls/header';
 import { AssertError, UnexpectedNullError } from '../errors/internal-error';
 import { LayoutManager } from '../layout-manager';
 import { DragListener } from '../utils/drag-listener';
 import { getJQueryOffset } from '../utils/jquery-legacy';
-import { AreaLinkedRect, Side, WidthAndHeight } from '../utils/types';
+import { AreaLinkedRect, JsonValue, Side, WidthAndHeight } from '../utils/types';
 import {
     createTemplateHtmlElement,
     getElementHeight,
@@ -17,8 +18,7 @@ import {
 import { ComponentItem } from './component-item';
 import { ContentItem } from './content-item';
 
-
-
+/** @public */
 export class Stack extends ContentItem {
     /** @internal */
     private readonly _header: Header;
@@ -38,6 +38,8 @@ export class Stack extends ContentItem {
     private _headerSideChanged = false;
     /** @internal */
     private _docker: Stack.Docker;
+    /** @internal */
+    private _isMaximised = false;
 
     /** @internal */
     private _elementMouseEnterEventListener = () => this.onElementMouseEnter();
@@ -58,13 +60,14 @@ export class Stack extends ContentItem {
     get dockEnabled(): boolean { return this._header.dockEnabled; }
     get docker(): Stack.Docker { return this._docker; }
     get contentAreaDimensions(): Stack.ContentAreaDimensions | null { return this._contentAreaDimensions; }
+    get isMaximised(): boolean { return this._isMaximised; }
 
     /** @internal */
     constructor(layoutManager: LayoutManager, private readonly _stackConfig: StackItemConfig, private _stackParent: Stack.Parent) {
         super(layoutManager, _stackConfig, _stackParent, createTemplateHtmlElement(Stack.templateHtml));
 
         const itemHeaderConfig = _stackConfig.header;
-        const managerHeaderConfig = layoutManager.managerConfig.header;
+        const managerHeaderConfig = layoutManager.layoutConfig.header;
         const configContent = _stackConfig.content;
         // If stack has only one component, then we can also check this for header settings
         let componentHeaderConfig: HeaderedItemConfig.Header | undefined;
@@ -103,7 +106,7 @@ export class Stack extends ContentItem {
 
         this._header = new Header(layoutManager,
             this, headerSettings,
-            this._stackConfig.isClosable && this.layoutManager.managerConfig.settings.showCloseIcon,
+            this._stackConfig.isClosable && this.layoutManager.layoutConfig.settings.showCloseIcon,
             () => this.remove(),
             () => this.handleDockEvent(),
             () => this.handlePopoutEvent(),
@@ -194,7 +197,7 @@ export class Stack extends ContentItem {
         this.initContentItems();
     }
 
-    /** @deprecated Use {@link setActiveComponentItem} */
+    /** @deprecated Use {@link (Stack:class).setActiveComponentItem} */
     setActiveContentItem(item: ContentItem): void {
         if (!ContentItem.isComponentItem(item)) {
             throw new Error('Stack.setActiveContentItem: item is not a ComponentItem');
@@ -221,7 +224,7 @@ export class Stack extends ContentItem {
         }
     }
 
-    /** @deprecated Use {@link getActiveComponentItem} */
+    /** @deprecated Use {@link (Stack:class).getActiveComponentItem} */
     getActiveContentItem(): ContentItem | null {
         let result: ContentItem | null;
         result = this.getActiveComponentItem();
@@ -264,8 +267,23 @@ export class Stack extends ContentItem {
         this._header.setRowColumnClosable(value);
     }
 
-    addChild(contentItem: ContentItem, index: number): void {
-        if(index > this.contentItems.length){
+    addSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): void {
+        const itemConfig: UserSerialisableComponentConfig = {
+            type: 'component',
+            componentName: componentTypeName,
+            componentState,
+        };
+        this.addItem(itemConfig, index);
+    }
+
+    addItem(userItemConfig: UserComponentItemConfig, index?: number): void {
+        const itemConfig = UserItemConfig.resolve(userItemConfig);
+        const contentItem = this.layoutManager.createAndInitContentItem(itemConfig, this);
+        this.addChild(contentItem, index);
+    }
+
+    addChild(contentItem: ContentItem, index?: number): number {
+        if(index !== undefined && index > this.contentItems.length){
             /* 
              * UGLY PATCH: PR #428, commit a4e84ec5 fixed a bug appearing on touchscreens during the drag of a panel. 
              * The bug was caused by the physical removal of the element on drag: partial documentation is at issue #425. 
@@ -279,11 +297,11 @@ export class Stack extends ContentItem {
             index -= 1;
             throw new AssertError('SAC99728'); // undisplayChild() removed so this condition should no longer occur
         }        
-        // contentItem = this.layoutManager._$normalizeContentItem(contentItem, this);
+
         if (!(contentItem instanceof ComponentItem)) {
             throw new AssertError('SACC88532'); // Stacks can only have Component children
         } else {
-            super.addChild(contentItem, index);
+            index = super.addChild(contentItem, index);
             this._childElementContainer.appendChild(contentItem.element);
             this._header.createTab(contentItem, index);
             this.setActiveComponentItem(contentItem);
@@ -293,6 +311,8 @@ export class Stack extends ContentItem {
                 this._stackParent.validateDocking();
             }
             this.emitBubblingEvent('stateChanged');
+
+            return index;
         }
     }
 
@@ -315,22 +335,25 @@ export class Stack extends ContentItem {
         }
     }
 
-    // undisplayChild(contentItem: ContentItem): void {
-    //     if(this.contentItems.length > 1){
-    //         const index = this.contentItems.indexOf(contentItem);
-    //         contentItem._$hide && contentItem._$hide()
-    //         this.setActiveContentItem(this.contentItems[index === 0 ? index+1 : index-1] as ComponentItem)
-    //     } else {
-    //         this._header.hideTab(contentItem);
-    //         contentItem._$hide();
-    //         this._$hide();
-    //         super.undisplayChild(contentItem);
-    //         if (this._stackParent.isRow || this._stackParent.isColumn) {
-    //             this._stackParent.validateDocking();
-    //         }
-    //     }
-    //     this.emitBubblingEvent('stateChanged');
-    // }
+    /**
+     * Maximises the Item or minimises it if it is already maximised
+     */
+    toggleMaximise(ev?: Event): void {
+        if (ev !== undefined) {
+            ev.preventDefault();
+        }
+        if (!this.isMaximised) {
+            this.dock(false);
+        }
+        if (this._isMaximised === true) {
+            this.layoutManager.minimiseItem(this);
+        } else {
+            this.layoutManager.maximiseItem(this);
+        }
+
+        this._isMaximised = !this._isMaximised;
+        this.emitBubblingEvent('stateChanged');
+    }
 
     /** @internal */
     destroy(): void {
@@ -348,6 +371,7 @@ export class Stack extends ContentItem {
     toConfig(): StackItemConfig {
         // cannot rely on ItemConfig.createCopy() to create StackItemConfig as header may have changed
         const result = super.toConfig() as StackItemConfig;
+        result.maximised = this._isMaximised;
         result.header = this.createHeaderConfig();
         result.activeItemIndex = this.contentItems.indexOf(this._activeComponentItem);
         if (result.activeItemIndex < 0) {
@@ -358,7 +382,7 @@ export class Stack extends ContentItem {
     }
 
     /**
-     * Ok, this one is going to be the tricky one: The user has dropped {contentItem} onto this stack.
+     * Ok, this one is going to be the tricky one: The user has dropped a {@link (ContentItem:class)} onto this stack.
      *
      * It was dropped on either the stacks header or the top, right, bottom or left bit of the content area
      * (which one of those is stored in this._dropSegment). Now, if the user has dropped on the header the case
@@ -469,8 +493,8 @@ export class Stack extends ContentItem {
      * If the user hovers above the header part of the stack, indicate drop positions for tabs.
      * otherwise indicate which segment of the body the dragged item would be dropped on
      *
-     * @param    x Absolute Screen X
-     * @param    y Absolute Screen Y
+     * @param x - Absolute Screen X
+     * @param y - Absolute Screen Y
      * @internal
      */
     highlightDropZone(x: number, y: number): void {
@@ -610,17 +634,10 @@ export class Stack extends ContentItem {
         }
     }
 
-    toggleMaximise(ev?: Event): void {
-        if (!this.isMaximised) {
-            this.dock(false);
-        }
-        super.toggleMaximise(ev);
-    }
-
     /**
      * Programmatically operate with header position.
      *
-     * @param position one of ('top','left','right','bottom') to set or empty to get it.
+     * @param position -
      *
      * @returns previous header position
      * @internal
@@ -641,7 +658,7 @@ export class Stack extends ContentItem {
         if (!(newChild instanceof ComponentItem)) {
             throw new AssertError('SPCR11056'); // Stacks can only have Component children
         } else {
-            this._header.tabs[index].componentItem = newChild;
+            this._header.tabs[index].setComponentItem(newChild);
         }
     }
 
@@ -653,7 +670,7 @@ export class Stack extends ContentItem {
 
             if (this._header.show) {
                 const dimension = this._header.leftRightSided ? WidthAndHeight.widthPropertyName : WidthAndHeight.heightPropertyName;
-                content[dimension] -= this.layoutManager.managerConfig.dimensions.headerHeight;
+                content[dimension] -= this.layoutManager.layoutConfig.dimensions.headerHeight;
             }
             if (isDocked) {
                 content[this._docker.dimension] = this._docker.realSize;
@@ -901,8 +918,9 @@ export class Stack extends ContentItem {
     }
 }
 
-/** @internal */
+/** @public */
 export namespace Stack {
+    /** @internal */
     export const enum Segment {
         Header = 'header',
         Body = 'body',
@@ -912,15 +930,18 @@ export namespace Stack {
         Bottom = 'bottom',
     }
 
+    /** @internal */
     export interface ContentAreaDimension {
         hoverArea: AreaLinkedRect;
         highlightArea: AreaLinkedRect;
     }
 
+    /** @internal */
     export type ContentAreaDimensions = {
         [segment: string]: ContentAreaDimension;
     };
 
+    /** @internal */
     export interface Docker {
         docked: boolean;
         dimension: ItemConfig.HeightOrWidthPropertyName;
@@ -933,5 +954,6 @@ export namespace Stack {
         validateDocking(): void;
     }
 
+    /** @internal */
     export const templateHtml = '<div class="lm_item lm_stack"></div>';
 }

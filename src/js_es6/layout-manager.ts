@@ -1,13 +1,13 @@
 import {
     ComponentItemConfig,
-    Config,
     ItemConfig,
-    ManagerConfig,
-    PopoutManagerConfig,
+    LayoutConfig,
+    PopoutLayoutConfig,
     RootItemConfig,
     RowOrColumnItemConfig,
     StackItemConfig
 } from './config/config'
+import { UserComponentItemConfig, UserLayoutConfig, UserRowOrColumnItemConfig, UserSerialisableComponentConfig, UserStackItemConfig } from './config/user-config'
 import { BrowserPopout } from './controls/browser-popout'
 import { DragSource } from './controls/drag-source'
 import { DropTargetIndicator } from './controls/drop-target-indicator'
@@ -16,7 +16,7 @@ import { ApiError, ConfigurationError } from './errors/external-error'
 import { AssertError, UnexpectedNullError, UnreachableCaseError } from './errors/internal-error'
 import { ComponentItem } from './items/component-item'
 import { ContentItem } from './items/content-item'
-import { Root } from './items/root'
+import { GroundItem } from './items/ground-item'
 import { RowOrColumn } from './items/row-or-column'
 import { Stack } from './items/stack'
 import { ConfigMinifier } from './utils/config-minifier'
@@ -24,7 +24,7 @@ import { EventEmitter } from './utils/event-emitter'
 import { EventHub } from './utils/event-hub'
 import { I18nStringId, I18nStrings, i18nStrings } from './utils/i18n-strings'
 import { getJQueryLeftAndTop } from './utils/jquery-legacy'
-import { Rect } from './utils/types'
+import { JsonValue, Rect } from './utils/types'
 import {
     createTemplateHtmlElement,
     getElementWidthAndHeight,
@@ -44,6 +44,7 @@ declare global {
  * The main class that will be exposed as GoldenLayout.
  */
 
+/** @public */
 export abstract class LayoutManager extends EventEmitter {
     /** @internal */
     private _container: HTMLElement;
@@ -52,7 +53,7 @@ export abstract class LayoutManager extends EventEmitter {
     /** @internal */
     private _isInitialised = false;
     /** @internal */
-    private _root: Root | null = null;
+    private _groundItem: GroundItem | null = null;
     /** @internal */
     private _openPopouts: BrowserPopout[] = [];
     /** @internal */
@@ -62,7 +63,7 @@ export abstract class LayoutManager extends EventEmitter {
     /** @internal */
     private _resizeTimeoutId: ReturnType<typeof setTimeout> | undefined;
     /** @internal */
-    private _componentConstructors: Record<string, ComponentItem.ComponentInstantiator> = {};
+    private _componentTypes: Record<string, ComponentItem.ComponentInstantiator> = {};
     /** @internal */
     private _itemAreas: ContentItem.Area[] = [];
     /** @internal */
@@ -87,7 +88,7 @@ export abstract class LayoutManager extends EventEmitter {
     private _selectedItem: ContentItem | null = null;
 
     /** @internal */
-    private _getComponentConstructorFtn: LayoutManager.GetComponentConstructorFtn;
+    private _getComponentConstructorFtn: LayoutManager.GetComponentConstructorCallback;
 
     /** @internal */
     private _windowResizeListener = () => this.onResize();
@@ -99,12 +100,15 @@ export abstract class LayoutManager extends EventEmitter {
     /** @internal */
     protected get maximisedItem(): ContentItem | null { return this._maximisedItem; }
 
-    public isSubWindow: boolean;
-    public managerConfig: ManagerConfig;
+    public readonly isSubWindow: boolean;
+    public layoutConfig: LayoutConfig;
 
     get container(): HTMLElement { return this._container; }
     get isInitialised(): boolean { return this._isInitialised; }
-    get root(): Root | null { return this._root; }
+    /** @internal */
+    get groundItem(): GroundItem | null { return this._groundItem; }
+    /** @deprecated use {@link (LayoutManager:class).groundItem} instead */
+    get root(): GroundItem | null { return this._groundItem; }
     get openPopouts(): BrowserPopout[] { return this._openPopouts; }
     /** @internal */
     get dropTargetIndicator(): DropTargetIndicator | null { return this._dropTargetIndicator; }
@@ -119,14 +123,14 @@ export abstract class LayoutManager extends EventEmitter {
     get tabDropPlaceholder(): HTMLElement { return this._tabDropPlaceholder; }
 
     /**
-    * @param container a Dom HTML element. Defaults to body
+    * @param container - A Dom HTML element. Defaults to body
     * @internal
     */
-    constructor(managerConfigAndIsSubWindow: LayoutManager.ManagerConfigAndIsSubWindow, container?: HTMLElement) {        
+    constructor(layoutConfigAndIsSubWindow: LayoutManager.LayoutConfigAndIsSubWindow, container?: HTMLElement) {        
         super();
 
-        this.managerConfig = managerConfigAndIsSubWindow.managerConfig;
-        this.isSubWindow = managerConfigAndIsSubWindow.isSubWindow;
+        this.layoutConfig = layoutConfigAndIsSubWindow.layoutConfig;
+        this.isSubWindow = layoutConfigAndIsSubWindow.isSubWindow;
 
         I18nStrings.checkInitialise();
 
@@ -136,12 +140,42 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /**
+     * Destroys the LayoutManager instance itself as well as every ContentItem
+     * within it. After this is called nothing should be left of the LayoutManager.
+     */
+    destroy(): void {
+        if (this._isInitialised === false) {
+            return;
+        }
+        this.onUnload();
+        globalThis.removeEventListener('resize', this._windowResizeListener);
+        globalThis.removeEventListener('unload', this._windowUnloadListener);
+        globalThis.removeEventListener('beforeunload', this._windowUnloadListener);
+        if (this._groundItem !== null) {
+            this._groundItem.destroy();
+        }
+        this._tabDropPlaceholder.remove();
+        if (this._dropTargetIndicator !== null) {
+            this._dropTargetIndicator.destroy();
+        }
+        if (this._transitionIndicator !== null) {
+            this._transitionIndicator.destroy();
+        }
+        this._eventHub.destroy();
+
+        for (const dragSource of this._dragSources) {
+            dragSource.destroy();
+        }
+        this._dragSources = [];
+    }
+
+    /**
      * Takes a GoldenLayout configuration object and
      * replaces its keys and values recursively with
      * one letter codes
      * @internal
      */
-    minifyConfig(config: ManagerConfig): ManagerConfig {
+    minifyConfig(config: LayoutConfig): LayoutConfig {
         return (new ConfigMinifier()).minifyConfig(config);
     }
 
@@ -150,17 +184,16 @@ export abstract class LayoutManager extends EventEmitter {
      * using minifyConfig and returns its original version
      * @internal
      */
-    unminifyConfig(config: ManagerConfig): ManagerConfig {
+    unminifyConfig(config: LayoutConfig): LayoutConfig {
         return (new ConfigMinifier()).unminifyConfig(config);
     }
 
     /**
-     * Register a component with the layout manager. If a configuration node
-     * of type component is reached it will look up componentName and create the
-     * associated component
+     * Register a new component type with the layout manager.
      *
-     * @deprecated See https://stackoverflow.com/questions/40922531/how-to-check-if-a-javascript-function-is-a-constructor
-     * @see {@link registerComponentWithConstructor} or {@link registerComponentWithFactoryFunction}
+     * @deprecated See {@link https://stackoverflow.com/questions/40922531/how-to-check-if-a-javascript-function-is-a-constructor}
+     * instead use {@link (LayoutManager:class).registerComponentConstructor}
+     * or {@link (LayoutManager:class).registerComponentFactoryFunction}
      */
     registerComponent(name: string,
         componentConstructorOrFactoryFtn: ComponentItem.ComponentConstructor | ComponentItem.ComponentFactoryFunction
@@ -170,63 +203,45 @@ export abstract class LayoutManager extends EventEmitter {
         } else {
             if (componentConstructorOrFactoryFtn.hasOwnProperty('prototype')) {
                 const componentConstructor = componentConstructorOrFactoryFtn as ComponentItem.ComponentConstructor;
-                this.registerComponentWithConstructor(name, componentConstructor);   
+                this.registerComponentConstructor(name, componentConstructor);   
             } else {
                 const componentFactoryFtn = componentConstructorOrFactoryFtn as ComponentItem.ComponentFactoryFunction;
-                this.registerComponentWithFactoryFunction(name, componentFactoryFtn);   
+                this.registerComponentFactoryFunction(name, componentFactoryFtn);   
             }
         }
     }
 
     /**
-     * Register a component with the layout manager. If a configuration node
-     * of type component is reached it will look up componentName and create the
-     * associated component
-     *
-     *  {
-     *    type: "component",
-     *    componentName: "EquityNewsFeed",
-     *    componentState: { "feedTopic": "us-bluechips" }
-     *  }
-     *
+     * Register a new component type with the layout manager.
      */
-    registerComponentWithConstructor(name: string, componentConstructor: ComponentItem.ComponentConstructor): void {
+    registerComponentConstructor(name: string, componentConstructor: ComponentItem.ComponentConstructor): void {
         if (typeof componentConstructor !== 'function') {
             throw new Error(i18nStrings[I18nStringId.PleaseRegisterAConstructorFunction]);
         }
 
-        if (this._componentConstructors[name] !== undefined) {
+        if (this._componentTypes[name] !== undefined) {
             throw new Error(`${i18nStrings[I18nStringId.ComponentIsAlreadyRegistered]}: ${name}`);
         }
 
-        this._componentConstructors[name] = {
+        this._componentTypes[name] = {
             constructor: componentConstructor,
             factoryFunction: undefined,
         }
     }
 
     /**
-     * Register a component with the layout manager. If a configuration node
-     * of type component is reached it will look up componentName and create the
-     * associated component
-     *
-     *  {
-     *    type: "component",
-     *    componentName: "EquityNewsFeed",
-     *    componentState: { "feedTopic": "us-bluechips" }
-     *  }
-     *
+     * Register a new component with the layout manager.
      */
-    registerComponentWithFactoryFunction(name: string, componentFactoryFunction: ComponentItem.ComponentFactoryFunction): void {
+    registerComponentFactoryFunction(name: string, componentFactoryFunction: ComponentItem.ComponentFactoryFunction): void {
         if (typeof componentFactoryFunction !== 'function') {
             throw new Error('Please register a constructor function');
         }
 
-        if (this._componentConstructors[name] !== undefined) {
+        if (this._componentTypes[name] !== undefined) {
             throw new Error('Component ' + name + ' is already registered');
         }
 
-        this._componentConstructors[name] = {
+        this._componentTypes[name] = {
             constructor: undefined,
             factoryFunction: componentFactoryFunction,
         }
@@ -234,12 +249,19 @@ export abstract class LayoutManager extends EventEmitter {
 
     /**
      * Register a component function with the layout manager. This function should
-     * return a constructor for a component based on a config.  If undefined is returned, 
-     * and no component has been registered under that name using registerComponent, an 
-     * error will be thrown.
+     * return a constructor for a component based on a config.
+     * @deprecated use {@link (LayoutManager:class).registerGetComponentConstructorCallback}
      */
-    registerComponentFunction(callbackClosure: LayoutManager.GetComponentConstructorFtn): void {
-        if (typeof callbackClosure !== 'function') {
+    registerComponentFunction(callback: LayoutManager.GetComponentConstructorCallback): void {
+        this.registerGetComponentConstructorCallback(callback);
+    }
+
+    /**
+     * Register a callback closure with the layout manager which supplies a Component Constructor.
+     * This callback should return a constructor for a component based on a config.
+     */
+    registerGetComponentConstructorCallback(callback: LayoutManager.GetComponentConstructorCallback): void {
+        if (typeof callback !== 'function') {
             throw new Error('Please register a callback function');
         }
 
@@ -247,59 +269,11 @@ export abstract class LayoutManager extends EventEmitter {
             console.warn('Multiple component functions are being registered.  Only the final registered function will be used.')
         }
 
-        this._getComponentConstructorFtn = callbackClosure;
+        this._getComponentConstructorFtn = callback;
     }
 
-    /**
-     * Creates a layout configuration object based on the the current state
-     *
-     * @public
-     * @returns GoldenLayout configuration
-     */
-    toConfig(): Config {
-        if (this._isInitialised === false) {
-            throw new Error('Can\'t create config, layout not yet initialised');
-        } else {
-
-            // if (root !== undefined && !(root instanceof ContentItem)) {
-            //     throw new Error('Root must be a ContentItem');
-            // }
-
-            /*
-            * Content
-            */
-            if (this._root === null) {
-                throw new UnexpectedNullError('LMTC18244');
-            } else {
-                const content = this._root.calculateConfigContent();
-
-                /*
-                * Retrieve config for subwindows
-                */
-                this.reconcilePopoutWindows();
-                const openPopouts: PopoutManagerConfig[] = [];
-                for (let i = 0; i < this._openPopouts.length; i++) {
-                    openPopouts.push(this._openPopouts[i].toConfig());
-                }
-
-                /*
-                * calculate maximisedItemId
-                */
-                const maximisedItemId = this._maximisedItem ? '__glMaximised' : null;
-
-                const config: Config = {
-                    content,
-                    openPopouts,
-                    settings:  ManagerConfig.Settings.createCopy(this.managerConfig.settings),
-                    dimensions: ManagerConfig.Dimensions.createCopy(this.managerConfig.dimensions),
-                    header: ManagerConfig.Header.createCopy(this.managerConfig.header),
-                    maximisedItemId,
-                    resolved: true,
-                }
-        
-                return config;
-            }
-        }
+    getRegisteredComponentTypeNames(): string[] {
+        return Object.keys(this._componentTypes);
     }
 
     /**
@@ -312,7 +286,7 @@ export abstract class LayoutManager extends EventEmitter {
      */
     getComponentInstantiator(config: ComponentItemConfig): ComponentItem.ComponentInstantiator {
         const name = this.getComponentNameFromConfig(config)
-        let constructorToUse = this._componentConstructors[name]
+        let constructorToUse = this._componentTypes[name]
         if (constructorToUse === undefined) {
             if (this._getComponentConstructorFtn !== undefined) {
                 constructorToUse = {
@@ -329,7 +303,7 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /**
-     * Called from GolderLayout class. Finishes of init
+     * Called from GoldenLayout class. Finishes of init
      * @internal
      */
     init(): void {
@@ -337,14 +311,130 @@ export abstract class LayoutManager extends EventEmitter {
         this._dropTargetIndicator = new DropTargetIndicator(/*this.container*/);
         this._transitionIndicator = new TransitionIndicator();
         this.updateSizeFromContainer();
-        this.create(this.managerConfig);
-        this.bindEvents();
-        this._isInitialised = true;
-        this.adjustColumnsResponsive();
-        this.emit('initialised');
+
+        const layoutConfig = this.layoutConfig;
+        if (layoutConfig.root === undefined) {
+            const errorMsg = 'Missing setting \'content\' on top level of configuration';
+            throw new ConfigurationError(errorMsg, JSON.stringify(layoutConfig));
+        } else {
+            this._groundItem = new GroundItem(this, layoutConfig.root, this._container);
+            this._groundItem.init();
+
+            this.checkLoadedLayoutMaximiseItem();
+
+            this.bindEvents();
+            this._isInitialised = true;
+            this.adjustColumnsResponsive();
+            this.emit('initialised');
+        }
     }
 
-    /** @deprecated Use {@link setSize} */
+    /**
+     * Loads a new layout
+     * @param userLayoutConfig - New layout to be loaded
+     */
+    loadLayout(userLayoutConfig: UserLayoutConfig): void {
+        if (this._groundItem === null) {
+            throw new Error('Cannot load layout before init');
+        } else {
+            this.layoutConfig = UserLayoutConfig.resolve(userLayoutConfig);
+            this._groundItem.loadRoot(this.layoutConfig.root);
+            this.checkLoadedLayoutMaximiseItem();
+            this.adjustColumnsResponsive();
+        }
+    }
+
+    /**
+     * Creates a layout configuration object based on the the current state
+     *
+     * @public
+     * @returns GoldenLayout configuration
+     */
+    saveLayout(): LayoutConfig {
+        if (this._isInitialised === false) {
+            throw new Error('Can\'t create config, layout not yet initialised');
+        } else {
+
+            // if (root !== undefined && !(root instanceof ContentItem)) {
+            //     throw new Error('Root must be a ContentItem');
+            // }
+
+            /*
+            * Content
+            */
+            if (this._groundItem === null) {
+                throw new UnexpectedNullError('LMTC18244');
+            } else {
+                const groundContent = this._groundItem.calculateConfigContent();
+
+                if (groundContent.length !== 1) {
+                    throw new AssertError('LMTC16682');
+                } else {
+                    const rootItemConfig = groundContent[0];                    
+
+                    /*
+                    * Retrieve config for subwindows
+                    */
+                    this.reconcilePopoutWindows();
+                    const openPopouts: PopoutLayoutConfig[] = [];
+                    for (let i = 0; i < this._openPopouts.length; i++) {
+                        openPopouts.push(this._openPopouts[i].toConfig());
+                    }
+
+                    const config: LayoutConfig = {
+                        root: rootItemConfig,
+                        openPopouts,
+                        settings:  LayoutConfig.Settings.createCopy(this.layoutConfig.settings),
+                        dimensions: LayoutConfig.Dimensions.createCopy(this.layoutConfig.dimensions),
+                        header: LayoutConfig.Header.createCopy(this.layoutConfig.header),
+                        resolved: true,
+                    }
+            
+                    return config;
+                }
+            }
+        }
+    }
+
+    /**
+     * @deprecated Use {@link (LayoutManager:class).saveLayout}
+     */
+    toConfig(): LayoutConfig {
+        return this.saveLayout();
+    }
+
+    /**
+     * Adds a new child ContentItem under the root ContentItem.
+     * @param userItemConfig - ItemConfig of child to be added.
+     * @param index - Position under root. If undefined, then last.
+     */
+    addItem(userItemConfig: UserRowOrColumnItemConfig | UserStackItemConfig | UserComponentItemConfig,  index?: number): void {
+        if (this._groundItem === null) {
+            throw new Error('Cannot add item before init');
+        } else {
+            this._groundItem.addItem(userItemConfig, index);
+        }
+    }
+
+    /**
+     * Adds a new child Serialisable ComponentItem under the root ContentItem.
+     * @param userItemConfig - ItemConfig of child to be added.
+     * @param index - Position under root. If undefined, then last.
+     */
+    addSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): void {
+        if (this._groundItem === null) {
+            throw new Error('Cannot add component before init');
+        } else {
+            const itemConfig: UserSerialisableComponentConfig = {
+                type: 'component',
+                componentName: componentTypeName,
+                componentState,
+            };
+            this._groundItem.addItem(itemConfig, index);
+        }
+    }
+
+    /** @deprecated Use {@link (LayoutManager:class).setSize} */
     updateSize(width: number, height: number): void {
         this.setSize(width, height);
     }
@@ -352,18 +442,18 @@ export abstract class LayoutManager extends EventEmitter {
     /**
      * Updates the layout managers size
      *
-     * @param width  width in pixels
-     * @param height height in pixels
+     * @param width - Width in pixels
+     * @param height - Height in pixels
      */
     setSize(width: number, height: number): void {
         this._width = width;
         this._height = height;
 
         if (this._isInitialised === true) {
-            if (this._root === null) {
+            if (this._groundItem === null) {
                 throw new UnexpectedNullError('LMUS18881');
             } else {
-                this._root.setSize(this._width, this._height);
+                this._groundItem.setSize(this._width, this._height);
 
                 if (this._maximisedItem) {
                     const { width, height } = getElementWidthAndHeight(this._container);
@@ -384,33 +474,14 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /**
-     * Destroys the LayoutManager instance itself as well as every ContentItem
-     * within it. After this is called nothing should be left of the LayoutManager.
+     * Update the size of the root ContentItem.  This will update the size of all contentItems in the tree
      */
-    destroy(): void {
-        if (this._isInitialised === false) {
-            return;
+    updateRootSize(): void {
+        if (this._groundItem === null) {
+            throw new UnexpectedNullError('LMURS28881');
+        } else {
+            this._groundItem.updateSize();
         }
-        this.onUnload();
-        globalThis.removeEventListener('resize', this._windowResizeListener);
-        globalThis.removeEventListener('unload', this._windowUnloadListener);
-        globalThis.removeEventListener('beforeunload', this._windowUnloadListener);
-        if (this._root !== null) {
-            this._root.destroy();
-        }
-        this._tabDropPlaceholder.remove();
-        if (this._dropTargetIndicator !== null) {
-            this._dropTargetIndicator.destroy();
-        }
-        if (this._transitionIndicator !== null) {
-            this._transitionIndicator.destroy();
-        }
-        this._eventHub.destroy();
-
-        for (const dragSource of this._dragSources) {
-            dragSource.destroy();
-        }
-        this._dragSources = [];
     }
 
     /**
@@ -425,7 +496,7 @@ export abstract class LayoutManager extends EventEmitter {
         }
     }
 
-    /** @internal */
+    /** @public */
     createAndInitContentItem(config: ItemConfig, parent: ContentItem): ContentItem {
         const newItem = this.createContentItem(config, parent);
         newItem.init();
@@ -436,8 +507,8 @@ export abstract class LayoutManager extends EventEmitter {
      * Recursively creates new item tree structures based on a provided
      * ItemConfiguration object
      *
-     * @param   config ItemConfig
-     * @param   parent The item the newly created item should be a child of
+     * @param config - ItemConfig
+     * @param parent - The item the newly created item should be a child of
      * @internal
      */
     createContentItem(config: ItemConfig, parent: ContentItem): ContentItem {
@@ -464,7 +535,7 @@ export abstract class LayoutManager extends EventEmitter {
             !!parent &&
 
             // and it's not the topmost item in a new window
-            !(this.isSubWindow === true && parent instanceof Root)
+            !(this.isSubWindow === true && parent instanceof GroundItem)
         ) {
             const stackConfig: StackItemConfig = {
                 type: ItemConfig.Type.stack,
@@ -474,6 +545,7 @@ export abstract class LayoutManager extends EventEmitter {
                 height: config.height,
                 minHeight: config.minHeight,
                 id: config.id,
+                maximised: config.maximised,
                 isClosable: config.isClosable,
                 title: config.title,
                 reorderEnabled: config.reorderEnabled,
@@ -491,46 +563,28 @@ export abstract class LayoutManager extends EventEmitter {
     /**
      * Creates a popout window with the specified content at the specified position
      *
-     * @param   itemConfigContentOrContentItem The content of the popout window's layout manager derived from either
-     * a {@link ContentItem ContentItem} or {@link ItemConfig} or ItemConfig content (array of {@link ItemConfig})
-     * @param   positionAndSize The width, height, left and top of Popout window
-     * @param   parentId The id of the element this item will be appended to when popIn is called
-     * @param   indexInParent The position of this item within its parent element
+     * @param itemConfigOrContentItem - The content of the popout window's layout manager derived from either
+     * a {@link (ContentItem:class)} or {@link (ItemConfig:interface)} or ItemConfig content (array of {@link (ItemConfig:interface)})
+     * @param positionAndSize - The width, height, left and top of Popout window
+     * @param parentId -The id of the element this item will be appended to when popIn is called
+     * @param indexInParent - The position of this item within its parent element
      */
 
-    createPopout(itemConfigContentOrContentItem: ContentItem | ItemConfig | ItemConfig[],
-        positionAndSize: PopoutManagerConfig.Window,
+    createPopout(itemConfigOrContentItem: ContentItem | RootItemConfig,
+        positionAndSize: PopoutLayoutConfig.Window,
         parentId: string | null,
         indexInParent: number | null
     ): BrowserPopout {
-        if (itemConfigContentOrContentItem instanceof ContentItem) {
-            return this.createPopoutFromContentItem(itemConfigContentOrContentItem, positionAndSize, parentId, indexInParent);
+        if (itemConfigOrContentItem instanceof ContentItem) {
+            return this.createPopoutFromContentItem(itemConfigOrContentItem, positionAndSize, parentId, indexInParent);
         } else {
-            let itemConfigArray: readonly (RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig)[];
-            if (itemConfigContentOrContentItem instanceof Array) {
-                itemConfigArray = itemConfigContentOrContentItem as readonly (RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig)[];
-            } else {
-                if (ItemConfig.isRoot(itemConfigContentOrContentItem)) {
-                    itemConfigArray = itemConfigContentOrContentItem.content;
-                } else {
-                    itemConfigArray = [itemConfigContentOrContentItem as (RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig)];
-                }
-            }
-
-            // confirm array is ok (cannot accept root)
-            const itemConfigCount = itemConfigArray.length;
-            for (let i = 0; i < itemConfigCount; i++) {
-                if (itemConfigArray[i].type === ItemConfig.Type.root) {
-                    throw new Error(`${i18nStrings[I18nStringId.PopoutCannotBeCreatedWithRootItemConfig]}`)
-                }
-            }
-            return this.createPopoutFromItemConfig(itemConfigArray, positionAndSize, parentId, indexInParent);
+            return this.createPopoutFromItemConfig(itemConfigOrContentItem, positionAndSize, parentId, indexInParent);
         }
     }
 
     /** @internal */
     createPopoutFromContentItem(item: ContentItem,
-        window: PopoutManagerConfig.Window | undefined,
+        window: PopoutLayoutConfig.Window | undefined,
         parentId: string | null,
         indexInParent: number | null | undefined,
     ): BrowserPopout {
@@ -544,7 +598,7 @@ export abstract class LayoutManager extends EventEmitter {
          */
         let parent = item.parent;
         let child = item;
-        while (parent !== null && parent.contentItems.length === 1 && !parent.isRoot) {
+        while (parent !== null && parent.contentItems.length === 1 && !parent.isGround) {
             child = parent;
             parent = parent.parent;
         }
@@ -576,44 +630,39 @@ export abstract class LayoutManager extends EventEmitter {
             const itemConfig = item.toConfig();
             item.remove();
 
-            const content = itemConfig.content as readonly (RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig)[];
-            // confirm content is ok (cannot accept root)
-            const contentCount = content.length;
-            for (let i = 0; i < contentCount; i++) {
-                if (content[i].type === ItemConfig.Type.root) {
-                    throw new Error(`${i18nStrings[I18nStringId.PopoutCannotBeCreatedWithRootItemConfig]}`)
-                }
+            if (!RootItemConfig.isRootItemConfig(itemConfig)) {
+                throw new Error(`${i18nStrings[I18nStringId.PopoutCannotBeCreatedWithGroundItemConfig]}`);
+            } else {
+                return this.createPopoutFromItemConfig(itemConfig, window, parentId, indexInParent);
             }
-
-            return this.createPopoutFromItemConfig(content, window, parentId, indexInParent);
         }
     }
 
     /** @internal */
-    private createPopoutFromItemConfig(content: readonly (RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig)[],
-        window: PopoutManagerConfig.Window,
+    private createPopoutFromItemConfig(rootItemConfig: RootItemConfig,
+        window: PopoutLayoutConfig.Window,
         parentId: string | null,
         indexInParent: number | null
     ) {
-        const managerConfig = this.toConfig();
+        const layoutConfig = this.toConfig();
 
-        const popoutManagerConfig: PopoutManagerConfig = {
-            content,
+        const popoutLayoutConfig: PopoutLayoutConfig = {
+            root: rootItemConfig,
             openPopouts: [],
-            settings: managerConfig.settings,
-            dimensions: managerConfig.dimensions,
-            header: managerConfig.header,
-            maximisedItemId: null,
+            settings: layoutConfig.settings,
+            dimensions: layoutConfig.dimensions,
+            header: layoutConfig.header,
             window,
             parentId,
             indexInParent,
+            resolved: true,
         }
 
-        return this.createPopoutFromPopoutManagerConfig(popoutManagerConfig);
+        return this.createPopoutFromPopoutLayoutConfig(popoutLayoutConfig);
     }
 
     /** @internal */
-    createPopoutFromPopoutManagerConfig(config: PopoutManagerConfig): BrowserPopout {
+    createPopoutFromPopoutLayoutConfig(config: PopoutLayoutConfig): BrowserPopout {
         const configWindow = config.window;
         const initialWindow: Rect = { 
             left: configWindow.left ?? (globalThis.screenX || globalThis.screenLeft + 20),
@@ -638,8 +687,8 @@ export abstract class LayoutManager extends EventEmitter {
      * and turns it into a way of creating new ContentItems
      * by 'dragging' the DOM element into the layout
      *
-     * @param   element
-     * @param   itemConfig for the new item to be created, or a function which will provide it
+     * @param element -
+     * @param itemConfig - For the new item to be created, or a function which will provide it
      *
      * @returns 1) an opaque object that identifies the DOM element
 	 *          and the attached itemConfig. This can be used in
@@ -647,7 +696,7 @@ export abstract class LayoutManager extends EventEmitter {
      *          2) undefined if constrainDragToContainer is specified
      */
     createDragSource(element: HTMLElement, itemConfig: ItemConfig | (() => ItemConfig)): DragSource | undefined {
-        if (this.managerConfig.settings.constrainDragToContainer) {
+        if (this.layoutConfig.settings.constrainDragToContainer) {
             return undefined;
         } else {
             const dragSource = new DragSource(element, itemConfig, this);
@@ -671,13 +720,12 @@ export abstract class LayoutManager extends EventEmitter {
      * the currently selected item, selects the specified item
      * and emits a selectionChanged event
      *
-     * @param   item
-     * @param   silent Wheather to notify the item of its selection
-     * @event   selectionChanged
+     * @param item -
+     * @param silent - Whether to notify the item of its selection
      */
     selectItem(item: ContentItem, silent: boolean): void {
 
-        if (this.managerConfig.settings.selectionEnabled !== true) {
+        if (this.layoutConfig.settings.selectionEnabled !== true) {
             throw new Error('Please set selectionEnabled to true to use this feature');
         }
 
@@ -706,7 +754,7 @@ export abstract class LayoutManager extends EventEmitter {
     /** @internal */
     private createContentItemFromConfig(config: ItemConfig, parent: ContentItem): ContentItem {
         switch (config.type) {
-            case ItemConfig.Type.root: return new Root(this, config as RootItemConfig, this._container);
+            case ItemConfig.Type.ground: throw new AssertError('LMCCIFC68871');
             case ItemConfig.Type.row: return new RowOrColumn(false, this, config as RowOrColumnItemConfig, parent);
             case ItemConfig.Type.column: return new RowOrColumn(true, this, config as RowOrColumnItemConfig, parent);
             case ItemConfig.Type.stack: return new Stack(this, config as StackItemConfig, parent as Stack.Parent);
@@ -725,13 +773,12 @@ export abstract class LayoutManager extends EventEmitter {
         }
         this._maximisedItem = contentItem;
         contentItem.on('beforeItemDestroyed', this._maximisedItemBeforeDestroyedListener);
-        this._maximisedItem.addId('__glMaximised');
         contentItem.element.classList.add('lm_maximised');
         contentItem.element.insertAdjacentElement('afterend', this._maximisePlaceholder);
-        if (this._root === null) {
+        if (this._groundItem === null) {
             throw new UnexpectedNullError('LMMXI19993');
         } else {
-            this._root.element.prepend(contentItem.element);
+            this._groundItem.element.prepend(contentItem.element);
             const { width, height } = getElementWidthAndHeight(this._container);
             setElementWidth(contentItem.element, width);
             setElementHeight(contentItem.element, height);
@@ -747,7 +794,6 @@ export abstract class LayoutManager extends EventEmitter {
             throw new UnexpectedNullError('LMMI13668');
         } else {
             contentItem.element.classList.remove('lm_maximised');
-            contentItem.removeId('__glMaximised');
             this._maximisePlaceholder.insertAdjacentElement('afterend', contentItem.element);
             this._maximisePlaceholder.remove();
             contentItem.parent.updateSize();
@@ -846,26 +892,26 @@ export abstract class LayoutManager extends EventEmitter {
         const allContentItems = this.getAllContentItems();
         /**
          * If the last item is dragged out, highlight the entire container size to
-         * allow to re-drop it. this.root.contentiItems.length === 0 at this point
+         * allow to re-drop it. this.ground.contentiItems.length === 0 at this point
          *
-         * Don't include root into the possible drop areas though otherwise since it
+         * Don't include ground into the possible drop areas though otherwise since it
          * will used for every gap in the layout, e.g. splitters
          */
-        const root = this._root;
-        if (root === null) {
+        const groundItem = this._groundItem;
+        if (groundItem === null) {
             throw new UnexpectedNullError('LMCIAR44365');
         } else {
             if (allContentItems.length === 1) {
-                const rootArea = root.getElementArea();
-                if (rootArea === null) {
+                const groundArea = groundItem.getElementArea();
+                if (groundArea === null) {
                     throw new UnexpectedNullError('LMCIARA44365')
                 } else {
-                    this._itemAreas = [rootArea];
+                    this._itemAreas = [groundArea];
                 }
                 return;
             } else {
                 // sides of layout
-                this._itemAreas = root.createSideAreas();
+                this._itemAreas = groundItem.createSideAreas();
 
                 for (let i = 0; i < allContentItems.length; i++) {
                     const stack = allContentItems[i];
@@ -906,6 +952,31 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /**
+     * Called as part of loading a new layout (including initial init()).
+     * Checks to see layout has a maximised item. If so, it maximises that item.
+     * @internal
+     */
+    private checkLoadedLayoutMaximiseItem() {
+        if (this._groundItem === null) {
+            throw new UnexpectedNullError('LMCLLMI43432');
+        } else {
+            const configMaximisedItems = this._groundItem.getConfigMaximisedItems();
+
+            if (configMaximisedItems.length > 0) {
+                let item = configMaximisedItems[0];
+                if (ContentItem.isComponentItem(item)) {
+                    item = item.stack;
+                }
+                if (!ContentItem.isStack(item)) {
+                    throw new AssertError('LMCLLMI19993');
+                } else {
+                    item.toggleMaximise();
+                }
+            }
+        }
+    }
+
+    /**
      * Iterates through the array of open popout windows and removes the ones
      * that are effectively closed. This is necessary due to the lack of reliably
      * listening for window.close / unload events in a cross browser compatible fashion.
@@ -935,11 +1006,11 @@ export abstract class LayoutManager extends EventEmitter {
      * @internal
      */
     private getAllContentItems() {
-        if (this._root === null) {
+        if (this._groundItem === null) {
             throw new UnexpectedNullError('LMGACI13130');
         } else {
-            const allContentItems: ContentItem[] = [this._root];
-            this._root.deepAddChildContentItems(allContentItems);
+            const allContentItems: ContentItem[] = [this._groundItem];
+            this._groundItem.deepAddChildContentItems(allContentItems);
             return allContentItems;
         }
     }
@@ -993,49 +1064,12 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /**
-     * Kicks of the initial, recursive creation chain
-     *
-     * @param   managerConfig GoldenLayout Config
-     * @internal
-     */
-    private create(managerConfig: ManagerConfig) {
-        if (!(managerConfig.content instanceof Array)) {
-            let errorMsg: string;
-            if (managerConfig.content === undefined) {
-                errorMsg = 'Missing setting \'content\' on top level of configuration';
-            } else {
-                errorMsg = 'Configuration parameter \'content\' must be an array';
-            }
-
-            throw new ConfigurationError(errorMsg, JSON.stringify(managerConfig));
-        }
-
-        if (managerConfig.content.length > 1) {
-            const errorMsg = 'Top level content can\'t contain more then one element.';
-            throw new ConfigurationError(errorMsg, JSON.stringify(managerConfig));
-        }
-
-        const rootConfig = ManagerConfig.createRootItemConfig(managerConfig);
-
-        this._root = new Root(this, rootConfig, this._container);
-        this._root.init();
-
-        if (managerConfig.maximisedItemId === '__glMaximised') {
-            const maximisedItems = this._root.getItemsById(managerConfig.maximisedItemId);
-            if (maximisedItems.length > 0) {
-                // should only be one - if more, just do first
-                maximisedItems[0].toggleMaximise();
-            }
-        }
-    }
-
-    /**
      * Called when the window is closed or the user navigates away
      * from the page
      * @internal
      */
     private onUnload(): void {
-        if (this.managerConfig.settings.closePopoutsOnUnload === true) {
+        if (this.layoutConfig.settings.closePopoutsOnUnload === true) {
             for (let i = 0; i < this._openPopouts.length; i++) {
                 this._openPopouts[i].close();
             }
@@ -1047,26 +1081,26 @@ export abstract class LayoutManager extends EventEmitter {
      * @internal
      */
     private adjustColumnsResponsive() {
-        if (this._root === null) {
+        if (this._groundItem === null) {
             throw new UnexpectedNullError('LMACR20883');
         } else {
             this._firstLoad = false;
             // If there is no min width set, or not content items, do nothing.
             if (this.useResponsiveLayout() &&
                 !this._updatingColumnsResponsive &&
-                this._root.contentItems.length > 0 &&
-                this._root.contentItems[0].isRow)
+                this._groundItem.contentItems.length > 0 &&
+                this._groundItem.contentItems[0].isRow)
             {
-                if (this._root === null || this._width === null) {
+                if (this._groundItem === null || this._width === null) {
                     throw new UnexpectedNullError('LMACR77412');
                 } else {
                     // If there is only one column, do nothing.
-                    const columnCount = this._root.contentItems[0].contentItems.length;
+                    const columnCount = this._groundItem.contentItems[0].contentItems.length;
                     if (columnCount <= 1) {
                         return;
                     } else {
                         // If they all still fit, do nothing.
-                        const minItemWidth = this.managerConfig.dimensions.minItemWidth;
+                        const minItemWidth = this.layoutConfig.dimensions.minItemWidth;
                         const totalMinWidth = columnCount * minItemWidth;
                         if (totalMinWidth <= this._width) {
                             return;
@@ -1078,7 +1112,7 @@ export abstract class LayoutManager extends EventEmitter {
                             const finalColumnCount = Math.max(Math.floor(this._width / minItemWidth), 1);
                             const stackColumnCount = columnCount - finalColumnCount;
 
-                            const rootContentItem = this._root.contentItems[0];
+                            const rootContentItem = this._groundItem.contentItems[0];
                             const allStacks = this.getAllStacks();
                             if (allStacks.length === 0) {
                                 throw new AssertError('LMACRS77413')
@@ -1106,9 +1140,9 @@ export abstract class LayoutManager extends EventEmitter {
      * @internal
      */
     private useResponsiveLayout() {
-        const settings = this.managerConfig.settings;
-        const alwaysResponsiveMode = settings.responsiveMode === ManagerConfig.Settings.ResponsiveMode.always;
-        const onLoadResponsiveModeAndFirst = settings.responsiveMode === ManagerConfig.Settings.ResponsiveMode.onload && this._firstLoad;
+        const settings = this.layoutConfig.settings;
+        const alwaysResponsiveMode = settings.responsiveMode === LayoutConfig.Settings.ResponsiveMode.always;
+        const onLoadResponsiveModeAndFirst = settings.responsiveMode === LayoutConfig.Settings.ResponsiveMode.onload && this._firstLoad;
         return alwaysResponsiveMode || onLoadResponsiveModeAndFirst;
     }
 
@@ -1140,11 +1174,11 @@ export abstract class LayoutManager extends EventEmitter {
      * @internal
      */
     private getAllStacks() {
-        if (this._root === null) {
+        if (this._groundItem === null) {
             throw new UnexpectedNullError('LMFASC52778');
         } else {
             const stacks: Stack[] = [];
-            this.findAllStacksRecursive(stacks, this._root);
+            this.findAllStacksRecursive(stacks, this._groundItem);
 
             return stacks;
         }
@@ -1153,8 +1187,8 @@ export abstract class LayoutManager extends EventEmitter {
     /**
      * Finds all the stack containers.
      *
-     * @param stacks Set of containers to populate.
-     * @param node Current node to process.
+     * @param stacks - Set of containers to populate.
+     * @param node - Current node to process.
      * @internal
      */
     private findAllStacksRecursive(stacks: Stack[], node: ContentItem) {
@@ -1172,12 +1206,13 @@ export abstract class LayoutManager extends EventEmitter {
     }
 }
 
+/** @public */
 export namespace LayoutManager {
-    export type GetComponentConstructorFtn = (this: void, config: ComponentItemConfig) => ComponentItem.ComponentConstructor
+    export type GetComponentConstructorCallback = (this: void, config: ComponentItemConfig) => ComponentItem.ComponentConstructor
 
     /** @internal */
-    export interface ManagerConfigAndIsSubWindow {
-        managerConfig: ManagerConfig;
+    export interface LayoutConfigAndIsSubWindow {
+        layoutConfig: LayoutConfig;
         isSubWindow: boolean;
     }
 }

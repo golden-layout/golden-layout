@@ -11,6 +11,7 @@ const _template = '<li class="lm_tab"><i class="lm_left"></i>' +
 
 /**
  * Represents an individual tab within a Stack's header
+ * @public
  */
 export class Tab {
     /** @internal */
@@ -43,9 +44,7 @@ export class Tab {
     get isActive(): boolean { return this._isActive; }
     // get header(): Header { return this._header; }
     get componentItem(): ComponentItem { return this._componentItem; }
-    /** @internal */
-    set componentItem(value: ComponentItem) { this._componentItem = value; }
-    /** @deprecated use {@link componentItem} */
+    /** @deprecated use {@link (Tab:class).componentItem} */
     get contentItem(): ComponentItem { return this._componentItem; }
     get element(): HTMLElement { return this._element; }
     get titleElement(): HTMLElement { return this._titleElement; }
@@ -80,7 +79,7 @@ export class Tab {
         this.setTitle(_componentItem.config.title);
         this._componentItem.on('titleChanged', (title) => this.setTitle(title));
 
-        const reorderEnabled = _componentItem.config.reorderEnabled ?? this._layoutManager.managerConfig.settings.reorderEnabled;
+        const reorderEnabled = _componentItem.config.reorderEnabled ?? this._layoutManager.layoutConfig.settings.reorderEnabled;
 
         if (reorderEnabled) {
             this._dragListener = new DragListener(this._element);
@@ -153,10 +152,15 @@ export class Tab {
         this._element.remove();
     }
 
+    /** @internal */
+    setComponentItem(value: ComponentItem): void {
+        this._componentItem = value;
+    }
+
     /**
      * Callback for the DragListener
-     * @param   x The tabs absolute x position
-     * @param   y The tabs absolute y position
+     * @param x - The tabs absolute x position
+     * @param y - The tabs absolute y position
      * @internal
      */
     private onDragStart(x: number, y: number): void {
@@ -244,9 +248,12 @@ export class Tab {
     }
 }
 
-/** @internal */
+/** @public */
 export namespace Tab {
+    /** @internal */
     export type CloseEvent = (componentItem: ComponentItem) => void;
+    /** @internal */
     export type ActivateEvent = (componentItem: ComponentItem) => void;
+    /** @internal */
     export type DragStartEvent = (x: number, y: number, dragListener: DragListener, componentItem: ComponentItem) => void;
 }

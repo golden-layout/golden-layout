@@ -1,28 +1,28 @@
 // IMPORTANT NOTE
 // Base styling is done in less.  However it is converted to goldenlayout-base.scss so that themes
 // can also be developed using SCSS.
-// All changes to base style should be done in goldenlayout-base.less.
+// All changes to base style should be done in goldenlayout-base.scss.
 // Do NOT make changes directly in goldenlayout-base.scss.  goldenlayout-base.scss should only be updated by
 // running the npm script "update-scss"
-// Make sure that less code in goldenlayout.base.less can be correctly correctly converted to scss with less2sass (ie keep it basic)
+// Make sure that less code in goldenlayout.base.scss can be correctly correctly converted to scss with less2sass (ie keep it basic)
 
 // Width variables (appears count calculates by raw css)
-@width0: 100%; // Appears 3 times
-@width1: 20px; // Appears 2 times
-@width2: 100px; // Appears 1 time
-@width3: 14px; // Appears 1 time
-@width4: 18px; // Appears 1 time
-@width5: 15px; // Appears 1 time
-@width6: 2px; // Appears 1 time
+$width0: 100%; // Appears 3 times
+$width1: 20px; // Appears 2 times
+$width2: 100px; // Appears 1 time
+$width3: 14px; // Appears 1 time
+$width4: 18px; // Appears 1 time
+$width5: 15px; // Appears 1 time
+$width6: 2px; // Appears 1 time
 
 // Height variables (appears count calculates by raw css)
-@height0: 100%; // Appears 4 times
-@height1: 20px; // Appears 2 times
-@height2: 14px; // Appears 2 times
-@height3: 10px; // Appears 1 time
-@height4: 19px; // Appears 1 time
-@height5: 18px; // Appears 1 time
-@height6: 15px; // Appears 1 time
+$height0: 100%; // Appears 4 times
+$height1: 20px; // Appears 2 times
+$height2: 14px; // Appears 2 times
+$height3: 10px; // Appears 1 time
+$height4: 19px; // Appears 1 time
+$height5: 18px; // Appears 1 time
+$height6: 15px; // Appears 1 time
 
 .lm_root {
   position: relative;
@@ -69,7 +69,7 @@
 
   &.lm_vertical {
     .lm_drag_handle {
-      width: @width0;
+      width: $width0;
       position: absolute;
       cursor: ns-resize;
     }
@@ -77,10 +77,10 @@
 
   &.lm_horizontal {
     float: left;
-    height: @height0;
+    height: $height0;
 
     .lm_drag_handle {
-      height: @height0;
+      height: $height0;
       position: absolute;
       cursor: ew-resize;
     }
@@ -110,8 +110,8 @@
     > li {
       cursor: pointer;
       float: left;
-      width: @width4;
-      height: @height5;
+      width: $width4;
+      height: $height5;
       text-align: center;
     }
   }
@@ -130,15 +130,15 @@
   .lm_tab {
     cursor: pointer;
     float: left;
-    height: @height2;
+    height: $height2;
     margin-top: 1px;
     padding: 0px 10px 5px;
     padding-right: 25px;
     position: relative;
 
     i {
-      width: @width6;
-      height: @height4;
+      width: $width6;
+      height: $height4;
       position: absolute;
 
       &.lm_left {
@@ -160,8 +160,8 @@
 
     // Close Tab Icon
     .lm_close_tab {
-      width: @width3;
-      height: @height2;
+      width: $width3;
+      height: $height2;
       position: absolute;
       top: 0;
       right: 0;
@@ -336,8 +336,8 @@
 
 .lm_drop_tab_placeholder {
   float: left;
-  width: @width2;
-  height: @height3;
+  width: $width2;
+  height: $height3;
   visibility: hidden;
 }
 
@@ -408,8 +408,8 @@
 
   // Inner Placeholder
   .lm_inner {
-    width: @width0;
-    height: @height0;
+    width: $width0;
+    height: $height0;
     position: relative;
     top: 0;
     left: 0;
@@ -418,8 +418,8 @@
 
 .lm_transition_indicator {
   display: none;
-  width: @width1;
-  height: @height1;
+  width: $width1;
+  height: $height1;
   position: absolute;
   top: 0;
   left: 0;
@@ -428,16 +428,16 @@
 
 // If a specific Pane is Popped Out, so move it to a different Browser Window, Icon to restore original position is:
 .lm_popin {
-  width: @width1;
-  height: @height1;
+  width: $width1;
+  height: $height1;
   position: absolute;
   bottom: 0;
   right: 0;
   z-index: 9999;
 
   > * {
-    width: @width0;
-    height: @height0;
+    width: $width0;
+    height: $height0;
     position: absolute;
     top: 0;
     left: 0;

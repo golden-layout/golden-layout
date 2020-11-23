@@ -3,9 +3,7 @@
   "compilerOptions": {
     "moduleResolution": "node",
     "target": "es2015",
-    "module": "commonjs",
     "downlevelIteration": true,
-    "resolveJsonModule": true,
     "importHelpers": true,
     "strict": true,
     "strictNullChecks": true,
@@ -22,7 +20,6 @@
     "allowSyntheticDefaultImports": true,
     "baseUrl": "./",
     "sourceMap": true,
-    "declaration": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "typeRoots": [
@@ -37,13 +34,19 @@
     "src/**.ts",
   ],
   "exclude": [
-    "index.d.ts",
+    "api-test",
     "dist",
+    "demo",
+    "doc",
+    "etc",
+    "lib",
     "node_modules",
-    "website",
-    "test",
     "script",
+    "temp",
+    "test",
     "typings/browser",
-    "typings/browser.d.ts"
+    "typings/browser.d.ts",
+    "webpack",
+    "website"
   ]
 }

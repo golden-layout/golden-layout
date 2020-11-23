@@ -26,8 +26,8 @@ export class ReactComponentHandler {
     private _containerDestroyListener = () => this.destroy();
 
     /**
-     * @param container
-     * @param state state is not required for react components
+     * @param container -
+     * @param state - State is not required for react components
      */
     constructor(container: ComponentContainer, state: unknown) {
         this._reactComponent = null;
@@ -99,8 +99,8 @@ export class ReactComponentHandler {
 
     /**
      * Retrieves the react class from GoldenLayout's registry
-     * @returns {React.Class}
      */
+    // * @returns {React.Class}
     // assume this is returning a constructor
     private getReactClass() {
         const config = this._container.config as ReactComponentConfig;
@@ -122,8 +122,8 @@ export class ReactComponentHandler {
 
     /**
      * Copies and extends the properties array and returns the React element
-     * @returns {React.Element}
      */
+    // * @returns {React.Element}
     // return type probably wrong
     private getReactComponent(): React.ReactElement {
         const defaultProps = {

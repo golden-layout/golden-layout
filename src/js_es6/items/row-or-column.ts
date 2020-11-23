@@ -1,8 +1,9 @@
 import { ItemConfig, RowOrColumnItemConfig } from '../config/config'
+import { UserComponentItemConfig, UserItemConfig, UserRowOrColumnItemConfig, UserSerialisableComponentConfig, UserStackItemConfig } from '../config/user-config'
 import { Splitter } from '../controls/splitter'
 import { AssertError, UnexpectedNullError } from '../errors/internal-error'
 import { LayoutManager } from '../layout-manager'
-import { Side } from '../utils/types'
+import { JsonValue, Side } from '../utils/types'
 import {
     createTemplateHtmlElement,
     getElementHeight,
@@ -18,11 +19,12 @@ import {
 import { ContentItem } from './content-item'
 import { Stack } from './stack'
 
+/** @public */
 export class RowOrColumn extends ContentItem {
     /** @internal */
     private readonly _childElementContainer: HTMLElement;
     /** @internal */
-    private readonly _configType: ItemConfig.Type.row | ItemConfig.Type.column;
+    private readonly _configType: 'row' | 'column';
     /** @internal */
     private readonly _isColumn: boolean;
     /** @internal */
@@ -50,8 +52,8 @@ export class RowOrColumn extends ContentItem {
         this.isColumn = isColumn;
 
         this._childElementContainer = this.element;
-        this._splitterSize = layoutManager.managerConfig.dimensions.borderWidth;
-        this._splitterGrabSize = layoutManager.managerConfig.dimensions.borderGrabWidth;
+        this._splitterSize = layoutManager.layoutConfig.dimensions.borderWidth;
+        this._splitterGrabSize = layoutManager.layoutConfig.dimensions.borderGrabWidth;
         this._isColumn = isColumn;
         this._dimension = isColumn ? 'height' : 'width';
         this._splitterPosition = null;
@@ -68,20 +70,36 @@ export class RowOrColumn extends ContentItem {
         }
     }
 
+    addSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): void {
+        const itemConfig: UserSerialisableComponentConfig = {
+            type: 'component',
+            componentName: componentTypeName,
+            componentState,
+        };
+        this.addItem(itemConfig, index);
+    }
+
+    addItem(userItemConfig: UserRowOrColumnItemConfig | UserStackItemConfig | UserComponentItemConfig,
+        index?: number
+    ): void {
+        const itemConfig = UserItemConfig.resolve(userItemConfig);
+        const contentItem = this.layoutManager.createAndInitContentItem(itemConfig, this);
+        this.addChild(contentItem, index, false);
+    }
 
     /**
      * Add a new contentItem to the Row or Column
      *
-     * @param {ContentItem} contentItem
-     * @param {[int]} index The position of the new item within the Row or Column.
-     *                      If no index is provided the item will be added to the end
-     * @param {[bool]} _$suspendResize If true the items won't be resized. This will leave the item in
-     *                                 an inconsistent state and is only intended to be used if multiple
-     *                                 children need to be added in one go and resize is called afterwards
+     * @param contentItem -
+     * @param index - The position of the new item within the Row or Column.
+     *                If no index is provided the item will be added to the end
+     * @param suspendResize - If true the items won't be resized. This will leave the item in
+     *                        an inconsistent state and is only intended to be used if multiple
+     *                        children need to be added in one go and resize is called afterwards
      *
-     * @returns {void}
+     * @returns
      */
-    addChild(contentItem: ContentItem, index: number | undefined, _$suspendResize: boolean): void {
+    addChild(contentItem: ContentItem, index?: number, suspendResize?: boolean): number {
 
         // contentItem = this.layoutManager._$normalizeContentItem(contentItem, this);
 
@@ -111,9 +129,9 @@ export class RowOrColumn extends ContentItem {
 
         const newItemSize = (1 / this.contentItems.length) * 100;
 
-        if (_$suspendResize === true) {
+        if (suspendResize === true) {
             this.emitBubblingEvent('stateChanged');
-            return;
+            return index;
         }
 
         for (let i = 0; i < this.contentItems.length; i++) {
@@ -128,6 +146,8 @@ export class RowOrColumn extends ContentItem {
         this.updateSize();
         this.emitBubblingEvent('stateChanged');
         this.validateDocking();
+
+        return index;
     }
 
 
@@ -182,8 +202,8 @@ export class RowOrColumn extends ContentItem {
     /**
      * Removes a child of this element
      *
-     * @param   contentItem
-     * @param   keepChild   If true the child will be removed, but not destroyed
+     * @param contentItem -
+     * @param keepChild - If true the child will be removed, but not destroyed
      *
      */
     removeChild(contentItem: ContentItem, keepChild: boolean): void {
@@ -227,7 +247,7 @@ export class RowOrColumn extends ContentItem {
             this.contentItems.length = 0;
             this._rowOrColumnParent.replaceChild(this, childItem, true);
             if (this._rowOrColumnParent instanceof RowOrColumn) { // this check not included originally.
-                // If Root, then validateDocking not require
+                // If Ground, then validateDocking not require
                 this._rowOrColumnParent.validateDocking();
             }
         } else {
@@ -259,16 +279,16 @@ export class RowOrColumn extends ContentItem {
     /**
      * Dock or undock a child if it posiible
      *
-     * @param   {ContentItem} contentItem
-     * @param   {Boolean} mode or toggle if undefined
-     * @param   {Boolean} collapsed after docking
+     * @param contentItem -
+     * @param mode - Toggle if undefined
+     * @param collapsed - After docking
      */
     dock(contentItem: Stack, mode?: boolean, collapsed?: boolean): void {
         if (this.contentItems.length === 1)
             throw new Error('Can\'t dock child when it single');
 
         const removedItemSize = contentItem.config[this._dimension];
-        const headerSize = this.layoutManager.managerConfig.header.show === false ? 0 : this.layoutManager.managerConfig.dimensions.headerHeight;
+        const headerSize = this.layoutManager.layoutConfig.header.show === false ? 0 : this.layoutManager.layoutConfig.dimensions.headerHeight;
         const index = this.contentItems.indexOf(contentItem);
         const splitterIndex = Math.max(index - 1, 0);
 
@@ -293,7 +313,7 @@ export class RowOrColumn extends ContentItem {
         } else { // dock
             if (this.contentItems.length - this.calculateDockedCount() < 2)
                 throw new AssertError('Can\'t dock child when it is last in ' + this.config.type);
-            const autoside = {
+            const autoside: {[columnRow: string]: { [firstLast: string]: Side }} = {
                 column: {
                     first: Side.top,
                     last: Side.bottom,
@@ -384,7 +404,7 @@ export class RowOrColumn extends ContentItem {
     }
 
     /**
-     * Turns the relative sizes calculated by _calculateRelativeSizes into
+     * Turns the relative sizes calculated by calculateRelativeSizes into
      * absolute pixel values and applies them to the children's DOM elements
      *
      * Assigns additional pixels to counteract Math.floor
@@ -415,7 +435,7 @@ export class RowOrColumn extends ContentItem {
      */
     private calculateAbsoluteSizes() {
         const totalSplitterSize = (this.contentItems.length - 1) * this._splitterSize;
-        const headerSize = this.layoutManager.managerConfig.dimensions.headerHeight;
+        const headerSize = this.layoutManager.layoutConfig.dimensions.headerHeight;
         let { width: totalWidth, height: totalHeight } = getElementWidthAndHeight(this.element);
 
         if (this._isColumn) {
@@ -469,11 +489,11 @@ export class RowOrColumn extends ContentItem {
      * - If the total == 100 (check for floating point errors)
      *        Excellent, job done
      *
-     * - If the total is > 100,
+     * - If the total is \> 100,
      *        set the size of items without set dimensions to 1/3 and add this to the total
      *        set the size off all items so that the total is hundred relative to their original size
      *
-     * - If the total is < 100
+     * - If the total is \< 100
      *        If there are items without set dimensions, distribute the remainder to 100 evenly between them
      *        If there are no items without set dimensions, increase all items sizes relative to
      *        their original size so that they add up to 100
@@ -544,7 +564,7 @@ export class RowOrColumn extends ContentItem {
             width: number;
         }
 
-        const minItemWidth = this.layoutManager.managerConfig.dimensions.minItemWidth;
+        const minItemWidth = this.layoutManager.layoutConfig.dimensions.minItemWidth;
         let totalOverMin = 0;
         let totalUnderMin = 0;
         const entriesOverMin: Entry[] = [];
@@ -620,9 +640,9 @@ export class RowOrColumn extends ContentItem {
      *
      * What it doesn't do though is append the splitter to the DOM
      *
-     * @param   {Int} index The position of the splitter
+     * @param index - The position of the splitter
      *
-     * @returns {Splitter}
+     * @returns
      * @internal
      */
     private createSplitter(index: number): Splitter {
@@ -677,7 +697,6 @@ export class RowOrColumn extends ContentItem {
 
     /**
      * Validate if row or column has ability to dock
-     * @private
      * @internal
      */
     private validateDocking(): void {
@@ -717,7 +736,7 @@ export class RowOrColumn extends ContentItem {
      */
     private onSplitterDragStart(splitter: Splitter) {
         const items = this.getItemsForSplitter(splitter);
-        const minSize = this.layoutManager.managerConfig.dimensions[this._isColumn ? 'minItemHeight' : 'minItemWidth'];
+        const minSize = this.layoutManager.layoutConfig.dimensions[this._isColumn ? 'minItemHeight' : 'minItemWidth'];
 
         const beforeMinDim = this._getMinimumDimensions(items.before.config.content);
         const beforeMinSize = this._isColumn ? beforeMinDim.vertical : beforeMinDim.horizontal;
@@ -734,9 +753,9 @@ export class RowOrColumn extends ContentItem {
      * Invoked when a splitter's DragListener fires drag. Updates the splitters DOM position,
      * but not the sizes of the elements the splitter controls in order to minimize resize events
      *
-     * @param   splitter
-     * @param   offsetX  Relative pixel values to the splitters original position. Can be negative
-     * @param   offsetY  Relative pixel values to the splitters original position. Can be negative
+     * @param splitter -
+     * @param offsetX - Relative pixel values to the splitters original position. Can be negative
+     * @param offsetY - Relative pixel values to the splitters original position. Can be negative
      * @internal
      */
     private onSplitterDrag(splitter: Splitter, offsetX: number, offsetY: number) {
@@ -784,8 +803,9 @@ export class RowOrColumn extends ContentItem {
     }
 }
 
-/** @internal */
+/** @public */
 export namespace RowOrColumn {
+    /** @internal */
     export function getElementDimensionSize(element: HTMLElement, dimension: ItemConfig.HeightOrWidthPropertyName): number {
         if (dimension === 'width') {
             return getElementWidth(element);
@@ -794,6 +814,7 @@ export namespace RowOrColumn {
         }
     }
 
+    /** @internal */
     export function setElementDimensionSize(element: HTMLElement, dimension: ItemConfig.HeightOrWidthPropertyName, value: number): void {
         if (dimension === 'width') {
             return setElementWidth(element, value);
@@ -802,6 +823,7 @@ export namespace RowOrColumn {
         }
     }
 
+    /** @internal */
     export function createTemplateHtml(isColumn: boolean): string {
         return '<div class="lm_item lm_' + (isColumn ? 'column' : 'row') + '"></div>'
     }

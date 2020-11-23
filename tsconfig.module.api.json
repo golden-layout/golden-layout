@@ -1,6 +1,7 @@
 {
     "extends": "./tsconfig.module.json",
     "compilerOptions": {
+        "outDir": "dist/golden-layout",
         "stripInternal": false,
     },
 }

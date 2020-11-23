@@ -2,9 +2,10 @@
     "extends": "./tsconfig.base.json",
     "compilerOptions": {
       "outDir": "dist/module",
-      "module": "es2015",
+      "module": "es2020",
       "declaration": true,
-      "declarationDir": "dist/types",
+      "declarationMap": true,
+      "declarationDir": "lib",
       "sourceMap": true,
       "inlineSourceMap": false
     },

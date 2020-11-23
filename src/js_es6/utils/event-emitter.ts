@@ -1,6 +1,7 @@
 /**
  * A generic and very fast EventEmitter implementation. On top of emitting the actual event it emits an
- * ALL_EVENT event for every event triggered. This allows to hook into it and proxy events forwards
+ * {@link (EventEmitter:class).ALL_EVENT} event for every event triggered. This allows to hook into it and proxy events forwards
+ * @public
  */
 export class EventEmitter {
     /** @internal */
@@ -11,8 +12,8 @@ export class EventEmitter {
     /**
      * Emit an event and notify listeners
      *
-     * @param   eventName The name of the event
-     * @param   args additional arguments that will be passed to the listener
+     * @param eventName - The name of the event
+     * @param args - Additional arguments that will be passed to the listener
      */
     emit<K extends keyof EventEmitter.EventParamsMap>(eventName: K, ...args: EventEmitter.EventParamsMap[K]): void {
         let subcriptions = this._subscriptionsMap.get(eventName);
@@ -58,7 +59,7 @@ export class EventEmitter {
     /**
      * Emit an event that bubbles up the item tree.
      *
-     * @param  eventName The name of the event
+     * @param eventName - The name of the event
      * @internal
      */
     emitBubblingEvent<K extends keyof EventEmitter.EventParamsMap>(eventName: K): void {
@@ -74,8 +75,8 @@ export class EventEmitter {
 
     /**
      * Removes a listener for an event, or all listeners if no callback and context is provided.
-     * @param eventName The name of the event
-     * @param callback The previously registered callback method (optional)
+     * @param eventName - The name of the event
+     * @param callback - The previously registered callback method (optional)
      */
     off<K extends keyof EventEmitter.EventParamsMap>(eventName: K, callback: EventEmitter.Callback<K>): void {
         const unknownCallback = callback as EventEmitter.UnknownCallback;
@@ -109,8 +110,8 @@ export class EventEmitter {
     /**
      * Listen for events
      *
-     * @param   eventName    The name of the event to listen to
-     * @param   callback The callback to execute when the event occurs
+     * @param eventName - The name of the event to listen to
+     * @param callback - The callback to execute when the event occurs
      */
     on<K extends keyof EventEmitter.EventParamsMap>(eventName: K, callback: EventEmitter.Callback<K>): void {
         const unknownCallback = callback as EventEmitter.UnknownCallback;
@@ -143,15 +144,10 @@ export class EventEmitter {
     }
 }
 
+/** @public */
 export namespace EventEmitter {
     /**
-     * The name of the event that's triggered for every other event
-     *
-     * usage
-     *
-     * myEmitter.on( EventEmitter.ALL_EVENT, function( eventName, argsArray ){
-     *  //do stuff
-     * });
+     * The name of the event that's triggered for every event
      */
     export const ALL_EVENT = '__all';
 

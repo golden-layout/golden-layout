@@ -93,18 +93,6 @@ export function extend(target: Record<string, unknown>, obj: Record<string, unkn
 }
 
 /**
- * Replacement for JQuery $.extend(true, target, ...objs)
- * @internal
-*/
-export function multiDeepExtend(target: Record<string, unknown>, ...objs: Record<string, unknown>[]): Record<string, unknown> {
-    for (const obj of objs) {
-        target = deepExtend(target, obj);
-    }
-
-    return target;
-}
-
-/**
  * Replacement for JQuery $.extend(true, target, obj)
  * @internal
 */
@@ -132,7 +120,7 @@ export function deepExtendValue(existingTarget: unknown, value: unknown): unknow
             const targetArray = new Array<unknown>(length);
             for (let i = 0; i < length; i++) {
                 const element = value[i];
-                targetArray[i] = deepExtend({}, element);
+                targetArray[i] = deepExtendValue({}, element);
             }
             return targetArray;
         } else {

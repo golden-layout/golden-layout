@@ -5,38 +5,19 @@
 //import './less/goldenlayout-dark-theme.less'
 //
 
-//
-// container
+export * from './js_es6/config/config';
+export * from './js_es6/config/user-config';
 export { ComponentContainer } from './js_es6/container/component-container';
-//
-// controls
 export { BrowserPopout } from './js_es6/controls/browser-popout';
 export { Header } from './js_es6/controls/header';
-/** @internal */
-export { HeaderButton } from './js_es6/controls/header-button';
 export { Tab } from './js_es6/controls/tab';
-//
-// GoldenLayout
+export * from './js_es6/errors/external-error';
 export { GoldenLayout } from './js_es6/golden-layout';
-//
-// items
 export { ComponentItem } from './js_es6/items/component-item';
-export { Root } from './js_es6/items/root';
+export { ContentItem } from './js_es6/items/content-item';
 export { RowOrColumn } from './js_es6/items/row-or-column';
 export { Stack } from './js_es6/items/stack';
-//
-// LayoutManager
 export { LayoutManager } from './js_es6/layout-manager';
-//
-// utils
-/** @internal */
-export { ConfigMinifier } from './js_es6/utils/config-minifier';
-/** @internal */
-export { DragListener } from './js_es6/utils/drag-listener';
-export { EventEmitter } from './js_es6/utils/event-emitter';
-/** @internal */
-export { EventHub } from './js_es6/utils/event-hub';
-/** @internal */
-export { ReactComponentHandler } from './js_es6/utils/react-component-handler';
-
+export * from './js_es6/utils/i18n-strings';
+export { Json, JsonValue, JsonValueArray } from './js_es6/utils/types';
 

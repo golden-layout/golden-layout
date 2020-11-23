@@ -1,11 +1,13 @@
 import { AssertError } from '../errors/internal-error';
 
+/** @public */
 export const enum I18nStringId {
-    PopoutCannotBeCreatedWithRootItemConfig,
+    PopoutCannotBeCreatedWithGroundItemConfig,
     PleaseRegisterAConstructorFunction,
     ComponentIsAlreadyRegistered,
 }
 
+/** @public */
 export namespace I18nStrings {
     /** @internal */
     let initialised = false;
@@ -21,9 +23,9 @@ export namespace I18nStrings {
 
     /** @internal */
     const infosObject: InfosObject = {
-        PopoutCannotBeCreatedWithRootItemConfig: {
-            id: I18nStringId.PopoutCannotBeCreatedWithRootItemConfig,
-            default: 'Popout cannot be created with root ItemConfig'
+        PopoutCannotBeCreatedWithGroundItemConfig: {
+            id: I18nStringId.PopoutCannotBeCreatedWithGroundItemConfig,
+            default: 'Popout cannot be created with ground ItemConfig'
         },
         PleaseRegisterAConstructorFunction: {
             id: I18nStringId.PleaseRegisterAConstructorFunction,
@@ -54,4 +56,5 @@ export namespace I18nStrings {
     }
 }
 
+/** @public */
 export const i18nStrings = new Array<string>(I18nStrings.idCount);

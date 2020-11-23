@@ -20,6 +20,7 @@ const _template =
 
 /**
  * This class represents a header above a Stack ContentItem.
+ * @public
  */
 export class Header extends EventEmitter {
     /** @internal */
@@ -106,7 +107,7 @@ export class Header extends EventEmitter {
     /**
      * Caution: Returns active Tab but not necessarily Stack.activeComponentItem
      * Active Tab may not equal Stack.activeContentItem if Header.setActiveContentItem() is used
-     * @deprecated use {@link Stack.getActiveComponentItem} */
+     * @deprecated use {@link (Stack:class).getActiveComponentItem} */
     get activeContentItem(): ContentItem | null {
         if (this._activeComponentItem === undefined) {
             return null;
@@ -116,10 +117,10 @@ export class Header extends EventEmitter {
     }
     get element(): HTMLElement { return this._element; }
     get tabsContainerElement(): HTMLElement { return this._tabsContainerElement; }
-    /** @deprecated use {@link tabsContainerElement} */
+    /** @deprecated use {@link (Header:class).tabsContainerElement} */
     get tabsContainer(): HTMLElement { return this._tabsContainerElement; }
     get controlsContainerElement(): HTMLElement { return this._controlsContainerElement; }
-    /** @deprecated use {@link controlsContainerElement} */
+    /** @deprecated use {@link (Header:class).controlsContainerElement} */
     get controlsContainer(): HTMLElement { return this._controlsContainerElement; }
 
     /** @internal */
@@ -158,7 +159,7 @@ export class Header extends EventEmitter {
 
         this._element = createTemplateHtmlElement(_template);
 
-        if (this._layoutManager.managerConfig.settings.selectionEnabled === true) {
+        if (this._layoutManager.layoutConfig.settings.selectionEnabled === true) {
             this._element.classList.add('lm_selectable');
             this._element.addEventListener('click', this._headerClickListener);
             this._element.addEventListener('touchstart', this._headerTouchStartListener);
@@ -182,7 +183,7 @@ export class Header extends EventEmitter {
                     this._controlsContainerElement = controlsContainerElement as HTMLElement;
                     globalThis.document.addEventListener('mouseup', this._documentMouseUpListener);
 
-                    this._tabControlOffset = this._layoutManager.managerConfig.settings.tabControlOffset;
+                    this._tabControlOffset = this._layoutManager.layoutConfig.settings.tabControlOffset;
                     this.createControls(closeEvent);
                 }
             }
@@ -213,7 +214,7 @@ export class Header extends EventEmitter {
 
     /**
      * Creates a new tab and associates it with a contentItem
-     * @param index The position of the tab
+     * @param index - The position of the tab
      */
     createTab(componentItem: ComponentItem, index: number): void {
         //If there's already a tab relating to the
@@ -252,7 +253,7 @@ export class Header extends EventEmitter {
 
     /**
      * Finds a tab based on the contentItem its associated with and removes it.
-     * @param    componentItem
+     * @param componentItem -
      */
     removeTab(componentItem: ContentItem): void {
         for (let i = 0; i < this._tabs.length; i++) {
@@ -273,7 +274,7 @@ export class Header extends EventEmitter {
 
     /**
      * Caution: Will not change Stack ActiveContentItem
-     * @deprecated use {@link Stack.setActiveComponentItem}
+     * @deprecated use {@link (Stack:class).setActiveComponentItem}
      */
     setActiveContentItem(item: ContentItem): void {
         if (!ContentItem.isComponentItem(item)) {
@@ -301,7 +302,7 @@ export class Header extends EventEmitter {
             if (activeIndex < 0) {
                 throw new AssertError('HSACI56632');
             } else {
-                if (this._layoutManager.managerConfig.settings.reorderOnTabMenuClick) {
+                if (this._layoutManager.layoutConfig.settings.reorderOnTabMenuClick) {
                     /**
                      * If the tab selected was in the dropdown, move everything down one to make way for this one to be the first.
                      * This will make sure the most used tabs stay visible.
@@ -329,7 +330,7 @@ export class Header extends EventEmitter {
 
     /**
      * Programmatically set closability.
-     * @param value Whether to enable/disable closability.
+     * @param value - Whether to enable/disable closability.
      * @returns Whether the action was successful
      * @internal
      */
@@ -375,7 +376,7 @@ export class Header extends EventEmitter {
 
     /**
      * Programmatically set ability to dock.
-     * @param isDockable Whether to enable/disable ability to dock.
+     * @param isDockable - Whether to enable/disable ability to dock.
      * @returns Whether the action was successful
      * @internal
      */
@@ -420,7 +421,7 @@ export class Header extends EventEmitter {
         }
         setElementDisplayVisibility(this._tabDropdownButton.element, showTabMenu === true);
 
-        const headerHeight = this._show ? this._layoutManager.managerConfig.dimensions.headerHeight : 0;
+        const headerHeight = this._show ? this._layoutManager.layoutConfig.dimensions.headerHeight : 0;
 
         if (this._leftRightSided) {
             this._element.style.height = '';
@@ -432,7 +433,7 @@ export class Header extends EventEmitter {
         let availableWidth = this._element.offsetWidth - this._controlsContainerElement.offsetWidth - this._tabControlOffset;
         let cumulativeTabWidth = 0;
         let tabOverlapAllowanceExceeded = false;
-        const tabOverlapAllowance = this._layoutManager.managerConfig.settings.tabOverlapAllowance;
+        const tabOverlapAllowance = this._layoutManager.layoutConfig.settings.tabOverlapAllowance;
         const activeIndex = (this._activeComponentItem ? this._tabs.indexOf(this._activeComponentItem.tab as Tab) : 0);
         const activeTab = this._tabs[activeIndex];
         if (this._leftRightSided) {
@@ -618,7 +619,7 @@ export class Header extends EventEmitter {
 
     /** @internal */
     private handleButtonPopoutEvent() {
-        if (this._layoutManager.managerConfig.settings.popoutWholeStack) {
+        if (this._layoutManager.layoutConfig.settings.popoutWholeStack) {
             if (this._popoutEvent === undefined) {
                 throw new UnexpectedUndefinedError('HHBPOE17834');
             } else {
@@ -681,18 +682,28 @@ export class Header extends EventEmitter {
     }
 }
 
-/** @internal */
+/** @public */
 export namespace Header {
+    /** @internal */
     export type CloseEvent = (this: void) => void;
+    /** @internal */
     export type DockEvent = (this: void) => void;
+    /** @internal */
     export type PopoutEvent = (this: void) => void;
+    /** @internal */
     export type MaximiseToggleEvent = (this: void, ev: Event) => void;
+    /** @internal */
     export type HeaderClickTouchEvent = (this: void) => void;
+    /** @internal */
     export type ComponentRemoveEvent = (this: void, componentItem: ComponentItem) => void;
+    /** @internal */
     export type ComponentActivateEvent = (this: void, componentItem: ComponentItem) => void;
+    /** @internal */
     export type ComponentDragStartEvent = (this: void, x: number, y: number, dragListener: DragListener, componentItem: ComponentItem) => void;
+    /** @internal */
     export type StateChangedEvent = (this: void) => void;
 
+    /** @internal */
     export interface Settings {
         show: boolean;
         side: Side;
