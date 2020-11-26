@@ -1,4 +1,4 @@
-import { GroundItemConfig, HeaderedItemConfig, ItemConfig, RootItemConfig, StackItemConfig } from '../config/config';
+import { ComponentItemConfig, GroundItemConfig, HeaderedItemConfig, ItemConfig, RootItemConfig, StackItemConfig } from '../config/config';
 import { UserComponentItemConfig, UserItemConfig, UserRowOrColumnItemConfig, UserSerialisableComponentConfig, UserStackItemConfig } from '../config/user-config';
 import { AssertError, UnexpectedNullError } from '../errors/internal-error';
 import { LayoutManager } from '../layout-manager';
@@ -18,7 +18,7 @@ export class GroundItem extends ContentItem {
     private readonly _childElementContainer: HTMLElement;
     private readonly _containerElement: HTMLElement;
 
-    constructor(layoutManager: LayoutManager, rootItemConfig: RootItemConfig, containerElement: HTMLElement) {
+    constructor(layoutManager: LayoutManager, rootItemConfig: RootItemConfig | undefined, containerElement: HTMLElement) {
       
         super(layoutManager, GroundItemConfig.create(rootItemConfig), null, createTemplateHtmlElement(GroundItem.templateHtml));
 
@@ -46,24 +46,14 @@ export class GroundItem extends ContentItem {
      * Loads a new Layout
      * Internal only.  To load a new layout with API, use {@link (LayoutManager:class).loadLayout}
      */
-    loadRoot(rootItemConfig: RootItemConfig): void {
+    loadRoot(rootItemConfig: RootItemConfig | undefined): void {
         // Remove existing root if it exists
-        const contentItems = this.contentItems;
-        switch (contentItems.length) {
-            case 0: {
-                break;
-            }
-            case 1: {
-                const existingRootContentItem = contentItems[0];
-                existingRootContentItem.remove();
-                break;
-            }
-            default: {
-                throw new AssertError('GILR07721');
-            }
+        this.clearRoot();
+
+        if (rootItemConfig !== undefined) {
+            const rootContentItem = this.layoutManager.createAndInitContentItem(rootItemConfig, this);
+            this.addChild(rootContentItem, 0);
         }
-        const rootContentItem = this.layoutManager.createAndInitContentItem(rootItemConfig, this);
-        this.addChild(rootContentItem, 0);
     }
 
     /**
@@ -93,8 +83,27 @@ export class GroundItem extends ContentItem {
         } else {
             parent = this;
         }
-        const contentItem = this.layoutManager.createAndInitContentItem(itemConfig, parent);
-        parent.addChild(contentItem, index);
+        if (parent.isComponent) {
+            throw new Error('Cannot add item as child to ComponentItem');
+        } else {
+            const contentItem = this.layoutManager.createAndInitContentItem(itemConfig, parent);
+            parent.addChild(contentItem, index);
+        }
+    }
+
+    loadComponentAsRoot(userItemConfig: UserComponentItemConfig): void {
+        // Remove existing root if it exists
+        this.clearRoot();
+
+        const itemConfig = UserItemConfig.resolve(userItemConfig) as ComponentItemConfig;
+
+        if (itemConfig.maximised) {
+            throw new Error('Root Component cannot be maximised');
+        } else {
+            const rootContentItem = new ComponentItem(this.layoutManager, itemConfig, this);
+            rootContentItem.init();
+            this.addChild(rootContentItem, 0);
+        }
     }
 
     /**
@@ -104,16 +113,16 @@ export class GroundItem extends ContentItem {
     addChild(contentItem: ContentItem, index?: number): number {
         if (this.contentItems.length > 0) {
             throw new Error('Ground node can only have a single child');
+        } else {
+            // contentItem = this.layoutManager._$normalizeContentItem(contentItem, this);
+            this._childElementContainer.appendChild(contentItem.element);
+            index = super.addChild(contentItem, index);
+
+            this.updateSize();
+            this.emitBubblingEvent('stateChanged');
+
+            return index;
         }
-
-        // contentItem = this.layoutManager._$normalizeContentItem(contentItem, this);
-        this._childElementContainer.appendChild(contentItem.element);
-        index = super.addChild(contentItem, index);
-
-        this.updateSize();
-        this.emitBubblingEvent('stateChanged');
-
-        return index;
     }
 
     /** @internal */
@@ -241,6 +250,20 @@ export class GroundItem extends ContentItem {
         }
     }
 
+    // No ContentItem can dock with groundItem.  However Stack can have a GroundItem parent and Stack requires that
+    // its parent implement dock() function.  Accordingly this function is implemented but throws an exception as it should
+    // never be called
+    dock(): void {
+        throw new AssertError('GID87731');
+    }
+
+    // No ContentItem can dock with groundItem.  However Stack can have a GroundItem parent and Stack requires that
+    // its parent implement validateDocking() function.  Accordingly this function is implemented but throws an exception as it should
+    // never be called
+    validateDocking(): void {
+        throw new AssertError('GIVD87732');
+    }
+
     private updateNodeSize(): void {
         const { width, height } = getElementWidthAndHeight(this._containerElement);
 
@@ -253,6 +276,24 @@ export class GroundItem extends ContentItem {
         if (this.contentItems.length > 0) {
             setElementWidth(this.contentItems[0].element, width);
             setElementHeight(this.contentItems[0].element, height);
+        }
+    }
+
+    private clearRoot() {
+        // Remove existing root if it exists
+        const contentItems = this.contentItems;
+        switch (contentItems.length) {
+            case 0: {
+                return;
+            }
+            case 1: {
+                const existingRootContentItem = contentItems[0];
+                existingRootContentItem.remove();
+                return;
+            }
+            default: {
+                throw new AssertError('GILR07721');
+            }
         }
     }
 }

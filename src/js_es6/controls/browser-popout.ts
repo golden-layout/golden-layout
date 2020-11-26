@@ -1,6 +1,6 @@
 import { LayoutConfig, PopoutLayoutConfig } from '../config/config';
 import { PopoutBlockedError } from '../errors/external-error';
-import { UnexpectedNullError } from '../errors/internal-error';
+import { UnexpectedNullError, UnexpectedUndefinedError } from '../errors/internal-error';
 import { ContentItem } from '../items/content-item';
 import { LayoutManager } from '../layout-manager';
 import { ConfigMinifier } from '../utils/config-minifier';
@@ -50,7 +50,7 @@ export class BrowserPopout extends EventEmitter {
         }
 
         const glInstance = this.getGlInstance();
-        const glInstanceConfig = glInstance.toConfig();
+        const glInstanceConfig = glInstance.saveLayout();
         
         let left: number | null;
         let top: number | null;
@@ -132,32 +132,36 @@ export class BrowserPopout extends EventEmitter {
              *
              * The callee (server [not server application]) is not available and disappeared
              */
-            const glInstanceConfig = this.getGlInstance().toConfig();
-            const copiedGlInstanceConfig = deepExtend({}, glInstanceConfig) as LayoutConfig;
-            const copiedRoot = copiedGlInstanceConfig.root;
-            const groundItem = this._layoutManager.groundItem;
-            if (groundItem === null) {
-                throw new UnexpectedNullError('BPPIR34972');
+            const glInstanceLayoutConfig = this.getGlInstance().saveLayout();
+            const copiedGlInstanceLayoutConfig = deepExtend({}, glInstanceLayoutConfig) as LayoutConfig;
+            const copiedRoot = copiedGlInstanceLayoutConfig.root;
+            if (copiedRoot === undefined) {
+                throw new UnexpectedUndefinedError('BPPIR19998');
             } else {
-                parentItem = groundItem.getItemsById(this._config.parentId)[0];
+                const groundItem = this._layoutManager.groundItem;
+                if (groundItem === null) {
+                    throw new UnexpectedNullError('BPPIG34972');
+                } else {
+                    parentItem = groundItem.getItemsById(this._config.parentId)[0];
 
-                /*
-                * Fallback if parentItem is not available. Either add it to the topmost
-                * item or make it the topmost item if the layout is empty
-                */
-                if (!parentItem) {
-                    if (groundItem.contentItems.length > 0) {
-                        parentItem = groundItem.contentItems[0];
-                    } else {
-                        parentItem = groundItem;
+                    /*
+                    * Fallback if parentItem is not available. Either add it to the topmost
+                    * item or make it the topmost item if the layout is empty
+                    */
+                    if (!parentItem) {
+                        if (groundItem.contentItems.length > 0) {
+                            parentItem = groundItem.contentItems[0];
+                        } else {
+                            parentItem = groundItem;
+                        }
+                        index = 0;
                     }
-                    index = 0;
+
+                    const newContentItem = this._layoutManager.createAndInitContentItem(copiedRoot, parentItem);
+
+                    parentItem.addChild(newContentItem, index);
+                    this.close();
                 }
-
-                const newContentItem = this._layoutManager.createAndInitContentItem(copiedRoot, parentItem);
-
-                parentItem.addChild(newContentItem, index);
-                this.close();
             }
         }
     }

@@ -8,7 +8,9 @@ import {
     StackItemConfig
 } from './config/config'
 import { UserComponentItemConfig, UserLayoutConfig, UserRowOrColumnItemConfig, UserSerialisableComponentConfig, UserStackItemConfig } from './config/user-config'
+import { ComponentContainer } from './container/component-container'
 import { BrowserPopout } from './controls/browser-popout'
+import { DragProxy } from './controls/drag-proxy'
 import { DragSource } from './controls/drag-source'
 import { DropTargetIndicator } from './controls/drop-target-indicator'
 import { TransitionIndicator } from './controls/transition-indicator'
@@ -20,6 +22,7 @@ import { GroundItem } from './items/ground-item'
 import { RowOrColumn } from './items/row-or-column'
 import { Stack } from './items/stack'
 import { ConfigMinifier } from './utils/config-minifier'
+import { DragListener } from './utils/drag-listener'
 import { EventEmitter } from './utils/event-emitter'
 import { EventHub } from './utils/event-hub'
 import { I18nStringId, I18nStrings, i18nStrings } from './utils/i18n-strings'
@@ -27,6 +30,7 @@ import { getJQueryLeftAndTop } from './utils/jquery-legacy'
 import { JsonValue, Rect } from './utils/types'
 import {
     createTemplateHtmlElement,
+    deepExtendValue,
     getElementWidthAndHeight,
     removeFromArray,
     setElementHeight,
@@ -47,7 +51,7 @@ declare global {
 /** @public */
 export abstract class LayoutManager extends EventEmitter {
     /** @internal */
-    private _container: HTMLElement;
+    private _containerElement: HTMLElement;
     /** @internal */
     private _isFullPage = false;
     /** @internal */
@@ -63,7 +67,7 @@ export abstract class LayoutManager extends EventEmitter {
     /** @internal */
     private _resizeTimeoutId: ReturnType<typeof setTimeout> | undefined;
     /** @internal */
-    private _componentTypes: Record<string, ComponentItem.ComponentInstantiator> = {};
+    private _componentTypes: Record<string, LayoutManager.ComponentInstantiator> = {};
     /** @internal */
     private _itemAreas: ContentItem.Area[] = [];
     /** @internal */
@@ -91,7 +95,7 @@ export abstract class LayoutManager extends EventEmitter {
     private _getComponentConstructorFtn: LayoutManager.GetComponentConstructorCallback;
 
     /** @internal */
-    private _windowResizeListener = () => this.onResize();
+    private _windowResizeListener = () => this.processResizeWithDebounce();
     /** @internal */
     private _windowUnloadListener = () => this.onUnload();
     /** @internal */
@@ -100,10 +104,22 @@ export abstract class LayoutManager extends EventEmitter {
     /** @internal */
     protected get maximisedItem(): ContentItem | null { return this._maximisedItem; }
 
-    public readonly isSubWindow: boolean;
-    public layoutConfig: LayoutConfig;
+    readonly isSubWindow: boolean;
+    layoutConfig: LayoutConfig;
 
-    get container(): HTMLElement { return this._container; }
+    /**
+     * If a new component is required and:
+     * 1. a component type with corresponding name is not registered, and
+     * 2. a  
+     * This callback should return a constructor for a component based on a config.
+     * This function will be called if a component type with the required name is not already registered.
+     * It is recommended that applications use the {@link (LayoutManager:class).getComponentEvent} and
+     * {@link (LayoutManager:class).releaseComponentEvent} instead of registering a constructor callback
+     */
+    getComponentEvent: LayoutManager.GetComponentEventHandler | undefined;
+    releaseComponentEvent: LayoutManager.ReleaseComponentEventHandler | undefined;
+
+    get container(): HTMLElement { return this._containerElement; }
     get isInitialised(): boolean { return this._isInitialised; }
     /** @internal */
     get groundItem(): GroundItem | null { return this._groundItem; }
@@ -126,16 +142,21 @@ export abstract class LayoutManager extends EventEmitter {
     * @param container - A Dom HTML element. Defaults to body
     * @internal
     */
-    constructor(layoutConfigAndIsSubWindow: LayoutManager.LayoutConfigAndIsSubWindow, container?: HTMLElement) {        
+    constructor(parameters: LayoutManager.ConstructorParameters) {        
         super();
 
-        this.layoutConfig = layoutConfigAndIsSubWindow.layoutConfig;
-        this.isSubWindow = layoutConfigAndIsSubWindow.isSubWindow;
+        let layoutConfig = parameters.layoutConfig;
+        if (layoutConfig === undefined) {
+            layoutConfig = LayoutConfig.createDefault();
+        }
+
+        this.layoutConfig = layoutConfig;
+        this.isSubWindow = parameters.isSubWindow;
 
         I18nStrings.checkInitialise();
 
-        if (container !== undefined) {
-            this._container = container;
+        if (parameters.containerElement !== undefined) {
+            this._containerElement = parameters.containerElement;
         }
     }
 
@@ -148,7 +169,9 @@ export abstract class LayoutManager extends EventEmitter {
             return;
         }
         this.onUnload();
-        globalThis.removeEventListener('resize', this._windowResizeListener);
+        if (this._isFullPage) {
+            globalThis.removeEventListener('resize', this._windowResizeListener);
+        }
         globalThis.removeEventListener('unload', this._windowUnloadListener);
         globalThis.removeEventListener('beforeunload', this._windowUnloadListener);
         if (this._groundItem !== null) {
@@ -167,6 +190,9 @@ export abstract class LayoutManager extends EventEmitter {
             dragSource.destroy();
         }
         this._dragSources = [];
+
+        this.getComponentEvent = undefined;
+        this.releaseComponentEvent = undefined;
     }
 
     /**
@@ -196,16 +222,16 @@ export abstract class LayoutManager extends EventEmitter {
      * or {@link (LayoutManager:class).registerComponentFactoryFunction}
      */
     registerComponent(name: string,
-        componentConstructorOrFactoryFtn: ComponentItem.ComponentConstructor | ComponentItem.ComponentFactoryFunction
+        componentConstructorOrFactoryFtn: LayoutManager.ComponentConstructor | LayoutManager.ComponentFactoryFunction
     ): void {
         if (typeof componentConstructorOrFactoryFtn !== 'function') {
             throw new ApiError('registerComponent() componentConstructorOrFactoryFtn parameter is not a function')
         } else {
             if (componentConstructorOrFactoryFtn.hasOwnProperty('prototype')) {
-                const componentConstructor = componentConstructorOrFactoryFtn as ComponentItem.ComponentConstructor;
+                const componentConstructor = componentConstructorOrFactoryFtn as LayoutManager.ComponentConstructor;
                 this.registerComponentConstructor(name, componentConstructor);   
             } else {
-                const componentFactoryFtn = componentConstructorOrFactoryFtn as ComponentItem.ComponentFactoryFunction;
+                const componentFactoryFtn = componentConstructorOrFactoryFtn as LayoutManager.ComponentFactoryFunction;
                 this.registerComponentFactoryFunction(name, componentFactoryFtn);   
             }
         }
@@ -214,7 +240,7 @@ export abstract class LayoutManager extends EventEmitter {
     /**
      * Register a new component type with the layout manager.
      */
-    registerComponentConstructor(name: string, componentConstructor: ComponentItem.ComponentConstructor): void {
+    registerComponentConstructor(name: string, componentConstructor: LayoutManager.ComponentConstructor): void {
         if (typeof componentConstructor !== 'function') {
             throw new Error(i18nStrings[I18nStringId.PleaseRegisterAConstructorFunction]);
         }
@@ -232,7 +258,7 @@ export abstract class LayoutManager extends EventEmitter {
     /**
      * Register a new component with the layout manager.
      */
-    registerComponentFactoryFunction(name: string, componentFactoryFunction: ComponentItem.ComponentFactoryFunction): void {
+    registerComponentFactoryFunction(name: string, componentFactoryFunction: LayoutManager.ComponentFactoryFunction): void {
         if (typeof componentFactoryFunction !== 'function') {
             throw new Error('Please register a constructor function');
         }
@@ -250,6 +276,9 @@ export abstract class LayoutManager extends EventEmitter {
     /**
      * Register a component function with the layout manager. This function should
      * return a constructor for a component based on a config.
+     * This function will be called if a component type with the required name is not already registered.
+     * It is recommended that applications use the {@link (LayoutManager:class).getComponentEvent} and
+     * {@link (LayoutManager:class).releaseComponentEvent} instead of registering a constructor callback
      * @deprecated use {@link (LayoutManager:class).registerGetComponentConstructorCallback}
      */
     registerComponentFunction(callback: LayoutManager.GetComponentConstructorCallback): void {
@@ -259,6 +288,9 @@ export abstract class LayoutManager extends EventEmitter {
     /**
      * Register a callback closure with the layout manager which supplies a Component Constructor.
      * This callback should return a constructor for a component based on a config.
+     * This function will be called if a component type with the required name is not already registered.
+     * It is recommended that applications use the {@link (LayoutManager:class).getComponentEvent} and
+     * {@link (LayoutManager:class).releaseComponentEvent} instead of registering a constructor callback
      */
     registerGetComponentConstructorCallback(callback: LayoutManager.GetComponentConstructorCallback): void {
         if (typeof callback !== 'function') {
@@ -284,8 +316,8 @@ export abstract class LayoutManager extends EventEmitter {
      * @param config - The item config
      * @internal
      */
-    getComponentInstantiator(config: ComponentItemConfig): ComponentItem.ComponentInstantiator {
-        const name = this.getComponentNameFromConfig(config)
+    getComponentInstantiator(config: ComponentItemConfig): LayoutManager.ComponentInstantiator {
+        const name = ComponentItemConfig.resolveComponentName(config)
         let constructorToUse = this._componentTypes[name]
         if (constructorToUse === undefined) {
             if (this._getComponentConstructorFtn !== undefined) {
@@ -302,6 +334,82 @@ export abstract class LayoutManager extends EventEmitter {
         return constructorToUse;
     }
 
+    /** @internal */
+    getComponent(container: ComponentContainer): ComponentItem.Component {
+        const itemConfig = container.componentItemConfig;
+
+        let component: ComponentItem.Component;
+        if (ComponentItemConfig.isSerialisable(itemConfig)) {
+            const name = ComponentItemConfig.resolveComponentName(itemConfig);
+            let instantiator = this._componentTypes[name]
+            if (instantiator === undefined) {
+                if (this._getComponentConstructorFtn !== undefined) {
+                    instantiator = {
+                        constructor: this._getComponentConstructorFtn(itemConfig),
+                        factoryFunction: undefined,
+                    }
+                }
+            }
+
+            if (instantiator !== undefined) {
+                // handle case where component is obtained by name or component constructor callback
+                let componentState: JsonValue | undefined;
+                if (itemConfig.componentState === undefined) {
+                    componentState = undefined;
+                } else {
+                    // make copy
+                    componentState = deepExtendValue({}, itemConfig.componentState as Record<string, unknown>) as JsonValue;
+                }
+
+                // This next (commented out) if statement is a bad hack. Looks like someone wanted the component name passed
+                // to the component's constructor.  The application really should have put this into the state itself.
+                // If an application needs this information in the constructor, it should now use the getComponentEvent.
+                // if (typeof componentState === 'object' && componentState !== null) {
+                //     (componentState as Record<string, unknown>).componentName = itemConfig.componentName;
+                // }
+
+                const componentConstructor = instantiator.constructor;
+                if (componentConstructor !== undefined) {
+                    component = new componentConstructor(container, componentState);
+                } else {
+                    const factoryFunction = instantiator.factoryFunction;
+                    if (factoryFunction !== undefined) {
+                        component = factoryFunction(container, componentState);
+                    } else {
+                        throw new AssertError('LMGC10008');
+                    }
+                }
+            } else {
+                if (this.getComponentEvent !== undefined) {
+                    component = this.getComponentEvent(container);
+                } else {
+                    throw new Error();
+                }
+            }
+        } else {
+            if (ComponentItemConfig.isReact(itemConfig)) {
+                // uncomment lines below and remove not implemented exception when react-component-handler ready
+                // componentInstantiator = {
+                //     constructor: ReactComponentHandler,
+                //     factoryFunction: undefined,
+                // };
+                // componentState = this._componentConfig.props as JsonValue;
+                throw new Error('React not implemented yet'); 
+            } else {
+                throw new Error(`Component.constructor: unsupported Config type: ${itemConfig.type}`);
+            }
+        }
+
+        return component;
+    }
+
+    /** @internal */
+    releaseComponent(container: ComponentContainer, component: ComponentItem.Component): void {
+        if (this.releaseComponentEvent !== undefined) {
+            this.releaseComponentEvent(container, component);
+        }
+    }
+
     /**
      * Called from GoldenLayout class. Finishes of init
      * @internal
@@ -313,20 +421,15 @@ export abstract class LayoutManager extends EventEmitter {
         this.updateSizeFromContainer();
 
         const layoutConfig = this.layoutConfig;
-        if (layoutConfig.root === undefined) {
-            const errorMsg = 'Missing setting \'content\' on top level of configuration';
-            throw new ConfigurationError(errorMsg, JSON.stringify(layoutConfig));
-        } else {
-            this._groundItem = new GroundItem(this, layoutConfig.root, this._container);
-            this._groundItem.init();
+        this._groundItem = new GroundItem(this, layoutConfig.root, this._containerElement);
+        this._groundItem.init();
 
-            this.checkLoadedLayoutMaximiseItem();
+        this.checkLoadedLayoutMaximiseItem();
 
-            this.bindEvents();
-            this._isInitialised = true;
-            this.adjustColumnsResponsive();
-            this.emit('initialised');
-        }
+        this.bindEvents();
+        this._isInitialised = true;
+        this.adjustColumnsResponsive();
+        this.emit('initialised');
     }
 
     /**
@@ -334,13 +437,18 @@ export abstract class LayoutManager extends EventEmitter {
      * @param userLayoutConfig - New layout to be loaded
      */
     loadLayout(userLayoutConfig: UserLayoutConfig): void {
-        if (this._groundItem === null) {
-            throw new Error('Cannot load layout before init');
+        if (!this.isInitialised) {
+            // In case application not correctly using legacy constructor
+            throw new Error('GoldenLayout: Need to call init() if LayoutConfig with defined root passed to constructor')
         } else {
-            this.layoutConfig = UserLayoutConfig.resolve(userLayoutConfig);
-            this._groundItem.loadRoot(this.layoutConfig.root);
-            this.checkLoadedLayoutMaximiseItem();
-            this.adjustColumnsResponsive();
+            if (this._groundItem === null) {
+                throw new UnexpectedNullError('LMLL11119');
+            } else {
+                this.layoutConfig = UserLayoutConfig.resolve(userLayoutConfig);
+                this._groundItem.loadRoot(this.layoutConfig.root);
+                this.checkLoadedLayoutMaximiseItem();
+                this.adjustColumnsResponsive();
+            }
         }
     }
 
@@ -434,6 +542,18 @@ export abstract class LayoutManager extends EventEmitter {
         }
     }
 
+    /** Loads the specified component ItemConfig as root.
+     * This can be used to display a Component all by itself.  The layout cannot be changed other than having another new layout loaded.
+     * Note that, if this layout is saved and reloaded, it will reload with the Component as a child of a Stack.
+    */
+    loadComponentAsRoot(userItemConfig: UserComponentItemConfig): void {
+        if (this._groundItem === null) {
+            throw new Error('Cannot add item before init');
+        } else {
+            this._groundItem.loadComponentAsRoot(userItemConfig);
+        }
+    }
+
     /** @deprecated Use {@link (LayoutManager:class).setSize} */
     updateSize(width: number, height: number): void {
         this.setSize(width, height);
@@ -456,7 +576,7 @@ export abstract class LayoutManager extends EventEmitter {
                 this._groundItem.setSize(this._width, this._height);
 
                 if (this._maximisedItem) {
-                    const { width, height } = getElementWidthAndHeight(this._container);
+                    const { width, height } = getElementWidthAndHeight(this._containerElement);
                     setElementWidth(this._maximisedItem.element, width);
                     setElementHeight(this._maximisedItem.element, height);
                     this._maximisedItem.updateSize();
@@ -469,7 +589,7 @@ export abstract class LayoutManager extends EventEmitter {
 
     /** @internal */
     updateSizeFromContainer(): void {
-        const { width, height } = getElementWidthAndHeight(this._container);
+        const { width, height } = getElementWidthAndHeight(this._containerElement);
         this.setSize(width, height);
     }
 
@@ -481,18 +601,6 @@ export abstract class LayoutManager extends EventEmitter {
             throw new UnexpectedNullError('LMURS28881');
         } else {
             this._groundItem.updateSize();
-        }
-    }
-
-    /**
-     * Returns the name of the component for the config, taking into account whether it's a react component or not.
-     * @internal
-     */
-    getComponentNameFromConfig(config: ComponentItemConfig): string {
-        if (ComponentItemConfig.isReact(config)) {
-            return config.component;
-        } else {
-            return config.componentName;
         }
     }
 
@@ -547,7 +655,6 @@ export abstract class LayoutManager extends EventEmitter {
                 id: config.id,
                 maximised: config.maximised,
                 isClosable: config.isClosable,
-                title: config.title,
                 reorderEnabled: config.reorderEnabled,
                 activeItemIndex: 0,
                 header: undefined,
@@ -695,7 +802,7 @@ export abstract class LayoutManager extends EventEmitter {
 	 *          removeDragSource() later to get rid of the drag listeners.
      *          2) undefined if constrainDragToContainer is specified
      */
-    createDragSource(element: HTMLElement, itemConfig: ItemConfig | (() => ItemConfig)): DragSource | undefined {
+    createDragSource(element: HTMLElement, itemConfig: ComponentItemConfig | (() => ComponentItemConfig)): DragSource | undefined {
         if (this.layoutConfig.settings.constrainDragToContainer) {
             return undefined;
         } else {
@@ -713,7 +820,19 @@ export abstract class LayoutManager extends EventEmitter {
 	removeDragSource(dragSource: DragSource): void {
 		dragSource.destroy();
 		removeFromArray(dragSource, this._dragSources );
-	}
+    }
+    
+    /** @internal */
+    startComponentDrag(x: number, y: number, dragListener: DragListener, componentItem: ComponentItem, stack: Stack): void {
+        new DragProxy(
+            x,
+            y,
+            dragListener,
+            this,
+            componentItem,
+            stack
+        );
+    }
 
     /**
      * Programmatically selects an item. This deselects
@@ -779,7 +898,7 @@ export abstract class LayoutManager extends EventEmitter {
             throw new UnexpectedNullError('LMMXI19993');
         } else {
             this._groundItem.element.prepend(contentItem.element);
-            const { width, height } = getElementWidthAndHeight(this._container);
+            const { width, height } = getElementWidthAndHeight(this._containerElement);
             setElementWidth(contentItem.element, width);
             setElementHeight(contentItem.element, height);
             contentItem.updateSize();
@@ -965,7 +1084,12 @@ export abstract class LayoutManager extends EventEmitter {
             if (configMaximisedItems.length > 0) {
                 let item = configMaximisedItems[0];
                 if (ContentItem.isComponentItem(item)) {
-                    item = item.stack;
+                    const stack = item.parent;
+                    if (stack === null) {
+                        throw new UnexpectedNullError('LMXLLMI69999');
+                    } else {
+                        item = stack;
+                    }
                 }
                 if (!ContentItem.isStack(item)) {
                     throw new AssertError('LMCLLMI19993');
@@ -1031,7 +1155,7 @@ export abstract class LayoutManager extends EventEmitter {
      * Debounces resize events
      * @internal
      */
-    private onResize(): void {
+    private processResizeWithDebounce(): void {
         if (this._resizeTimeoutId !== undefined) {
             clearTimeout(this._resizeTimeoutId);
         }
@@ -1044,9 +1168,9 @@ export abstract class LayoutManager extends EventEmitter {
      */
     private setContainer() {
         const bodyElement = document.body;
-        const container = this._container ?? bodyElement;
+        const containerElement = this._containerElement ?? bodyElement;
 
-        if (container === bodyElement) {
+        if (containerElement === bodyElement) {
             this._isFullPage = true;
 
             const documentElement = document.documentElement;
@@ -1060,7 +1184,7 @@ export abstract class LayoutManager extends EventEmitter {
             bodyElement.style.overflow = 'hidden';
         }
 
-        this._container = container;
+        this._containerElement = containerElement;
     }
 
     /**
@@ -1208,11 +1332,24 @@ export abstract class LayoutManager extends EventEmitter {
 
 /** @public */
 export namespace LayoutManager {
-    export type GetComponentConstructorCallback = (this: void, config: ComponentItemConfig) => ComponentItem.ComponentConstructor
+    export type ComponentConstructor = new(container: ComponentContainer, state: JsonValue | undefined) => ComponentItem.Component;
+    export type ComponentFactoryFunction = (container: ComponentContainer, state: JsonValue | undefined) => ComponentItem.Component;
+   export type GetComponentConstructorCallback = (this: void, config: ComponentItemConfig) => ComponentConstructor
+    export type GetComponentEventHandler =
+        (this: void, container: ComponentContainer) => ComponentItem.Component;
+    export type ReleaseComponentEventHandler =
+        (this: void, container: ComponentContainer, component: ComponentItem.Component) => void;
 
     /** @internal */
-    export interface LayoutConfigAndIsSubWindow {
-        layoutConfig: LayoutConfig;
+    export interface ConstructorParameters {
+        layoutConfig: LayoutConfig | undefined;
         isSubWindow: boolean;
+        containerElement: HTMLElement | undefined;
+    }
+
+    /** @internal */
+    export interface ComponentInstantiator {
+        constructor: ComponentConstructor | undefined;
+        factoryFunction: ComponentFactoryFunction | undefined;
     }
 }

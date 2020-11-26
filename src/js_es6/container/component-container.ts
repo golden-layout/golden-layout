@@ -6,7 +6,7 @@ import { ContentItem } from '../items/content-item';
 import { LayoutManager } from '../layout-manager';
 import { EventEmitter } from '../utils/event-emitter';
 import { JsonValue } from '../utils/types';
-import { deepExtend, setElementHeight, setElementWidth } from '../utils/utils';
+import { setElementHeight, setElementWidth } from '../utils/utils';
 
 /** @public */
 export class ComponentContainer extends EventEmitter {
@@ -14,8 +14,6 @@ export class ComponentContainer extends EventEmitter {
     private _width: number | null;
     /** @internal */
     private _height: number | null;
-    /** @internal */
-    private readonly _title;
     /** @internal */
     private _isHidden;
     /** @internal */
@@ -29,16 +27,16 @@ export class ComponentContainer extends EventEmitter {
     get width(): number | null { return this._width; }
     get height(): number | null { return this._height; }
     get parent(): ComponentItem { return this._parent; }
-    get config(): ComponentItemConfig { return this._config; }
+    get componentItemConfig(): ComponentItemConfig { return this._componentItemConfig; }
     get tab(): Tab { return this._tab; }
-    get title(): string { return this._title; }
+    get title(): string { return this._parent.title; }
     get layoutManager(): LayoutManager { return this._layoutManager; }
     get isHidden(): boolean { return this._isHidden; }
     /** The inner DOM element where the container's content is intended to live in */
     get contentElement(): HTMLElement { return this._contentElement; }
 
     /** @internal */
-    constructor(private readonly _config: ComponentItemConfig,
+    constructor(private readonly _componentItemConfig: ComponentItemConfig,
         private readonly _parent: ComponentItem,
         private readonly _layoutManager: LayoutManager,
         private readonly _element: HTMLElement
@@ -47,7 +45,6 @@ export class ComponentContainer extends EventEmitter {
 
         this._width = null;
         this._height = null;
-        this._title = this._config.componentName;
         this._isHidden = false;
 
         const contentElement = this._element.querySelector('.lm_content') as HTMLElement;
@@ -59,9 +56,6 @@ export class ComponentContainer extends EventEmitter {
     }
 
     destroy(): void {
-        if (this.beforeDestroyEvent !== undefined) {
-            this.beforeDestroyEvent();
-        }
         this.stateRequestEvent = undefined;
         this.beforeDestroyEvent = undefined;
         this.emit('destroy');
@@ -161,22 +155,22 @@ export class ComponentContainer extends EventEmitter {
      * it. Emits a close event before the container itself is closed.
      */
     close(): void {
-        if (this._config.isClosable) {
+        if (this._componentItemConfig.isClosable) {
             this.emit('close');
             this._parent.close();
         }
     }
 
     /**
-     * Returns the current state object
+     * Returns the inital state object
      * @returns state
      */
-    getState(): JsonValue | undefined {
-        if (ComponentItemConfig.isSerialisable(this._config)) {
-            return this._config.componentState;
+    getInitialState(): JsonValue | undefined {
+        if (ComponentItemConfig.isSerialisable(this._componentItemConfig)) {
+            return this._componentItemConfig.componentState;
         } else {
-            if (ComponentItemConfig.isReact(this._config)) {
-                return this._config.props as JsonValue;
+            if (ComponentItemConfig.isReact(this._componentItemConfig)) {
+                return this._componentItemConfig.props as JsonValue;
             } else {
                 throw new AssertError('ICGS25546');
             }
@@ -184,29 +178,40 @@ export class ComponentContainer extends EventEmitter {
     }
 
     /**
-     * Merges the provided state into the current one
+     * Returns the inital state object
+     * @returns state
+     * @deprecated Use {@link (ComponentContainer:class).getInitialState}
      */
-    extendState(state: Record<string, unknown>): void {
-        const extendedState = deepExtend(this.getState() as Record<string, unknown>, state);
-        this.setState(extendedState as JsonValue);
+    getState(): JsonValue | undefined {
+        return this.getInitialState();
     }
 
-    /**
-     * Notifies the layout manager of a stateupdate
-     */
-    setState(state: JsonValue): void {
-        if (ComponentItemConfig.isSerialisable(this._config)) {
-            this._config.componentState = state;
-            this._parent.emitBubblingEvent('stateChanged');
-        } else {
-            if (ComponentItemConfig.isReact(this._config)) {
-                this._config.props = state;
-                this._parent.emitBubblingEvent('stateChanged');
-            } else {
-                throw new AssertError('ICSS25546');
-            }
-        }
-    }
+    // extendState is no longer supported.  Use ComponentContainer.stateRequestEvent instead
+    // /**
+    //  * Merges the provided state into the current one
+    //  */
+    // extendState(state: Record<string, unknown>): void {
+    //     const extendedState = deepExtend(this.getState() as Record<string, unknown>, state);
+    //     this.setState(extendedState as JsonValue);
+    // }
+
+    // setState is no longer supported.  Use ComponentContainer.stateRequestEvent instead
+    // /**
+    //  * DO NOT USE - will throw an exception
+    //  */
+    // setState(state: JsonValue): void {
+    //     if (ComponentItemConfig.isSerialisable(this._componentItemConfig)) {
+    //         this._componentItemConfig.componentState = state;
+    //         this._parent.emitBubblingEvent('stateChanged');
+    //     } else {
+    //         if (ComponentItemConfig.isReact(this._componentItemConfig)) {
+    //             this._componentItemConfig.props = state;
+    //             this._parent.emitBubblingEvent('stateChanged');
+    //         } else {
+    //             throw new AssertError('ICSS25546');
+    //         }
+    //     }
+    // }
 
     /**
      * Set's the components title

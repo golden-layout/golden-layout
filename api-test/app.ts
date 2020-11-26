@@ -1,10 +1,12 @@
-import { Config, GoldenLayout, UserLayoutConfig, UserSerialisableComponentConfig } from "../dist/golden-layout";
+import { GoldenLayout, LayoutConfig, UserLayoutConfig, UserSerialisableComponentConfig } from "../dist/golden-layout";
 import { BooleanComponent } from './boolean-component';
 import { ColorComponent } from './color-component';
 import { Layout, prefinedLayouts } from './predefined-layouts';
 import { TextComponent } from './text-component';
 
 export class App {
+    private _layoutElement: HTMLElement;
+    private _controlsElement: HTMLElement;
     private _goldenLayout: GoldenLayout;
     private _registerExtraComponentTypesButton;
     private _registerExtraComponentTypesButtonClickListener = () => this.handleRegisterExtraComponentTypesButtonClick();
@@ -16,21 +18,30 @@ export class App {
     private _layoutSelectChangeListener = () => this.handleLayoutSelectChange();
     private _loadLayoutButton: HTMLButtonElement;
     private _loadLayoutButtonClickListener = () => this.handleLoadLayoutButtonClick();
-    private _saveLayout: HTMLButtonElement;
-    private _saveLayoutClickListener = () => this.handleSaveLayoutClick();
-    private _reloadSavedLayout: HTMLButtonElement;
-    private _reloadSavedLayoutClickListener = () => this.handleReloadSavedLayoutClick();
+    private _loadComponentAsRootButton: HTMLButtonElement;
+    private _loadComponentAsRootClickListener = () => this.handleLoadComponentAsRootButtonClick();
+    private _saveLayoutButton: HTMLButtonElement;
+    private _saveLayoutButtonClickListener = () => this.handleSaveLayoutButtonClick();
+    private _reloadSavedLayoutButton: HTMLButtonElement;
+    private _reloadSavedLayoutButtonClickListener = () => this.handleReloadSavedLayoutButtonClick();
  
     private _allComponentsRegistered = false;
-    private _savedLayout: Config | undefined;
+    private _savedLayout: LayoutConfig | undefined;
+
+    private _windowResizeListener = () => this.handleWindowResizeEvent();
 
     constructor() {
-        const initialConfig = prefinedLayouts.colorComponentCompatible[0].config;
+        const controlsElement = document.querySelector('#controls') as HTMLElement;
+        if (controlsElement === null) {
+            throw new Error('controlsElement not found');
+        }
+        this._controlsElement = controlsElement;
         const layoutElement = document.querySelector('#layoutContainer') as HTMLElement;
         if (layoutElement === null) {
             throw new Error('layoutContainerElement not found');
         }
-        this._goldenLayout = new GoldenLayout(initialConfig, layoutElement);
+        this._layoutElement = layoutElement;
+        this._goldenLayout = new GoldenLayout(this._layoutElement);
         this._goldenLayout.registerComponentConstructor(ColorComponent.typeName, ColorComponent);
 
         const registerExtraComponentTypesButton = document.querySelector('#registerExtraComponentTypesButton') as HTMLButtonElement;
@@ -68,29 +79,46 @@ export class App {
         this._loadLayoutButton = loadLayoutButton;
         this._loadLayoutButton.addEventListener('click', this._loadLayoutButtonClickListener);
 
-        const saveLayout = document.querySelector('#saveLayout') as HTMLButtonElement;
-        if (saveLayout === null) {
-            throw Error('Could not find saveLayout');
+        const loadComponentAsRootButton = document.querySelector('#loadComponentAsRootButton') as HTMLButtonElement;
+        if (loadComponentAsRootButton === null) {
+            throw Error('Could not find loadComponentAsRootButton');
         }
-        this._saveLayout = saveLayout;
-        this._saveLayout.addEventListener('click', this._saveLayoutClickListener);
+        this._loadComponentAsRootButton = loadComponentAsRootButton;
+        this._loadComponentAsRootButton.addEventListener('click', this._loadComponentAsRootClickListener);
 
-        const reloadSavedLayout = document.querySelector('#reloadSavedLayout') as HTMLButtonElement;
-        if (reloadSavedLayout === null) {
-            throw Error('Could not find reloadSavedLayout');
+        const saveLayoutButton = document.querySelector('#saveLayoutButton') as HTMLButtonElement;
+        if (saveLayoutButton === null) {
+            throw Error('Could not find saveLayoutButton');
         }
-        this._reloadSavedLayout = reloadSavedLayout;
-        this._reloadSavedLayout.disabled = true;
-        this._reloadSavedLayout.addEventListener('click', this._reloadSavedLayoutClickListener);
+        this._saveLayoutButton = saveLayoutButton;
+        this._saveLayoutButton.addEventListener('click', this._saveLayoutButtonClickListener);
+
+        const reloadSavedLayoutButton = document.querySelector('#reloadSavedLayoutButton') as HTMLButtonElement;
+        if (reloadSavedLayoutButton === null) {
+            throw Error('Could not find reloadSavedLayoutButton');
+        }
+        this._reloadSavedLayoutButton = reloadSavedLayoutButton;
+        this._reloadSavedLayoutButton.disabled = true;
+        this._reloadSavedLayoutButton.addEventListener('click', this._reloadSavedLayoutButtonClickListener);
+
+        globalThis.addEventListener('resize', this._windowResizeListener);
     }
 
     start(): void {
-        this._goldenLayout.init();
-
         this.loadRegisteredComponentNamesSelect();
         this.loadLayoutSelect();
     }
 
+    private handleWindowResizeEvent() {
+        // handling of resize event is required if GoldenLayout does not use body element
+        const bodyComputedStyle = getComputedStyle(document.body);
+        const controlsComputedStyle = getComputedStyle(this._controlsElement);
+        const bodyWidth = this.pixelsToNumber(bodyComputedStyle.width);
+        const controlsWidth = this.pixelsToNumber(controlsComputedStyle.width);
+        const height = this.pixelsToNumber(bodyComputedStyle.height);
+        this._goldenLayout.setSize(bodyWidth - controlsWidth, height)
+    }
+    
     private handleRegisterExtraComponentTypesButtonClick() {
         this._goldenLayout.registerComponentConstructor(TextComponent.typeName, TextComponent);
         this._goldenLayout.registerComponentConstructor(BooleanComponent.typeName, BooleanComponent);
@@ -128,18 +156,32 @@ export class App {
         }
     }
 
-    private handleSaveLayoutClick() {
-        this._savedLayout = this._goldenLayout.saveLayout();
-        this._reloadSavedLayout.disabled = false;
+    private handleLoadComponentAsRootButtonClick() {
+        const itemConfig: UserSerialisableComponentConfig = {
+            type: 'component',
+            componentName: ColorComponent.typeName,
+            componentState: 'yellow',
+        };
+        this._goldenLayout.loadComponentAsRoot(itemConfig);
     }
 
-    private handleReloadSavedLayoutClick() {
+    private handleSaveLayoutButtonClick() {
+        this._savedLayout = this._goldenLayout.saveLayout();
+        this._reloadSavedLayoutButton.disabled = false;
+    }
+
+    private handleReloadSavedLayoutButtonClick() {
         if (this._savedLayout === undefined) {
             throw new Error('No saved layout');
         } else {
             const userLayoutConfig = UserLayoutConfig.fromLayoutConfig(this._savedLayout);
             this._goldenLayout.loadLayout(userLayoutConfig);
         }
+    }
+
+    private pixelsToNumber(value: string): number {
+        const numberStr = value.replace("px", "");
+        return parseFloat(numberStr);
     }
 
     private loadRegisteredComponentNamesSelect() {

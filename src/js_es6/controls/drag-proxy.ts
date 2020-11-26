@@ -1,4 +1,5 @@
 import { UnexpectedNullError } from '../errors/internal-error';
+import { ComponentItem } from '../items/component-item';
 import { ContentItem } from '../items/content-item';
 import { Stack } from '../items/stack';
 import { LayoutManager } from '../layout-manager';
@@ -40,7 +41,7 @@ export class DragProxy extends EventEmitter {
     private _maxY: number;
     private _width: number;
     private _height: number;
-    private _contentItemParent: ContentItem;
+    private _contentItemParent: Stack;
     private _sided: boolean;
     private _childElementContainer: HTMLElement;
     private _element: HTMLElement;
@@ -55,7 +56,7 @@ export class DragProxy extends EventEmitter {
     constructor(x: number, y: number,
         private readonly _dragListener: DragListener,
         private readonly _layoutManager: LayoutManager,
-        private readonly _contentItem: ContentItem,
+        private readonly _contentItem: ComponentItem,
         private readonly _originalParent: ContentItem) {
 
         super();
@@ -90,12 +91,12 @@ export class DragProxy extends EventEmitter {
         if (tabElement === null) {
             throw new UnexpectedNullError('DPCTE33245');
         } else {
-            tabElement.setAttribute('title', stripTags(this._contentItem.config.title));
+            tabElement.setAttribute('title', stripTags(this._contentItem.title));
             const titleElement = this._element.querySelector('.lm_title');
             if (titleElement === null) {
                 throw new UnexpectedNullError('DPCTI98826');
             } else {
-                titleElement.insertAdjacentText('afterbegin', this._contentItem.config.title);
+                titleElement.insertAdjacentText('afterbegin', this._contentItem.title);
                 const childElementContainer = this._element.querySelector('.lm_content') as HTMLElement;
                 if (childElementContainer === null) {
                     throw new UnexpectedNullError('DPCCC98826');

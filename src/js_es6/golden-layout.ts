@@ -2,7 +2,7 @@ import { LayoutConfig, PopoutLayoutConfig } from './config/config';
 import { UserLayoutConfig } from './config/user-config';
 import { LayoutManager } from './layout-manager';
 import { ConfigMinifier } from './utils/config-minifier';
-import { createTemplateHtmlElement, getQueryStringParam, stripTags } from './utils/utils';
+import { createTemplateHtmlElement, getQueryStringParam } from './utils/utils';
 
 /** @public */
 export class GoldenLayout extends LayoutManager {
@@ -14,11 +14,19 @@ export class GoldenLayout extends LayoutManager {
     /**
     * @param container - A Dom HTML element. Defaults to body
     */
-   constructor(userConfig: UserLayoutConfig, container?: HTMLElement) {        
-        super(GoldenLayout.createConfig(userConfig), container);
+   constructor(container?: HTMLElement);
+   /** @deprecated specify userLayoutConfig in {@link (LayoutManager:class).loadLayout}*/
+   constructor(userConfig: UserLayoutConfig, container?: HTMLElement);
+   /** @internal */
+   constructor(userConfigOrOptionalContainer: UserLayoutConfig | HTMLElement | undefined, container?: HTMLElement) {
+        super(GoldenLayout.createConfig(userConfigOrOptionalContainer, container));
 
         if (this.isSubWindow) {
             document.body.style.visibility = 'hidden';
+        }
+
+        if (this.layoutConfig.root === undefined) {
+            this.init();
         }
     }
 
@@ -29,6 +37,9 @@ export class GoldenLayout extends LayoutManager {
      *
      * If called before the document is ready it adds itself as a listener
      * to the document.ready event
+     * @deprecated LayoutConfig should not be loaded in {@link (LayoutManager:class)} constructor, but rather in a
+     * {@link (LayoutManager:class).loadLayout} call.  If LayoutConfig is not specified in {@link (LayoutManager:class)} constructor, 
+     * then init() will be automatically called internally and should not be called externally.
      */
     init(): void {
         /**
@@ -94,8 +105,6 @@ export class GoldenLayout extends LayoutManager {
 
         popInButton.click = () => this.emit('popIn');
 
-        document.title = stripTags(this.layoutConfig.root.title);
-
         const headElement = document.head;
 
         const appendNodeLists = new Array<NodeListOf<Element>>(4);
@@ -136,11 +145,14 @@ export class GoldenLayout extends LayoutManager {
 /** @public */
 export namespace GoldenLayout {
     /** @internal */
-    export function createConfig(userConfig: UserLayoutConfig): LayoutManager.LayoutConfigAndIsSubWindow {
+    export function createConfig(userConfigOrOptionalContainer: UserLayoutConfig | HTMLElement | undefined,
+        containerElement?: HTMLElement):
+        LayoutManager.ConstructorParameters
+    {
         const windowConfigKey = getQueryStringParam('gl-window');
         const isSubWindow = windowConfigKey !== null;  
 
-        let config: LayoutConfig;
+        let config: LayoutConfig | undefined;
         if (windowConfigKey !== null) {
             const windowConfigStr = localStorage.getItem(windowConfigKey);
             if (windowConfigStr === null) {
@@ -150,10 +162,19 @@ export namespace GoldenLayout {
             const minifiedWindowConfig = JSON.parse(windowConfigStr);
             config = (new ConfigMinifier()).unminifyConfig(minifiedWindowConfig) as PopoutLayoutConfig;
         } else {
-            if (UserLayoutConfig.isUserLayoutConfig(userConfig)) {
-                config = UserLayoutConfig.resolve(userConfig);
+            if (userConfigOrOptionalContainer === undefined) {
+                config = undefined;
             } else {
-                config = userConfig as LayoutConfig;
+                if (userConfigOrOptionalContainer instanceof HTMLElement) {
+                    config = undefined;
+                    containerElement = userConfigOrOptionalContainer;
+                } else {
+                    if (UserLayoutConfig.isUserLayoutConfig(userConfigOrOptionalContainer)) {
+                        config = UserLayoutConfig.resolve(userConfigOrOptionalContainer);
+                    } else {
+                        config = userConfigOrOptionalContainer as LayoutConfig;
+                    }
+                }
             }
         }
 
@@ -173,6 +194,7 @@ export namespace GoldenLayout {
         return {
             layoutConfig: config,
             isSubWindow,
+            containerElement,
         };
     }
 }

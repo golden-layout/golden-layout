@@ -22,7 +22,7 @@ export class ColorComponent {
         this._paraElement = document.createElement("p");
         this._paraElement.style.textAlign = "left";
         this._paraElement.style.color = color;
-        const title = container.config.title;
+        const title = container.title;
         this._paraElement.innerText = (title ?? "unknown") + " component";
         container.contentElement.appendChild(this._paraElement);
 

@@ -1,12 +1,11 @@
-import { ComponentItemConfig, HeaderedItemConfig } from '../config/config';
+import { ComponentItemConfig, HeaderedItemConfig, ReactComponentConfig, SerialisableComponentConfig } from '../config/config';
 import { ComponentContainer } from '../container/component-container';
 import { Tab } from '../controls/tab';
-import { AssertError, UnexpectedUndefinedError } from '../errors/internal-error';
+import { AssertError, UnexpectedNullError } from '../errors/internal-error';
 import { LayoutManager } from '../layout-manager';
-import { ReactComponentHandler } from '../utils/react-component-handler';
-import { JsonValue } from '../utils/types';
-import { createTemplateHtmlElement, deepExtendValue, getElementWidthAndHeight } from '../utils/utils';
+import { createTemplateHtmlElement, getElementWidthAndHeight } from '../utils/utils';
 import { ContentItem } from './content-item';
+import { GroundItem } from './ground-item';
 import { Stack } from './stack';
 
 /** @public */
@@ -16,6 +15,8 @@ export class ComponentItem extends ContentItem {
     /** @internal */
     private _container: ComponentContainer;
     /** @internal */
+    private _title: string;
+    /** @internal */
     private _tab: Tab;
     /** @internal */
     private _component: ComponentItem.Component; // this is the user component wrapped by this ComponentItem instance
@@ -23,89 +24,85 @@ export class ComponentItem extends ContentItem {
     get componentName(): string { return this._componentName; }
     get component(): ComponentItem.Component { return this._component; }
     get container(): ComponentContainer { return this._container; }
-    get stack(): Stack { return this._stack; } 
 
     get headerConfig(): HeaderedItemConfig.Header | undefined { return this._componentConfig.header; }
+    get title(): string { return this._title; }
     get tab(): Tab { return this._tab; }
 
     /** @internal */
-    constructor(layoutManager: LayoutManager, private readonly _componentConfig: ComponentItemConfig, private _stack: Stack) {
-        super(layoutManager, _componentConfig, _stack, createTemplateHtmlElement(ComponentItem.templateHtml));
-
-        let componentInstantiator: ComponentItem.ComponentInstantiator;
-        let componentState: JsonValue | undefined;
-        if (ComponentItemConfig.isSerialisable(this._componentConfig)) {
-            componentInstantiator = layoutManager.getComponentInstantiator(this._componentConfig);
-            if (this._componentConfig.componentState === undefined) {
-                componentState = undefined;
-            } else {
-                 // make copy
-                componentState = deepExtendValue({}, this._componentConfig.componentState as Record<string, unknown>) as JsonValue;
-            }
-        } else {
-            if (ComponentItemConfig.isReact(this._componentConfig)) {
-                componentInstantiator = {
-                    constructor: ReactComponentHandler,
-                    factoryFunction: undefined,
-                };
-                componentState = this._componentConfig.props as JsonValue;
-            } else {
-                throw new Error(`Component.constructor: unsupported Config type: ${this._componentConfig.type}`);
-            }
-        }
-
-        if (typeof componentState === 'object' && componentState !== null) {
-            (componentState as Record<string, unknown>).componentName = this._componentConfig.componentName;
-        }
-
-        this._componentName = this._componentConfig.componentName;
-
-        if (this.config.title === '') {
-            this.config.title = this._componentConfig.componentName;
-        }
+    constructor(layoutManager: LayoutManager,
+        private readonly _componentConfig: ComponentItemConfig,
+        stackOrGroundItem: Stack | GroundItem
+    ) {
+        super(layoutManager, _componentConfig, stackOrGroundItem, createTemplateHtmlElement(ComponentItem.templateHtml));
 
         this.isComponent = true;
-        this._container = new ComponentContainer(this._componentConfig, this, layoutManager, this.element);
-        const componentConstructor = componentInstantiator.constructor;
-        if (componentConstructor !== undefined) {
-            this._component = new componentConstructor(this._container, componentState);
-        } else {
-            const factoryFunction = componentInstantiator.factoryFunction;
-            if (factoryFunction !== undefined) {
-                this._component = factoryFunction(this._container, componentState);
-            } else {
-                throw new UnexpectedUndefinedError('CIC10008');
-            }
+        this._componentName = this._componentConfig.componentName;
+        this._title = this._componentConfig.title;
+        if (this._title === '') {
+            this._title = this._componentName;
         }
+        this._container = new ComponentContainer(this._componentConfig, this, layoutManager, this.element);
+        this.layoutManager.getComponent(this._container);
     }
 
     /** @internal */
     destroy(): void {
+        if (this._container.beforeDestroyEvent !== undefined) {
+            this._container.beforeDestroyEvent();
+        }
+        this.layoutManager.releaseComponent(this._container, this._component);
         this._container.destroy()
         super.destroy();
     }
 
     /** @internal */
-    setParent(parent: Stack): void {
-        this._stack = parent;
-        super.setParent(parent);
-    }
-
-    /** @internal */
     toConfig(): ComponentItemConfig {
-        // cannot rely on ItemConfig.createCopy() to create StackItemConfig as header may have changed
-        const result = super.toConfig() as ComponentItemConfig;
         const stateRequestEvent = this._container.stateRequestEvent;
-        if (stateRequestEvent !== undefined) {
-            const state = stateRequestEvent();
-            if (ComponentItemConfig.isSerialisable(result)) {
-                result.componentState = state;
-            } else {
-                if (ComponentItemConfig.isReact(result)) {
-                    result.props = state; // is this correct? Needs review.
-                } else {
-                    throw new AssertError('CITC75335');
+        const state = stateRequestEvent === undefined ? undefined : stateRequestEvent();
+
+        const currentConfig = this._componentConfig;
+        let result: ComponentItemConfig;
+        if (ComponentItemConfig.isSerialisable(currentConfig)) {
+            const serialisableResult: SerialisableComponentConfig = {
+                type: currentConfig.type,
+                content: [],
+                width: currentConfig.width,
+                minWidth: currentConfig.minWidth,
+                height: currentConfig.height,
+                minHeight: currentConfig.minHeight,
+                id: currentConfig.id,
+                maximised: false,
+                isClosable: currentConfig.isClosable,
+                reorderEnabled: currentConfig.reorderEnabled,
+                title: this._title,
+                header: HeaderedItemConfig.Header.createCopy(currentConfig.header),
+                componentName: currentConfig.componentName,
+                componentState: state,
+            }
+            result = serialisableResult;
+        } else {
+            if (ComponentItemConfig.isReact(currentConfig)) {
+                const reactResult: ReactComponentConfig = {
+                    type: currentConfig.type,
+                    content: [],
+                    width: currentConfig.width,
+                    minWidth: currentConfig.minWidth,
+                    height: currentConfig.height,
+                    minHeight: currentConfig.minHeight,
+                    id: currentConfig.id,
+                    maximised: false,
+                    isClosable: currentConfig.isClosable,
+                    reorderEnabled: currentConfig.reorderEnabled,
+                    title: this._title,
+                    header: HeaderedItemConfig.Header.createCopy(currentConfig.header),
+                    componentName: currentConfig.componentName,
+                    component: currentConfig.component,
+                    props: state,
                 }
+                result = reactResult;
+            } else {
+                throw new AssertError('CITC75335');
             }
         }
 
@@ -113,7 +110,11 @@ export class ComponentItem extends ContentItem {
     }
 
     close(): void {
-        this._stack.removeChild(this, false);
+        if (this.parent === null) {
+            throw new UnexpectedNullError('CIC68883');
+        } else {
+            this.parent.removeChild(this, false);
+        }
     }
 
     /** @internal */
@@ -129,6 +130,19 @@ export class ComponentItem extends ContentItem {
         super.init();
         this._container.emit('open');
         this.initContentItems();
+    }
+
+    /**
+     * Set this component's title
+     *
+     * @public
+     * @param title -
+     */
+
+     setTitle(title: string): void {
+        this._title = title;
+        this.emit('titleChanged', title);
+        this.emit('stateChanged');
     }
 
     setTab(tab: Tab): void {
@@ -165,13 +179,6 @@ export type Component = ComponentItem;
 /** @public */
 export namespace ComponentItem {
     export type Component = unknown;
-    export type ComponentConstructor = new(container: ComponentContainer, state: JsonValue | undefined) => Component;
-    export type ComponentFactoryFunction = (container: ComponentContainer, state: JsonValue | undefined) => Component;
-    /** @internal */
-    export interface ComponentInstantiator {
-        constructor: ComponentConstructor | undefined;
-        factoryFunction: ComponentFactoryFunction | undefined;
-    }
 
     /** @internal */
     export const templateHtml =

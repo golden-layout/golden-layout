@@ -14,7 +14,6 @@ export interface ItemConfig {
     // id no longer specifies whether an Item is maximised.  This is now done by HeaderItemConfig.maximised
     id: string | string[];
     readonly isClosable: boolean;
-    title: string;
     readonly reorderEnabled: boolean; // Takes precedence over LayoutConfig.reorderEnabled. Should be settings.reorderEnabled
 }
 
@@ -44,7 +43,6 @@ export namespace ItemConfig {
         id: '',
         isClosable: true,
         reorderEnabled: true,
-        title: '',
     } as const;
 
     /** Creates a copy of the original ItemConfig using an alternative content if specified */
@@ -177,7 +175,6 @@ export namespace StackItemConfig {
             maximised: original.maximised,
             isClosable: original.isClosable,
             reorderEnabled: original.reorderEnabled,
-            title: original.title,
             activeItemIndex: original.activeItemIndex,
             header: HeaderedItemConfig.Header.createCopy(original.header),
         }
@@ -205,7 +202,6 @@ export namespace StackItemConfig {
             maximised: HeaderedItemConfig.defaultMaximised,
             isClosable: ItemConfig.defaults.isClosable,
             reorderEnabled: ItemConfig.defaults.reorderEnabled,
-            title: ItemConfig.defaults.title,
             activeItemIndex: defaultActiveItemIndex,
             header: undefined,
         }
@@ -216,6 +212,7 @@ export namespace StackItemConfig {
 /** @public */
 export interface ComponentItemConfig extends HeaderedItemConfig {
     readonly content: [];
+    readonly title: string;
     /**
      * The name of the component as specified in layout.registerComponent. Mandatory if type is 'component'.
      */
@@ -229,6 +226,19 @@ export namespace ComponentItemConfig {
     }
     export function isSerialisable(config: ComponentItemConfig): config is SerialisableComponentConfig {
         return config.type === ItemConfig.Type.component;
+    }
+
+    /** @internal */
+    export function resolveComponentName(itemConfig: ComponentItemConfig): string {
+        if (isSerialisable(itemConfig)) {
+            return itemConfig.componentName;
+        } else {
+            if (isReact(itemConfig)) {
+                return itemConfig.component; // This looks wrong.  Hopefully React logic can be updated to improve this
+            } else {
+                throw new AssertError('COCRCN60054');
+            }
+        }
     }
 }
 
@@ -273,7 +283,7 @@ export namespace SerialisableComponentConfig {
             maximised: HeaderedItemConfig.defaultMaximised,
             isClosable: ItemConfig.defaults.isClosable,
             reorderEnabled: ItemConfig.defaults.reorderEnabled,
-            title: ItemConfig.defaults.title,
+            title: '',
             header: undefined,
             componentName: '',
             componentState: {},
@@ -327,7 +337,7 @@ export namespace ReactComponentConfig {
             maximised: HeaderedItemConfig.defaultMaximised,
             isClosable: ItemConfig.defaults.isClosable,
             reorderEnabled: ItemConfig.defaults.reorderEnabled,
-            title: ItemConfig.defaults.title,
+            title: '',
             header: undefined,
             componentName: '',
             component: '',
@@ -378,7 +388,6 @@ export namespace RowOrColumnItemConfig {
             id: original.id,
             isClosable: original.isClosable,
             reorderEnabled: original.reorderEnabled,
-            title: original.title,
         }
         return result;
     }
@@ -403,7 +412,6 @@ export namespace RowOrColumnItemConfig {
             id: ItemConfig.defaults.id,
             isClosable: ItemConfig.defaults.isClosable,
             reorderEnabled: ItemConfig.defaults.reorderEnabled,
-            title: ItemConfig.defaults.title,
         }
         return result;
     }
@@ -455,10 +463,11 @@ export interface GroundItemConfig extends ItemConfig {
 
 /** @internal */
 export namespace GroundItemConfig {
-    export function create(content: RootItemConfig):GroundItemConfig {
+    export function create(rootItemConfig: RootItemConfig | undefined):GroundItemConfig {
+        const content = rootItemConfig === undefined ? [] : [rootItemConfig];
         return {
             type: ItemConfig.Type.ground,
-            content: [content],
+            content,
             width: 100,
             minWidth: 0,
             height: 100,
@@ -473,7 +482,7 @@ export namespace GroundItemConfig {
 
 /** @public */
 export interface LayoutConfig {
-    readonly root: RootItemConfig;
+    readonly root: RootItemConfig | undefined;
     readonly openPopouts: PopoutLayoutConfig[];
     readonly dimensions: LayoutConfig.Dimensions;
     readonly settings: LayoutConfig.Settings;
@@ -619,12 +628,24 @@ export namespace LayoutConfig {
         return 'parentId' in config;
     }
 
+    export function createDefault(): LayoutConfig {
+        const result: LayoutConfig = {
+            root: undefined,
+            openPopouts: [],
+            dimensions: LayoutConfig.Dimensions.defaults,
+            settings: LayoutConfig.Settings.defaults,
+            header: LayoutConfig.Header.defaults,
+            resolved: true,
+        }
+        return result;
+    }
+
     export function createCopy(config: LayoutConfig): LayoutConfig {
         if (isPopout(config)) {
             return PopoutLayoutConfig.createCopy(config);
         } else {
             const result: LayoutConfig = {
-                root: RootItemConfig.createCopy(config.root),
+                root: config.root === undefined ? undefined : RootItemConfig.createCopy(config.root),
                 openPopouts: LayoutConfig.copyOpenPopouts(config.openPopouts),
                 settings: LayoutConfig.Settings.createCopy(config.settings),
                 dimensions: LayoutConfig.Dimensions.createCopy(config.dimensions),
@@ -682,7 +703,7 @@ export namespace PopoutLayoutConfig {
 
     export function createCopy(original: PopoutLayoutConfig): PopoutLayoutConfig {
         const result: PopoutLayoutConfig = {
-            root: RootItemConfig.createCopy(original.root),
+            root: original.root === undefined ? undefined : RootItemConfig.createCopy(original.root),
             openPopouts: LayoutConfig.copyOpenPopouts(original.openPopouts),
             settings: LayoutConfig.Settings.createCopy(original.settings),
             dimensions: LayoutConfig.Dimensions.createCopy(original.dimensions),

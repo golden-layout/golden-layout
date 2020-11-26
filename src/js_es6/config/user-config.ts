@@ -220,7 +220,6 @@ export namespace UserStackItemConfig {
             maximised,
             isClosable: user.isClosable ?? ItemConfig.defaults.isClosable,
             reorderEnabled: user.reorderEnabled ?? ItemConfig.defaults.reorderEnabled,
-            title: user.title ?? ItemConfig.defaults.title,
             activeItemIndex: user.activeItemIndex ?? StackItemConfig.defaultActiveItemIndex,
             header: UserHeaderedItemConfig.Header.resolve(user.header, user.hasHeaders),
         };
@@ -273,6 +272,12 @@ export namespace UserSerialisableComponentConfig {
             throw new Error('UserJsonComponentConfig.componentName is undefined');
         } else {
             const { id, maximised } = UserHeaderedItemConfig.resolveIdAndMaximised(user);
+            let title: string;
+            if (user.title === undefined || user.title === '') {
+                title = user.componentName;
+            } else {
+                title = user.title;
+            }
             const result: SerialisableComponentConfig = {
                 type: user.type,
                 content: [],
@@ -284,7 +289,7 @@ export namespace UserSerialisableComponentConfig {
                 maximised,
                 isClosable: user.isClosable ?? ItemConfig.defaults.isClosable,
                 reorderEnabled: user.reorderEnabled ?? ItemConfig.defaults.reorderEnabled,
-                title: user.title ?? user.componentName,
+                title,
                 header: UserHeaderedItemConfig.Header.resolve(user.header, user.hasHeaders),
                 componentName: user.componentName,
                 componentState: user.componentState ?? {},
@@ -311,6 +316,12 @@ export namespace UserReactComponentConfig {
             throw new Error('UserReactComponentConfig.componentName is undefined');
         } else {
             const { id, maximised } = UserHeaderedItemConfig.resolveIdAndMaximised(user);
+            let title: string;
+            if (user.title === undefined || user.title === '') {
+                title = user.componentName;
+            } else {
+                title = user.title;
+            }
             const result: ReactComponentConfig = {
                 type: ItemConfig.Type.reactComponent,
                 content: [],
@@ -322,7 +333,7 @@ export namespace UserReactComponentConfig {
                 maximised,
                 isClosable: user.isClosable ?? ItemConfig.defaults.isClosable,
                 reorderEnabled: user.reorderEnabled ?? ItemConfig.defaults.reorderEnabled,
-                title: user.title ?? user.componentName,
+                title,
                 header: UserHeaderedItemConfig.Header.resolve(user.header, user.hasHeaders),
                 componentName: ReactComponentConfig.REACT_COMPONENT_ID,
                 component: user.component,
@@ -370,7 +381,6 @@ export namespace UserRowOrColumnItemConfig {
             id: user.id ?? ItemConfig.defaults.id,
             isClosable: user.isClosable ?? ItemConfig.defaults.isClosable,
             reorderEnabled: user.reorderEnabled ?? ItemConfig.defaults.reorderEnabled,
-            title: user.title ?? ItemConfig.defaults.title,
         }
         return result;
     }
@@ -418,19 +428,23 @@ export namespace UserRootItemConfig {
         }
     }
 
-    export function resolve(user: UserRootItemConfig): RootItemConfig {
-        const result = UserItemConfig.resolve(user);
-        if (!RootItemConfig.isRootItemConfig(result)) {
-            throw new ConfigurationError('ItemConfig is not Row, Column or Stack', JSON.stringify(user));
+    export function resolve(user: UserRootItemConfig | undefined): RootItemConfig | undefined {
+        if (user === undefined) {
+            return undefined;
         } else {
-            return result;
+            const result = UserItemConfig.resolve(user);
+            if (!RootItemConfig.isRootItemConfig(result)) {
+                throw new ConfigurationError('ItemConfig is not Row, Column or Stack', JSON.stringify(user));
+            } else {
+                return result;
+            }
         }
     }
 }
 
 /** @public */
 export interface UserLayoutConfig {
-    root: UserRootItemConfig;
+    root?: UserRootItemConfig;
     /** @deprecated Use {@link (UserLayoutConfig:interface).root} */
     content?: (UserRowOrColumnItemConfig | UserStackItemConfig | UserComponentItemConfig)[];
     openPopouts?: UserPopoutLayoutConfig[];
@@ -727,14 +741,14 @@ export namespace UserLayoutConfig {
         if (isPopout(user)) {
             return UserPopoutLayoutConfig.resolve(user);
         } else {
-            let userRoot: UserRootItemConfig;
+            let userRoot: UserRootItemConfig | undefined;
             if (user.root !== undefined) {
                 userRoot = user.root;
             } else {
                 if (user.content !== undefined && user.content.length > 0) {
                     userRoot = user.content[0];
                 } else {
-                    throw new ConfigurationError('UserLayoutConfig must specify root', JSON.stringify(user));
+                    userRoot = undefined;
                 }
             }
             const config: LayoutConfig = {
@@ -843,14 +857,14 @@ export namespace UserPopoutLayoutConfig {
     }
 
     export function resolve(user: UserPopoutLayoutConfig): PopoutLayoutConfig {
-        let userRoot: UserRootItemConfig;
+        let userRoot: UserRootItemConfig | undefined;
         if (user.root !== undefined) {
             userRoot = user.root;
         } else {
             if (user.content !== undefined && user.content.length > 0) {
                 userRoot = user.content[0];
             } else {
-                throw new ConfigurationError('UserPopoutLayoutConfig must specify root', JSON.stringify(user));
+                userRoot = undefined;
             }
         }
 

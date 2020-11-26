@@ -270,18 +270,6 @@ export abstract class ContentItem extends EventEmitter {
     }
 
     /**
-     * Set this component's title
-     *
-     * @public
-     * @param title -
-     */
-    setTitle(title: string): void {
-        this._config.title = title;
-        this.emit('titleChanged', title);
-        this.emit('stateChanged');
-    }
-
-    /**
      * Checks whether a provided id is present
      *
      * @param id -

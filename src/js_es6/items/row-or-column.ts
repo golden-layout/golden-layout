@@ -288,6 +288,7 @@ export class RowOrColumn extends ContentItem {
             throw new Error('Can\'t dock child when it single');
 
         const removedItemSize = contentItem.config[this._dimension];
+        // this is wrong - does not reflect the stack and component settings for header.show
         const headerSize = this.layoutManager.layoutConfig.header.show === false ? 0 : this.layoutManager.layoutConfig.dimensions.headerHeight;
         const index = this.contentItems.indexOf(contentItem);
         const splitterIndex = Math.max(index - 1, 0);
@@ -352,6 +353,21 @@ export class RowOrColumn extends ContentItem {
         this.updateSize();
         this.emitBubblingEvent('stateChanged');
         this.validateDocking();
+    }
+
+    /**
+     * Validate if row or column has ability to dock
+     * @internal
+     */
+    validateDocking(): void {
+        const can = this.contentItems.length - this.calculateDockedCount() > 1;
+        for (let i = 0; i < this.contentItems.length; ++i) {
+            const contentItem = this.contentItems[i];
+            if (contentItem instanceof Stack) {
+                contentItem.setDockable(this.isDocked(i) ?? can);
+                contentItem.setRowColumnClosable(can);
+            }
+        }
     }
 
     /**
@@ -693,21 +709,6 @@ export class RowOrColumn extends ContentItem {
             if (this.isDocked(i))
                 count++;
         return count;
-    }
-
-    /**
-     * Validate if row or column has ability to dock
-     * @internal
-     */
-    private validateDocking(): void {
-        const can = this.contentItems.length - this.calculateDockedCount() > 1;
-        for (let i = 0; i < this.contentItems.length; ++i) {
-            const contentItem = this.contentItems[i];
-            if (contentItem instanceof Stack) {
-                contentItem.setDockable(this.isDocked(i) ?? can);
-                contentItem.setRowColumnClosable(can);
-            }
-        }
     }
 
     /**

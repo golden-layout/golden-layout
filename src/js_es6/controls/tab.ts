@@ -76,7 +76,7 @@ export class Tab {
             this._closeElement.style.display = 'none';
         }
 
-        this.setTitle(_componentItem.config.title);
+        this.setTitle(_componentItem.title);
         this._componentItem.on('titleChanged', (title) => this.setTitle(title));
 
         const reorderEnabled = _componentItem.config.reorderEnabled ?? this._layoutManager.layoutConfig.settings.reorderEnabled;

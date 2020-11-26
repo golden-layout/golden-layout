@@ -42,6 +42,7 @@
     "lib",
     "node_modules",
     "script",
+    "src/js_es6/utils/react-component-handler.ts",
     "temp",
     "test",
     "typings/browser",

@@ -1,6 +1,5 @@
 import { HeaderedItemConfig, ItemConfig, StackItemConfig } from '../config/config';
 import { UserComponentItemConfig, UserItemConfig, UserSerialisableComponentConfig } from '../config/user-config';
-import { DragProxy } from '../controls/drag-proxy';
 import { Header } from '../controls/header';
 import { AssertError, UnexpectedNullError } from '../errors/internal-error';
 import { LayoutManager } from '../layout-manager';
@@ -883,14 +882,7 @@ export class Stack extends ContentItem {
         if (this.isMaximised === true) {
             this.toggleMaximise();
         }
-        new DragProxy(
-            x,
-            y,
-            dragListener,
-            this.layoutManager,
-            componentItem,
-            this
-        );
+        this.layoutManager.startComponentDrag(x, y, dragListener, componentItem, this);
     }
 
     /** @internal */

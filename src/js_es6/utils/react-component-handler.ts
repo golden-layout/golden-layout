@@ -8,6 +8,7 @@ import { JsonValue } from './types';
 import { extend } from './utils';
 
 // This needs more attention - refer to original Javascript ReactComponentHandler
+// When fixed, remove from excludes in tsconfig.base.json and uncomment lines component-item.ts
 
 /**
  * A specialised GoldenLayout component that binds GoldenLayout container
@@ -20,7 +21,7 @@ export class ReactComponentHandler {
     private _originalComponentWillUpdate: Function | null;
     private _container: ComponentContainer;
     private _initialState: unknown;
-    private _reactClass: ComponentItem.ComponentConstructor;
+    private _reactClass: ComponentItem.Component;
 
     private _containerOpenListener = () => this.render();
     private _containerDestroyListener = () => this.destroy();
@@ -89,7 +90,7 @@ export class ReactComponentHandler {
      * to GoldenLayout
      */
     private onUpdate(nextProps: unknown, nextState: JsonValue): void {
-        this._container.setState(nextState);
+        // this._container.setState(nextState);
         if (this._originalComponentWillUpdate === null) {
             throw new UnexpectedNullError('RCHOU11196');
         } else {
@@ -103,14 +104,14 @@ export class ReactComponentHandler {
     // * @returns {React.Class}
     // assume this is returning a constructor
     private getReactClass() {
-        const config = this._container.config as ReactComponentConfig;
+        const config = this._container.componentItemConfig as ReactComponentConfig;
         const componentName = config;
 
         if (!componentName) {
             throw new Error('No react component name. type: react-component needs a field `component`');
         }
 
-        const reactClass = this._container.layoutManager.getComponentInstantiator(this._container.config).constructor;
+        const reactClass = this._container.layoutManager.getComponentInstantiator(this._container.componentItemConfig).constructor;
 
         if (!reactClass) {
             throw new Error('React component "' + componentName + '" not found. ' +
@@ -131,7 +132,7 @@ export class ReactComponentHandler {
             glContainer: this._container,
             ref: this.gotReactComponent.bind(this),
         };
-        const config = this._container.config as ReactComponentConfig;
+        const config = this._container.componentItemConfig as ReactComponentConfig;
         let props = config.props;
         if (props === undefined) {
             props = defaultProps;
