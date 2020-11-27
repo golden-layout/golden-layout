@@ -444,7 +444,7 @@ export namespace UserRootItemConfig {
 
 /** @public */
 export interface UserLayoutConfig {
-    root?: UserRootItemConfig;
+    root: UserRootItemConfig;
     /** @deprecated Use {@link (UserLayoutConfig:interface).root} */
     content?: (UserRowOrColumnItemConfig | UserStackItemConfig | UserComponentItemConfig)[];
     openPopouts?: UserPopoutLayoutConfig[];
