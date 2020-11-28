@@ -266,19 +266,33 @@ export class Stack extends ContentItem {
         this._header.setRowColumnClosable(value);
     }
 
-    addSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): void {
+    newSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): ComponentItem {
         const itemConfig: UserSerialisableComponentConfig = {
             type: 'component',
             componentName: componentTypeName,
             componentState,
         };
-        this.addItem(itemConfig, index);
+        return this.newItem(itemConfig, index) as ComponentItem;
     }
 
-    addItem(userItemConfig: UserComponentItemConfig, index?: number): void {
+    addSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): number {
+        const itemConfig: UserSerialisableComponentConfig = {
+            type: 'component',
+            componentName: componentTypeName,
+            componentState,
+        };
+        return this.addItem(itemConfig, index);
+    }
+
+    newItem(userItemConfig: UserComponentItemConfig,  index?: number): ContentItem {
+        index = this.addItem(userItemConfig, index);
+        return this.contentItems[index];
+    }
+
+    addItem(userItemConfig: UserComponentItemConfig, index?: number): number {
         const itemConfig = UserItemConfig.resolve(userItemConfig);
         const contentItem = this.layoutManager.createAndInitContentItem(itemConfig, this);
-        this.addChild(contentItem, index);
+        return this.addChild(contentItem, index);
     }
 
     addChild(contentItem: ContentItem, index?: number): number {

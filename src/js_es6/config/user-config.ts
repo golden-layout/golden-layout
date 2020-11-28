@@ -85,7 +85,7 @@ export namespace UserItemConfig {
             case ItemConfig.Type.stack:
                 return UserStackItemConfig.resolve(user as UserStackItemConfig);
 
-            case ItemConfig.Type.component:
+            case ItemConfig.Type.serialisableComponent:
                 return UserSerialisableComponentConfig.resolve(user as UserSerialisableComponentConfig);
 
             case ItemConfig.Type.reactComponent:
@@ -121,10 +121,13 @@ export namespace UserItemConfig {
     export function isStack(config: UserItemConfig): config is UserItemConfig {
         return config.type === ItemConfig.Type.stack;
     }
-    export function isJson(config: UserItemConfig): config is UserSerialisableComponentConfig {
-        return config.type === ItemConfig.Type.component;
+    export function isComponent(config: UserItemConfig): config is UserSerialisableComponentConfig | UserReactComponentConfig {
+        return isSerialisableComponent(config) || isReactComponent(config);
     }
-    export function isReact(config: UserItemConfig): config is UserReactComponentConfig {
+    export function isSerialisableComponent(config: UserItemConfig): config is UserSerialisableComponentConfig {
+        return config.type === ItemConfig.Type.serialisableComponent;
+    }
+    export function isReactComponent(config: UserItemConfig): config is UserReactComponentConfig {
         return config.type === ItemConfig.Type.reactComponent;
     }
 }
@@ -361,7 +364,7 @@ export namespace UserRowOrColumnItemConfig {
             case ItemConfig.Type.column:
             case ItemConfig.Type.stack:
             case ItemConfig.Type.reactComponent:
-            case ItemConfig.Type.component:
+            case ItemConfig.Type.serialisableComponent:
                 return true;
             case ItemConfig.Type.ground:
                 return false;
@@ -419,7 +422,7 @@ export namespace UserRootItemConfig {
             case ItemConfig.Type.column:
             case ItemConfig.Type.stack:
             case ItemConfig.Type.reactComponent:
-            case ItemConfig.Type.component:
+            case ItemConfig.Type.serialisableComponent:
                 return true;
             case ItemConfig.Type.ground:
                 return false;

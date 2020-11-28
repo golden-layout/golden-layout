@@ -1,6 +1,6 @@
 import { ComponentItemConfig, GroundItemConfig, HeaderedItemConfig, ItemConfig, RootItemConfig, StackItemConfig } from '../config/config';
 import { UserComponentItemConfig, UserItemConfig, UserRowOrColumnItemConfig, UserSerialisableComponentConfig, UserStackItemConfig } from '../config/user-config';
-import { AssertError, UnexpectedNullError } from '../errors/internal-error';
+import { AssertError, UnexpectedNullError, UnexpectedUndefinedError } from '../errors/internal-error';
 import { LayoutManager } from '../layout-manager';
 import { AreaLinkedRect, JsonValue } from '../utils/types';
 import { createTemplateHtmlElement, getElementWidthAndHeight, setElementHeight, setElementWidth } from '../utils/utils';
@@ -56,26 +56,59 @@ export class GroundItem extends ContentItem {
         }
     }
 
-    /**
-     * Adds a Serialisable Component child to root ContentItem.
-     * Internal only.  To load a add with API, use {@link (LayoutManager:class).addSerialisableComponent}
-     */
-    addSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): void {
+    newSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): ComponentItem {
         const itemConfig: UserSerialisableComponentConfig = {
             type: 'component',
             componentName: componentTypeName,
             componentState,
         };
-        this.addItem(itemConfig, index);
+        return this.newItem(itemConfig, index) as ComponentItem;
+    }
+
+    /**
+     * Adds a Serialisable Component child to root ContentItem.
+     * Internal only.  To load a add with API, use {@link (LayoutManager:class).addSerialisableComponent}
+     */
+    addSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): number {
+        const itemConfig: UserSerialisableComponentConfig = {
+            type: 'component',
+            componentName: componentTypeName,
+            componentState,
+        };
+        return this.addItem(itemConfig, index);
+    }
+
+    newItem(userItemConfig: UserRowOrColumnItemConfig | UserStackItemConfig | UserComponentItemConfig,  index?: number): ContentItem {
+        index = this.addItem(userItemConfig, index);
+        let createdItem: ContentItem;
+        if (index === -1) {
+            // created ContentItem as root as root did not exist
+            createdItem = this.contentItems[0];
+        } else {
+            const rootItem = this.contentItems[0];
+            if (rootItem === undefined) {
+                throw new UnexpectedUndefinedError('GINI8832');
+            } else {
+                createdItem = rootItem.contentItems[index];
+            }
+        }
+
+        if (ContentItem.isStack(createdItem) && (UserItemConfig.isComponent(userItemConfig))) {
+            // createdItem is a Stack which was created to hold wanted component.  Return component
+            return createdItem.contentItems[0];
+        } else {
+            return createdItem;
+        }
     }
 
     /**
      * Adds a ContentItem child to root ContentItem.
      * Internal only.  To load a add with API, use {@link (LayoutManager:class).addItem}
+     * @returns -1 if added as root otherwise index in root ContentItem's content
      */
     addItem(userItemConfig: UserRowOrColumnItemConfig | UserStackItemConfig | UserComponentItemConfig, 
         index?: number
-    ): void {
+    ): number {
         const itemConfig = UserItemConfig.resolve(userItemConfig);
         let parent: ContentItem;
         if (this.contentItems.length > 0) {
@@ -87,7 +120,8 @@ export class GroundItem extends ContentItem {
             throw new Error('Cannot add item as child to ComponentItem');
         } else {
             const contentItem = this.layoutManager.createAndInitContentItem(itemConfig, parent);
-            parent.addChild(contentItem, index);
+            index = parent.addChild(contentItem, index);
+            return (parent === this) ? -1 : index;
         }
     }
 

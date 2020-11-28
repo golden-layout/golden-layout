@@ -26,7 +26,7 @@ export namespace ItemConfig {
         export const row = 'row';
         export const column = 'column';
         export const stack = 'stack';
-        export const component = 'component';
+        export const serialisableComponent = 'component';
         export const reactComponent = 'react-component';
     }
 
@@ -57,7 +57,7 @@ export namespace ItemConfig {
             case ItemConfig.Type.stack:
                 return StackItemConfig.createCopy(original as StackItemConfig, content as ComponentItemConfig[]);
 
-            case ItemConfig.Type.component:
+            case ItemConfig.Type.serialisableComponent:
                 return SerialisableComponentConfig.createCopy(original as SerialisableComponentConfig);
 
             case ItemConfig.Type.reactComponent:
@@ -79,7 +79,7 @@ export namespace ItemConfig {
             case ItemConfig.Type.stack:
                 return StackItemConfig.createDefault();
 
-            case ItemConfig.Type.component:
+            case ItemConfig.Type.serialisableComponent:
                 return SerialisableComponentConfig.createDefault();
 
             case ItemConfig.Type.reactComponent:
@@ -99,7 +99,7 @@ export namespace ItemConfig {
     }
 
     export function isComponentItem(itemConfig: ItemConfig): itemConfig is ComponentItemConfig {
-        return itemConfig.type === ItemConfig.Type.component || itemConfig.type === ItemConfig.Type.reactComponent;
+        return itemConfig.type === ItemConfig.Type.serialisableComponent || itemConfig.type === ItemConfig.Type.reactComponent;
     }
 
     export function isStackItem(itemConfig: ItemConfig): itemConfig is StackItemConfig {
@@ -225,7 +225,7 @@ export namespace ComponentItemConfig {
         return config.type === ItemConfig.Type.reactComponent;
     }
     export function isSerialisable(config: ComponentItemConfig): config is SerialisableComponentConfig {
-        return config.type === ItemConfig.Type.component;
+        return config.type === ItemConfig.Type.serialisableComponent;
     }
 
     /** @internal */
@@ -273,7 +273,7 @@ export namespace SerialisableComponentConfig {
 
     export function createDefault(): SerialisableComponentConfig {
         const result: SerialisableComponentConfig = {
-            type: ItemConfig.Type.component,
+            type: ItemConfig.Type.serialisableComponent,
             content: [],
             width: ItemConfig.defaults.width,
             minWidth: ItemConfig.defaults.minWidth,
@@ -368,7 +368,7 @@ export namespace RowOrColumnItemConfig {
             case ItemConfig.Type.column:
             case ItemConfig.Type.stack:
             case ItemConfig.Type.reactComponent:
-            case ItemConfig.Type.component:
+            case ItemConfig.Type.serialisableComponent:
                 return true;
             case ItemConfig.Type.ground:
                 return false;
@@ -438,7 +438,7 @@ export namespace RootItemConfig {
             case ItemConfig.Type.column:
             case ItemConfig.Type.stack:
             case ItemConfig.Type.reactComponent:
-            case ItemConfig.Type.component:
+            case ItemConfig.Type.serialisableComponent:
                 return true;
             case ItemConfig.Type.ground:
                 return false;

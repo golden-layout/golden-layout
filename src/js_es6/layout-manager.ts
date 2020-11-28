@@ -134,6 +134,18 @@ export abstract class LayoutManager extends EventEmitter {
     get height(): number | null { return this._height; }
     /** @internal */
     get eventHub(): EventHub { return this._eventHub; }
+    get rootItem(): ContentItem | undefined {
+        if (this._groundItem === null) {
+            throw new Error('Cannot access rootItem before init');
+        } else {
+            const groundContentItems = this._groundItem.contentItems;
+            if (groundContentItems.length === 0) {
+                return undefined;
+            } else {
+                return this._groundItem.contentItems[0];
+            }
+        }
+    }
     get selectedItem(): ContentItem | null { return this._selectedItem; }
     /** @internal */
     get tabDropPlaceholder(): HTMLElement { return this._tabDropPlaceholder; }
@@ -165,34 +177,39 @@ export abstract class LayoutManager extends EventEmitter {
      * within it. After this is called nothing should be left of the LayoutManager.
      */
     destroy(): void {
-        if (this._isInitialised === false) {
-            return;
-        }
-        this.onUnload();
-        if (this._isFullPage) {
-            globalThis.removeEventListener('resize', this._windowResizeListener);
-        }
-        globalThis.removeEventListener('unload', this._windowUnloadListener);
-        globalThis.removeEventListener('beforeunload', this._windowUnloadListener);
-        if (this._groundItem !== null) {
-            this._groundItem.destroy();
-        }
-        this._tabDropPlaceholder.remove();
-        if (this._dropTargetIndicator !== null) {
-            this._dropTargetIndicator.destroy();
-        }
-        if (this._transitionIndicator !== null) {
-            this._transitionIndicator.destroy();
-        }
-        this._eventHub.destroy();
+        if (this._isInitialised) {
+            if (this.layoutConfig.settings.closePopoutsOnUnload === true) {
+                for (let i = 0; i < this._openPopouts.length; i++) {
+                    this._openPopouts[i].close();
+                }
+            }
+            if (this._isFullPage) {
+                globalThis.removeEventListener('resize', this._windowResizeListener);
+            }
+            globalThis.removeEventListener('unload', this._windowUnloadListener);
+            globalThis.removeEventListener('beforeunload', this._windowUnloadListener);
+            if (this._groundItem !== null) {
+                this._groundItem.destroy();
+            }
+            this._tabDropPlaceholder.remove();
+            if (this._dropTargetIndicator !== null) {
+                this._dropTargetIndicator.destroy();
+            }
+            if (this._transitionIndicator !== null) {
+                this._transitionIndicator.destroy();
+            }
+            this._eventHub.destroy();
 
-        for (const dragSource of this._dragSources) {
-            dragSource.destroy();
-        }
-        this._dragSources = [];
+            for (const dragSource of this._dragSources) {
+                dragSource.destroy();
+            }
+            this._dragSources = [];
 
-        this.getComponentEvent = undefined;
-        this.releaseComponentEvent = undefined;
+            this.getComponentEvent = undefined;
+            this.releaseComponentEvent = undefined;
+
+            this._isInitialised = false;
+        }
     }
 
     /**
@@ -512,24 +529,56 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /**
-     * Adds a new child ContentItem under the root ContentItem.
+     * Adds a new child ContentItem under the root ContentItem.  If a root does not exist, then create root ContentItem instead
      * @param userItemConfig - ItemConfig of child to be added.
      * @param index - Position under root. If undefined, then last.
-     */
-    addItem(userItemConfig: UserRowOrColumnItemConfig | UserStackItemConfig | UserComponentItemConfig,  index?: number): void {
+     * @returns New ContentItem created.
+    */
+    newItem(userItemConfig: UserRowOrColumnItemConfig | UserStackItemConfig | UserComponentItemConfig,  index?: number): ContentItem {
         if (this._groundItem === null) {
             throw new Error('Cannot add item before init');
         } else {
-            this._groundItem.addItem(userItemConfig, index);
+            return this._groundItem.newItem(userItemConfig, index);
         }
     }
 
     /**
-     * Adds a new child Serialisable ComponentItem under the root ContentItem.
+     * Adds a new child ContentItem under the root ContentItem.  If a root does not exist, then create root ContentItem instead
      * @param userItemConfig - ItemConfig of child to be added.
      * @param index - Position under root. If undefined, then last.
+     * @returns -1 if added as root otherwise index in root ContentItem's content
+    */
+    addItem(userItemConfig: UserRowOrColumnItemConfig | UserStackItemConfig | UserComponentItemConfig,  index?: number): number {
+        if (this._groundItem === null) {
+            throw new Error('Cannot add item before init');
+        } else {
+            return this._groundItem.addItem(userItemConfig, index);
+        }
+    }
+
+    /**
+     * Adds a new child Serialisable ComponentItem under the root ContentItem.  If a root does not exist,
+     * then a Stack will first be created as root and the component created under this root Stack.
+     * @param componentTypeName - Name of component type to be created.
+     * @param state - Optional initial state to be assigned to component
+     * @returns New ComponentItem created.
      */
-    addSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): void {
+    newSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): ComponentItem {
+        if (this._groundItem === null) {
+            throw new Error('Cannot add component before init');
+        } else {
+            return this._groundItem.newSerialisableComponent(componentTypeName, componentState, index);
+        }
+    }
+
+    /**
+     * Adds a new child Serialisable ComponentItem under the root ContentItem.  If a root does not exist,
+     * then create root ContentItem instead.
+     * @param componentTypeName - Name of component type to be created.
+     * @param state - Optional initial state to be assigned to component
+     * @returns -1 if added as root otherwise index in root ContentItem's content
+     */
+    addSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): number {
         if (this._groundItem === null) {
             throw new Error('Cannot add component before init');
         } else {
@@ -538,7 +587,7 @@ export abstract class LayoutManager extends EventEmitter {
                 componentName: componentTypeName,
                 componentState,
             };
-            this._groundItem.addItem(itemConfig, index);
+            return this.addItem(itemConfig, index);
         }
     }
 
@@ -877,7 +926,7 @@ export abstract class LayoutManager extends EventEmitter {
             case ItemConfig.Type.row: return new RowOrColumn(false, this, config as RowOrColumnItemConfig, parent);
             case ItemConfig.Type.column: return new RowOrColumn(true, this, config as RowOrColumnItemConfig, parent);
             case ItemConfig.Type.stack: return new Stack(this, config as StackItemConfig, parent as Stack.Parent);
-            case ItemConfig.Type.component:
+            case ItemConfig.Type.serialisableComponent:
             case ItemConfig.Type.reactComponent:
                 return new ComponentItem(this, config as ComponentItemConfig, parent as Stack);
             default:
@@ -1193,11 +1242,7 @@ export abstract class LayoutManager extends EventEmitter {
      * @internal
      */
     private onUnload(): void {
-        if (this.layoutConfig.settings.closePopoutsOnUnload === true) {
-            for (let i = 0; i < this._openPopouts.length; i++) {
-                this._openPopouts[i].close();
-            }
-        }
+        this.destroy();
     }
 
     /**

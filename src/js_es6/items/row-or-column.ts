@@ -16,6 +16,7 @@ import {
 
     setElementWidth
 } from '../utils/utils'
+import { ComponentItem } from './component-item'
 import { ContentItem } from './content-item'
 import { Stack } from './stack'
 
@@ -70,21 +71,42 @@ export class RowOrColumn extends ContentItem {
         }
     }
 
-    addSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): void {
+    newSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): ComponentItem {
         const itemConfig: UserSerialisableComponentConfig = {
             type: 'component',
             componentName: componentTypeName,
             componentState,
         };
-        this.addItem(itemConfig, index);
+        return this.newItem(itemConfig, index) as ComponentItem;
+    }
+
+    addSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): number {
+        const itemConfig: UserSerialisableComponentConfig = {
+            type: 'component',
+            componentName: componentTypeName,
+            componentState,
+        };
+        return this.addItem(itemConfig, index);
+    }
+
+    newItem(userItemConfig: UserRowOrColumnItemConfig | UserStackItemConfig | UserComponentItemConfig,  index?: number): ContentItem {
+        index = this.addItem(userItemConfig, index);
+        const createdItem = this.contentItems[index];
+
+        if (ContentItem.isStack(createdItem) && (UserItemConfig.isComponent(userItemConfig))) {
+            // createdItem is a Stack which was created to hold wanted component.  Return component
+            return createdItem.contentItems[0];
+        } else {
+            return createdItem;
+        }
     }
 
     addItem(userItemConfig: UserRowOrColumnItemConfig | UserStackItemConfig | UserComponentItemConfig,
         index?: number
-    ): void {
+    ): number {
         const itemConfig = UserItemConfig.resolve(userItemConfig);
         const contentItem = this.layoutManager.createAndInitContentItem(itemConfig, this);
-        this.addChild(contentItem, index, false);
+        return this.addChild(contentItem, index, false);
     }
 
     /**
