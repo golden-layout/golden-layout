@@ -434,7 +434,7 @@ export class Header extends EventEmitter {
         let cumulativeTabWidth = 0;
         let tabOverlapAllowanceExceeded = false;
         const tabOverlapAllowance = this._layoutManager.layoutConfig.settings.tabOverlapAllowance;
-        const activeIndex = (this._activeComponentItem ? this._tabs.indexOf(this._activeComponentItem.tab as Tab) : 0);
+        const activeIndex = (this._activeComponentItem ? this._tabs.indexOf(this._activeComponentItem.tab) : 0);
         const activeTab = this._tabs[activeIndex];
         if (this._leftRightSided) {
             availableWidth = this._element.offsetHeight - this._controlsContainerElement.offsetHeight - this._tabControlOffset;
@@ -519,7 +519,6 @@ export class Header extends EventEmitter {
                 this._tabsContainerElement.appendChild(tabElement);
             }
         }
-
     }
 
     /** @internal */

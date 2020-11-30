@@ -26,7 +26,6 @@ import { DragListener } from './utils/drag-listener'
 import { EventEmitter } from './utils/event-emitter'
 import { EventHub } from './utils/event-hub'
 import { I18nStringId, I18nStrings, i18nStrings } from './utils/i18n-strings'
-import { getJQueryLeftAndTop } from './utils/jquery-legacy'
 import { JsonValue, Rect } from './utils/types'
 import {
     createTemplateHtmlElement,
@@ -492,31 +491,32 @@ export abstract class LayoutManager extends EventEmitter {
             } else {
                 const groundContent = this._groundItem.calculateConfigContent();
 
+                let rootItemConfig: RootItemConfig | undefined;
                 if (groundContent.length !== 1) {
-                    throw new AssertError('LMTC16682');
+                    rootItemConfig = undefined;
                 } else {
-                    const rootItemConfig = groundContent[0];                    
+                    rootItemConfig = groundContent[0];
+                }                
 
-                    /*
-                    * Retrieve config for subwindows
-                    */
-                    this.reconcilePopoutWindows();
-                    const openPopouts: PopoutLayoutConfig[] = [];
-                    for (let i = 0; i < this._openPopouts.length; i++) {
-                        openPopouts.push(this._openPopouts[i].toConfig());
-                    }
-
-                    const config: LayoutConfig = {
-                        root: rootItemConfig,
-                        openPopouts,
-                        settings:  LayoutConfig.Settings.createCopy(this.layoutConfig.settings),
-                        dimensions: LayoutConfig.Dimensions.createCopy(this.layoutConfig.dimensions),
-                        header: LayoutConfig.Header.createCopy(this.layoutConfig.header),
-                        resolved: true,
-                    }
-            
-                    return config;
+                /*
+                * Retrieve config for subwindows
+                */
+                this.reconcilePopoutWindows();
+                const openPopouts: PopoutLayoutConfig[] = [];
+                for (let i = 0; i < this._openPopouts.length; i++) {
+                    openPopouts.push(this._openPopouts[i].toConfig());
                 }
+
+                const config: LayoutConfig = {
+                    root: rootItemConfig,
+                    openPopouts,
+                    settings:  LayoutConfig.Settings.createCopy(this.layoutConfig.settings),
+                    dimensions: LayoutConfig.Dimensions.createCopy(this.layoutConfig.dimensions),
+                    header: LayoutConfig.Header.createCopy(this.layoutConfig.header),
+                    resolved: true,
+                }
+        
+                return config;
             }
         }
     }
@@ -772,7 +772,9 @@ export abstract class LayoutManager extends EventEmitter {
             if (window === undefined) {
                 const windowLeft = globalThis.screenX || globalThis.screenLeft;
                 const windowTop = globalThis.screenY || globalThis.screenTop;
-                const { left: offsetLeft, top: offsetTop } = getJQueryLeftAndTop(item.element);
+                const offsetLeft = item.element.offsetLeft;
+                const offsetTop = item.element.offsetTop
+                // const { left: offsetLeft, top: offsetTop } = getJQueryLeftAndTop(item.element);
                 const { width, height } = getElementWidthAndHeight(item.element);
 
                 window = {
@@ -1070,16 +1072,26 @@ export abstract class LayoutManager extends EventEmitter {
             throw new UnexpectedNullError('LMCIAR44365');
         } else {
             if (allContentItems.length === 1) {
+                // No root ContentItem (just Ground ContentItem)
                 const groundArea = groundItem.getElementArea();
                 if (groundArea === null) {
                     throw new UnexpectedNullError('LMCIARA44365')
                 } else {
+                    groundArea.x1++;
+                    groundArea.x2--;
+                    groundArea.y1++;
+                    groundArea.y2--;
                     this._itemAreas = [groundArea];
                 }
                 return;
             } else {
-                // sides of layout
-                this._itemAreas = groundItem.createSideAreas();
+                if (groundItem.contentItems[0].isStack) {
+                    // if root is Stack, then split stack and sides of Layout are same, so skip sides
+                    this._itemAreas = [];
+                } else {
+                    // sides of layout
+                    this._itemAreas = groundItem.createSideAreas();
+                }
 
                 for (let i = 0; i < allContentItems.length; i++) {
                     const stack = allContentItems[i];
@@ -1089,28 +1101,23 @@ export abstract class LayoutManager extends EventEmitter {
                         if (area === null) {
                             continue;
                         } else {
-                            // This does not look correct. Stack.getArea() never returns an array.  Needs review
-                            if (area instanceof Array) {
-                                this._itemAreas = this._itemAreas.concat(area);
+                            this._itemAreas.push(area);
+                            const stackContentAreaDimensions = stack.contentAreaDimensions;
+                            if (stackContentAreaDimensions === null) {
+                                throw new UnexpectedNullError('LMCIASC45599');
                             } else {
-                                this._itemAreas.push(area);
-                                const stackContentAreaDimensions = stack.contentAreaDimensions;
-                                if (stackContentAreaDimensions === null) {
-                                    throw new UnexpectedNullError('LMCIASC45599');
-                                } else {
-                                    const highlightArea = stackContentAreaDimensions.header.highlightArea
-                                    const surface = (highlightArea.x2 - highlightArea.x1) * (highlightArea.y2 - highlightArea.y1);
+                                const highlightArea = stackContentAreaDimensions.header.highlightArea
+                                const surface = (highlightArea.x2 - highlightArea.x1) * (highlightArea.y2 - highlightArea.y1);
 
-                                    const header: ContentItem.Area = {
-                                        x1: highlightArea.x1,
-                                        x2: highlightArea.x2,
-                                        y1: highlightArea.y1,
-                                        y2: highlightArea.y2,
-                                        contentItem: stack,
-                                        surface,
-                                    };
-                                    this._itemAreas.push(header);
-                                }
+                                const header: ContentItem.Area = {
+                                    x1: highlightArea.x1,
+                                    x2: highlightArea.x2,
+                                    y1: highlightArea.y1,
+                                    y2: highlightArea.y2,
+                                    contentItem: stack,
+                                    surface,
+                                };
+                                this._itemAreas.push(header);
                             }
                         }
                     }
@@ -1326,8 +1333,8 @@ export abstract class LayoutManager extends EventEmitter {
         if (node instanceof Stack) {
             for (let i = 0; i < contentItems.length; i++) {
                 const item = contentItems[i];
-                container.addChild(item);
                 node.removeChild(item, true);
+                container.addChild(item);
             }
         } else {
             for (let i = 0; i < contentItems.length; i++) {

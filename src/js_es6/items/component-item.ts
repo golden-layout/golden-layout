@@ -59,7 +59,7 @@ export class ComponentItem extends ContentItem {
     /** @internal */
     toConfig(): ComponentItemConfig {
         const stateRequestEvent = this._container.stateRequestEvent;
-        const state = stateRequestEvent === undefined ? undefined : stateRequestEvent();
+        const state = stateRequestEvent === undefined ? this._container.getState() : stateRequestEvent();
 
         const currentConfig = this._componentConfig;
         let result: ComponentItemConfig;

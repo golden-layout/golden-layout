@@ -4,7 +4,7 @@ import { ConfigurationError } from '../errors/external-error'
 import { AssertError, UnexpectedNullError } from '../errors/internal-error'
 import { LayoutManager } from '../layout-manager'
 import { EventEmitter } from '../utils/event-emitter'
-import { getJQueryOffset, getJQueryWidthAndHeight } from '../utils/jquery-legacy'
+import { getJQueryOffset } from '../utils/jquery-legacy'
 import { AreaLinkedRect } from '../utils/types'
 import { getUniqueId, setElementDisplayVisibility } from '../utils/utils'
 import { ComponentItem } from './component-item'
@@ -425,14 +425,16 @@ export abstract class ContentItem extends EventEmitter {
         element = element ?? this._element;
 
         const offset = getJQueryOffset(element);
-        const widthAndHeight = getJQueryWidthAndHeight(element);
+        const width = element.offsetWidth;
+        const height = element.offsetHeight;
+        // const widthAndHeight = getJQueryWidthAndHeight(element);
 
         return {
             x1: offset.left,
             y1: offset.top,
-            x2: offset.left + widthAndHeight.width,
-            y2: offset.top + widthAndHeight.height,
-            surface: widthAndHeight.width * widthAndHeight.height,
+            x2: offset.left + width,
+            y2: offset.top + height,
+            surface: width * height,
             contentItem: this
         };
     }

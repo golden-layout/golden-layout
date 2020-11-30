@@ -528,7 +528,7 @@ export namespace LayoutConfig {
             showPopoutIcon: true,
             showMaximiseIcon: true,
             showCloseIcon: true,
-            responsiveMode: LayoutConfig.Settings.ResponsiveMode.onload,
+            responsiveMode: LayoutConfig.Settings.ResponsiveMode.none, // was onload
             tabOverlapAllowance: 0,
             reorderOnTabMenuClick: true,
             tabControlOffset: 10

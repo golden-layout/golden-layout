@@ -39,8 +39,7 @@ export function pixelsToNumber(value: string): number {
 
 /** @internal */
 export function getElementWidth(element: HTMLElement): number {
-    const widthAsPixels = getComputedStyle(element).width;
-    return pixelsToNumber(widthAsPixels);
+    return element.offsetWidth;
 }
 
 /** @internal */
@@ -51,8 +50,7 @@ export function setElementWidth(element: HTMLElement, width: number): void {
 
 /** @internal */
 export function getElementHeight(element: HTMLElement): number {
-    const heightAsPixels = getComputedStyle(element).height;
-    return pixelsToNumber(heightAsPixels);
+    return element.offsetHeight;
 }
 
 /** @internal */
@@ -63,10 +61,9 @@ export function setElementHeight(element: HTMLElement, height: number): void {
 
 /** @internal */
 export function getElementWidthAndHeight(element: HTMLElement): WidthAndHeight {
-    const computedStyle = getComputedStyle(element);
     return {
-        width: pixelsToNumber(computedStyle.width),
-        height: pixelsToNumber(computedStyle.height),
+        width: element.offsetWidth,
+        height: element.offsetHeight,
     };
 }
 

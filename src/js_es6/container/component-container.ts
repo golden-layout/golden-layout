@@ -6,7 +6,7 @@ import { ContentItem } from '../items/content-item';
 import { LayoutManager } from '../layout-manager';
 import { EventEmitter } from '../utils/event-emitter';
 import { JsonValue } from '../utils/types';
-import { setElementHeight, setElementWidth } from '../utils/utils';
+import { deepExtend, setElementHeight, setElementWidth } from '../utils/utils';
 
 /** @public */
 export class ComponentContainer extends EventEmitter {
@@ -162,8 +162,10 @@ export class ComponentContainer extends EventEmitter {
     }
 
     /**
-     * Returns the inital state object
-     * @returns state
+     * Returns the component state.
+     * Note that if the deprecated setState() function is called, then getInitialState will return
+     * this latest state otherwise it will return the initialState()
+     * @returns state 
      */
     getInitialState(): JsonValue | undefined {
         if (ComponentItemConfig.isSerialisable(this._componentItemConfig)) {
@@ -178,7 +180,7 @@ export class ComponentContainer extends EventEmitter {
     }
 
     /**
-     * Returns the inital state object
+     * Returns the initial component state or the latest passed in setState()
      * @returns state
      * @deprecated Use {@link (ComponentContainer:class).getInitialState}
      */
@@ -186,32 +188,32 @@ export class ComponentContainer extends EventEmitter {
         return this.getInitialState();
     }
 
-    // extendState is no longer supported.  Use ComponentContainer.stateRequestEvent instead
-    // /**
-    //  * Merges the provided state into the current one
-    //  */
-    // extendState(state: Record<string, unknown>): void {
-    //     const extendedState = deepExtend(this.getState() as Record<string, unknown>, state);
-    //     this.setState(extendedState as JsonValue);
-    // }
+    /**
+     * Merges the provided state into the current one
+     * @deprecated Use {@link (ComponentContainer:class).stateRequestEvent}
+     */
+    extendState(state: Record<string, unknown>): void {
+        const extendedState = deepExtend(this.getState() as Record<string, unknown>, state);
+        this.setState(extendedState as JsonValue);
+    }
 
-    // setState is no longer supported.  Use ComponentContainer.stateRequestEvent instead
-    // /**
-    //  * DO NOT USE - will throw an exception
-    //  */
-    // setState(state: JsonValue): void {
-    //     if (ComponentItemConfig.isSerialisable(this._componentItemConfig)) {
-    //         this._componentItemConfig.componentState = state;
-    //         this._parent.emitBubblingEvent('stateChanged');
-    //     } else {
-    //         if (ComponentItemConfig.isReact(this._componentItemConfig)) {
-    //             this._componentItemConfig.props = state;
-    //             this._parent.emitBubblingEvent('stateChanged');
-    //         } else {
-    //             throw new AssertError('ICSS25546');
-    //         }
-    //     }
-    // }
+    /**
+     * Sets the component state
+     * @deprecated Use {@link (ComponentContainer:class).stateRequestEvent}
+     */
+    setState(state: JsonValue): void {
+        if (ComponentItemConfig.isSerialisable(this._componentItemConfig)) {
+            this._componentItemConfig.componentState = state;
+            this._parent.emitBubblingEvent('stateChanged');
+        } else {
+            if (ComponentItemConfig.isReact(this._componentItemConfig)) {
+                this._componentItemConfig.props = state;
+                this._parent.emitBubblingEvent('stateChanged');
+            } else {
+                throw new AssertError('ICSS25546');
+            }
+        }
+    }
 
     /**
      * Set's the components title

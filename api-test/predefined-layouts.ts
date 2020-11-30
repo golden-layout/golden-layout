@@ -70,6 +70,21 @@ const miniStackLayout: Layout = {
     config: miniStackConfig,
 };
 
+const componentConfig: UserLayoutConfig = {
+    root: {
+        type: ItemConfig.Type.serialisableComponent,
+        title: "Layout",
+        header: { show: "top", popout: false },
+        componentName: ColorComponent.typeName,
+        componentState: 'green',
+    } as UserSerialisableComponentConfig,
+};
+
+const component: Layout = {
+    name: 'component',
+    config: componentConfig,
+};
+
 const standardConfig: UserLayoutConfig = {
     root: {
         type: "row",
@@ -450,6 +465,6 @@ export interface PredefinedLayouts {
 }
 
 export const prefinedLayouts: PredefinedLayouts = {
-    colorComponentCompatible: [miniRowLayout, miniStackLayout, standardLayout],
-    allComponents: [miniRowLayout, miniStackLayout, responsiveLayout, standardLayout, tabDropdownLayout]
+    colorComponentCompatible: [miniRowLayout, miniStackLayout, component, standardLayout],
+    allComponents: [miniRowLayout, miniStackLayout, component, responsiveLayout, standardLayout, tabDropdownLayout]
 };

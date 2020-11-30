@@ -111,11 +111,9 @@ export class App {
 
     private handleWindowResizeEvent() {
         // handling of resize event is required if GoldenLayout does not use body element
-        const bodyComputedStyle = getComputedStyle(document.body);
-        const controlsComputedStyle = getComputedStyle(this._controlsElement);
-        const bodyWidth = this.pixelsToNumber(bodyComputedStyle.width);
-        const controlsWidth = this.pixelsToNumber(controlsComputedStyle.width);
-        const height = this.pixelsToNumber(bodyComputedStyle.height);
+        const bodyWidth = document.body.offsetWidth;
+        const controlsWidth = this._controlsElement.offsetWidth;
+        const height = document.body.offsetHeight;
         this._goldenLayout.setSize(bodyWidth - controlsWidth, height)
     }
     
@@ -177,11 +175,6 @@ export class App {
             const userLayoutConfig = UserLayoutConfig.fromLayoutConfig(this._savedLayout);
             this._goldenLayout.loadLayout(userLayoutConfig);
         }
-    }
-
-    private pixelsToNumber(value: string): number {
-        const numberStr = value.replace("px", "");
-        return parseFloat(numberStr);
     }
 
     private loadRegisteredComponentNamesSelect() {
