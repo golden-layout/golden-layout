@@ -117,6 +117,15 @@ export class ComponentItem extends ContentItem {
         }
     }
 
+    // Used by Drag Proxy
+    /** @internal */
+    setDragSize(width: number, height: number): void {
+        if (this.element.style.display !== 'none') {
+            // Do not update size of hidden components to prevent unwanted reflows
+            this._container.setDragSize(width, height);
+        }
+    }
+
     /** @internal */
     updateSize(): void {
         this.updateNodeSize();
@@ -139,7 +148,7 @@ export class ComponentItem extends ContentItem {
      * @param title -
      */
 
-     setTitle(title: string): void {
+    setTitle(title: string): void {
         this._title = title;
         this.emit('titleChanged', title);
         this.emit('stateChanged');

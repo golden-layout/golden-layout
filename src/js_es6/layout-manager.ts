@@ -1077,10 +1077,6 @@ export abstract class LayoutManager extends EventEmitter {
                 if (groundArea === null) {
                     throw new UnexpectedNullError('LMCIARA44365')
                 } else {
-                    groundArea.x1++;
-                    groundArea.x2--;
-                    groundArea.y1++;
-                    groundArea.y2--;
                     this._itemAreas = [groundArea];
                 }
                 return;

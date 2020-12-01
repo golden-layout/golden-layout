@@ -1,6 +1,6 @@
 {
   "name": "golden-layout",
-  "version": "2.0.0-beta.5",
+  "version": "2.0.0-beta.6",
   "description": "A multi-screen javascript Layout manager \r https://golden-layout.com",
   "keywords": [
     "docking",
@@ -31,7 +31,7 @@
     "build:styles": "node ./scripts/css.js",
     "build": "npm run clean && npm-run-all --parallel build:*",
     "build:api": "npm run clean:libanddist && npm run build:module:api && npx api-extractor run --local --verbose",
-    "update-scss": "npx copyfiles -f ./src/less/goldenlayout-base.less ./src/scss && npx less2sass ./src/scss/goldenlayout-base.less &&  npx del-cli ./src/scss/goldenlayout-base.less",
+    "update-scss": "npx del-cli ./src/scss/goldenlayout-base.scss && npx copyfiles -f ./src/less/goldenlayout-base.less ./src/scss && npx less2sass ./src/scss/goldenlayout-base.less &&  npx del-cli ./src/scss/goldenlayout-base.less",
     "clean": "npm-run-all clean:*",
     "clean:dist": "npx del-cli dist",
     "clean:lib": "npx del-cli lib",

@@ -87,7 +87,7 @@ export class ComponentContainer extends EventEmitter {
         this._isHidden = false;
         this._element.style.display = '';
         // emit shown only if the container has a valid size
-        if (this._height != 0 || this._width != 0) {
+        if (this._height !== 0 || this._width !== 0) {
             this.emit('shown');
         }
     }
@@ -226,6 +226,14 @@ export class ComponentContainer extends EventEmitter {
     setTab(tab: Tab): void {
         this._tab = tab as Tab;
         this.emit('tab', tab)
+    }
+
+    /** @internal */
+    setDragSize(width: number, height: number): void {
+        setElementWidth(this._element, width);
+        setElementHeight(this._element, height);
+        setElementWidth(this._contentElement, width);
+        setElementHeight(this._contentElement, height);
     }
 
     /**

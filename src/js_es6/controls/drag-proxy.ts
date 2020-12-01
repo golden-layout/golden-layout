@@ -244,12 +244,13 @@ export class DragProxy extends EventEmitter {
                 this._element.style.height = numberToPixels(height)
                 width -= (this._sided ? headerHeight : 0);
                 height -= (!this._sided ? headerHeight : 0);
-                this._childElementContainer.style.width = numberToPixels(width);
-                this._childElementContainer.style.height = numberToPixels(height);
-                this._contentItem.element.style.width = numberToPixels(width);
-                this._contentItem.element.style.height = numberToPixels(height);
+                this._contentItem.setDragSize(width, height);
+                // this._childElementContainer.style.width = numberToPixels(width);
+                // this._childElementContainer.style.height = numberToPixels(height);
+                // this._contentItem.element.style.width = numberToPixels(width);
+                // this._contentItem.element.style.height = numberToPixels(height);
                 this._contentItem.show();
-                this._contentItem.updateSize();
+                // this._contentItem.updateSize();
             }
         }
     }

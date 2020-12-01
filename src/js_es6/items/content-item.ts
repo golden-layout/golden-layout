@@ -430,10 +430,10 @@ export abstract class ContentItem extends EventEmitter {
         // const widthAndHeight = getJQueryWidthAndHeight(element);
 
         return {
-            x1: offset.left,
-            y1: offset.top,
-            x2: offset.left + width,
-            y2: offset.top + height,
+            x1: offset.left + 1,
+            y1: offset.top + 1,
+            x2: offset.left + width - 1,
+            y2: offset.top + height - 1,
             surface: width * height,
             contentItem: this
         };
