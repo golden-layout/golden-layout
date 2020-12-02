@@ -43,8 +43,8 @@ export class DragProxy extends EventEmitter {
     private _height: number;
     private _contentItemParent: Stack;
     private _sided: boolean;
-    private _childElementContainer: HTMLElement;
     private _element: HTMLElement;
+    private _proxyContainerElement: HTMLElement;
 
     get element(): HTMLElement { return this._element; }
 
@@ -97,12 +97,12 @@ export class DragProxy extends EventEmitter {
                 throw new UnexpectedNullError('DPCTI98826');
             } else {
                 titleElement.insertAdjacentText('afterbegin', this._contentItem.title);
-                const childElementContainer = this._element.querySelector('.lm_content') as HTMLElement;
-                if (childElementContainer === null) {
+                const proxyContainerElement = this._element.querySelector('.lm_content') as HTMLElement;
+                if (proxyContainerElement === null) {
                     throw new UnexpectedNullError('DPCCC98826');
                 } else {
-                    this._childElementContainer = childElementContainer;
-                    this._childElementContainer.appendChild(this._contentItem.element);
+                    this._proxyContainerElement = proxyContainerElement;
+                    this._proxyContainerElement.appendChild(this._contentItem.element);
 
                     if (this._contentItem.parent === null) {
                         // Note that _contentItem will have dummy GroundContentItem as parent if initiated by a external drag source
@@ -244,13 +244,10 @@ export class DragProxy extends EventEmitter {
                 this._element.style.height = numberToPixels(height)
                 width -= (this._sided ? headerHeight : 0);
                 height -= (!this._sided ? headerHeight : 0);
+                this._proxyContainerElement.style.width = numberToPixels(width);
+                this._proxyContainerElement.style.height = numberToPixels(height);
                 this._contentItem.setDragSize(width, height);
-                // this._childElementContainer.style.width = numberToPixels(width);
-                // this._childElementContainer.style.height = numberToPixels(height);
-                // this._contentItem.element.style.width = numberToPixels(width);
-                // this._contentItem.element.style.height = numberToPixels(height);
                 this._contentItem.show();
-                // this._contentItem.updateSize();
             }
         }
     }
