@@ -500,9 +500,6 @@ export namespace LayoutConfig {
         readonly popoutWholeStack: boolean;
         readonly blockedPopoutsThrowError: boolean;
         readonly closePopoutsOnUnload: boolean;
-        readonly showPopoutIcon: boolean;
-        readonly showMaximiseIcon: boolean;
-        readonly showCloseIcon: boolean;
         readonly responsiveMode: Settings.ResponsiveMode;
         readonly tabOverlapAllowance: number;
         readonly reorderOnTabMenuClick: boolean;
@@ -525,9 +522,6 @@ export namespace LayoutConfig {
             popoutWholeStack: false,
             blockedPopoutsThrowError: true,
             closePopoutsOnUnload: true,
-            showPopoutIcon: true,
-            showMaximiseIcon: true,
-            showCloseIcon: true,
             responsiveMode: LayoutConfig.Settings.ResponsiveMode.none, // was onload
             tabOverlapAllowance: 0,
             reorderOnTabMenuClick: true,
@@ -542,9 +536,6 @@ export namespace LayoutConfig {
                 popoutWholeStack: original.popoutWholeStack,
                 blockedPopoutsThrowError: original.blockedPopoutsThrowError,
                 closePopoutsOnUnload: original.closePopoutsOnUnload,
-                showPopoutIcon: original.showPopoutIcon,
-                showMaximiseIcon: original.showMaximiseIcon,
-                showCloseIcon: original.showCloseIcon,
                 responsiveMode: original.responsiveMode,
                 tabOverlapAllowance: original.tabOverlapAllowance,
                 reorderOnTabMenuClick: original.reorderOnTabMenuClick,
@@ -595,7 +586,7 @@ export namespace LayoutConfig {
         readonly dock: string;
         readonly maximise: false | string;
         readonly minimise: string;
-        readonly close: string;
+        readonly close: false | string;
         readonly tabDropdown: string;
     }
 

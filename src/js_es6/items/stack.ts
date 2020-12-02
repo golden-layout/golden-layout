@@ -66,7 +66,7 @@ export class Stack extends ContentItem {
         super(layoutManager, _stackConfig, _stackParent, createTemplateHtmlElement(Stack.templateHtml));
 
         const itemHeaderConfig = _stackConfig.header;
-        const managerHeaderConfig = layoutManager.layoutConfig.header;
+        const layoutHeaderConfig = layoutManager.layoutConfig.header;
         const configContent = _stackConfig.content;
         // If stack has only one component, then we can also check this for header settings
         let componentHeaderConfig: HeaderedItemConfig.Header | undefined;
@@ -78,13 +78,13 @@ export class Stack extends ContentItem {
         }
 
         // check for defined value for each item in order of Stack (this Item), Component (first child), Manager.
-        const show = itemHeaderConfig?.show ?? componentHeaderConfig?.show ?? managerHeaderConfig.show;
-        const popout = itemHeaderConfig?.popout ?? componentHeaderConfig?.popout ?? managerHeaderConfig.popout;
-        const dock = itemHeaderConfig?.dock ?? componentHeaderConfig?.dock ?? managerHeaderConfig.dock;
-        const maximise = itemHeaderConfig?.maximise ?? componentHeaderConfig?.maximise ?? managerHeaderConfig.maximise;
-        const close = itemHeaderConfig?.close ?? componentHeaderConfig?.close ?? managerHeaderConfig.close;
-        const minimise = itemHeaderConfig?.minimise ?? componentHeaderConfig?.minimise ?? managerHeaderConfig.minimise;
-        const tabDropdown = itemHeaderConfig?.tabDropdown ?? componentHeaderConfig?.tabDropdown ?? managerHeaderConfig.tabDropdown;
+        const show = itemHeaderConfig?.show ?? componentHeaderConfig?.show ?? layoutHeaderConfig.show;
+        const popout = itemHeaderConfig?.popout ?? componentHeaderConfig?.popout ?? layoutHeaderConfig.popout;
+        const dock = itemHeaderConfig?.dock ?? componentHeaderConfig?.dock ?? layoutHeaderConfig.dock;
+        const maximise = itemHeaderConfig?.maximise ?? componentHeaderConfig?.maximise ?? layoutHeaderConfig.maximise;
+        const close = itemHeaderConfig?.close ?? componentHeaderConfig?.close ?? layoutHeaderConfig.close;
+        const minimise = itemHeaderConfig?.minimise ?? componentHeaderConfig?.minimise ?? layoutHeaderConfig.minimise;
+        const tabDropdown = itemHeaderConfig?.tabDropdown ?? componentHeaderConfig?.tabDropdown ?? layoutHeaderConfig.tabDropdown;
         this._maximisedEnabled = maximise !== false;
         const headerSettings: Header.Settings = {
             show: show !== false,
@@ -95,8 +95,8 @@ export class Stack extends ContentItem {
             dockLabel: dock === false ? '' : dock,
             maximiseEnabled: this._maximisedEnabled,
             maximiseLabel: maximise === false ? '' : maximise,
-            closeEnabled: true,
-            closeLabel: close,
+            closeEnabled: close !== false,
+            closeLabel: close === false ? '' : close,
             minimiseEnabled: true,
             minimiseLabel: minimise,
             tabDropdownEnabled: tabDropdown !== false,
@@ -105,7 +105,7 @@ export class Stack extends ContentItem {
 
         this._header = new Header(layoutManager,
             this, headerSettings,
-            this._stackConfig.isClosable && this.layoutManager.layoutConfig.settings.showCloseIcon,
+            this._stackConfig.isClosable && close !== false,
             () => this.remove(),
             () => this.handleDockEvent(),
             () => this.handlePopoutEvent(),

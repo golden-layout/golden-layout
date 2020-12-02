@@ -601,7 +601,7 @@ export namespace LayoutConfig {
     // (undocumented)
     export interface Header {
         // (undocumented)
-        readonly close: string;
+        readonly close: false | string;
         // (undocumented)
         readonly dock: string;
         // (undocumented)
@@ -642,12 +642,6 @@ export namespace LayoutConfig {
         readonly responsiveMode: Settings.ResponsiveMode;
         // (undocumented)
         readonly selectionEnabled: boolean;
-        // (undocumented)
-        readonly showCloseIcon: boolean;
-        // (undocumented)
-        readonly showMaximiseIcon: boolean;
-        // (undocumented)
-        readonly showPopoutIcon: boolean;
         // (undocumented)
         readonly tabControlOffset: number;
         // (undocumented)
@@ -1266,7 +1260,7 @@ export namespace UserLayoutConfig {
     export function fromLayoutConfig(config: LayoutConfig): UserLayoutConfig;
     // (undocumented)
     export interface Header {
-        close?: string;
+        close?: false | string;
         maximise?: false | string;
         minimise?: string;
         popin?: string;
@@ -1314,8 +1308,11 @@ export namespace UserLayoutConfig {
         reorderOnTabMenuClick?: boolean;
         responsiveMode?: LayoutConfig.Settings.ResponsiveMode;
         selectionEnabled?: boolean;
+        // @deprecated
         showCloseIcon?: boolean;
+        // @deprecated
         showMaximiseIcon?: boolean;
+        // @deprecated
         showPopoutIcon?: boolean;
         tabControlOffset?: number;
         tabOverlapAllowance?: number;

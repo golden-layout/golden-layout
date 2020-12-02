@@ -517,25 +517,25 @@ export namespace UserLayoutConfig {
 
         /**
          * Specifies if the popout icon should be displayed in the header-bar.
-         * Default: true
+         * @deprecated use {@link (UserLayoutConfig:namespace).(Header:interface).popout} instead
          */
         showPopoutIcon?: boolean;
 
         /**
          * Specifies if the maximise icon should be displayed in the header-bar.
-         * Default: true
+         * @deprecated use {@link (UserLayoutConfig:namespace).(Header:interface).maximise} instead
          */
         showMaximiseIcon?: boolean;
 
         /**
          * Specifies if the close icon should be displayed in the header-bar.
-         * Default: true
+         * @deprecated use {@link (UserLayoutConfig:namespace).(Header:interface).close} instead
          */
         showCloseIcon?: boolean;
 
         /**
          * Specifies Responsive Mode (more info needed).
-         * Default: onload
+         * Default: none
          */
         responsiveMode?: LayoutConfig.Settings.ResponsiveMode;
 
@@ -566,9 +566,6 @@ export namespace UserLayoutConfig {
                 popoutWholeStack: user?.popoutWholeStack ?? LayoutConfig.Settings.defaults.popoutWholeStack,
                 blockedPopoutsThrowError: user?.blockedPopoutsThrowError ?? LayoutConfig.Settings.defaults.blockedPopoutsThrowError,
                 closePopoutsOnUnload: user?.closePopoutsOnUnload ?? LayoutConfig.Settings.defaults.closePopoutsOnUnload,
-                showPopoutIcon: user?.showPopoutIcon ?? LayoutConfig.Settings.defaults.showPopoutIcon,
-                showMaximiseIcon: user?.showMaximiseIcon ?? LayoutConfig.Settings.defaults.showMaximiseIcon,
-                showCloseIcon: user?.showCloseIcon ?? LayoutConfig.Settings.defaults.showCloseIcon,
                 responsiveMode: user?.responsiveMode ?? LayoutConfig.Settings.defaults.responsiveMode,
                 tabOverlapAllowance: user?.tabOverlapAllowance ?? LayoutConfig.Settings.defaults.tabOverlapAllowance,
                 reorderOnTabMenuClick: user?.reorderOnTabMenuClick ?? LayoutConfig.Settings.defaults.reorderOnTabMenuClick,
@@ -696,7 +693,7 @@ export namespace UserLayoutConfig {
          * The tooltip text that appears when hovering over the close icon.
          * Default: 'close'
          */
-        close?: string;
+        close?: false | string;
         /**
          * The tooltip text that appears when hovering over the minimise icon.
          * Default: 'minimise'
@@ -725,12 +722,15 @@ export namespace UserLayoutConfig {
             }
             const result: LayoutConfig.Header = {
                 show,
-                popout: userHeader?.popout ?? (userLabels?.popout ?? LayoutConfig.Header.defaults.popout),
-                dock: userHeader?.popin ?? (userLabels?.popin ?? LayoutConfig.Header.defaults.dock),
-                maximise: userHeader?.maximise ?? (userLabels?.maximise ?? LayoutConfig.Header.defaults.maximise),
-                close: userHeader?.close ?? (userLabels?.close ?? LayoutConfig.Header.defaults.close),
-                minimise: userHeader?.minimise ?? (userLabels?.minimise ?? LayoutConfig.Header.defaults.minimise),
-                tabDropdown: userHeader?.tabDropdown ?? (userLabels?.tabDropdown ?? LayoutConfig.Header.defaults.tabDropdown),
+                popout: userHeader?.popout ?? userLabels?.popout ??
+                    (userSettings?.showPopoutIcon === false ? false : LayoutConfig.Header.defaults.popout),
+                dock: userHeader?.popin ?? userLabels?.popin ?? LayoutConfig.Header.defaults.dock,
+                maximise: userHeader?.maximise ?? userLabels?.maximise ??
+                    (userSettings?.showMaximiseIcon === false ? false : LayoutConfig.Header.defaults.maximise),
+                close: userHeader?.close ?? userLabels?.close ??
+                    (userSettings?.showCloseIcon === false ? false : LayoutConfig.Header.defaults.close),
+                minimise: userHeader?.minimise ?? userLabels?.minimise ?? LayoutConfig.Header.defaults.minimise,
+                tabDropdown: userHeader?.tabDropdown ?? userLabels?.tabDropdown ?? LayoutConfig.Header.defaults.tabDropdown,
             }
             return result;
         }
