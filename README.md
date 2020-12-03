@@ -85,8 +85,8 @@ Currently version 2 is available from [https://github.com/pbklink/golden-layout]
 1. In your application, run `npm link golden-layout` to link it to the new GoldenLayout repository.
 
 If you wish to use the api-test application, then from within the new GoldenLayout repository, either run:
-* `npm build:apitest` to just build it
-* `npm start:apitest` to both build and start the development server.  You can then view it in your browser.
+* `npm run build:apitest` to just build it
+* `npm run start:apitest` to both build and start the development server.  You can then view it in your browser.
 
 ### Migration guide
 
