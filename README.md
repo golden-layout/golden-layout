@@ -71,7 +71,6 @@ The APIs implemented in the api-test application (included in the repository) ha
 * `LayoutManager.getComponentEvent`
 * `LayoutManager.releaseComponentEvent`
 * `ComponentContainer.stateRequestEvent`
-* `ComponentContainer.beforeComponentReleaseEvent`
 
 The extent of the testing can be viewed by examining the api-test program and the above Angular GoldenLayout example program.
 
@@ -162,8 +161,8 @@ Returns HTMLElement which hosts component
 Returns the componentState of the `ComponentItemConfig` used to create the contained component. Note that if the deprecated `setState()` function is called, then `getInitialState()` will return the state passed in this call instead of the initial state.
 1. `stateRequestEvent` (new event)\
 If set, `stateRequestEvent` is fired whenever GoldenLayout wants the latest state for a component. Calling `LayoutManager.saveLayout` will cause this event to be fired (if it is defined).  If it is not defined, then the initial state in the ItemConfig or the latest state set in `setState()` will be saved.
-1. `beforeComponentReleaseEvent` (new event)\
-If set, `beforeComponentReleaseEvent` is fired before a component is released.  Components can use this event to dispose of resources.
+1. `beforeComponentRelease` (new EventEmitter event)\
+`beforeComponentRelease` is emitted on the container before a component is released.  Components can use this event to dispose of resources.
 1. Do not use `getState()` unless you are using the deprecated `setState()`. Use `getInitialState()` if you have migrated to the new `ComponentContainer.stateRequestEvent`.
 1. `setState()` has been marked as deprecated. If possible, use the new `stateRequestEvent` event instead.
 

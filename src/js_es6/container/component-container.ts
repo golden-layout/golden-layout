@@ -11,23 +11,26 @@ import { deepExtend, setElementHeight, setElementWidth } from '../utils/utils';
 /** @public */
 export class ComponentContainer extends EventEmitter {
     /** @internal */
+    private _component: ComponentItem.Component;
+    /** @internal */
     private _width: number | null;
     /** @internal */
     private _height: number | null;
     /** @internal */
     private _isHidden;
+    private _isShownWithZeroDimensions;
     /** @internal */
     private readonly _contentElement;
     /** @internal */
     private _tab: Tab;
 
     stateRequestEvent: ComponentContainer.StateRequestEventHandler | undefined;
-    beforeComponentReleaseEvent: ComponentContainer.BeforeComponentReleaseEventHandler | undefined;
 
     get width(): number | null { return this._width; }
     get height(): number | null { return this._height; }
     get parent(): ComponentItem { return this._parent; }
     get componentItemConfig(): ComponentItemConfig { return this._componentItemConfig; }
+    get component(): ComponentItem.Component { return this._component; }
     get tab(): Tab { return this._tab; }
     get title(): string { return this._parent.title; }
     get layoutManager(): LayoutManager { return this._layoutManager; }
@@ -46,6 +49,7 @@ export class ComponentContainer extends EventEmitter {
         this._width = null;
         this._height = null;
         this._isHidden = false;
+        this._isShownWithZeroDimensions = false;
 
         const contentElement = this._element.querySelector('.lm_content') as HTMLElement;
         if (contentElement === null) {
@@ -53,11 +57,13 @@ export class ComponentContainer extends EventEmitter {
         } else {
             this._contentElement = contentElement;
         }
+        this._component = this.layoutManager.getComponent(this);
     }
 
     destroy(): void {
+        this.emit('beforeComponentRelease', this._component);
+        this.layoutManager.releaseComponent(this, this._component);
         this.stateRequestEvent = undefined;
-        this.beforeComponentReleaseEvent = undefined;
         this.emit('destroy');
     }
 
@@ -72,8 +78,11 @@ export class ComponentContainer extends EventEmitter {
      * this should have no effect
      */
     hide(): void {
-        this.emit('hide');
-        this._isHidden = true;
+        if (!this._isHidden) {
+            this.emit('hide');
+            this._isHidden = true;
+            this._isShownWithZeroDimensions = false;
+        }
         this._element.style.display = 'none';
     }
 
@@ -83,12 +92,26 @@ export class ComponentContainer extends EventEmitter {
      * If the container is already visible this has no effect.
      */
     show(): void {
-        this.emit('show');
-        this._isHidden = false;
+        const wasHidden = this._isHidden;
+        if (wasHidden) {
+            this._isHidden = false;
+            this.emit('show');
+        }
         this._element.style.display = '';
+
         // emit shown only if the container has a valid size
-        if (this._height !== 0 || this._width !== 0) {
-            this.emit('shown');
+        if (wasHidden) {
+            if (this._height === 0 && this._width === 0) {
+                this._isShownWithZeroDimensions = true;
+            } else {
+                this._isShownWithZeroDimensions = false;
+                this.emit('shown');
+            }
+        } else {
+            if (this._isShownWithZeroDimensions && (this._height !== 0 || this._width !== 0)) {
+                this._isShownWithZeroDimensions = false;
+                this.emit('shown');
+            }
         }
     }
 
@@ -256,6 +279,10 @@ export class ComponentContainer extends EventEmitter {
             setElementWidth(this._contentElement, width);
             setElementHeight(this._contentElement, height);
             this.emit('resize');
+            if (this._isShownWithZeroDimensions && (this._height !== 0 || this._width !== 0)) {
+                this._isShownWithZeroDimensions = false;
+                this.emit('shown');
+            }
         }
     }
 }
@@ -266,5 +293,4 @@ export type ItemContainer = ComponentContainer;
 /** @public */
 export namespace ComponentContainer {
     export type StateRequestEventHandler = (this: void) => JsonValue | undefined;
-    export type BeforeComponentReleaseEventHandler = (this: void) => void;
 }

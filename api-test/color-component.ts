@@ -7,6 +7,10 @@ export class ColorComponent {
     private _paraElement: HTMLParagraphElement;
     private _inputElement: HTMLInputElement;
 
+    private _beforeComponentReleaseEventListener = () => this.handleBeforeComponentReleaseEvent()
+    private _inputChangeListener = () => this.handleInputChangeEvent();
+    private _shownEventListener = () => this.handleShownEvent();
+
     constructor(container: ComponentContainer, state: JsonValue | undefined) {
         let color: string;
         if (state === undefined) {
@@ -31,11 +35,12 @@ export class ColorComponent {
         this._inputElement.value = color;
         this._inputElement.style.display = "block";
 
-        this._inputElement.addEventListener('input', () => this.handleInputChangeEvent());
+        this._inputElement.addEventListener('input', this._inputChangeListener);
         container.contentElement.appendChild(this._inputElement);
 
         container.stateRequestEvent = () => this.handleContainerStateRequestEvent();
-        container.beforeComponentReleaseEvent = () => this.handleContainerBeforeComponentReleaseEvent();
+        container.addEventListener('beforeComponentRelease', this._beforeComponentReleaseEventListener);
+        container.addEventListener('shown', this._shownEventListener);
     }
 
     private handleInputChangeEvent() {
@@ -51,7 +56,14 @@ export class ColorComponent {
         }
     }
 
-    private handleContainerBeforeComponentReleaseEvent(): void {
-        this._inputElement.removeEventListener('change', () => this.handleInputChangeEvent());
+    private handleBeforeComponentReleaseEvent(): void {
+        this._inputElement.removeEventListener('change', this._inputChangeListener);
+    }
+
+    private handleShownEvent(): void {
+        this._paraElement.style.backgroundColor = 'purple';
+        setTimeout(() => { 
+            this._paraElement.style.backgroundColor = ''
+        }, 1000);
     }
 }

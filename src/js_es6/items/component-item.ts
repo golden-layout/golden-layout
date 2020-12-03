@@ -18,11 +18,9 @@ export class ComponentItem extends ContentItem {
     private _title: string;
     /** @internal */
     private _tab: Tab;
-    /** @internal */
-    private _component: ComponentItem.Component; // this is the user component wrapped by this ComponentItem instance
 
     get componentName(): string { return this._componentName; }
-    get component(): ComponentItem.Component { return this._component; }
+    get component(): ComponentItem.Component { return this._container.component; }
     get container(): ComponentContainer { return this._container; }
 
     get headerConfig(): HeaderedItemConfig.Header | undefined { return this._componentConfig.header; }
@@ -43,15 +41,10 @@ export class ComponentItem extends ContentItem {
             this._title = this._componentName;
         }
         this._container = new ComponentContainer(this._componentConfig, this, layoutManager, this.element);
-        this.layoutManager.getComponent(this._container);
     }
 
     /** @internal */
     destroy(): void {
-        if (this._container.beforeComponentReleaseEvent !== undefined) {
-            this._container.beforeComponentReleaseEvent();
-        }
-        this.layoutManager.releaseComponent(this._container, this._component);
         this._container.destroy()
         super.destroy();
     }

@@ -78,29 +78,19 @@ export class EventEmitter {
      * @param eventName - The name of the event
      * @param callback - The previously registered callback method (optional)
      */
-    off<K extends keyof EventEmitter.EventParamsMap>(eventName: K, callback: EventEmitter.Callback<K>): void {
+    removeEventListener<K extends keyof EventEmitter.EventParamsMap>(eventName: K, callback: EventEmitter.Callback<K>): void {
         const unknownCallback = callback as EventEmitter.UnknownCallback;
-        this.offUnknown(eventName, unknownCallback);
+        this.removeUnknownEventListener(eventName, unknownCallback);
     }
 
-    /** @internal */
-    offUnknown(eventName: string, callback: EventEmitter.UnknownCallback): void {
-        if (eventName === EventEmitter.ALL_EVENT) {
-            this.removeSubscription(eventName, this._allEventSubscriptions, callback);
-        } else {
-            const subscriptions = this._subscriptionsMap.get(eventName);
-            if (subscriptions === undefined) {
-                throw new Error('No subscribtions to unsubscribe for event ' + eventName);
-            } else {
-                this.removeSubscription(eventName, subscriptions, callback);
-            }
-        }
+    off<K extends keyof EventEmitter.EventParamsMap>(eventName: K, callback: EventEmitter.Callback<K>): void {
+        this.removeEventListener(eventName, callback);
     }
 
     /**
      * Alias for off
      */
-    unbind = this.off;
+    unbind = this.removeEventListener;
 
     /**
      * Alias for emit
@@ -113,13 +103,17 @@ export class EventEmitter {
      * @param eventName - The name of the event to listen to
      * @param callback - The callback to execute when the event occurs
      */
-    on<K extends keyof EventEmitter.EventParamsMap>(eventName: K, callback: EventEmitter.Callback<K>): void {
+    addEventListener<K extends keyof EventEmitter.EventParamsMap>(eventName: K, callback: EventEmitter.Callback<K>): void {
         const unknownCallback = callback as EventEmitter.UnknownCallback;
-        this.onUnknown(eventName, unknownCallback);
+        this.addUnknownEventListener(eventName, unknownCallback);
+    }
+
+    on<K extends keyof EventEmitter.EventParamsMap>(eventName: K, callback: EventEmitter.Callback<K>): void {
+        this.addEventListener(eventName, callback);
     }
 
     /** @internal */
-    onUnknown(eventName: string, callback: EventEmitter.UnknownCallback): void {
+    private addUnknownEventListener(eventName: string, callback: EventEmitter.UnknownCallback): void {
         if (eventName === EventEmitter.ALL_EVENT) {
             this._allEventSubscriptions.push(callback);
         } else {
@@ -129,6 +123,20 @@ export class EventEmitter {
             } else {
                 subscriptions = [callback];
                 this._subscriptionsMap.set(eventName, subscriptions);
+            }
+        }
+    }
+
+    /** @internal */
+    private removeUnknownEventListener(eventName: string, callback: EventEmitter.UnknownCallback): void {
+        if (eventName === EventEmitter.ALL_EVENT) {
+            this.removeSubscription(eventName, this._allEventSubscriptions, callback);
+        } else {
+            const subscriptions = this._subscriptionsMap.get(eventName);
+            if (subscriptions === undefined) {
+                throw new Error('No subscribtions to unsubscribe for event ' + eventName);
+            } else {
+                this.removeSubscription(eventName, subscriptions, callback);
             }
         }
     }
@@ -184,6 +192,7 @@ export namespace EventEmitter {
         "titleChanged": StringParam;
         "windowClosed": UnknownParam;
         "windowOpened": UnknownParam;
+        "beforeComponentRelease": BeforeComponentReleaseParams;
     }
 
     export type UnknownParams = unknown[];
@@ -194,6 +203,7 @@ export namespace EventEmitter {
     export type DragStartParams = [originalX: number, originalY: number];
     export type DragStopParams = [event: DragEvent];
     export type DragParams = [offsetX: number, offsetY: number, event: DragEvent];
+    export type BeforeComponentReleaseParams = [component: unknown];
 
     export class BubblingEvent {
         name: string;

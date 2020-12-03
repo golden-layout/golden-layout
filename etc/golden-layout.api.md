@@ -32,9 +32,9 @@ export class BrowserPopout extends EventEmitter {
 export class ComponentContainer extends EventEmitter {
     // @internal
     constructor(_componentItemConfig: ComponentItemConfig, _parent: ComponentItem, _layoutManager: LayoutManager, _element: HTMLElement);
-    // (undocumented)
-    beforeComponentReleaseEvent: ComponentContainer.BeforeComponentReleaseEventHandler | undefined;
     close(): void;
+    // (undocumented)
+    get component(): ComponentItem.Component;
     // (undocumented)
     get componentItemConfig(): ComponentItemConfig;
     get contentElement(): HTMLElement;
@@ -79,8 +79,6 @@ export class ComponentContainer extends EventEmitter {
 
 // @public (undocumented)
 export namespace ComponentContainer {
-    // (undocumented)
-    export type BeforeComponentReleaseEventHandler = (this: void) => void;
     // (undocumented)
     export type StateRequestEventHandler = (this: void) => JsonValue | undefined;
 }
