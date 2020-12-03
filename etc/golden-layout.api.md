@@ -33,7 +33,7 @@ export class ComponentContainer extends EventEmitter {
     // @internal
     constructor(_componentItemConfig: ComponentItemConfig, _parent: ComponentItem, _layoutManager: LayoutManager, _element: HTMLElement);
     // (undocumented)
-    beforeDestroyEvent: ComponentContainer.BeforeDestroyEventHandler | undefined;
+    beforeComponentReleaseEvent: ComponentContainer.BeforeComponentReleaseEventHandler | undefined;
     close(): void;
     // (undocumented)
     get componentItemConfig(): ComponentItemConfig;
@@ -80,7 +80,7 @@ export class ComponentContainer extends EventEmitter {
 // @public (undocumented)
 export namespace ComponentContainer {
     // (undocumented)
-    export type BeforeDestroyEventHandler = (this: void) => void;
+    export type BeforeComponentReleaseEventHandler = (this: void) => void;
     // (undocumented)
     export type StateRequestEventHandler = (this: void) => JsonValue | undefined;
 }

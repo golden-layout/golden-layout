@@ -35,7 +35,7 @@ export class ColorComponent {
         container.contentElement.appendChild(this._inputElement);
 
         container.stateRequestEvent = () => this.handleContainerStateRequestEvent();
-        container.beforeDestroyEvent = () => this.handleContainerBeforeDestroyEvent();
+        container.beforeComponentReleaseEvent = () => this.handleContainerBeforeComponentReleaseEvent();
     }
 
     private handleInputChangeEvent() {
@@ -51,7 +51,7 @@ export class ColorComponent {
         }
     }
 
-    private handleContainerBeforeDestroyEvent(): void {
+    private handleContainerBeforeComponentReleaseEvent(): void {
         this._inputElement.removeEventListener('change', () => this.handleInputChangeEvent());
     }
 }

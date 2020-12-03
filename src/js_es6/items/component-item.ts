@@ -48,8 +48,8 @@ export class ComponentItem extends ContentItem {
 
     /** @internal */
     destroy(): void {
-        if (this._container.beforeDestroyEvent !== undefined) {
-            this._container.beforeDestroyEvent();
+        if (this._container.beforeComponentReleaseEvent !== undefined) {
+            this._container.beforeComponentReleaseEvent();
         }
         this.layoutManager.releaseComponent(this._container, this._component);
         this._container.destroy()

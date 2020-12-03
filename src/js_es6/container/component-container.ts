@@ -22,7 +22,7 @@ export class ComponentContainer extends EventEmitter {
     private _tab: Tab;
 
     stateRequestEvent: ComponentContainer.StateRequestEventHandler | undefined;
-    beforeDestroyEvent: ComponentContainer.BeforeDestroyEventHandler | undefined;
+    beforeComponentReleaseEvent: ComponentContainer.BeforeComponentReleaseEventHandler | undefined;
 
     get width(): number | null { return this._width; }
     get height(): number | null { return this._height; }
@@ -57,7 +57,7 @@ export class ComponentContainer extends EventEmitter {
 
     destroy(): void {
         this.stateRequestEvent = undefined;
-        this.beforeDestroyEvent = undefined;
+        this.beforeComponentReleaseEvent = undefined;
         this.emit('destroy');
     }
 
@@ -266,5 +266,5 @@ export type ItemContainer = ComponentContainer;
 /** @public */
 export namespace ComponentContainer {
     export type StateRequestEventHandler = (this: void) => JsonValue | undefined;
-    export type BeforeDestroyEventHandler = (this: void) => void;
+    export type BeforeComponentReleaseEventHandler = (this: void) => void;
 }
