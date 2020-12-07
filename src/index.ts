@@ -1,5 +1,5 @@
+export * from './js_es6/config/config';
 export * from './js_es6/config/resolved-config';
-export * from './js_es6/config/user-config';
 export { ComponentContainer } from './js_es6/container/component-container';
 export { BrowserPopout } from './js_es6/controls/browser-popout';
 export { Header } from './js_es6/controls/header';

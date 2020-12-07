@@ -1,5 +1,5 @@
-import { ResolvedGroundItemConfig, ResolvedComponentItemConfig, ResolvedHeaderedItemConfig, ResolvedItemConfig, ResolvedStackItemConfig, ResolvedRootItemConfig } from '../config/resolved-config';
-import { UserComponentItemConfig, UserItemConfig, UserRowOrColumnItemConfig, UserSerialisableComponentConfig, UserStackItemConfig } from '../config/user-config';
+import { ItemConfig, StackItemConfig, ComponentItemConfig, RowOrColumnItemConfig, SerialisableComponentConfig } from '../config/config';
+import { ResolvedComponentItemConfig, ResolvedGroundItemConfig, ResolvedHeaderedItemConfig, ResolvedItemConfig, ResolvedRootItemConfig, ResolvedStackItemConfig } from '../config/resolved-config';
 import { AssertError, UnexpectedNullError, UnexpectedUndefinedError } from '../errors/internal-error';
 import { LayoutManager } from '../layout-manager';
 import { AreaLinkedRect, ItemType, JsonValue } from '../utils/types';
@@ -57,7 +57,7 @@ export class GroundItem extends ContentItem {
     }
 
     newSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): ComponentItem {
-        const itemConfig: UserSerialisableComponentConfig = {
+        const itemConfig: SerialisableComponentConfig = {
             type: 'component',
             componentName: componentTypeName,
             componentState,
@@ -70,7 +70,7 @@ export class GroundItem extends ContentItem {
      * Internal only.  To load a add with API, use {@link (LayoutManager:class).addSerialisableComponent}
      */
     addSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): number {
-        const itemConfig: UserSerialisableComponentConfig = {
+        const itemConfig: SerialisableComponentConfig = {
             type: 'component',
             componentName: componentTypeName,
             componentState,
@@ -78,8 +78,8 @@ export class GroundItem extends ContentItem {
         return this.addItem(itemConfig, index);
     }
 
-    newItem(userItemConfig: UserRowOrColumnItemConfig | UserStackItemConfig | UserComponentItemConfig,  index?: number): ContentItem {
-        index = this.addItem(userItemConfig, index);
+    newItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig,  index?: number): ContentItem {
+        index = this.addItem(itemConfig, index);
         let createdItem: ContentItem;
         if (index === -1) {
             // created ContentItem as root as root did not exist
@@ -93,7 +93,7 @@ export class GroundItem extends ContentItem {
             }
         }
 
-        if (ContentItem.isStack(createdItem) && (UserItemConfig.isComponent(userItemConfig))) {
+        if (ContentItem.isStack(createdItem) && (ItemConfig.isComponent(itemConfig))) {
             // createdItem is a Stack which was created to hold wanted component.  Return component
             return createdItem.contentItems[0];
         } else {
@@ -106,10 +106,10 @@ export class GroundItem extends ContentItem {
      * Internal only.  To load a add with API, use {@link (LayoutManager:class).addItem}
      * @returns -1 if added as root otherwise index in root ContentItem's content
      */
-    addItem(userItemConfig: UserRowOrColumnItemConfig | UserStackItemConfig | UserComponentItemConfig, 
+    addItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig, 
         index?: number
     ): number {
-        const itemConfig = UserItemConfig.resolve(userItemConfig);
+        const resolvedItemConfig = ItemConfig.resolve(itemConfig);
         let parent: ContentItem;
         if (this.contentItems.length > 0) {
             parent = this.contentItems[0];          
@@ -119,22 +119,22 @@ export class GroundItem extends ContentItem {
         if (parent.isComponent) {
             throw new Error('Cannot add item as child to ComponentItem');
         } else {
-            const contentItem = this.layoutManager.createAndInitContentItem(itemConfig, parent);
+            const contentItem = this.layoutManager.createAndInitContentItem(resolvedItemConfig, parent);
             index = parent.addChild(contentItem, index);
             return (parent === this) ? -1 : index;
         }
     }
 
-    loadComponentAsRoot(userItemConfig: UserComponentItemConfig): void {
+    loadComponentAsRoot(itemConfig: ComponentItemConfig): void {
         // Remove existing root if it exists
         this.clearRoot();
 
-        const itemConfig = UserItemConfig.resolve(userItemConfig) as ResolvedComponentItemConfig;
+        const resolvedItemConfig = ItemConfig.resolve(itemConfig) as ResolvedComponentItemConfig;
 
-        if (itemConfig.maximised) {
+        if (resolvedItemConfig.maximised) {
             throw new Error('Root Component cannot be maximised');
         } else {
-            const rootContentItem = new ComponentItem(this.layoutManager, itemConfig, this);
+            const rootContentItem = new ComponentItem(this.layoutManager, resolvedItemConfig, this);
             rootContentItem.init();
             this.addChild(rootContentItem, 0);
         }

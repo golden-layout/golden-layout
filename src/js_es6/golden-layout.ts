@@ -1,5 +1,5 @@
 import { ResolvedLayoutConfig, ResolvedPopoutLayoutConfig } from './config/resolved-config';
-import { UserLayoutConfig } from './config/user-config';
+import { LayoutConfig } from './config/config';
 import { LayoutManager } from './layout-manager';
 import { ConfigMinifier } from './utils/config-minifier';
 import { createTemplateHtmlElement, getQueryStringParam } from './utils/utils';
@@ -15,11 +15,11 @@ export class GoldenLayout extends LayoutManager {
     * @param container - A Dom HTML element. Defaults to body
     */
    constructor(container?: HTMLElement);
-   /** @deprecated specify userLayoutConfig in {@link (LayoutManager:class).loadLayout}*/
-   constructor(userConfig: UserLayoutConfig, container?: HTMLElement);
+   /** @deprecated specify layoutConfig in {@link (LayoutManager:class).loadLayout}*/
+   constructor(config: LayoutConfig, container?: HTMLElement);
    /** @internal */
-   constructor(userConfigOrOptionalContainer: UserLayoutConfig | HTMLElement | undefined, container?: HTMLElement) {
-        super(GoldenLayout.createConfig(userConfigOrOptionalContainer, container));
+   constructor(configOrOptionalContainer: LayoutConfig | HTMLElement | undefined, container?: HTMLElement) {
+        super(GoldenLayout.createConfig(configOrOptionalContainer, container));
 
         if (this.isSubWindow) {
             document.body.style.visibility = 'hidden';
@@ -145,7 +145,7 @@ export class GoldenLayout extends LayoutManager {
 /** @public */
 export namespace GoldenLayout {
     /** @internal */
-    export function createConfig(userConfigOrOptionalContainer: UserLayoutConfig | HTMLElement | undefined,
+    export function createConfig(configOrOptionalContainer: LayoutConfig | HTMLElement | undefined,
         containerElement?: HTMLElement):
         LayoutManager.ConstructorParameters
     {
@@ -162,17 +162,17 @@ export namespace GoldenLayout {
             const minifiedWindowConfig = JSON.parse(windowConfigStr);
             config = (new ConfigMinifier()).unminifyConfig(minifiedWindowConfig) as ResolvedPopoutLayoutConfig;
         } else {
-            if (userConfigOrOptionalContainer === undefined) {
+            if (configOrOptionalContainer === undefined) {
                 config = undefined;
             } else {
-                if (userConfigOrOptionalContainer instanceof HTMLElement) {
+                if (configOrOptionalContainer instanceof HTMLElement) {
                     config = undefined;
-                    containerElement = userConfigOrOptionalContainer;
+                    containerElement = configOrOptionalContainer;
                 } else {
-                    if (UserLayoutConfig.isUserLayoutConfig(userConfigOrOptionalContainer)) {
-                        config = UserLayoutConfig.resolve(userConfigOrOptionalContainer);
+                    if (LayoutConfig.isResolved(configOrOptionalContainer)) {
+                        config = configOrOptionalContainer as ResolvedLayoutConfig;
                     } else {
-                        config = userConfigOrOptionalContainer as ResolvedLayoutConfig;
+                        config = LayoutConfig.resolve(configOrOptionalContainer);
                     }
                 }
             }

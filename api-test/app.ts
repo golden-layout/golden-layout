@@ -1,4 +1,4 @@
-import { ContentItem, GoldenLayout, LayoutConfig, UserComponentItemConfig, UserLayoutConfig, UserSerialisableComponentConfig } from "../dist/golden-layout";
+import { ComponentItemConfig, ContentItem, GoldenLayout, LayoutConfig, ResolvedLayoutConfig, SerialisableComponentConfig } from "../dist/golden-layout";
 import { BooleanComponent } from './boolean-component';
 import { ColorComponent } from './color-component';
 import { Layout, prefinedLayouts } from './predefined-layouts';
@@ -30,7 +30,7 @@ export class App {
     private _reloadSavedLayoutButtonClickListener = () => this.handleReloadSavedLayoutButtonClick();
  
     private _allComponentsRegistered = false;
-    private _savedLayout: LayoutConfig | undefined;
+    private _savedLayout: ResolvedLayoutConfig | undefined;
 
     private _windowResizeListener = () => this.handleWindowResizeEvent();
 
@@ -152,11 +152,11 @@ export class App {
 
     private handleAddComponentButtonClick() {
         const componentName = this._registeredComponentNamesForAddSelect.value;
-        const userItemConfig: UserSerialisableComponentConfig = {
+        const itemConfig: SerialisableComponentConfig = {
             componentName,
             type: 'component',
         }
-        this._goldenLayout.addItem(userItemConfig, 0);
+        this._goldenLayout.addItem(itemConfig, 0);
     }
 
     private handleLayoutSelectChange() {
@@ -175,7 +175,7 @@ export class App {
     }
 
     private handleLoadComponentAsRootButtonClick() {
-        const itemConfig: UserSerialisableComponentConfig = {
+        const itemConfig: SerialisableComponentConfig = {
             type: 'component',
             componentName: ColorComponent.typeName,
             componentState: 'yellow',
@@ -189,14 +189,14 @@ export class App {
 
     private handleReplaceComponentButtonClick() {
         const componentName = this._registeredComponentNamesForReplaceSelect.value;
-        const userItemConfig: UserSerialisableComponentConfig = {
+        const itemConfig: SerialisableComponentConfig = {
             componentName,
             type: 'component',
         }
         const rootItem = this._goldenLayout.rootItem;
         if (rootItem !== undefined) {
             const content = [rootItem];
-            this.replaceComponentRecursively(content, userItemConfig);
+            this.replaceComponentRecursively(content, itemConfig);
         }
 
     }
@@ -210,8 +210,8 @@ export class App {
         if (this._savedLayout === undefined) {
             throw new Error('No saved layout');
         } else {
-            const userLayoutConfig = UserLayoutConfig.fromLayoutConfig(this._savedLayout);
-            this._goldenLayout.loadLayout(userLayoutConfig);
+            const layoutConfig = LayoutConfig.fromResolved(this._savedLayout);
+            this._goldenLayout.loadLayout(layoutConfig);
         }
     }
 
@@ -246,7 +246,7 @@ export class App {
         }
     }
 
-    private replaceComponentRecursively(content: ContentItem[], itemConfig: UserComponentItemConfig) {
+    private replaceComponentRecursively(content: ContentItem[], itemConfig: ComponentItemConfig) {
         for (const item of content) {
             if (ContentItem.isComponentItem(item)) {
                 const container = item.container;

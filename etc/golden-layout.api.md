@@ -28,7 +28,7 @@ export interface AreaLinkedRect {
 // @public
 export class BrowserPopout extends EventEmitter {
     // @internal
-    constructor(_config: PopoutLayoutConfig, _initialWindowSize: Rect, _layoutManager: LayoutManager);
+    constructor(_config: ResolvedPopoutLayoutConfig, _initialWindowSize: Rect, _layoutManager: LayoutManager);
     // (undocumented)
     close(): void;
     // (undocumented)
@@ -37,13 +37,13 @@ export class BrowserPopout extends EventEmitter {
     getWindow(): Window;
     popIn(): void;
     // (undocumented)
-    toConfig(): PopoutLayoutConfig;
+    toConfig(): ResolvedPopoutLayoutConfig;
 }
 
 // @public (undocumented)
 export class ComponentContainer extends EventEmitter {
     // @internal
-    constructor(config: ComponentItemConfig, _parent: ComponentItem, _layoutManager: LayoutManager, _element: HTMLElement, _updateItemConfigEvent: ComponentContainer.UpdateItemConfigEventHandler);
+    constructor(config: ResolvedComponentItemConfig, _parent: ComponentItem, _layoutManager: LayoutManager, _element: HTMLElement, _updateItemConfigEvent: ComponentContainer.UpdateItemConfigEventHandler);
     close(): void;
     // (undocumented)
     get component(): ComponentItem.Component;
@@ -68,7 +68,7 @@ export class ComponentContainer extends EventEmitter {
     get layoutManager(): LayoutManager;
     // (undocumented)
     get parent(): ComponentItem;
-    replaceComponent(userItemConfig: UserComponentItemConfig): void;
+    replaceComponent(itemConfig: ComponentItemConfig): void;
     // @internal (undocumented)
     setDragSize(width: number, height: number): void;
     setSize(width: number, height: number): boolean;
@@ -95,7 +95,7 @@ export namespace ComponentContainer {
     // (undocumented)
     export type StateRequestEventHandler = (this: void) => JsonValue | undefined;
     // @internal (undocumented)
-    export type UpdateItemConfigEventHandler = (itemConfig: ComponentItemConfig) => void;
+    export type UpdateItemConfigEventHandler = (itemConfig: ResolvedComponentItemConfig) => void;
 }
 
 // @public (undocumented)
@@ -103,9 +103,9 @@ export class ComponentItem extends ContentItem {
     // Warning: (ae-forgotten-export) The symbol "GroundItem" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    constructor(layoutManager: LayoutManager, config: ComponentItemConfig, stackOrGroundItem: Stack | GroundItem);
+    constructor(layoutManager: LayoutManager, config: ResolvedComponentItemConfig, stackOrGroundItem: Stack | GroundItem);
     // (undocumented)
-    applyUpdatableConfig(config: ComponentItemConfig): void;
+    applyUpdatableConfig(config: ResolvedComponentItemConfig): void;
     // (undocumented)
     close(): void;
     // (undocumented)
@@ -117,7 +117,7 @@ export class ComponentItem extends ContentItem {
     // @internal (undocumented)
     destroy(): void;
     // (undocumented)
-    get headerConfig(): HeaderedItemConfig.Header | undefined;
+    get headerConfig(): ResolvedHeaderedItemConfig.Header | undefined;
     // @internal (undocumented)
     hide(): void;
     // @internal (undocumented)
@@ -138,7 +138,7 @@ export class ComponentItem extends ContentItem {
     // (undocumented)
     get title(): string;
     // (undocumented)
-    toConfig(): ComponentItemConfig;
+    toConfig(): ResolvedComponentItemConfig;
     // @internal (undocumented)
     updateSize(): void;
 }
@@ -153,25 +153,10 @@ export namespace ComponentItem {
 
 // @public (undocumented)
 export interface ComponentItemConfig extends HeaderedItemConfig {
-    readonly componentName: string;
+    componentName: string;
     // (undocumented)
-    readonly content: [];
-    // (undocumented)
-    readonly reorderEnabled: boolean;
-    // (undocumented)
-    readonly title: string;
-}
-
-// @public (undocumented)
-export namespace ComponentItemConfig {
-    const // (undocumented)
-    defaultReorderEnabled = true;
-    // (undocumented)
-    export function isReact(config: ComponentItemConfig): config is ReactComponentConfig;
-    // (undocumented)
-    export function isSerialisable(config: ComponentItemConfig): config is SerialisableComponentConfig;
-    // @internal (undocumented)
-    export function resolveComponentName(itemConfig: ComponentItemConfig): string;
+    readonly content?: [];
+    reorderEnabled?: boolean;
 }
 
 // @public @deprecated (undocumented)
@@ -187,12 +172,12 @@ export class ConfigurationError extends ExternalError {
 // @public
 export abstract class ContentItem extends EventEmitter {
     // @internal
-    constructor(layoutManager: LayoutManager, config: ItemConfig, _parent: ContentItem | null, _element: HTMLElement);
+    constructor(layoutManager: LayoutManager, config: ResolvedItemConfig, _parent: ContentItem | null, _element: HTMLElement);
     addChild(contentItem: ContentItem, index?: number | null, suspendResize?: boolean): number;
     // @internal (undocumented)
     addPopInParentId(id: string): void;
     // @internal (undocumented)
-    calculateConfigContent(): ItemConfig[];
+    calculateConfigContent(): ResolvedItemConfig[];
     // (undocumented)
     get contentItems(): ContentItem[];
     deselect(): void;
@@ -256,7 +241,7 @@ export abstract class ContentItem extends EventEmitter {
     // @internal (undocumented)
     show(): void;
     // (undocumented)
-    abstract toConfig(): ItemConfig;
+    abstract toConfig(): ResolvedItemConfig;
     // (undocumented)
     get type(): ItemType;
     // @internal (undocumented)
@@ -289,7 +274,7 @@ export abstract class ExternalError extends Error {
 export class GoldenLayout extends LayoutManager {
     constructor(container?: HTMLElement);
     // @deprecated
-    constructor(userConfig: UserLayoutConfig, container?: HTMLElement);
+    constructor(config: LayoutConfig, container?: HTMLElement);
     // @deprecated
     init(): void;
     }
@@ -297,37 +282,7 @@ export class GoldenLayout extends LayoutManager {
 // @public (undocumented)
 export namespace GoldenLayout {
     // @internal (undocumented)
-    export function createConfig(userConfigOrOptionalContainer: UserLayoutConfig | HTMLElement | undefined, containerElement?: HTMLElement): LayoutManager.ConstructorParameters;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "GroundItemConfig" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface GroundItemConfig extends ItemConfig {
-    // (undocumented)
-    readonly height: 100;
-    // (undocumented)
-    readonly id: '';
-    // (undocumented)
-    readonly isClosable: false;
-    // (undocumented)
-    readonly minHeight: 0;
-    // (undocumented)
-    readonly minWidth: 0;
-    // (undocumented)
-    readonly reorderEnabled: false;
-    // (undocumented)
-    readonly title: '';
-    // (undocumented)
-    readonly type: 'ground';
-    // (undocumented)
-    readonly width: 100;
-}
-
-// @internal (undocumented)
-export namespace GroundItemConfig {
-    // (undocumented)
-    export function create(rootItemConfig: RootItemConfig | undefined): GroundItemConfig;
+    export function createConfig(configOrOptionalContainer: LayoutConfig | HTMLElement | undefined, containerElement?: HTMLElement): LayoutManager.ConstructorParameters;
 }
 
 // @public
@@ -441,38 +396,43 @@ export namespace Header {
 
 // @public (undocumented)
 export interface HeaderedItemConfig extends ItemConfig {
+    // @deprecated (undocumented)
+    hasHeaders?: boolean;
     // (undocumented)
-    header: HeaderedItemConfig.Header | undefined;
+    header?: HeaderedItemConfig.Header;
     // (undocumented)
-    readonly maximised: boolean;
+    maximised?: boolean;
 }
 
 // @public (undocumented)
 export namespace HeaderedItemConfig {
-    const // (undocumented)
-    defaultMaximised = false;
     // (undocumented)
     export interface Header {
         // (undocumented)
-        readonly close: string | undefined;
+        close?: string;
         // (undocumented)
-        readonly dock: false | string | undefined;
+        dock?: false | string;
         // (undocumented)
-        readonly maximise: false | string | undefined;
+        maximise?: false | string;
         // (undocumented)
-        readonly minimise: string | undefined;
+        minimise?: string;
         // (undocumented)
-        readonly popout: false | string | undefined;
+        popout?: false | string;
         // (undocumented)
-        readonly show: false | Side | undefined;
+        show?: false | Side;
         // (undocumented)
-        readonly tabDropdown: false | string | undefined;
+        tabDropdown?: false | string;
     }
     // (undocumented)
     export namespace Header {
         // (undocumented)
-        export function createCopy(original: Header | undefined, show?: false | Side): Header | undefined;
+        export function resolve(header: Header | undefined, hasHeaders: boolean | undefined): ResolvedHeaderedItemConfig.Header | undefined;
     }
+    // (undocumented)
+    export function resolveIdAndMaximised(config: HeaderedItemConfig): {
+        id: string;
+        maximised: boolean;
+    };
 }
 
 // @public (undocumented)
@@ -498,37 +458,39 @@ export const i18nStrings: string[];
 
 // @public (undocumented)
 export interface ItemConfig {
-    // (undocumented)
-    readonly content: readonly ItemConfig[];
-    // (undocumented)
-    readonly height: number;
-    // (undocumented)
-    readonly id: string;
-    // (undocumented)
-    readonly isClosable: boolean;
-    // (undocumented)
-    readonly minHeight: number;
-    // (undocumented)
-    readonly minWidth: number;
-    // (undocumented)
-    readonly type: ItemType;
-    // (undocumented)
-    readonly width: number;
+    content?: ItemConfig[];
+    height?: number;
+    id?: string | string[];
+    isClosable?: boolean;
+    minHeight?: number;
+    minWidth?: number;
+    title?: string;
+    type: ItemType;
+    width?: number;
 }
 
 // @public (undocumented)
 export namespace ItemConfig {
-    const // @internal (undocumented)
-    defaults: ItemConfig;
-    export function createCopy(original: ItemConfig, content?: ItemConfig[]): ItemConfig;
     // (undocumented)
-    export function createDefault(type: ItemType): ItemConfig;
+    export function isColumn(config: ItemConfig): config is ItemConfig;
     // (undocumented)
-    export function isComponentItem(itemConfig: ItemConfig): itemConfig is ComponentItemConfig;
-    // @internal (undocumented)
-    export function isGroundItem(itemConfig: ItemConfig): itemConfig is GroundItemConfig;
+    export function isComponent(config: ItemConfig): config is SerialisableComponentConfig | ReactComponentConfig;
     // (undocumented)
-    export function isStackItem(itemConfig: ItemConfig): itemConfig is StackItemConfig;
+    export function isGround(config: ItemConfig): config is ItemConfig;
+    // (undocumented)
+    export function isReactComponent(config: ItemConfig): config is ReactComponentConfig;
+    // (undocumented)
+    export function isRow(config: ItemConfig): config is ItemConfig;
+    // (undocumented)
+    export function isSerialisableComponent(config: ItemConfig): config is SerialisableComponentConfig;
+    // (undocumented)
+    export function isStack(config: ItemConfig): config is ItemConfig;
+    // (undocumented)
+    export function resolve(itemConfig: ItemConfig): ResolvedItemConfig;
+    // (undocumented)
+    export function resolveContent(content: ItemConfig[] | undefined): ResolvedItemConfig[];
+    // (undocumented)
+    export function resolveId(id: string | string[] | undefined): string;
 }
 
 // @public (undocumented)
@@ -570,107 +532,106 @@ export type JsonValueArray = Array<JsonValue>;
 
 // @public (undocumented)
 export interface LayoutConfig {
+    // @deprecated (undocumented)
+    content?: (RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig)[];
     // (undocumented)
-    readonly dimensions: LayoutConfig.Dimensions;
+    dimensions?: LayoutConfig.Dimensions;
     // (undocumented)
-    readonly header: LayoutConfig.Header;
+    header?: LayoutConfig.Header;
+    // @deprecated (undocumented)
+    labels?: LayoutConfig.Labels;
+    // @deprecated (undocumented)
+    maximisedItemId?: string | null;
     // (undocumented)
-    readonly openPopouts: PopoutLayoutConfig[];
+    openPopouts?: PopoutLayoutConfig[];
     // (undocumented)
-    readonly resolved: true;
+    root: RootItemConfig;
     // (undocumented)
-    readonly root: RootItemConfig | undefined;
-    // (undocumented)
-    readonly settings: LayoutConfig.Settings;
+    settings?: LayoutConfig.Settings;
 }
 
-// @public (undocumented)
+// @public
 export namespace LayoutConfig {
     // (undocumented)
-    export function copyOpenPopouts(original: PopoutLayoutConfig[]): PopoutLayoutConfig[];
-    // (undocumented)
-    export function createCopy(config: LayoutConfig): LayoutConfig;
-    // (undocumented)
-    export function createDefault(): LayoutConfig;
-    // (undocumented)
     export interface Dimensions {
-        // (undocumented)
-        readonly borderGrabWidth: number;
-        // (undocumented)
-        readonly borderWidth: number;
-        // (undocumented)
-        readonly dragProxyHeight: number;
-        // (undocumented)
-        readonly dragProxyWidth: number;
-        // (undocumented)
-        readonly headerHeight: number;
-        // (undocumented)
-        readonly minItemHeight: number;
-        // (undocumented)
-        readonly minItemWidth: number;
+        borderGrabWidth?: number;
+        borderWidth?: number;
+        dragProxyHeight?: number;
+        dragProxyWidth?: number;
+        headerHeight?: number;
+        minItemHeight?: number;
+        minItemWidth?: number;
     }
     // (undocumented)
     export namespace Dimensions {
         // (undocumented)
-        export function createCopy(original: Dimensions): Dimensions;
-        const // @internal (undocumented)
-        defaults: LayoutConfig.Dimensions;
+        export function resolve(dimensions: Dimensions | undefined): ResolvedLayoutConfig.Dimensions;
     }
     // (undocumented)
+    export function fromResolved(config: ResolvedLayoutConfig): LayoutConfig;
+    // (undocumented)
     export interface Header {
-        // (undocumented)
-        readonly close: false | string;
-        // (undocumented)
-        readonly dock: string;
-        // (undocumented)
-        readonly maximise: false | string;
-        // (undocumented)
-        readonly minimise: string;
-        // (undocumented)
-        readonly popout: false | string;
-        // (undocumented)
-        readonly show: false | Side;
-        // (undocumented)
-        readonly tabDropdown: string;
+        close?: false | string;
+        maximise?: false | string;
+        minimise?: string;
+        popin?: string;
+        popout?: false | string;
+        show?: false | Side;
+        tabDropdown?: string;
     }
     // (undocumented)
     export namespace Header {
         // (undocumented)
-        export function createCopy(original: Header): Header;
-        const // @internal (undocumented)
-        defaults: LayoutConfig.Header;
+        export function resolve(header: Header | undefined, settings: LayoutConfig.Settings | undefined, labels: LayoutConfig.Labels | undefined): ResolvedLayoutConfig.Header;
     }
     // (undocumented)
     export function isPopout(config: LayoutConfig): config is PopoutLayoutConfig;
     // (undocumented)
+    export function isResolved(configOrResolvedConfig: ResolvedLayoutConfig | LayoutConfig): configOrResolvedConfig is ResolvedLayoutConfig;
+    // (undocumented)
+    export interface Labels {
+        // @deprecated (undocumented)
+        close?: string;
+        // @deprecated (undocumented)
+        maximise?: string;
+        // @deprecated (undocumented)
+        minimise?: string;
+        // @deprecated (undocumented)
+        popin?: string;
+        // @deprecated (undocumented)
+        popout?: string;
+        // @deprecated (undocumented)
+        tabDropdown?: string;
+    }
+    // (undocumented)
+    export function resolve(layoutConfig: LayoutConfig): ResolvedLayoutConfig;
+    // (undocumented)
+    export function resolveOpenPopouts(popoutConfigs: PopoutLayoutConfig[] | undefined): ResolvedPopoutLayoutConfig[];
+    // (undocumented)
     export interface Settings {
-        // (undocumented)
-        readonly blockedPopoutsThrowError: boolean;
-        // (undocumented)
-        readonly closePopoutsOnUnload: boolean;
-        // (undocumented)
-        readonly constrainDragToContainer: boolean;
-        // (undocumented)
-        readonly popoutWholeStack: boolean;
-        // (undocumented)
-        readonly reorderEnabled: boolean;
-        // (undocumented)
-        readonly reorderOnTabMenuClick: boolean;
-        // (undocumented)
-        readonly responsiveMode: ResponsiveMode;
-        // (undocumented)
-        readonly selectionEnabled: boolean;
-        // (undocumented)
-        readonly tabControlOffset: number;
-        // (undocumented)
-        readonly tabOverlapAllowance: number;
+        blockedPopoutsThrowError?: boolean;
+        closePopoutsOnUnload?: boolean;
+        constrainDragToContainer?: boolean;
+        // @deprecated (undocumented)
+        hasHeaders?: boolean;
+        popoutWholeStack?: boolean;
+        reorderEnabled?: boolean;
+        reorderOnTabMenuClick?: boolean;
+        responsiveMode?: ResponsiveMode;
+        selectionEnabled?: boolean;
+        // @deprecated
+        showCloseIcon?: boolean;
+        // @deprecated
+        showMaximiseIcon?: boolean;
+        // @deprecated
+        showPopoutIcon?: boolean;
+        tabControlOffset?: number;
+        tabOverlapAllowance?: number;
     }
     // (undocumented)
     export namespace Settings {
-        const // @internal (undocumented)
-        defaults: LayoutConfig.Settings;
         // (undocumented)
-        export function createCopy(original: Settings): Settings;
+        export function resolve(settings: Settings | undefined): ResolvedLayoutConfig.Settings;
     }
 }
 
@@ -678,7 +639,7 @@ export namespace LayoutConfig {
 export abstract class LayoutManager extends EventEmitter {
     // @internal
     constructor(parameters: LayoutManager.ConstructorParameters);
-    addItem(userItemConfig: UserRowOrColumnItemConfig | UserStackItemConfig | UserComponentItemConfig, index?: number): number;
+    addItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig, index?: number): number;
     addSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): number;
     // @internal (undocumented)
     calculateItemAreas(): void;
@@ -689,16 +650,16 @@ export abstract class LayoutManager extends EventEmitter {
     // (undocumented)
     get container(): HTMLElement;
     // (undocumented)
-    createAndInitContentItem(config: ItemConfig, parent: ContentItem): ContentItem;
+    createAndInitContentItem(config: ResolvedItemConfig, parent: ContentItem): ContentItem;
     // @internal
-    createContentItem(config: ItemConfig, parent: ContentItem): ContentItem;
+    createContentItem(config: ResolvedItemConfig, parent: ContentItem): ContentItem;
     // Warning: (ae-forgotten-export) The symbol "DragSource" needs to be exported by the entry point index.d.ts
-    createDragSource(element: HTMLElement, itemConfig: ComponentItemConfig | (() => ComponentItemConfig)): DragSource | undefined;
-    createPopout(itemConfigOrContentItem: ContentItem | RootItemConfig, positionAndSize: PopoutLayoutConfig.Window, parentId: string | null, indexInParent: number | null): BrowserPopout;
+    createDragSource(element: HTMLElement, itemConfig: ResolvedComponentItemConfig | (() => ResolvedComponentItemConfig)): DragSource | undefined;
+    createPopout(itemConfigOrContentItem: ContentItem | ResolvedRootItemConfig, positionAndSize: ResolvedPopoutLayoutConfig.Window, parentId: string | null, indexInParent: number | null): BrowserPopout;
     // @internal (undocumented)
-    createPopoutFromContentItem(item: ContentItem, window: PopoutLayoutConfig.Window | undefined, parentId: string | null, indexInParent: number | null | undefined): BrowserPopout;
+    createPopoutFromContentItem(item: ContentItem, window: ResolvedPopoutLayoutConfig.Window | undefined, parentId: string | null, indexInParent: number | null | undefined): BrowserPopout;
     // @internal (undocumented)
-    createPopoutFromPopoutLayoutConfig(config: PopoutLayoutConfig): BrowserPopout;
+    createPopoutFromPopoutLayoutConfig(config: ResolvedPopoutLayoutConfig): BrowserPopout;
     destroy(): void;
     // Warning: (ae-forgotten-export) The symbol "DropTargetIndicator" needs to be exported by the entry point index.d.ts
     //
@@ -711,10 +672,10 @@ export abstract class LayoutManager extends EventEmitter {
     // @internal (undocumented)
     getArea(x: number, y: number): ContentItem.Area | null;
     // @internal (undocumented)
-    getComponent(container: ComponentContainer, itemConfig: ComponentItemConfig): ComponentItem.Component;
+    getComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentItem.Component;
     getComponentEvent: LayoutManager.GetComponentEventHandler | undefined;
     // @internal
-    getComponentInstantiator(config: ComponentItemConfig): LayoutManager.ComponentInstantiator;
+    getComponentInstantiator(config: ResolvedComponentItemConfig): LayoutManager.ComponentInstantiator;
     // (undocumented)
     getRegisteredComponentTypeNames(): string[];
     // @internal (undocumented)
@@ -728,18 +689,18 @@ export abstract class LayoutManager extends EventEmitter {
     // (undocumented)
     readonly isSubWindow: boolean;
     // (undocumented)
-    layoutConfig: LayoutConfig;
-    loadComponentAsRoot(userItemConfig: UserComponentItemConfig): void;
-    loadLayout(userLayoutConfig: UserLayoutConfig): void;
+    layoutConfig: ResolvedLayoutConfig;
+    loadComponentAsRoot(itemConfig: ComponentItemConfig): void;
+    loadLayout(layoutConfig: LayoutConfig): void;
     // @internal (undocumented)
     protected get maximisedItem(): ContentItem | null;
     // @internal (undocumented)
     maximiseItem(contentItem: ContentItem): void;
     // @internal
-    minifyConfig(config: LayoutConfig): LayoutConfig;
+    minifyConfig(config: ResolvedLayoutConfig): ResolvedLayoutConfig;
     // @internal (undocumented)
     minimiseItem(contentItem: ContentItem): void;
-    newItem(userItemConfig: UserRowOrColumnItemConfig | UserStackItemConfig | UserComponentItemConfig, index?: number): ContentItem;
+    newItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig, index?: number): ContentItem;
     newSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): ComponentItem;
     // (undocumented)
     get openPopouts(): BrowserPopout[];
@@ -759,7 +720,7 @@ export abstract class LayoutManager extends EventEmitter {
     get root(): GroundItem | null;
     // (undocumented)
     get rootItem(): ContentItem | undefined;
-    saveLayout(): LayoutConfig;
+    saveLayout(): ResolvedLayoutConfig;
     // (undocumented)
     get selectedItem(): ContentItem | null;
     selectItem(item: ContentItem, silent: boolean): void;
@@ -769,13 +730,13 @@ export abstract class LayoutManager extends EventEmitter {
     // @internal (undocumented)
     get tabDropPlaceholder(): HTMLElement;
     // @deprecated (undocumented)
-    toConfig(): LayoutConfig;
+    toConfig(): ResolvedLayoutConfig;
     // Warning: (ae-forgotten-export) The symbol "TransitionIndicator" needs to be exported by the entry point index.d.ts
     //
     // @internal (undocumented)
     get transitionIndicator(): TransitionIndicator | null;
     // @internal
-    unminifyConfig(config: LayoutConfig): LayoutConfig;
+    unminifyConfig(config: ResolvedLayoutConfig): ResolvedLayoutConfig;
     updateRootSize(): void;
     // @deprecated (undocumented)
     updateSize(width: number, height: number): void;
@@ -805,12 +766,12 @@ export namespace LayoutManager {
         // (undocumented)
         isSubWindow: boolean;
         // (undocumented)
-        layoutConfig: LayoutConfig | undefined;
+        layoutConfig: ResolvedLayoutConfig | undefined;
     }
     // (undocumented)
-    export type GetComponentConstructorCallback = (this: void, config: ComponentItemConfig) => ComponentConstructor;
+    export type GetComponentConstructorCallback = (this: void, config: ResolvedComponentItemConfig) => ComponentConstructor;
     // (undocumented)
-    export type GetComponentEventHandler = (this: void, container: ComponentContainer, itemConfig: ComponentItemConfig) => ComponentItem.Component;
+    export type GetComponentEventHandler = (this: void, container: ComponentContainer, itemConfig: ResolvedComponentItemConfig) => ComponentItem.Component;
     // (undocumented)
     export type ReleaseComponentEventHandler = (this: void, container: ComponentContainer, component: ComponentItem.Component) => void;
 }
@@ -832,56 +793,60 @@ export class PopoutBlockedError extends ExternalError {
 
 // @public (undocumented)
 export interface PopoutLayoutConfig extends LayoutConfig {
+    // @deprecated (undocumented)
+    dimensions: PopoutLayoutConfig.Dimensions | undefined;
+    indexInParent: number | null | undefined;
+    parentId: string | null | undefined;
     // (undocumented)
-    readonly indexInParent: number | null;
-    // (undocumented)
-    readonly parentId: string | null;
-    // (undocumented)
-    readonly window: PopoutLayoutConfig.Window;
+    window: PopoutLayoutConfig.Window | undefined;
 }
 
 // @public (undocumented)
 export namespace PopoutLayoutConfig {
+    // @deprecated (undocumented)
+    export interface Dimensions extends LayoutConfig.Dimensions {
+        // @deprecated (undocumented)
+        height: number | null;
+        // @deprecated (undocumented)
+        left: number | null;
+        // @deprecated (undocumented)
+        top: number | null;
+        // @deprecated (undocumented)
+        width: number | null;
+    }
     // (undocumented)
-    export function createCopy(original: PopoutLayoutConfig): PopoutLayoutConfig;
+    export function resolve(popoutConfig: PopoutLayoutConfig): ResolvedPopoutLayoutConfig;
     // (undocumented)
     export interface Window {
         // (undocumented)
-        readonly height: number | null;
+        height?: number;
         // (undocumented)
-        readonly left: number | null;
+        left?: number;
         // (undocumented)
-        readonly top: number | null;
+        top?: number;
         // (undocumented)
-        readonly width: number | null;
+        width?: number;
     }
     // (undocumented)
     export namespace Window {
         // (undocumented)
-        export function createCopy(original: Window): Window;
-        const // @internal (undocumented)
-        defaults: PopoutLayoutConfig.Window;
+        export function resolve(window: Window | undefined, dimensions: Dimensions | undefined): ResolvedPopoutLayoutConfig.Window;
     }
 }
 
 // @public (undocumented)
 export interface ReactComponentConfig extends ComponentItemConfig {
     // (undocumented)
-    readonly component: string;
+    component?: string;
+    props?: JsonValue;
     // (undocumented)
-    readonly props?: unknown;
-    // (undocumented)
-    readonly type: 'react-component';
+    type: 'react-component';
 }
 
 // @public (undocumented)
 export namespace ReactComponentConfig {
-    const // (undocumented)
-    REACT_COMPONENT_ID = "lm-react-component";
     // (undocumented)
-    export function createCopy(original: ReactComponentConfig): ReactComponentConfig;
-    // (undocumented)
-    export function createDefault(): ReactComponentConfig;
+    export function resolve(itemConfig: ReactComponentConfig): ResolvedReactComponentConfig;
 }
 
 // Warning: (ae-internal-missing-underscore) The name "Rect" should be prefixed with an underscore because the declaration is marked as @internal
@@ -899,6 +864,360 @@ export interface Rect {
 }
 
 // @public (undocumented)
+export interface ResolvedComponentItemConfig extends ResolvedHeaderedItemConfig {
+    readonly componentName: string;
+    // (undocumented)
+    readonly content: [];
+    // (undocumented)
+    readonly reorderEnabled: boolean;
+    // (undocumented)
+    readonly title: string;
+}
+
+// @public (undocumented)
+export namespace ResolvedComponentItemConfig {
+    const // (undocumented)
+    defaultReorderEnabled = true;
+    // (undocumented)
+    export function isReact(config: ResolvedComponentItemConfig): config is ResolvedReactComponentConfig;
+    // (undocumented)
+    export function isSerialisable(config: ResolvedComponentItemConfig): config is ResolvedSerialisableComponentConfig;
+    // @internal (undocumented)
+    export function resolveComponentName(itemConfig: ResolvedComponentItemConfig): string;
+}
+
+// Warning: (ae-internal-missing-underscore) The name "ResolvedGroundItemConfig" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal (undocumented)
+export interface ResolvedGroundItemConfig extends ResolvedItemConfig {
+    // (undocumented)
+    readonly height: 100;
+    // (undocumented)
+    readonly id: '';
+    // (undocumented)
+    readonly isClosable: false;
+    // (undocumented)
+    readonly minHeight: 0;
+    // (undocumented)
+    readonly minWidth: 0;
+    // (undocumented)
+    readonly reorderEnabled: false;
+    // (undocumented)
+    readonly title: '';
+    // (undocumented)
+    readonly type: 'ground';
+    // (undocumented)
+    readonly width: 100;
+}
+
+// @internal (undocumented)
+export namespace ResolvedGroundItemConfig {
+    // (undocumented)
+    export function create(rootItemConfig: ResolvedRootItemConfig | undefined): ResolvedGroundItemConfig;
+}
+
+// @public (undocumented)
+export interface ResolvedHeaderedItemConfig extends ResolvedItemConfig {
+    // (undocumented)
+    header: ResolvedHeaderedItemConfig.Header | undefined;
+    // (undocumented)
+    readonly maximised: boolean;
+}
+
+// @public (undocumented)
+export namespace ResolvedHeaderedItemConfig {
+    const // (undocumented)
+    defaultMaximised = false;
+    // (undocumented)
+    export interface Header {
+        // (undocumented)
+        readonly close: string | undefined;
+        // (undocumented)
+        readonly dock: false | string | undefined;
+        // (undocumented)
+        readonly maximise: false | string | undefined;
+        // (undocumented)
+        readonly minimise: string | undefined;
+        // (undocumented)
+        readonly popout: false | string | undefined;
+        // (undocumented)
+        readonly show: false | Side | undefined;
+        // (undocumented)
+        readonly tabDropdown: false | string | undefined;
+    }
+    // (undocumented)
+    export namespace Header {
+        // (undocumented)
+        export function createCopy(original: Header | undefined, show?: false | Side): Header | undefined;
+    }
+}
+
+// @public (undocumented)
+export interface ResolvedItemConfig {
+    // (undocumented)
+    readonly content: readonly ResolvedItemConfig[];
+    // (undocumented)
+    readonly height: number;
+    // (undocumented)
+    readonly id: string;
+    // (undocumented)
+    readonly isClosable: boolean;
+    // (undocumented)
+    readonly minHeight: number;
+    // (undocumented)
+    readonly minWidth: number;
+    // (undocumented)
+    readonly type: ItemType;
+    // (undocumented)
+    readonly width: number;
+}
+
+// @public (undocumented)
+export namespace ResolvedItemConfig {
+    const // @internal (undocumented)
+    defaults: ResolvedItemConfig;
+    export function createCopy(original: ResolvedItemConfig, content?: ResolvedItemConfig[]): ResolvedItemConfig;
+    // (undocumented)
+    export function createDefault(type: ItemType): ResolvedItemConfig;
+    // (undocumented)
+    export function isComponentItem(itemConfig: ResolvedItemConfig): itemConfig is ResolvedComponentItemConfig;
+    // @internal (undocumented)
+    export function isGroundItem(itemConfig: ResolvedItemConfig): itemConfig is ResolvedGroundItemConfig;
+    // (undocumented)
+    export function isStackItem(itemConfig: ResolvedItemConfig): itemConfig is ResolvedStackItemConfig;
+}
+
+// @public (undocumented)
+export interface ResolvedLayoutConfig {
+    // (undocumented)
+    readonly dimensions: ResolvedLayoutConfig.Dimensions;
+    // (undocumented)
+    readonly header: ResolvedLayoutConfig.Header;
+    // (undocumented)
+    readonly openPopouts: ResolvedPopoutLayoutConfig[];
+    // (undocumented)
+    readonly resolved: true;
+    // (undocumented)
+    readonly root: ResolvedRootItemConfig | undefined;
+    // (undocumented)
+    readonly settings: ResolvedLayoutConfig.Settings;
+}
+
+// @public (undocumented)
+export namespace ResolvedLayoutConfig {
+    // (undocumented)
+    export function copyOpenPopouts(original: ResolvedPopoutLayoutConfig[]): ResolvedPopoutLayoutConfig[];
+    // (undocumented)
+    export function createCopy(config: ResolvedLayoutConfig): ResolvedLayoutConfig;
+    // (undocumented)
+    export function createDefault(): ResolvedLayoutConfig;
+    // (undocumented)
+    export interface Dimensions {
+        // (undocumented)
+        readonly borderGrabWidth: number;
+        // (undocumented)
+        readonly borderWidth: number;
+        // (undocumented)
+        readonly dragProxyHeight: number;
+        // (undocumented)
+        readonly dragProxyWidth: number;
+        // (undocumented)
+        readonly headerHeight: number;
+        // (undocumented)
+        readonly minItemHeight: number;
+        // (undocumented)
+        readonly minItemWidth: number;
+    }
+    // (undocumented)
+    export namespace Dimensions {
+        // (undocumented)
+        export function createCopy(original: Dimensions): Dimensions;
+        const // @internal (undocumented)
+        defaults: ResolvedLayoutConfig.Dimensions;
+    }
+    // (undocumented)
+    export interface Header {
+        // (undocumented)
+        readonly close: false | string;
+        // (undocumented)
+        readonly dock: string;
+        // (undocumented)
+        readonly maximise: false | string;
+        // (undocumented)
+        readonly minimise: string;
+        // (undocumented)
+        readonly popout: false | string;
+        // (undocumented)
+        readonly show: false | Side;
+        // (undocumented)
+        readonly tabDropdown: string;
+    }
+    // (undocumented)
+    export namespace Header {
+        // (undocumented)
+        export function createCopy(original: Header): Header;
+        const // @internal (undocumented)
+        defaults: ResolvedLayoutConfig.Header;
+    }
+    // (undocumented)
+    export function isPopout(config: ResolvedLayoutConfig): config is ResolvedPopoutLayoutConfig;
+    // (undocumented)
+    export interface Settings {
+        // (undocumented)
+        readonly blockedPopoutsThrowError: boolean;
+        // (undocumented)
+        readonly closePopoutsOnUnload: boolean;
+        // (undocumented)
+        readonly constrainDragToContainer: boolean;
+        // (undocumented)
+        readonly popoutWholeStack: boolean;
+        // (undocumented)
+        readonly reorderEnabled: boolean;
+        // (undocumented)
+        readonly reorderOnTabMenuClick: boolean;
+        // (undocumented)
+        readonly responsiveMode: ResponsiveMode;
+        // (undocumented)
+        readonly selectionEnabled: boolean;
+        // (undocumented)
+        readonly tabControlOffset: number;
+        // (undocumented)
+        readonly tabOverlapAllowance: number;
+    }
+    // (undocumented)
+    export namespace Settings {
+        const // @internal (undocumented)
+        defaults: ResolvedLayoutConfig.Settings;
+        // (undocumented)
+        export function createCopy(original: Settings): Settings;
+    }
+}
+
+// @public (undocumented)
+export interface ResolvedPopoutLayoutConfig extends ResolvedLayoutConfig {
+    // (undocumented)
+    readonly indexInParent: number | null;
+    // (undocumented)
+    readonly parentId: string | null;
+    // (undocumented)
+    readonly window: ResolvedPopoutLayoutConfig.Window;
+}
+
+// @public (undocumented)
+export namespace ResolvedPopoutLayoutConfig {
+    // (undocumented)
+    export function createCopy(original: ResolvedPopoutLayoutConfig): ResolvedPopoutLayoutConfig;
+    // (undocumented)
+    export interface Window {
+        // (undocumented)
+        readonly height: number | null;
+        // (undocumented)
+        readonly left: number | null;
+        // (undocumented)
+        readonly top: number | null;
+        // (undocumented)
+        readonly width: number | null;
+    }
+    // (undocumented)
+    export namespace Window {
+        // (undocumented)
+        export function createCopy(original: Window): Window;
+        const // @internal (undocumented)
+        defaults: ResolvedPopoutLayoutConfig.Window;
+    }
+}
+
+// @public (undocumented)
+export interface ResolvedReactComponentConfig extends ResolvedComponentItemConfig {
+    // (undocumented)
+    readonly component: string;
+    // (undocumented)
+    readonly props?: unknown;
+    // (undocumented)
+    readonly type: 'react-component';
+}
+
+// @public (undocumented)
+export namespace ResolvedReactComponentConfig {
+    const // (undocumented)
+    REACT_COMPONENT_ID = "lm-react-component";
+    // (undocumented)
+    export function createCopy(original: ResolvedReactComponentConfig): ResolvedReactComponentConfig;
+    // (undocumented)
+    export function createDefault(): ResolvedReactComponentConfig;
+}
+
+// @public
+export type ResolvedRootItemConfig = ResolvedRowOrColumnItemConfig | ResolvedStackItemConfig | ResolvedComponentItemConfig;
+
+// @public (undocumented)
+export namespace ResolvedRootItemConfig {
+    // (undocumented)
+    export function createCopy(config: ResolvedRootItemConfig): ResolvedRootItemConfig;
+    // (undocumented)
+    export function isRootItemConfig(itemConfig: ResolvedItemConfig): itemConfig is ResolvedRootItemConfig;
+}
+
+// @public
+export interface ResolvedRowOrColumnItemConfig extends ResolvedItemConfig {
+    readonly content: readonly (ResolvedRowOrColumnItemConfig | ResolvedStackItemConfig | ResolvedComponentItemConfig)[];
+    // (undocumented)
+    readonly type: 'row' | 'column';
+}
+
+// @public (undocumented)
+export namespace ResolvedRowOrColumnItemConfig {
+    // (undocumented)
+    export type ChildItemConfig = ResolvedRowOrColumnItemConfig | ResolvedStackItemConfig | ResolvedComponentItemConfig;
+    // (undocumented)
+    export function copyContent(original: readonly ChildItemConfig[]): ChildItemConfig[];
+    // (undocumented)
+    export function createCopy(original: ResolvedRowOrColumnItemConfig, content?: ChildItemConfig[]): ResolvedRowOrColumnItemConfig;
+    // (undocumented)
+    export function createDefault(type: 'row' | 'column'): ResolvedRowOrColumnItemConfig;
+    // (undocumented)
+    export function isChildItemConfig(itemConfig: ResolvedItemConfig): itemConfig is ChildItemConfig;
+}
+
+// @public (undocumented)
+export interface ResolvedSerialisableComponentConfig extends ResolvedComponentItemConfig {
+    // (undocumented)
+    readonly componentState?: JsonValue;
+    // (undocumented)
+    readonly type: 'component';
+}
+
+// @public (undocumented)
+export namespace ResolvedSerialisableComponentConfig {
+    // (undocumented)
+    export function createCopy(original: ResolvedSerialisableComponentConfig): ResolvedSerialisableComponentConfig;
+    // (undocumented)
+    export function createDefault(): ResolvedSerialisableComponentConfig;
+}
+
+// @public (undocumented)
+export interface ResolvedStackItemConfig extends ResolvedHeaderedItemConfig {
+    // (undocumented)
+    readonly activeItemIndex: number;
+    // (undocumented)
+    readonly content: ResolvedComponentItemConfig[];
+    // (undocumented)
+    readonly type: 'stack';
+}
+
+// @public (undocumented)
+export namespace ResolvedStackItemConfig {
+    const // (undocumented)
+    defaultActiveItemIndex = 0;
+    // (undocumented)
+    export function copyContent(original: ResolvedComponentItemConfig[]): ResolvedComponentItemConfig[];
+    // (undocumented)
+    export function createCopy(original: ResolvedStackItemConfig, content?: ResolvedComponentItemConfig[]): ResolvedStackItemConfig;
+    // (undocumented)
+    export function createDefault(): ResolvedStackItemConfig;
+}
+
+// @public (undocumented)
 export type ResponsiveMode = 'none' | 'always' | 'onload';
 
 // @public (undocumented)
@@ -911,31 +1230,31 @@ export namespace ResponsiveMode {
     onload = "onload";
 }
 
-// @public
+// @public (undocumented)
 export type RootItemConfig = RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig;
 
 // @public (undocumented)
 export namespace RootItemConfig {
     // (undocumented)
-    export function createCopy(config: RootItemConfig): RootItemConfig;
-    // (undocumented)
     export function isRootItemConfig(itemConfig: ItemConfig): itemConfig is RootItemConfig;
+    // (undocumented)
+    export function resolve(itemConfig: RootItemConfig | undefined): ResolvedRootItemConfig | undefined;
 }
 
 // @public (undocumented)
 export class RowOrColumn extends ContentItem {
     // @internal
-    constructor(isColumn: boolean, layoutManager: LayoutManager, config: RowOrColumnItemConfig, _rowOrColumnParent: ContentItem);
+    constructor(isColumn: boolean, layoutManager: LayoutManager, config: ResolvedRowOrColumnItemConfig, _rowOrColumnParent: ContentItem);
     addChild(contentItem: ContentItem, index?: number, suspendResize?: boolean): number;
     // (undocumented)
-    addItem(userItemConfig: UserRowOrColumnItemConfig | UserStackItemConfig | UserComponentItemConfig, index?: number): number;
+    addItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig, index?: number): number;
     // (undocumented)
     addSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): number;
     dock(contentItem: Stack, mode?: boolean, collapsed?: boolean): void;
     // @internal
     init(): void;
     // (undocumented)
-    newItem(userItemConfig: UserRowOrColumnItemConfig | UserStackItemConfig | UserComponentItemConfig, index?: number): ContentItem;
+    newItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig, index?: number): ContentItem;
     // (undocumented)
     newSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): ComponentItem;
     removeChild(contentItem: ContentItem, keepChild: boolean): void;
@@ -943,7 +1262,7 @@ export class RowOrColumn extends ContentItem {
     // @internal (undocumented)
     setParent(parent: ContentItem): void;
     // (undocumented)
-    toConfig(): RowOrColumnItemConfig;
+    toConfig(): ResolvedRowOrColumnItemConfig;
     updateSize(): void;
     // @internal
     validateDocking(): void;
@@ -959,11 +1278,12 @@ export namespace RowOrColumn {
     export function setElementDimensionSize(element: HTMLElement, dimension: WidthOrHeightPropertyName, value: number): void;
 }
 
-// @public
+// @public (undocumented)
 export interface RowOrColumnItemConfig extends ItemConfig {
-    readonly content: readonly (RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig)[];
     // (undocumented)
-    readonly type: 'row' | 'column';
+    content: (RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig)[];
+    // (undocumented)
+    type: 'row' | 'column';
 }
 
 // @public (undocumented)
@@ -971,29 +1291,24 @@ export namespace RowOrColumnItemConfig {
     // (undocumented)
     export type ChildItemConfig = RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig;
     // (undocumented)
-    export function copyContent(original: readonly ChildItemConfig[]): ChildItemConfig[];
-    // (undocumented)
-    export function createCopy(original: RowOrColumnItemConfig, content?: ChildItemConfig[]): RowOrColumnItemConfig;
-    // (undocumented)
-    export function createDefault(type: 'row' | 'column'): RowOrColumnItemConfig;
-    // (undocumented)
     export function isChildItemConfig(itemConfig: ItemConfig): itemConfig is ChildItemConfig;
+    // (undocumented)
+    export function resolve(itemConfig: RowOrColumnItemConfig): ResolvedRowOrColumnItemConfig;
+    // (undocumented)
+    export function resolveContent(content: ChildItemConfig[] | undefined): ResolvedRowOrColumnItemConfig.ChildItemConfig[];
 }
 
 // @public (undocumented)
 export interface SerialisableComponentConfig extends ComponentItemConfig {
+    componentState?: JsonValue;
     // (undocumented)
-    readonly componentState?: JsonValue;
-    // (undocumented)
-    readonly type: 'component';
+    type: 'component';
 }
 
 // @public (undocumented)
 export namespace SerialisableComponentConfig {
     // (undocumented)
-    export function createCopy(original: SerialisableComponentConfig): SerialisableComponentConfig;
-    // (undocumented)
-    export function createDefault(): SerialisableComponentConfig;
+    export function resolve(itemConfig: SerialisableComponentConfig): ResolvedSerialisableComponentConfig;
 }
 
 // @public (undocumented)
@@ -1014,11 +1329,11 @@ export namespace Side {
 // @public (undocumented)
 export class Stack extends ContentItem {
     // @internal
-    constructor(layoutManager: LayoutManager, config: StackItemConfig, _stackParent: Stack.Parent);
+    constructor(layoutManager: LayoutManager, config: ResolvedStackItemConfig, _stackParent: Stack.Parent);
     // (undocumented)
     addChild(contentItem: ContentItem, index?: number): number;
     // (undocumented)
-    addItem(userItemConfig: UserComponentItemConfig, index?: number): number;
+    addItem(itemConfig: ComponentItemConfig, index?: number): number;
     // (undocumented)
     addSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): number;
     // (undocumented)
@@ -1054,7 +1369,7 @@ export class Stack extends ContentItem {
     // (undocumented)
     get isMaximised(): boolean;
     // (undocumented)
-    newItem(userItemConfig: UserComponentItemConfig, index?: number): ContentItem;
+    newItem(itemConfig: ComponentItemConfig, index?: number): ContentItem;
     // (undocumented)
     newSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): ComponentItem;
     // @internal
@@ -1080,7 +1395,7 @@ export class Stack extends ContentItem {
     // @internal (undocumented)
     setUndocked(): void;
     // (undocumented)
-    toConfig(): StackItemConfig;
+    toConfig(): ResolvedStackItemConfig;
     toggleMaximise(ev?: Event): void;
     // (undocumented)
     updateSize(): void;
@@ -1138,24 +1453,19 @@ export namespace Stack {
 
 // @public (undocumented)
 export interface StackItemConfig extends HeaderedItemConfig {
+    activeItemIndex?: number;
     // (undocumented)
-    readonly activeItemIndex: number;
+    content: ComponentItemConfig[];
     // (undocumented)
-    readonly content: ComponentItemConfig[];
-    // (undocumented)
-    readonly type: 'stack';
+    type: 'stack';
 }
 
 // @public (undocumented)
 export namespace StackItemConfig {
-    const // (undocumented)
-    defaultActiveItemIndex = 0;
     // (undocumented)
-    export function copyContent(original: ComponentItemConfig[]): ComponentItemConfig[];
+    export function resolve(itemConfig: StackItemConfig): ResolvedStackItemConfig;
     // (undocumented)
-    export function createCopy(original: StackItemConfig, content?: ComponentItemConfig[]): StackItemConfig;
-    // (undocumented)
-    export function createDefault(): StackItemConfig;
+    export function resolveContent(content: ComponentItemConfig[] | undefined): ResolvedComponentItemConfig[];
 }
 
 // @public
@@ -1190,316 +1500,6 @@ export namespace Tab {
     export type CloseEvent = (componentItem: ComponentItem) => void;
     // @internal (undocumented)
     export type DragStartEvent = (x: number, y: number, dragListener: DragListener, componentItem: ComponentItem) => void;
-}
-
-// @public (undocumented)
-export interface UserComponentItemConfig extends UserHeaderedItemConfig {
-    componentName: string;
-    // (undocumented)
-    readonly content?: [];
-    reorderEnabled?: boolean;
-}
-
-// @public (undocumented)
-export interface UserHeaderedItemConfig extends UserItemConfig {
-    // @deprecated (undocumented)
-    hasHeaders?: boolean;
-    // (undocumented)
-    header?: UserHeaderedItemConfig.Header;
-    // (undocumented)
-    maximised?: boolean;
-}
-
-// @public (undocumented)
-export namespace UserHeaderedItemConfig {
-    // (undocumented)
-    export interface Header {
-        // (undocumented)
-        close?: string;
-        // (undocumented)
-        dock?: false | string;
-        // (undocumented)
-        maximise?: false | string;
-        // (undocumented)
-        minimise?: string;
-        // (undocumented)
-        popout?: false | string;
-        // (undocumented)
-        show?: false | Side;
-        // (undocumented)
-        tabDropdown?: false | string;
-    }
-    // (undocumented)
-    export namespace Header {
-        // (undocumented)
-        export function resolve(userHeader: Header | undefined, hasHeaders: boolean | undefined): HeaderedItemConfig.Header | undefined;
-    }
-    // (undocumented)
-    export function resolveIdAndMaximised(config: UserHeaderedItemConfig): {
-        id: string;
-        maximised: boolean;
-    };
-}
-
-// @public (undocumented)
-export interface UserItemConfig {
-    content?: UserItemConfig[];
-    height?: number;
-    id?: string | string[];
-    isClosable?: boolean;
-    minHeight?: number;
-    minWidth?: number;
-    title?: string;
-    type: ItemType;
-    width?: number;
-}
-
-// @public (undocumented)
-export namespace UserItemConfig {
-    // (undocumented)
-    export function isColumn(config: UserItemConfig): config is UserItemConfig;
-    // (undocumented)
-    export function isComponent(config: UserItemConfig): config is UserSerialisableComponentConfig | UserReactComponentConfig;
-    // (undocumented)
-    export function isGround(config: UserItemConfig): config is UserItemConfig;
-    // (undocumented)
-    export function isReactComponent(config: UserItemConfig): config is UserReactComponentConfig;
-    // (undocumented)
-    export function isRow(config: UserItemConfig): config is UserItemConfig;
-    // (undocumented)
-    export function isSerialisableComponent(config: UserItemConfig): config is UserSerialisableComponentConfig;
-    // (undocumented)
-    export function isStack(config: UserItemConfig): config is UserItemConfig;
-    // (undocumented)
-    export function resolve(user: UserItemConfig): ItemConfig;
-    // (undocumented)
-    export function resolveContent(content: UserItemConfig[] | undefined): ItemConfig[];
-    // (undocumented)
-    export function resolveId(id: string | string[] | undefined): string;
-}
-
-// @public (undocumented)
-export interface UserLayoutConfig {
-    // @deprecated (undocumented)
-    content?: (UserRowOrColumnItemConfig | UserStackItemConfig | UserComponentItemConfig)[];
-    // (undocumented)
-    dimensions?: UserLayoutConfig.Dimensions;
-    // (undocumented)
-    header?: UserLayoutConfig.Header;
-    // @deprecated (undocumented)
-    labels?: UserLayoutConfig.Labels;
-    // @deprecated (undocumented)
-    maximisedItemId?: string | null;
-    // (undocumented)
-    openPopouts?: UserPopoutLayoutConfig[];
-    // (undocumented)
-    root: UserRootItemConfig;
-    // (undocumented)
-    settings?: UserLayoutConfig.Settings;
-}
-
-// @public
-export namespace UserLayoutConfig {
-    // (undocumented)
-    export interface Dimensions {
-        borderGrabWidth?: number;
-        borderWidth?: number;
-        dragProxyHeight?: number;
-        dragProxyWidth?: number;
-        headerHeight?: number;
-        minItemHeight?: number;
-        minItemWidth?: number;
-    }
-    // (undocumented)
-    export namespace Dimensions {
-        // (undocumented)
-        export function resolve(user: Dimensions | undefined): LayoutConfig.Dimensions;
-    }
-    // (undocumented)
-    export function fromLayoutConfig(config: LayoutConfig): UserLayoutConfig;
-    // (undocumented)
-    export interface Header {
-        close?: false | string;
-        maximise?: false | string;
-        minimise?: string;
-        popin?: string;
-        popout?: false | string;
-        show?: false | Side;
-        tabDropdown?: string;
-    }
-    // (undocumented)
-    export namespace Header {
-        // (undocumented)
-        export function resolve(userHeader: Header | undefined, userSettings: UserLayoutConfig.Settings | undefined, userLabels: UserLayoutConfig.Labels | undefined): LayoutConfig.Header;
-    }
-    // (undocumented)
-    export function isPopout(config: UserLayoutConfig): config is UserPopoutLayoutConfig;
-    // (undocumented)
-    export function isUserLayoutConfig(configOrUserConfig: LayoutConfig | UserLayoutConfig): configOrUserConfig is UserLayoutConfig;
-    // (undocumented)
-    export interface Labels {
-        // @deprecated (undocumented)
-        close?: string;
-        // @deprecated (undocumented)
-        maximise?: string;
-        // @deprecated (undocumented)
-        minimise?: string;
-        // @deprecated (undocumented)
-        popin?: string;
-        // @deprecated (undocumented)
-        popout?: string;
-        // @deprecated (undocumented)
-        tabDropdown?: string;
-    }
-    // (undocumented)
-    export function resolve(user: UserLayoutConfig): LayoutConfig;
-    // (undocumented)
-    export function resolveOpenPopouts(userPopoutConfigs: UserPopoutLayoutConfig[] | undefined): PopoutLayoutConfig[];
-    // (undocumented)
-    export interface Settings {
-        blockedPopoutsThrowError?: boolean;
-        closePopoutsOnUnload?: boolean;
-        constrainDragToContainer?: boolean;
-        // @deprecated (undocumented)
-        hasHeaders?: boolean;
-        popoutWholeStack?: boolean;
-        reorderEnabled?: boolean;
-        reorderOnTabMenuClick?: boolean;
-        responsiveMode?: ResponsiveMode;
-        selectionEnabled?: boolean;
-        // @deprecated
-        showCloseIcon?: boolean;
-        // @deprecated
-        showMaximiseIcon?: boolean;
-        // @deprecated
-        showPopoutIcon?: boolean;
-        tabControlOffset?: number;
-        tabOverlapAllowance?: number;
-    }
-    // (undocumented)
-    export namespace Settings {
-        // (undocumented)
-        export function resolve(user: Settings | undefined): LayoutConfig.Settings;
-    }
-}
-
-// @public (undocumented)
-export interface UserPopoutLayoutConfig extends UserLayoutConfig {
-    // @deprecated (undocumented)
-    dimensions: UserPopoutLayoutConfig.Dimensions | undefined;
-    indexInParent: number | null | undefined;
-    parentId: string | null | undefined;
-    // (undocumented)
-    window: UserPopoutLayoutConfig.Window | undefined;
-}
-
-// @public (undocumented)
-export namespace UserPopoutLayoutConfig {
-    // @deprecated (undocumented)
-    export interface Dimensions extends UserLayoutConfig.Dimensions {
-        // @deprecated (undocumented)
-        height: number | null;
-        // @deprecated (undocumented)
-        left: number | null;
-        // @deprecated (undocumented)
-        top: number | null;
-        // @deprecated (undocumented)
-        width: number | null;
-    }
-    // (undocumented)
-    export function resolve(user: UserPopoutLayoutConfig): PopoutLayoutConfig;
-    // (undocumented)
-    export interface Window {
-        // (undocumented)
-        height?: number;
-        // (undocumented)
-        left?: number;
-        // (undocumented)
-        top?: number;
-        // (undocumented)
-        width?: number;
-    }
-    // (undocumented)
-    export namespace Window {
-        // (undocumented)
-        export function resolve(userWindow: Window | undefined, userDimensions: Dimensions | undefined): PopoutLayoutConfig.Window;
-    }
-}
-
-// @public (undocumented)
-export interface UserReactComponentConfig extends UserComponentItemConfig {
-    // (undocumented)
-    component?: string;
-    props?: JsonValue;
-    // (undocumented)
-    type: 'react-component';
-}
-
-// @public (undocumented)
-export namespace UserReactComponentConfig {
-    // (undocumented)
-    export function resolve(user: UserReactComponentConfig): ReactComponentConfig;
-}
-
-// @public (undocumented)
-export type UserRootItemConfig = UserRowOrColumnItemConfig | UserStackItemConfig | UserComponentItemConfig;
-
-// @public (undocumented)
-export namespace UserRootItemConfig {
-    // (undocumented)
-    export function isUserRootItemConfig(itemConfig: UserItemConfig): itemConfig is UserRootItemConfig;
-    // (undocumented)
-    export function resolve(user: UserRootItemConfig | undefined): RootItemConfig | undefined;
-}
-
-// @public (undocumented)
-export interface UserRowOrColumnItemConfig extends UserItemConfig {
-    // (undocumented)
-    content: (UserRowOrColumnItemConfig | UserStackItemConfig | UserComponentItemConfig)[];
-    // (undocumented)
-    type: 'row' | 'column';
-}
-
-// @public (undocumented)
-export namespace UserRowOrColumnItemConfig {
-    // (undocumented)
-    export type ChildItemConfig = UserRowOrColumnItemConfig | UserStackItemConfig | UserComponentItemConfig;
-    // (undocumented)
-    export function isChildItemConfig(itemConfig: UserItemConfig): itemConfig is ChildItemConfig;
-    // (undocumented)
-    export function resolve(user: UserRowOrColumnItemConfig): RowOrColumnItemConfig;
-    // (undocumented)
-    export function resolveContent(content: ChildItemConfig[] | undefined): RowOrColumnItemConfig.ChildItemConfig[];
-}
-
-// @public (undocumented)
-export interface UserSerialisableComponentConfig extends UserComponentItemConfig {
-    componentState?: JsonValue;
-    // (undocumented)
-    type: 'component';
-}
-
-// @public (undocumented)
-export namespace UserSerialisableComponentConfig {
-    // (undocumented)
-    export function resolve(user: UserSerialisableComponentConfig): SerialisableComponentConfig;
-}
-
-// @public (undocumented)
-export interface UserStackItemConfig extends UserHeaderedItemConfig {
-    activeItemIndex?: number;
-    // (undocumented)
-    content: UserComponentItemConfig[];
-    // (undocumented)
-    type: 'stack';
-}
-
-// @public (undocumented)
-export namespace UserStackItemConfig {
-    // (undocumented)
-    export function resolve(user: UserStackItemConfig): StackItemConfig;
-    // (undocumented)
-    export function resolveContent(content: UserComponentItemConfig[] | undefined): ComponentItemConfig[];
 }
 
 // Warning: (ae-internal-missing-underscore) The name "WidthAndHeight" should be prefixed with an underscore because the declaration is marked as @internal

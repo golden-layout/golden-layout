@@ -1,5 +1,5 @@
+import { ItemConfig, ComponentItemConfig } from '../config/config';
 import { ResolvedComponentItemConfig, ResolvedItemConfig } from '../config/resolved-config';
-import { UserComponentItemConfig, UserItemConfig } from '../config/user-config';
 import { UnexpectedNullError } from '../errors/internal-error';
 import { ComponentItem } from '../items/component-item';
 import { GroundItem } from '../items/ground-item';
@@ -22,7 +22,7 @@ export class DragSource {
  
     /** @internal */
     constructor(private _element: HTMLElement,
-        private _itemConfigOrFtn: UserComponentItemConfig | (() => UserComponentItemConfig),
+        private _itemConfigOrFtn: ComponentItemConfig | (() => ComponentItemConfig),
         private _layoutManager: LayoutManager
     ) {
         this._dragListener = null;
@@ -64,14 +64,14 @@ export class DragSource {
      * @internal
      */
     private onDragStart(x: number, y: number) {
-        let itemConfig: UserComponentItemConfig;
+        let itemConfig: ComponentItemConfig;
         if (typeof this._itemConfigOrFtn === "function") {
             itemConfig = this._itemConfigOrFtn();
         } else {
             itemConfig = this._itemConfigOrFtn;
         }
 
-        const resolvedItemConfig = UserItemConfig.resolve(itemConfig);
+        const resolvedItemConfig = ItemConfig.resolve(itemConfig);
 
         // const contentItem = this._layoutManager._$normalizeContentItem($.extend(true, {}, itemConfig));
         const copiedConfig = ResolvedItemConfig.createCopy(resolvedItemConfig) as ResolvedComponentItemConfig;

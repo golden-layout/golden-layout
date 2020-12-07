@@ -1,5 +1,5 @@
+import { ItemConfig, ComponentItemConfig, SerialisableComponentConfig } from '../config/config';
 import { ResolvedComponentItemConfig, ResolvedHeaderedItemConfig, ResolvedItemConfig, ResolvedStackItemConfig } from '../config/resolved-config';
-import { UserComponentItemConfig, UserItemConfig, UserSerialisableComponentConfig } from '../config/user-config';
 import { Header } from '../controls/header';
 import { AssertError, UnexpectedNullError } from '../errors/internal-error';
 import { LayoutManager } from '../layout-manager';
@@ -278,7 +278,7 @@ export class Stack extends ContentItem {
     }
 
     newSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): ComponentItem {
-        const itemConfig: UserSerialisableComponentConfig = {
+        const itemConfig: SerialisableComponentConfig = {
             type: 'component',
             componentName: componentTypeName,
             componentState,
@@ -287,7 +287,7 @@ export class Stack extends ContentItem {
     }
 
     addSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): number {
-        const itemConfig: UserSerialisableComponentConfig = {
+        const itemConfig: SerialisableComponentConfig = {
             type: 'component',
             componentName: componentTypeName,
             componentState,
@@ -295,14 +295,14 @@ export class Stack extends ContentItem {
         return this.addItem(itemConfig, index);
     }
 
-    newItem(userItemConfig: UserComponentItemConfig,  index?: number): ContentItem {
-        index = this.addItem(userItemConfig, index);
+    newItem(itemConfig: ComponentItemConfig,  index?: number): ContentItem {
+        index = this.addItem(itemConfig, index);
         return this.contentItems[index];
     }
 
-    addItem(userItemConfig: UserComponentItemConfig, index?: number): number {
-        const itemConfig = UserItemConfig.resolve(userItemConfig);
-        const contentItem = this.layoutManager.createAndInitContentItem(itemConfig, this);
+    addItem(itemConfig: ComponentItemConfig, index?: number): number {
+        const resolvedItemConfig = ItemConfig.resolve(itemConfig);
+        const contentItem = this.layoutManager.createAndInitContentItem(resolvedItemConfig, this);
         return this.addChild(contentItem, index);
     }
 

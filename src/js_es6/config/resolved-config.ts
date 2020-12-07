@@ -4,7 +4,7 @@ import { deepExtendValue } from '../utils/utils';
 
 /** @public */
 export interface ResolvedItemConfig {
-    // see UserItemConfig for comments
+    // see ItemConfig for comments
     readonly type: ItemType;
     readonly content: readonly ResolvedItemConfig[];
     readonly width: number;
@@ -223,7 +223,7 @@ export namespace ResolvedComponentItemConfig {
 
 /** @public */
 export interface ResolvedSerialisableComponentConfig extends ResolvedComponentItemConfig {
-    // see UserJsonComponentConfig for comments
+    // see SerialisableComponentConfig for comments
     readonly type: 'component';
     readonly componentState?: JsonValue;
 }
@@ -273,7 +273,7 @@ export namespace ResolvedSerialisableComponentConfig {
 
 /** @public */
 export interface ResolvedReactComponentConfig extends ResolvedComponentItemConfig {
-    // see UserReactComponentConfig for comments
+    // see ReactComponentConfig for comments
     readonly type: 'react-component';
     readonly component: string;
     readonly props?: unknown;
@@ -470,7 +470,7 @@ export interface ResolvedLayoutConfig {
 /** @public */
 export namespace ResolvedLayoutConfig {
     export interface Settings {
-        // see UserConfig.Settings for comments
+        // see Config.Settings for comments
         readonly constrainDragToContainer: boolean;
         readonly reorderEnabled: boolean; // also in ResolvedItemConfig which takes precedence
         readonly selectionEnabled: boolean;
@@ -515,7 +515,7 @@ export namespace ResolvedLayoutConfig {
     }
 
     export interface Dimensions {
-        // see UserConfig.Dimensions for comments
+        // see LayoutConfig.Dimensions for comments
         readonly borderWidth: number;
         readonly borderGrabWidth: number,
         readonly minItemHeight: number;

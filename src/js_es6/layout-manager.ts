@@ -1,18 +1,20 @@
+import { StackItemConfig, ComponentItemConfig, LayoutConfig, RowOrColumnItemConfig, SerialisableComponentConfig } from './config/config'
 import {
-
-    ResolvedLayoutConfig,
-    ResolvedPopoutLayoutConfig, ResolvedComponentItemConfig,
+    ResolvedComponentItemConfig,
 
 
-    ResolvedItemConfig,
-
+    ResolvedItemConfig, ResolvedLayoutConfig,
+    ResolvedPopoutLayoutConfig,
 
 
 
-    ResolvedStackItemConfig, ResolvedRootItemConfig,
-    ResolvedRowOrColumnItemConfig
+
+
+
+
+    ResolvedRootItemConfig,
+    ResolvedRowOrColumnItemConfig, ResolvedStackItemConfig
 } from './config/resolved-config'
-import { UserComponentItemConfig, UserLayoutConfig, UserRowOrColumnItemConfig, UserSerialisableComponentConfig, UserStackItemConfig } from './config/user-config'
 import { ComponentContainer } from './container/component-container'
 import { BrowserPopout } from './controls/browser-popout'
 import { DragProxy } from './controls/drag-proxy'
@@ -453,9 +455,9 @@ export abstract class LayoutManager extends EventEmitter {
 
     /**
      * Loads a new layout
-     * @param userLayoutConfig - New layout to be loaded
+     * @param layoutConfig - New layout to be loaded
      */
-    loadLayout(userLayoutConfig: UserLayoutConfig): void {
+    loadLayout(layoutConfig: LayoutConfig): void {
         if (!this.isInitialised) {
             // In case application not correctly using legacy constructor
             throw new Error('GoldenLayout: Need to call init() if LayoutConfig with defined root passed to constructor')
@@ -463,7 +465,7 @@ export abstract class LayoutManager extends EventEmitter {
             if (this._groundItem === null) {
                 throw new UnexpectedNullError('LMLL11119');
             } else {
-                this.layoutConfig = UserLayoutConfig.resolve(userLayoutConfig);
+                this.layoutConfig = LayoutConfig.resolve(layoutConfig);
                 this._groundItem.loadRoot(this.layoutConfig.root);
                 this.checkLoadedLayoutMaximiseItem();
                 this.adjustColumnsResponsive();
@@ -533,29 +535,29 @@ export abstract class LayoutManager extends EventEmitter {
 
     /**
      * Adds a new child ContentItem under the root ContentItem.  If a root does not exist, then create root ContentItem instead
-     * @param userItemConfig - ResolvedItemConfig of child to be added.
+     * @param itemConfig - ResolvedItemConfig of child to be added.
      * @param index - Position under root. If undefined, then last.
      * @returns New ContentItem created.
     */
-    newItem(userItemConfig: UserRowOrColumnItemConfig | UserStackItemConfig | UserComponentItemConfig,  index?: number): ContentItem {
+    newItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig,  index?: number): ContentItem {
         if (this._groundItem === null) {
             throw new Error('Cannot add item before init');
         } else {
-            return this._groundItem.newItem(userItemConfig, index);
+            return this._groundItem.newItem(itemConfig, index);
         }
     }
 
     /**
      * Adds a new child ContentItem under the root ContentItem.  If a root does not exist, then create root ContentItem instead
-     * @param userItemConfig - ResolvedItemConfig of child to be added.
+     * @param itemConfig - ResolvedItemConfig of child to be added.
      * @param index - Position under root. If undefined, then last.
      * @returns -1 if added as root otherwise index in root ContentItem's content
     */
-    addItem(userItemConfig: UserRowOrColumnItemConfig | UserStackItemConfig | UserComponentItemConfig,  index?: number): number {
+    addItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig,  index?: number): number {
         if (this._groundItem === null) {
             throw new Error('Cannot add item before init');
         } else {
-            return this._groundItem.addItem(userItemConfig, index);
+            return this._groundItem.addItem(itemConfig, index);
         }
     }
 
@@ -585,7 +587,7 @@ export abstract class LayoutManager extends EventEmitter {
         if (this._groundItem === null) {
             throw new Error('Cannot add component before init');
         } else {
-            const itemConfig: UserSerialisableComponentConfig = {
+            const itemConfig: SerialisableComponentConfig = {
                 type: 'component',
                 componentName: componentTypeName,
                 componentState,
@@ -598,11 +600,11 @@ export abstract class LayoutManager extends EventEmitter {
      * This can be used to display a Component all by itself.  The layout cannot be changed other than having another new layout loaded.
      * Note that, if this layout is saved and reloaded, it will reload with the Component as a child of a Stack.
     */
-    loadComponentAsRoot(userItemConfig: UserComponentItemConfig): void {
+    loadComponentAsRoot(itemConfig: ComponentItemConfig): void {
         if (this._groundItem === null) {
             throw new Error('Cannot add item before init');
         } else {
-            this._groundItem.loadComponentAsRoot(userItemConfig);
+            this._groundItem.loadComponentAsRoot(itemConfig);
         }
     }
 

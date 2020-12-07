@@ -1,5 +1,5 @@
+import { ItemConfig, ComponentItemConfig, ReactComponentConfig, SerialisableComponentConfig } from '../config/config';
 import { ResolvedComponentItemConfig } from '../config/resolved-config';
-import { UserComponentItemConfig, UserItemConfig, UserReactComponentConfig, UserSerialisableComponentConfig } from '../config/user-config';
 import { Tab } from '../controls/tab';
 import { AssertError, UnexpectedNullError } from '../errors/internal-error';
 import { ComponentItem } from '../items/component-item';
@@ -217,39 +217,39 @@ export class ComponentContainer extends EventEmitter {
     }
 
     /** Replaces component without affecting layout */
-    replaceComponent(userItemConfig: UserComponentItemConfig): void {
+    replaceComponent(itemConfig: ComponentItemConfig): void {
         this.releaseComponent();
 
-        let itemConfig: ResolvedComponentItemConfig;
-        if (UserItemConfig.isSerialisableComponent(userItemConfig)) {
+        let resolvedItemConfig: ResolvedComponentItemConfig;
+        if (ItemConfig.isSerialisableComponent(itemConfig)) {
             if (this._isReact) {
                 throw new Error('Cannot replace React component with Serialisable component')
             } else {
-                const config = UserSerialisableComponentConfig.resolve(userItemConfig);
+                const config = SerialisableComponentConfig.resolve(itemConfig);
                 this._initialState = config.componentState;
                 this._state = this._initialState;
-                itemConfig = config;
+                resolvedItemConfig = config;
             }
         } else {
-            if (UserItemConfig.isReactComponent(userItemConfig)) {
+            if (ItemConfig.isReactComponent(itemConfig)) {
                 if (!this._isReact) {
                     throw new Error('Cannot replace Serialisable component with React component')
                 } else {
-                    const config = UserReactComponentConfig.resolve(userItemConfig);
+                    const config = ReactComponentConfig.resolve(itemConfig);
                     this._initialState = config.props as JsonValue;
                     this._state = this._initialState;
-                    itemConfig = config;
+                    resolvedItemConfig = config;
                 }
             } else {
-                throw new Error('ReplaceComponent not passed a component UserItemConfig')
+                throw new Error('ReplaceComponent not passed a component ItemConfig')
             }
         }
 
-        this._componentName = itemConfig.componentName;
+        this._componentName = resolvedItemConfig.componentName;
 
-        this._updateItemConfigEvent(itemConfig);
+        this._updateItemConfigEvent(resolvedItemConfig);
 
-        this._component = this.layoutManager.getComponent(this, itemConfig);
+        this._component = this.layoutManager.getComponent(this, resolvedItemConfig);
         this.emit('stateChanged');
     }
 

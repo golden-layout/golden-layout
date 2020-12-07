@@ -93,26 +93,26 @@ If you wish to use the api-test application, then from within the new GoldenLayo
 The following API changes have been made:
 
 #### Config
-Configs are now strongly typed. In addition, GoldenLayout now has "Configs" and "User Configs"
-1. User Configs\
-Application developers will mainly work with "User Configs".  A "User Config" supports optional properties.  If a property is not specified, a default will be used.  In addition, "User Config" also will handle backwards compatibility.  It will migrate deprecated properties to their new values.\
-All GoldenLayout API calls expect a type of "User Config".  The one exception is `LayoutConfig.saveLayout()` which returns a "Config".
+Configs are now strongly typed. In addition, GoldenLayout now has "Configs" and "Resolved Configs"
 1. Configs\
-Golden-Layout internally uses "Config"s. Whenever an API function is passed a "User Config", GoldenLayout will resolve it to its corresponding "Config".  This resolving process will set default values where an optional value has not been specified, and it will also handle backwards compatibility.  This allows the GoldenLayout library to always work with fully configured Configs.
+Application developers will mainly work with "Configs".  A "Config" supports optional properties.  If a property is not specified, a default will be used.  In addition, "Config" also will handle backwards compatibility.  It will migrate deprecated properties to their new values.\
+Config parameters in GoldenLayout API methods will be of type "Config".  The one exception is `LayoutConfig.saveLayout()` which returns a "Resolved Config".
+1. Resolved Configs\
+Golden-Layout internally uses "Resolved Config"s. Whenever an API function is passed a "Config", GoldenLayout will resolve it to its corresponding "Resolved Config".  This resolving process will set default values where an optional value has not been specified. It will also handle backwards compatibility.  This allows the GoldenLayout library to always work with fully configured Configs.
 
-For persistence of configs, always save the "Config" returned by LayoutManager.saveLayout. When reloading a saved Layout, first convert the saved "Config" to a "User Config" by calling `UserLayoutConfig.fromLayoutConfig()`.
+For persistence of configs, always save the "Resolved Config" returned by LayoutManager.saveLayout. When reloading a saved Layout, first convert the saved "Resolved Config" to a "Config" by calling `LayoutConfig.fromResolved()`.
 
-Both "User Config" and "Config" have 2 types of interface hierarchies:
+Both "Resolved Config" and "Config" have 2 types of interface hierarchies:
 1. `ItemConfig`\
 This specifies the config for a content item.
 1. `LayoutConfig` (previously the `Config` interface)\
 This specifies the config for a layout.
 
-A `UserLayoutConfig` has a `root` property which specifies the ItemConfig of root content item of the layout.  `root` is not optional and must always be specified.
+A `LayoutConfig` has a `root` property which specifies the ItemConfig of root content item of the layout.  `root` is not optional and must always be specified.
 
-For examples of how to create User LayoutConfigs, please refer to the api-test program in the repository.
+For examples of how to create LayoutConfigs, please refer to the api-test program in the repository.
 
-Many of the User Config properties have been deprecated as they overlapped or were moved to more appropriate locations. Please refer to the `UserConfig.ts` source file for more information about these deprecations.
+Many of the Config properties have been deprecated as they overlapped or were moved to more appropriate locations. Please refer to the `config.ts` source file for more information about these deprecations.
 
 #### GoldenLayout class
 
@@ -135,7 +135,7 @@ Generate a component needed by GoldenLayout. The parameters specify its containe
 Use in conjunction with `getComponentEvent` to release/dispose any component created for GoldenLayout
 1. Do not call `init()`. Call `LayoutManager.loadLayout()` instead.
 1. `loadLayout()` (new function)\
-Will load the new layout specified in its `userLayoutConfig` parameter.  This can also be subsequently called whenever the GoldenLayout layout is to be replaced.
+Will load the new layout specified in its `LayoutConfig` parameter.  This can also be subsequently called whenever the GoldenLayout layout is to be replaced.
 1. `saveLayout()` (new function)\
 Saves the current layout as a `LayoutConfig`. Replaces the existing `toConfig()` function
 1. Do not call `toConfig()`. `Call LayoutManager.saveLayout()` instead.
@@ -148,6 +148,7 @@ Specifies the root content item of the layout (not the Ground content item).
 
 #### Content Items
 1. `AbstractContentItem` has been renamed to `ContentItem`
+1. `config` property has been removed. Use the toConfig() method instead (as recommended in the original GoldenLayout documentation).
 1. `ItemContainer` has been renamed to `ComponentContainer`
 1. `Component` has been renamed to `ComponentItem`.  "Component" now refers to the external component hosted inside GoldenLayout
 1. `Root` has been renamed to `GroundItem` and has been marked as internal only. Applications should never access GroundItem.  Note that the layout's root ContentItem is GroundItem's only child.  You can access this root ContentItem with `LayoutManager.rootItem`.
@@ -156,7 +157,6 @@ Specifies the root content item of the layout (not the Ground content item).
 #### ComponentContainer
 1. `contentElement` (new property - replaces `getElement()`)\
 Returns HTMLElement which hosts component
-1. `config` property has been removed. Use the toConfig() method instead (as recommended in the original GoldenLayout documentation).
 1. Do not use `getElement()`. Use the new `contentElement` property instead
 1. `initialState` (new getter)\
 Gets the componentState of the `ComponentItemConfig` used to create the contained component.

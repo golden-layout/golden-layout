@@ -1,9 +1,9 @@
+import { ItemConfig, StackItemConfig, ComponentItemConfig, RowOrColumnItemConfig, SerialisableComponentConfig } from '../config/config'
 import { ResolvedRowOrColumnItemConfig, ResolvedStackItemConfig } from '../config/resolved-config'
-import { UserComponentItemConfig, UserItemConfig, UserRowOrColumnItemConfig, UserSerialisableComponentConfig, UserStackItemConfig } from '../config/user-config'
 import { Splitter } from '../controls/splitter'
 import { AssertError, UnexpectedNullError } from '../errors/internal-error'
 import { LayoutManager } from '../layout-manager'
-import { WidthOrHeightPropertyName, ItemType, JsonValue, Side } from '../utils/types'
+import { ItemType, JsonValue, Side, WidthOrHeightPropertyName } from '../utils/types'
 import {
     createTemplateHtmlElement,
     getElementHeight,
@@ -71,7 +71,7 @@ export class RowOrColumn extends ContentItem {
     }
 
     newSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): ComponentItem {
-        const itemConfig: UserSerialisableComponentConfig = {
+        const itemConfig: SerialisableComponentConfig = {
             type: 'component',
             componentName: componentTypeName,
             componentState,
@@ -80,7 +80,7 @@ export class RowOrColumn extends ContentItem {
     }
 
     addSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): number {
-        const itemConfig: UserSerialisableComponentConfig = {
+        const itemConfig: SerialisableComponentConfig = {
             type: 'component',
             componentName: componentTypeName,
             componentState,
@@ -88,11 +88,11 @@ export class RowOrColumn extends ContentItem {
         return this.addItem(itemConfig, index);
     }
 
-    newItem(userItemConfig: UserRowOrColumnItemConfig | UserStackItemConfig | UserComponentItemConfig,  index?: number): ContentItem {
-        index = this.addItem(userItemConfig, index);
+    newItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig,  index?: number): ContentItem {
+        index = this.addItem(itemConfig, index);
         const createdItem = this.contentItems[index];
 
-        if (ContentItem.isStack(createdItem) && (UserItemConfig.isComponent(userItemConfig))) {
+        if (ContentItem.isStack(createdItem) && (ItemConfig.isComponent(itemConfig))) {
             // createdItem is a Stack which was created to hold wanted component.  Return component
             return createdItem.contentItems[0];
         } else {
@@ -100,11 +100,11 @@ export class RowOrColumn extends ContentItem {
         }
     }
 
-    addItem(userItemConfig: UserRowOrColumnItemConfig | UserStackItemConfig | UserComponentItemConfig,
+    addItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig,
         index?: number
     ): number {
-        const itemConfig = UserItemConfig.resolve(userItemConfig);
-        const contentItem = this.layoutManager.createAndInitContentItem(itemConfig, this);
+        const resolvedItemConfig = ItemConfig.resolve(itemConfig);
+        const contentItem = this.layoutManager.createAndInitContentItem(resolvedItemConfig, this);
         return this.addChild(contentItem, index, false);
     }
 
