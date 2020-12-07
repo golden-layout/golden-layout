@@ -1,4 +1,5 @@
 import { ComponentItemConfig } from '../config/config';
+import { UserComponentItemConfig, UserItemConfig, UserReactComponentConfig, UserSerialisableComponentConfig } from '../config/user-config';
 import { Tab } from '../controls/tab';
 import { AssertError, UnexpectedNullError } from '../errors/internal-error';
 import { ComponentItem } from '../items/component-item';
@@ -11,6 +12,10 @@ import { deepExtend, setElementHeight, setElementWidth } from '../utils/utils';
 /** @public */
 export class ComponentContainer extends EventEmitter {
     /** @internal */
+    private readonly _isReact: boolean;
+    /** @internal */
+    private _componentName: string;
+    /** @internal */
     private _component: ComponentItem.Component;
     /** @internal */
     private _width: number | null;
@@ -18,6 +23,13 @@ export class ComponentContainer extends EventEmitter {
     private _height: number | null;
     /** @internal */
     private _isHidden;
+    /** @internal */
+    private _isClosable;
+    /** @internal */
+    private _initialState: JsonValue | undefined;
+    /** @internal @deprecated use initialState */
+    private _state: JsonValue | undefined;
+    /** @internal */
     private _isShownWithZeroDimensions;
     /** @internal */
     private readonly _contentElement;
@@ -29,20 +41,23 @@ export class ComponentContainer extends EventEmitter {
     get width(): number | null { return this._width; }
     get height(): number | null { return this._height; }
     get parent(): ComponentItem { return this._parent; }
-    get componentItemConfig(): ComponentItemConfig { return this._componentItemConfig; }
+    get componentName(): string { return this._componentName; }
     get component(): ComponentItem.Component { return this._component; }
     get tab(): Tab { return this._tab; }
     get title(): string { return this._parent.title; }
     get layoutManager(): LayoutManager { return this._layoutManager; }
     get isHidden(): boolean { return this._isHidden; }
+    /** Return the initial component state */
+    get initialState(): JsonValue | undefined { return this._initialState; }
     /** The inner DOM element where the container's content is intended to live in */
     get contentElement(): HTMLElement { return this._contentElement; }
 
     /** @internal */
-    constructor(private readonly _componentItemConfig: ComponentItemConfig,
+    constructor(config: ComponentItemConfig,
         private readonly _parent: ComponentItem,
         private readonly _layoutManager: LayoutManager,
-        private readonly _element: HTMLElement
+        private readonly _element: HTMLElement,
+        private readonly _updateItemConfigEvent: ComponentContainer.UpdateItemConfigEventHandler,
     ) {
         super();
 
@@ -51,18 +66,36 @@ export class ComponentContainer extends EventEmitter {
         this._isHidden = false;
         this._isShownWithZeroDimensions = false;
 
+        this._componentName = config.componentName;
+        this._isClosable = config.isClosable;
+
         const contentElement = this._element.querySelector('.lm_content') as HTMLElement;
         if (contentElement === null) {
             throw new UnexpectedNullError('CCC11195');
         } else {
             this._contentElement = contentElement;
         }
-        this._component = this.layoutManager.getComponent(this);
+
+        if (ComponentItemConfig.isSerialisable(config)) {
+            this._isReact = false;
+            this._initialState = config.componentState;
+            this._state = this._initialState;
+        } else {
+            if (ComponentItemConfig.isReact(config)) {
+                this._isReact = true;
+                this._initialState = config.props as JsonValue;
+                this._state = this._initialState;
+            } else {
+                throw new AssertError('ICGS25546');
+            }
+        }
+
+        this._component = this.layoutManager.getComponent(this, config);
     }
 
+    /** @internal */
     destroy(): void {
-        this.emit('beforeComponentRelease', this._component);
-        this.layoutManager.releaseComponent(this, this._component);
+        this.releaseComponent();
         this.stateRequestEvent = undefined;
         this.emit('destroy');
     }
@@ -115,7 +148,6 @@ export class ComponentContainer extends EventEmitter {
         }
     }
 
-
     /**
      * Set the size from within the container. Traverses up
      * the item tree until it finds a row or column element
@@ -151,15 +183,15 @@ export class ComponentContainer extends EventEmitter {
                 } else {
                     const newSize = direction === 'height' ? height : width;
 
-                    const totalPixel = currentSize * (1 / (ancestorChildItem.config[direction] / 100));
+                    const totalPixel = currentSize * (1 / (ancestorChildItem[direction] / 100));
                     const percentage = (newSize / totalPixel) * 100;
-                    const delta = (ancestorChildItem.config[direction] - percentage) / (ancestorItem.contentItems.length - 1);
+                    const delta = (ancestorChildItem[direction] - percentage) / (ancestorItem.contentItems.length - 1);
 
                     for (let i = 0; i < ancestorItem.contentItems.length; i++) {
                         if (ancestorItem.contentItems[i] === ancestorChildItem) {
-                            ancestorItem.contentItems[i].config[direction] = percentage;
+                            ancestorItem.contentItems[i][direction] = percentage;
                         } else {
-                            ancestorItem.contentItems[i].config[direction] += delta;
+                            ancestorItem.contentItems[i][direction] += delta;
                         }
                     }
 
@@ -178,37 +210,56 @@ export class ComponentContainer extends EventEmitter {
      * it. Emits a close event before the container itself is closed.
      */
     close(): void {
-        if (this._componentItemConfig.isClosable) {
+        if (this._isClosable) {
             this.emit('close');
             this._parent.close();
         }
     }
 
-    /**
-     * Returns the component state.
-     * Note that if the deprecated setState() function is called, then getInitialState will return
-     * this latest state otherwise it will return the initialState()
-     * @returns state 
-     */
-    getInitialState(): JsonValue | undefined {
-        if (ComponentItemConfig.isSerialisable(this._componentItemConfig)) {
-            return this._componentItemConfig.componentState;
-        } else {
-            if (ComponentItemConfig.isReact(this._componentItemConfig)) {
-                return this._componentItemConfig.props as JsonValue;
+    /** Replaces component without affecting layout */
+    replaceComponent(userItemConfig: UserComponentItemConfig): void {
+        this.releaseComponent();
+
+        let itemConfig: ComponentItemConfig;
+        if (UserItemConfig.isSerialisableComponent(userItemConfig)) {
+            if (this._isReact) {
+                throw new Error('Cannot replace React component with Serialisable component')
             } else {
-                throw new AssertError('ICGS25546');
+                const config = UserSerialisableComponentConfig.resolve(userItemConfig);
+                this._initialState = config.componentState;
+                this._state = this._initialState;
+                itemConfig = config;
+            }
+        } else {
+            if (UserItemConfig.isReactComponent(userItemConfig)) {
+                if (!this._isReact) {
+                    throw new Error('Cannot replace Serialisable component with React component')
+                } else {
+                    const config = UserReactComponentConfig.resolve(userItemConfig);
+                    this._initialState = config.props as JsonValue;
+                    this._state = this._initialState;
+                    itemConfig = config;
+                }
+            } else {
+                throw new Error('ReplaceComponent not passed a component UserItemConfig')
             }
         }
+
+        this._componentName = itemConfig.componentName;
+
+        this._updateItemConfigEvent(itemConfig);
+
+        this._component = this.layoutManager.getComponent(this, itemConfig);
+        this.emit('stateChanged');
     }
 
     /**
      * Returns the initial component state or the latest passed in setState()
      * @returns state
-     * @deprecated Use {@link (ComponentContainer:class).getInitialState}
+     * @deprecated Use {@link (ComponentContainer:class).initialState}
      */
     getState(): JsonValue | undefined {
-        return this.getInitialState();
+        return this._state;
     }
 
     /**
@@ -216,7 +267,7 @@ export class ComponentContainer extends EventEmitter {
      * @deprecated Use {@link (ComponentContainer:class).stateRequestEvent}
      */
     extendState(state: Record<string, unknown>): void {
-        const extendedState = deepExtend(this.getState() as Record<string, unknown>, state);
+        const extendedState = deepExtend(this._state as Record<string, unknown>, state);
         this.setState(extendedState as JsonValue);
     }
 
@@ -225,17 +276,8 @@ export class ComponentContainer extends EventEmitter {
      * @deprecated Use {@link (ComponentContainer:class).stateRequestEvent}
      */
     setState(state: JsonValue): void {
-        if (ComponentItemConfig.isSerialisable(this._componentItemConfig)) {
-            this._componentItemConfig.componentState = state;
-            this._parent.emitBubblingEvent('stateChanged');
-        } else {
-            if (ComponentItemConfig.isReact(this._componentItemConfig)) {
-                this._componentItemConfig.props = state;
-                this._parent.emitBubblingEvent('stateChanged');
-            } else {
-                throw new AssertError('ICSS25546');
-            }
-        }
+        this._state = state;
+        this._parent.emitBubblingEvent('stateChanged');
     }
 
     /**
@@ -285,6 +327,11 @@ export class ComponentContainer extends EventEmitter {
             }
         }
     }
+
+    private releaseComponent() {
+        this.emit('beforeComponentRelease', this._component);
+        this.layoutManager.releaseComponent(this, this._component);
+    }
 }
 
 /** @public @deprecated use {@link ComponentContainer} */
@@ -293,4 +340,6 @@ export type ItemContainer = ComponentContainer;
 /** @public */
 export namespace ComponentContainer {
     export type StateRequestEventHandler = (this: void) => JsonValue | undefined;
+    /** @internal */
+    export type UpdateItemConfigEventHandler = (itemConfig: ComponentItemConfig) => void;
 }

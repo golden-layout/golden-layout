@@ -122,7 +122,7 @@ export abstract class LayoutManager extends EventEmitter {
     get isInitialised(): boolean { return this._isInitialised; }
     /** @internal */
     get groundItem(): GroundItem | null { return this._groundItem; }
-    /** @deprecated use {@link (LayoutManager:class).groundItem} instead */
+    /** @internal @deprecated use {@link (LayoutManager:class).groundItem} instead */
     get root(): GroundItem | null { return this._groundItem; }
     get openPopouts(): BrowserPopout[] { return this._openPopouts; }
     /** @internal */
@@ -351,9 +351,7 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /** @internal */
-    getComponent(container: ComponentContainer): ComponentItem.Component {
-        const itemConfig = container.componentItemConfig;
-
+    getComponent(container: ComponentContainer, itemConfig: ComponentItemConfig): ComponentItem.Component {
         let component: ComponentItem.Component;
         if (ComponentItemConfig.isSerialisable(itemConfig)) {
             const name = ComponentItemConfig.resolveComponentName(itemConfig);
@@ -397,7 +395,7 @@ export abstract class LayoutManager extends EventEmitter {
                 }
             } else {
                 if (this.getComponentEvent !== undefined) {
-                    component = this.getComponentEvent(container);
+                    component = this.getComponentEvent(container, itemConfig);
                 } else {
                     throw new Error();
                 }
@@ -704,7 +702,6 @@ export abstract class LayoutManager extends EventEmitter {
                 id: config.id,
                 maximised: config.maximised,
                 isClosable: config.isClosable,
-                reorderEnabled: config.reorderEnabled,
                 activeItemIndex: 0,
                 header: undefined,
             };
@@ -765,8 +762,9 @@ export abstract class LayoutManager extends EventEmitter {
             if (indexInParent === undefined) {
                 indexInParent = parent.contentItems.indexOf(child);
             }
+
             if (parentId !== null) {
-                parent.addId(parentId);
+                parent.addPopInParentId(parentId);
             }
 
             if (window === undefined) {
@@ -974,41 +972,49 @@ export abstract class LayoutManager extends EventEmitter {
         }
     }
 
-    /** @internal */
-    showAllActiveContentItems(): void {
-        const allStacks = this.getAllStacks();
+    // showAllActiveContentItems() was called from ContentItem.show().  Not sure what its purpose was so have commented out
+    // Everything seems to work ok without this.  Have left commented code just in case there was a reason for it becomes
+    // apparent
 
-        for (let i = 0; i < allStacks.length; i++) {
-            const stack = allStacks[i];
-            const activeContentItem = stack.getActiveComponentItem();
+    // /** @internal */
+    // showAllActiveContentItems(): void {
+    //     const allStacks = this.getAllStacks();
 
-            if (activeContentItem !== undefined) {
-                if (!(activeContentItem instanceof ComponentItem)) {
-                    throw new AssertError('LMSAACIS22298');
-                } else {
-                    activeContentItem.container.show();
-                }
-            }
-        }
-    }
+    //     for (let i = 0; i < allStacks.length; i++) {
+    //         const stack = allStacks[i];
+    //         const activeContentItem = stack.getActiveComponentItem();
 
-    /** @internal */
-    hideAllActiveContentItems(): void {
-        const allStacks = this.getAllStacks();
+    //         if (activeContentItem !== undefined) {
+    //             if (!(activeContentItem instanceof ComponentItem)) {
+    //                 throw new AssertError('LMSAACIS22298');
+    //             } else {
+    //                 activeContentItem.container.show();
+    //             }
+    //         }
+    //     }
+    // }
 
-        for (let i = 0; i < allStacks.length; i++) {
-            const stack = allStacks[i];
-            const activeContentItem = stack.getActiveComponentItem();
+    // hideAllActiveContentItems() was called from ContentItem.hide().  Not sure what its purpose was so have commented out
+    // Everything seems to work ok without this.  Have left commented code just in case there was a reason for it becomes
+    // apparent
 
-            if (activeContentItem !== undefined) {
-                if (!(activeContentItem instanceof ComponentItem)) {
-                    throw new AssertError('LMSAACIH22298');
-                } else {
-                    activeContentItem.container.hide();
-                }
-            }
-        }
-    }
+    // /** @internal */
+    // hideAllActiveContentItems(): void {
+    //     const allStacks = this.getAllStacks();
+
+    //     for (let i = 0; i < allStacks.length; i++) {
+    //         const stack = allStacks[i];
+    //         const activeContentItem = stack.getActiveComponentItem();
+
+    //         if (activeContentItem !== undefined) {
+    //             if (!(activeContentItem instanceof ComponentItem)) {
+    //                 throw new AssertError('LMSAACIH22298');
+    //             } else {
+    //                 activeContentItem.container.hide();
+    //             }
+    //         }
+    //     }
+    // }
 
     /** @internal */
     private cleanupBeforeMaximisedItemDestroyed(event: EventEmitter.BubblingEvent) {
@@ -1185,9 +1191,7 @@ export abstract class LayoutManager extends EventEmitter {
         if (this._groundItem === null) {
             throw new UnexpectedNullError('LMGACI13130');
         } else {
-            const allContentItems: ContentItem[] = [this._groundItem];
-            this._groundItem.deepAddChildContentItems(allContentItems);
-            return allContentItems;
+            return this._groundItem.getAllContentItems();
         }
     }
 
@@ -1384,7 +1388,7 @@ export namespace LayoutManager {
     export type ComponentFactoryFunction = (container: ComponentContainer, state: JsonValue | undefined) => ComponentItem.Component;
    export type GetComponentConstructorCallback = (this: void, config: ComponentItemConfig) => ComponentConstructor
     export type GetComponentEventHandler =
-        (this: void, container: ComponentContainer) => ComponentItem.Component;
+        (this: void, container: ComponentContainer, itemConfig: ComponentItemConfig) => ComponentItem.Component;
     export type ReleaseComponentEventHandler =
         (this: void, container: ComponentContainer, component: ComponentItem.Component) => void;
 

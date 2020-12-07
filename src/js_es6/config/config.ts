@@ -6,15 +6,14 @@ import { deepExtendValue } from '../utils/utils';
 export interface ItemConfig {
     // see UserItemConfig for comments
     readonly type: ItemConfig.Type;
-    content: readonly ItemConfig[];
-    width: number;
+    readonly content: readonly ItemConfig[];
+    readonly width: number;
     readonly minWidth: number;
-    height: number;
+    readonly height: number;
     readonly minHeight: number;
     // id no longer specifies whether an Item is maximised.  This is now done by HeaderItemConfig.maximised
-    id: string | string[];
+    readonly id: string;
     readonly isClosable: boolean;
-    readonly reorderEnabled: boolean; // Takes precedence over LayoutConfig.reorderEnabled. Should be settings.reorderEnabled
 }
 
 /** @public */
@@ -42,7 +41,6 @@ export namespace ItemConfig {
         minHeight: 0,
         id: '',
         isClosable: true,
-        reorderEnabled: true,
     } as const;
 
     /** Creates a copy of the original ItemConfig using an alternative content if specified */
@@ -90,14 +88,6 @@ export namespace ItemConfig {
         }
     }
 
-    export function idEqualsOrContainsId(id: string | string[], otherId: string): boolean {
-        if (id instanceof Array) {
-            return id.includes(otherId);
-        } else {
-            return id === otherId;
-        }
-    }
-
     export function isComponentItem(itemConfig: ItemConfig): itemConfig is ComponentItemConfig {
         return itemConfig.type === ItemConfig.Type.serialisableComponent || itemConfig.type === ItemConfig.Type.reactComponent;
     }
@@ -106,6 +96,7 @@ export namespace ItemConfig {
         return itemConfig.type === ItemConfig.Type.stack;
     }
 
+    /** @internal */
     export function isGroundItem(itemConfig: ItemConfig): itemConfig is GroundItemConfig {
         return itemConfig.type === ItemConfig.Type.ground;
     }
@@ -174,7 +165,6 @@ export namespace StackItemConfig {
             id: original.id,
             maximised: original.maximised,
             isClosable: original.isClosable,
-            reorderEnabled: original.reorderEnabled,
             activeItemIndex: original.activeItemIndex,
             header: HeaderedItemConfig.Header.createCopy(original.header),
         }
@@ -201,7 +191,6 @@ export namespace StackItemConfig {
             id: ItemConfig.defaults.id,
             maximised: HeaderedItemConfig.defaultMaximised,
             isClosable: ItemConfig.defaults.isClosable,
-            reorderEnabled: ItemConfig.defaults.reorderEnabled,
             activeItemIndex: defaultActiveItemIndex,
             header: undefined,
         }
@@ -213,6 +202,7 @@ export namespace StackItemConfig {
 export interface ComponentItemConfig extends HeaderedItemConfig {
     readonly content: [];
     readonly title: string;
+    readonly reorderEnabled: boolean; // Takes precedence over LayoutConfig.reorderEnabled.
     /**
      * The name of the component as specified in layout.registerComponent. Mandatory if type is 'component'.
      */
@@ -221,6 +211,8 @@ export interface ComponentItemConfig extends HeaderedItemConfig {
 
 /** @public */
 export namespace ComponentItemConfig {
+    export const defaultReorderEnabled = true;
+
     export function isReact(config: ComponentItemConfig): config is ReactComponentConfig {
         return config.type === ItemConfig.Type.reactComponent;
     }
@@ -246,7 +238,7 @@ export namespace ComponentItemConfig {
 export interface SerialisableComponentConfig extends ComponentItemConfig {
     // see UserJsonComponentConfig for comments
     readonly type: 'component';
-    componentState?: JsonValue;
+    readonly componentState?: JsonValue;
 }
 
 /** @public */
@@ -282,7 +274,7 @@ export namespace SerialisableComponentConfig {
             id: ItemConfig.defaults.id,
             maximised: HeaderedItemConfig.defaultMaximised,
             isClosable: ItemConfig.defaults.isClosable,
-            reorderEnabled: ItemConfig.defaults.reorderEnabled,
+            reorderEnabled: ComponentItemConfig.defaultReorderEnabled,
             title: '',
             header: undefined,
             componentName: '',
@@ -297,7 +289,7 @@ export interface ReactComponentConfig extends ComponentItemConfig {
     // see UserReactComponentConfig for comments
     readonly type: 'react-component';
     readonly component: string;
-    props?: unknown;
+    readonly props?: unknown;
 }
 
 /** @public */
@@ -336,7 +328,7 @@ export namespace ReactComponentConfig {
             id: ItemConfig.defaults.id,
             maximised: HeaderedItemConfig.defaultMaximised,
             isClosable: ItemConfig.defaults.isClosable,
-            reorderEnabled: ItemConfig.defaults.reorderEnabled,
+            reorderEnabled: ComponentItemConfig.defaultReorderEnabled,
             title: '',
             header: undefined,
             componentName: '',
@@ -387,7 +379,6 @@ export namespace RowOrColumnItemConfig {
             minHeight: original.minHeight,
             id: original.id,
             isClosable: original.isClosable,
-            reorderEnabled: original.reorderEnabled,
         }
         return result;
     }
@@ -411,7 +402,6 @@ export namespace RowOrColumnItemConfig {
             minHeight: ItemConfig.defaults.minHeight,
             id: ItemConfig.defaults.id,
             isClosable: ItemConfig.defaults.isClosable,
-            reorderEnabled: ItemConfig.defaults.reorderEnabled,
         }
         return result;
     }

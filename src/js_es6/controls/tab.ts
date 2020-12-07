@@ -70,7 +70,7 @@ export class Tab {
         } else {
             this._closeElement = closeElement;
         }
-        if (_componentItem.config.isClosable) {
+        if (_componentItem.isClosable) {
             this._closeElement.style.display = '';
         } else {
             this._closeElement.style.display = 'none';
@@ -79,7 +79,7 @@ export class Tab {
         this.setTitle(_componentItem.title);
         this._componentItem.on('titleChanged', (title) => this.setTitle(title));
 
-        const reorderEnabled = _componentItem.config.reorderEnabled ?? this._layoutManager.layoutConfig.settings.reorderEnabled;
+        const reorderEnabled = _componentItem.reorderEnabled ?? this._layoutManager.layoutConfig.settings.reorderEnabled;
 
         if (reorderEnabled) {
             this._dragListener = new DragListener(this._element);
@@ -90,7 +90,7 @@ export class Tab {
         this._element.addEventListener('mousedown', this._tabMouseDownListener);
         this._element.addEventListener('touchstart', this._tabTouchStartListener);
 
-        if (this._componentItem.config.isClosable) {
+        if (this._componentItem.isClosable) {
             this._closeElement.addEventListener('click', this._closeClickListener);
             this._closeElement.addEventListener('touchstart', this._closeTouchStartListener);
             this._closeElement.addEventListener('mousedown', this._closeMouseDownListener);
@@ -195,7 +195,7 @@ export class Tab {
             this.notifyActivate();
 
             // middle mouse button
-        } else if (event.button === 1 && this._componentItem.config.isClosable) {
+        } else if (event.button === 1 && this._componentItem.isClosable) {
             event.stopPropagation();
             this.notifyClose();
         }

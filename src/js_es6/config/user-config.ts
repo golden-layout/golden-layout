@@ -49,7 +49,9 @@ export interface UserItemConfig {
     minHeight?: number;
 
     /**
-     * A String or an Array of Strings. Used to retrieve the item using item.getItemsById()
+     * A string that can be used to identify a ContentItem.
+     * Do NOT assign an array.  This only exists for legacy purposes.  If an array is assigned, the first element
+     * will become the id.
      */
     id?: string | string[];
 
@@ -65,11 +67,6 @@ export interface UserItemConfig {
      * Default: componentName or ''
      */
     title?: string;
-
-    /**
-     * Default: true
-     */
-    reorderEnabled?: boolean;  // Takes precedence over UserLayoutConfig.reorderEnabled. Should be settings.reorderEnabled
 }
 
 /** @public */
@@ -107,6 +104,23 @@ export namespace UserItemConfig {
             }
             return result;
         }
+    }
+
+    export function resolveId(id: string | string[] | undefined): string {
+        if (id === undefined) {
+            return ItemConfig.defaults.id;
+        } else {
+            if (Array.isArray(id)) {
+                if (id.length === 0) {
+                    return ItemConfig.defaults.id;
+                } else {
+                    return id[0];
+                }
+            } else {
+                return id;
+            }
+        }
+
     }
 
     export function isGround(config: UserItemConfig): config is UserItemConfig {
@@ -174,18 +188,26 @@ export namespace UserHeaderedItemConfig {
         }
     }
 
-    export function resolveIdAndMaximised(config: UserHeaderedItemConfig): { id: string | string[], maximised: boolean} {
-        let id = config.id;
+    export function resolveIdAndMaximised(config: UserHeaderedItemConfig): { id: string, maximised: boolean} {
+        let id: string;
+        let legacyId = config.id;
         let legacyMaximised = false;
-        if (id === undefined) {
+        if (legacyId === undefined) {
             id = ItemConfig.defaults.id;
         } else {
-            if (Array.isArray(id)) {
-                const idx = id.findIndex((id) => id === legacyMaximisedId)
+            if (Array.isArray(legacyId)) {
+                const idx = legacyId.findIndex((id) => id === legacyMaximisedId)
                 if (idx > 0) {
                     legacyMaximised = true;
-                    id = id.splice(idx, 1);
+                    legacyId = legacyId.splice(idx, 1);
                 }
+                if (legacyId.length > 0) {
+                    id = legacyId[0];
+                } else {
+                    id = ItemConfig.defaults.id;
+                }
+            } else {
+                id = legacyId;
             }
         }
 
@@ -222,7 +244,6 @@ export namespace UserStackItemConfig {
             id,
             maximised,
             isClosable: user.isClosable ?? ItemConfig.defaults.isClosable,
-            reorderEnabled: user.reorderEnabled ?? ItemConfig.defaults.reorderEnabled,
             activeItemIndex: user.activeItemIndex ?? StackItemConfig.defaultActiveItemIndex,
             header: UserHeaderedItemConfig.Header.resolve(user.header, user.hasHeaders),
         };
@@ -256,6 +277,11 @@ export interface UserComponentItemConfig extends UserHeaderedItemConfig {
      * The name of the component as specified in layout.registerComponent. Mandatory if type is 'component'.
      */
     componentName: string;
+
+    /**
+     * Default: true
+     */
+    reorderEnabled?: boolean;  // Takes precedence over UserLayoutConfig.reorderEnabled. Should be settings.reorderEnabled
 }
 
 /** @public */
@@ -291,7 +317,7 @@ export namespace UserSerialisableComponentConfig {
                 id,
                 maximised,
                 isClosable: user.isClosable ?? ItemConfig.defaults.isClosable,
-                reorderEnabled: user.reorderEnabled ?? ItemConfig.defaults.reorderEnabled,
+                reorderEnabled: user.reorderEnabled ?? ComponentItemConfig.defaultReorderEnabled,
                 title,
                 header: UserHeaderedItemConfig.Header.resolve(user.header, user.hasHeaders),
                 componentName: user.componentName,
@@ -335,7 +361,7 @@ export namespace UserReactComponentConfig {
                 id,
                 maximised,
                 isClosable: user.isClosable ?? ItemConfig.defaults.isClosable,
-                reorderEnabled: user.reorderEnabled ?? ItemConfig.defaults.reorderEnabled,
+                reorderEnabled: user.reorderEnabled ?? ComponentItemConfig.defaultReorderEnabled,
                 title,
                 header: UserHeaderedItemConfig.Header.resolve(user.header, user.hasHeaders),
                 componentName: ReactComponentConfig.REACT_COMPONENT_ID,
@@ -381,9 +407,8 @@ export namespace UserRowOrColumnItemConfig {
             minWidth: user.width ?? ItemConfig.defaults.minWidth,
             height: user.height ?? ItemConfig.defaults.height,
             minHeight: user.height ?? ItemConfig.defaults.minHeight,
-            id: user.id ?? ItemConfig.defaults.id,
+            id: UserItemConfig.resolveId(user.id),
             isClosable: user.isClosable ?? ItemConfig.defaults.isClosable,
-            reorderEnabled: user.reorderEnabled ?? ItemConfig.defaults.reorderEnabled,
         }
         return result;
     }

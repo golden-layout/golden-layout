@@ -142,7 +142,7 @@ export class BrowserPopout extends EventEmitter {
                 if (groundItem === null) {
                     throw new UnexpectedNullError('BPPIG34972');
                 } else {
-                    parentItem = groundItem.getItemsById(this._config.parentId)[0];
+                    parentItem = groundItem.getItemsByPopInParentId(this._config.parentId)[0];
 
                     /*
                     * Fallback if parentItem is not available. Either add it to the topmost

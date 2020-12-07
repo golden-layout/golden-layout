@@ -254,7 +254,7 @@ export class GroundItem extends ContentItem {
              * which would wrap the contentItem in a Stack) we need to check whether contentItem is a RowOrColumn.
              * If it is, we need to re-wrap it in a Stack like it was when it was dragged by its Tab (it was dragged!).
              */
-            if(contentItem.config.type === ItemConfig.Type.row || contentItem.config.type === ItemConfig.Type.column){
+            if(contentItem.type === ItemConfig.Type.row || contentItem.type === ItemConfig.Type.column){
                 const itemConfig = StackItemConfig.createDefault();
                 const stack = this.layoutManager.createContentItem(itemConfig, this);
                 stack.addChild(contentItem)
@@ -271,14 +271,14 @@ export class GroundItem extends ContentItem {
                 this.replaceChild(column, rowOrColumn);
                 rowOrColumn.addChild(contentItem, insertBefore ? 0 : undefined, true);
                 rowOrColumn.addChild(column, insertBefore ? undefined : 0, true);
-                column.config[dimension] = 50;
-                contentItem.config[dimension] = 50;
+                column[dimension] = 50;
+                contentItem[dimension] = 50;
                 rowOrColumn.updateSize();
             } else {
                 const sibling = column.contentItems[insertBefore ? 0 : column.contentItems.length - 1]
                 column.addChild(contentItem, insertBefore ? 0 : undefined, true);
-                sibling.config[dimension] *= 0.5;
-                contentItem.config[dimension] = sibling.config[dimension];
+                sibling[dimension] *= 0.5;
+                contentItem[dimension] = sibling[dimension];
                 column.updateSize();
             }
         }
@@ -296,6 +296,39 @@ export class GroundItem extends ContentItem {
     // never be called
     validateDocking(): void {
         throw new AssertError('GIVD87732');
+    }
+
+    getAllContentItems(): ContentItem[] {
+        const result: ContentItem[] = [this];
+        this.deepGetAllContentItems(this.contentItems, result);
+        return result;
+    }
+
+    getConfigMaximisedItems(): ContentItem[] {
+        const result: ContentItem[] = [];
+        this.deepFilterContentItems(this.contentItems, result, (item) => {
+            if (ContentItem.isStack(item) && item.initialWantMaximise) {
+                return true;
+            } else {
+                if (ContentItem.isComponentItem(item) && item.initialWantMaximise) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        });
+
+        return result;
+    }
+
+    getItemsByPopInParentId(popInParentId: string): ContentItem[] {
+        const result: ContentItem[] = [];
+        this.deepFilterContentItems(this.contentItems, result, (item) => item.popInParentIds.includes(popInParentId));
+        return result;
+    }
+
+    toConfig(): ItemConfig {
+        throw new Error('Cannot generate GroundItem config');
     }
 
     private updateNodeSize(): void {
@@ -330,6 +363,27 @@ export class GroundItem extends ContentItem {
             }
         }
     }
+
+    private deepGetAllContentItems(content: readonly ContentItem[], result: ContentItem[]): void {
+        for (let i = 0; i < content.length; i++) {
+            const contentItem = content[i];
+            result.push(contentItem);
+            this.deepGetAllContentItems(contentItem.contentItems, result);
+        }
+    }
+
+    private deepFilterContentItems(content: readonly ContentItem[], result: ContentItem[],
+        checkAcceptFtn: ((this: void, item: ContentItem) => boolean)
+    ): void {
+        for (let i = 0; i < content.length; i++) {
+            const contentItem = content[i];
+            if (checkAcceptFtn(contentItem)) {
+                result.push(contentItem);
+            }
+            this.deepFilterContentItems(contentItem.contentItems, result, checkAcceptFtn);
+        }
+    }
+
 }
 
 /** @internal */

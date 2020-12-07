@@ -144,7 +144,7 @@ Sets the size of the GoldenLayout instance in pixels. Replaces the existing `upd
 1. Do not use `updateSize()`.  Use the new `LayoutManager.setSize()` instead.
 1. `rootItem` (new property)
 Specifies the root content item of the layout (not the Ground content item).
-1. Do not use `root`. This has been replaced with the internal property `groundItem`, however you probably want to use the new `rootItem`.
+1. Do not use `root`. This has been replaced with the internal property `groundItem`. You probably want to use the new `rootItem` instead.
 
 #### Content Items
 1. `AbstractContentItem` has been renamed to `ContentItem`
@@ -156,21 +156,32 @@ Specifies the root content item of the layout (not the Ground content item).
 #### ComponentContainer
 1. `contentElement` (new property - replaces `getElement()`)\
 Returns HTMLElement which hosts component
+1. `config` property has been removed. Use the toConfig() method instead (as recommended in the original GoldenLayout documentation).
 1. Do not use `getElement()`. Use the new `contentElement` property instead
-1. `getInitialState()` (new function)\
-Returns the componentState of the `ComponentItemConfig` used to create the contained component. Note that if the deprecated `setState()` function is called, then `getInitialState()` will return the state passed in this call instead of the initial state.
+1. `initialState` (new getter)\
+Gets the componentState of the `ComponentItemConfig` used to create the contained component.
 1. `stateRequestEvent` (new event)\
 If set, `stateRequestEvent` is fired whenever GoldenLayout wants the latest state for a component. Calling `LayoutManager.saveLayout` will cause this event to be fired (if it is defined).  If it is not defined, then the initial state in the ItemConfig or the latest state set in `setState()` will be saved.
 1. `beforeComponentRelease` (new EventEmitter event)\
 `beforeComponentRelease` is emitted on the container before a component is released.  Components can use this event to dispose of resources.
 1. Do not use `getState()` unless you are using the deprecated `setState()`. Use `getInitialState()` if you have migrated to the new `ComponentContainer.stateRequestEvent`.
 1. `setState()` has been marked as deprecated. If possible, use the new `stateRequestEvent` event instead.
+1. `replaceComponent()` allows you to replace a component in a container without otherwise affecting the layout.
 
 #### Header and Tab
 Several properties and functions have been renamed in `header.ts` and `tab.ts`. Please search for "@deprecated" in these files for these changes.
 
 #### Deprecations
 For most changes, the existing functions and properties have been left in place but marked as deprecated.  It is strongly recommended that applications be reworked not to use these deprecations. Bugs associated with deprecations will be given low priority (or not fixed at all).  Also, deprecated aliases, methods and properties may be removed in future releases.
+
+#### Public and Internal APIs
+All API elements (classes, interfaces, functions etc) have been labelled as either `public` or `internal`.  Applications should only use `public` API elements.  Internal API elements are subject to change and no consideration will be given to backwards compatibility when these are changed.
+
+The library distribution includes 2 TypeScript declaration (typing) files:
+1. `index.d.ts` which contains only public API elements.  Applications should use this declaration file to access the library.
+1. `golden-layout-untrimmed.d.ts` which contains all (public and internal) API elements.  Use this declaration file if you wish to access any API element in the library however please take the above warning into account.
+
+Note that the allocation of API elements to either public or internal has not been finalised.  However any element used in either the api-test application or the example Angular application will remain labelled as public.
 
 ### Popout and docking
 Work is still underway in debugging Popout and docking. Do not migrate your application if it uses this feature.

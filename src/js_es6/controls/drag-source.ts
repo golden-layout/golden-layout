@@ -9,13 +9,17 @@ import { DragProxy } from './drag-proxy';
 /**
  * Allows for any DOM item to create a component on drag
  * start tobe dragged into the Layout
- * @internal
+ * @public
  */
 export class DragSource {
+    /** @internal */
     private _dragListener: DragListener | null;
+    /** @internal */
     private _dummyGroundContainer: HTMLElement;
+    /** @internal */
     private _dummyGroundContentItem: GroundItem;
  
+    /** @internal */
     constructor(private _element: HTMLElement,
         private _itemConfigOrFtn: ComponentItemConfig | (() => ComponentItemConfig),
         private _layoutManager: LayoutManager
@@ -41,6 +45,7 @@ export class DragSource {
     
     /**
      * Called initially and after every drag
+     * @internal
      */
     private createDragListener() {
         this.removeDragListener();
@@ -55,6 +60,7 @@ export class DragSource {
      *
      * @param x - The x position of the mouse on dragStart
      * @param y - The x position of the mouse on dragStart
+     * @internal
      */
     private onDragStart(x: number, y: number) {
         let itemConfig: ComponentItemConfig;
@@ -88,6 +94,7 @@ export class DragSource {
         }
     }
 
+    /** @internal */
     private onDragStop() {
         // if (this._dummyGroundContentItem === undefined) {
         //     throw new UnexpectedUndefinedError('DSODSDRU08116');
@@ -100,6 +107,7 @@ export class DragSource {
 
     /**
 	 * Called after every drag and when the drag source is being disposed of.
+     * @internal
 	 */
 	private removeDragListener() {
 		if (this._dragListener !== null ) {

@@ -1,4 +1,4 @@
-import { ItemConfig, RowOrColumnItemConfig } from '../config/config'
+import { ItemConfig, RowOrColumnItemConfig, StackItemConfig } from '../config/config'
 import { UserComponentItemConfig, UserItemConfig, UserRowOrColumnItemConfig, UserSerialisableComponentConfig, UserStackItemConfig } from '../config/user-config'
 import { Splitter } from '../controls/splitter'
 import { AssertError, UnexpectedNullError } from '../errors/internal-error'
@@ -11,11 +11,10 @@ import {
     getElementWidthAndHeight,
     numberToPixels,
     pixelsToNumber,
-
-    setElementDisplayVisibility, setElementHeight,
-
+    setElementDisplayVisibility,
+    setElementHeight,
     setElementWidth
-} from '../utils/utils'
+} from "../utils/utils"
 import { ComponentItem } from './component-item'
 import { ContentItem } from './content-item'
 import { Stack } from './stack'
@@ -158,10 +157,10 @@ export class RowOrColumn extends ContentItem {
 
         for (let i = 0; i < this.contentItems.length; i++) {
             if (this.contentItems[i] === contentItem) {
-                contentItem.config[this._dimension] = newItemSize;
+                contentItem[this._dimension] = newItemSize;
             } else {
-                const itemSize = this.contentItems[i].config[this._dimension] *= (100 - newItemSize) / 100;
-                this.contentItems[i].config[this._dimension] = itemSize;
+                const itemSize = this.contentItems[i][this._dimension] *= (100 - newItemSize) / 100;
+                this.contentItems[i][this._dimension] = itemSize;
             }
         }
 
@@ -229,7 +228,7 @@ export class RowOrColumn extends ContentItem {
      *
      */
     removeChild(contentItem: ContentItem, keepChild: boolean): void {
-        const removedItemSize = contentItem.config[this._dimension];
+        const removedItemSize = contentItem[this._dimension];
         const index = this.contentItems.indexOf(contentItem);
         const splitterIndex = Math.max(index - 1, 0);
 
@@ -257,14 +256,14 @@ export class RowOrColumn extends ContentItem {
         for (let i = 0; i < this.contentItems.length; i++) {
             if (this.contentItems[i] !== contentItem) {
                 if (!this.isDocked(i))
-                    this.contentItems[i].config[this._dimension] += removedItemSize / (this.contentItems.length - 1 - dockedCount);
+                    this.contentItems[i][this._dimension] += removedItemSize / (this.contentItems.length - 1 - dockedCount);
 
             }
         }
 
         super.removeChild(contentItem, keepChild);
 
-        if (this.contentItems.length === 1 && this.config.isClosable === true) {
+        if (this.contentItems.length === 1 && this.isClosable === true) {
             const childItem = this.contentItems[0];
             this.contentItems.length = 0;
             this._rowOrColumnParent.replaceChild(this, childItem, true);
@@ -283,9 +282,9 @@ export class RowOrColumn extends ContentItem {
      * Replaces a child of this Row or Column with another contentItem
      */
     replaceChild(oldChild: ContentItem, newChild: ContentItem): void {
-        const size = oldChild.config[this._dimension];
+        const size = oldChild[this._dimension];
         super.replaceChild(oldChild, newChild);
-        newChild.config[this._dimension] = size;
+        newChild[this._dimension] = size;
         this.updateSize();
         this.emitBubblingEvent('stateChanged');
     }
@@ -309,7 +308,7 @@ export class RowOrColumn extends ContentItem {
         if (this.contentItems.length === 1)
             throw new Error('Can\'t dock child when it single');
 
-        const removedItemSize = contentItem.config[this._dimension];
+        const removedItemSize = contentItem[this._dimension];
         // this is wrong - does not reflect the stack and component settings for header.show
         const headerSize = this.layoutManager.layoutConfig.header.show === false ? 0 : this.layoutManager.layoutConfig.dimensions.headerHeight;
         const index = this.contentItems.indexOf(contentItem);
@@ -326,16 +325,16 @@ export class RowOrColumn extends ContentItem {
             for (let i = 0; i < this.contentItems.length; i++) {
                 const newItemSize = contentItem.docker.size;
                 if (this.contentItems[i] === contentItem) {
-                    contentItem.config[this._dimension] = newItemSize;
+                    contentItem[this._dimension] = newItemSize;
                 } else {
-                    const itemSize = this.contentItems[i].config[this._dimension] *= (100 - newItemSize) / 100;
-                    this.contentItems[i].config[this._dimension] = itemSize;
+                    const itemSize = this.contentItems[i][this._dimension] *= (100 - newItemSize) / 100;
+                    this.contentItems[i][this._dimension] = itemSize;
                 }
             }
             contentItem.setUndocked();
         } else { // dock
             if (this.contentItems.length - this.calculateDockedCount() < 2)
-                throw new AssertError('Can\'t dock child when it is last in ' + this.config.type);
+                throw new AssertError('Can\'t dock child when it is last in ' + this.type);
             const autoside: {[columnRow: string]: { [firstLast: string]: Side }} = {
                 column: {
                     first: Side.top,
@@ -357,9 +356,9 @@ export class RowOrColumn extends ContentItem {
             for (let i = 0; i < this.contentItems.length; i++) {
                 if (this.contentItems[i] !== contentItem) {
                     if (!this.isDocked(i))
-                        this.contentItems[i].config[this._dimension] += removedItemSize / (this.contentItems.length - 1 - dockedCount);
+                        this.contentItems[i][this._dimension] += removedItemSize / (this.contentItems.length - 1 - dockedCount);
                 } else
-                    this.contentItems[i].config[this._dimension] = 0;
+                    this.contentItems[i][this._dimension] = 0;
             }
             contentItem.setDocked({
                 docked: true,
@@ -431,6 +430,20 @@ export class RowOrColumn extends ContentItem {
         super.setParent(parent);
     }
 
+    toConfig(): RowOrColumnItemConfig {
+        const result: RowOrColumnItemConfig = {
+            type: this.type as 'row' | 'column',
+            content: this.calculateConfigContent() as (RowOrColumnItemConfig | StackItemConfig)[],
+            width: this.width,
+            minWidth: this.minWidth,
+            height: this.height,
+            minHeight: this.minHeight,
+            id: this.id,
+            isClosable: this.isClosable,
+        }
+        return result;
+    }
+
     /** @internal */
     private updateNodeSize(): void {
         if (this.contentItems.length > 0) {
@@ -497,9 +510,9 @@ export class RowOrColumn extends ContentItem {
         for (let i = 0; i < this.contentItems.length; i++) {
             let itemSize: number;
             if (this._isColumn) {
-                itemSize = Math.floor(totalHeight * (this.contentItems[i].config.height / 100));
+                itemSize = Math.floor(totalHeight * (this.contentItems[i].height / 100));
             } else {
-                itemSize = Math.floor(totalWidth * (this.contentItems[i].config.width / 100));
+                itemSize = Math.floor(totalWidth * (this.contentItems[i].width / 100));
             }
             if (this.isDocked(i))
                 itemSize = headerSize;
@@ -544,8 +557,8 @@ export class RowOrColumn extends ContentItem {
         const itemsWithoutSetDimension: ContentItem[] = [];
 
         for (let i = 0; i < this.contentItems.length; i++) {
-            if (this.contentItems[i].config[this._dimension] !== undefined) {
-                total += this.contentItems[i].config[this._dimension];
+            if (this.contentItems[i][this._dimension] !== undefined) {
+                total += this.contentItems[i][this._dimension];
             } else {
                 itemsWithoutSetDimension.push(this.contentItems[i]);
             }
@@ -564,7 +577,7 @@ export class RowOrColumn extends ContentItem {
          */
         if (Math.round(total) < 100 && itemsWithoutSetDimension.length > 0) {
             for (let i = 0; i < itemsWithoutSetDimension.length; i++) {
-                itemsWithoutSetDimension[i].config[this._dimension] = (100 - total) / itemsWithoutSetDimension.length;
+                itemsWithoutSetDimension[i][this._dimension] = (100 - total) / itemsWithoutSetDimension.length;
             }
             this.respectMinItemWidth();
             return;
@@ -578,7 +591,7 @@ export class RowOrColumn extends ContentItem {
          */
         if (Math.round(total) > 100) {
             for (let i = 0; i < itemsWithoutSetDimension.length; i++) {
-                itemsWithoutSetDimension[i].config[this._dimension] = 50;
+                itemsWithoutSetDimension[i][this._dimension] = 50;
                 total += 50;
             }
         }
@@ -587,7 +600,7 @@ export class RowOrColumn extends ContentItem {
          * Set every items size relative to 100 relative to its size to total
          */
         for (let i = 0; i < this.contentItems.length; i++) {
-            this.contentItems[i].config[this._dimension] = (this.contentItems[i].config[this._dimension] / total) * 100;
+            this.contentItems[i][this._dimension] = (this.contentItems[i][this._dimension] / total) * 100;
         }
 
         this.respectMinItemWidth();
@@ -668,7 +681,7 @@ export class RowOrColumn extends ContentItem {
          * Set every items size relative to 100 relative to its size to total
          */
         for (let i = 0; i < this.contentItems.length; i++) {
-            this.contentItems[i].config.width = (allEntries[i].width / sizeData.totalWidth) * 100;
+            this.contentItems[i].width = (allEntries[i].width / sizeData.totalWidth) * 100;
         }
     }
 
@@ -737,7 +750,7 @@ export class RowOrColumn extends ContentItem {
      * Gets the minimum dimensions for the given item configuration array
      * @internal
      */
-    private _getMinimumDimensions(arr: readonly ItemConfig[]) {
+    private getMinimumDimensions(arr: readonly ContentItem[]) {
         let minWidth = 0;
         let minHeight = 0;
 
@@ -761,10 +774,10 @@ export class RowOrColumn extends ContentItem {
         const items = this.getItemsForSplitter(splitter);
         const minSize = this.layoutManager.layoutConfig.dimensions[this._isColumn ? 'minItemHeight' : 'minItemWidth'];
 
-        const beforeMinDim = this._getMinimumDimensions(items.before.config.content);
+        const beforeMinDim = this.getMinimumDimensions(items.before.contentItems);
         const beforeMinSize = this._isColumn ? beforeMinDim.vertical : beforeMinDim.horizontal;
 
-        const afterMinDim = this._getMinimumDimensions(items.after.config.content);
+        const afterMinDim = this.getMinimumDimensions(items.after.contentItems);
         const afterMinSize = this._isColumn ? afterMinDim.vertical : afterMinDim.horizontal;
 
         this._splitterPosition = 0;
@@ -813,10 +826,10 @@ export class RowOrColumn extends ContentItem {
             const sizeBefore = pixelsToNumber(items.before.element.style[this._dimension]);
             const sizeAfter = pixelsToNumber(items.after.element.style[this._dimension]);
             const splitterPositionInRange = (this._splitterPosition + sizeBefore) / (sizeBefore + sizeAfter);
-            const totalRelativeSize = items.before.config[this._dimension] + items.after.config[this._dimension];
+            const totalRelativeSize = items.before[this._dimension] + items.after[this._dimension];
 
-            items.before.config[this._dimension] = splitterPositionInRange * totalRelativeSize;
-            items.after.config[this._dimension] = (1 - splitterPositionInRange) * totalRelativeSize;
+            items.before[this._dimension] = splitterPositionInRange * totalRelativeSize;
+            items.after[this._dimension] = (1 - splitterPositionInRange) * totalRelativeSize;
 
             splitter.element.style.top = numberToPixels(0);
             splitter.element.style.left = numberToPixels(0);

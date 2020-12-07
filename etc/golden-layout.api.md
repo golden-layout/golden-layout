@@ -31,31 +31,32 @@ export class BrowserPopout extends EventEmitter {
 // @public (undocumented)
 export class ComponentContainer extends EventEmitter {
     // @internal
-    constructor(_componentItemConfig: ComponentItemConfig, _parent: ComponentItem, _layoutManager: LayoutManager, _element: HTMLElement);
+    constructor(config: ComponentItemConfig, _parent: ComponentItem, _layoutManager: LayoutManager, _element: HTMLElement, _updateItemConfigEvent: ComponentContainer.UpdateItemConfigEventHandler);
     close(): void;
     // (undocumented)
     get component(): ComponentItem.Component;
     // (undocumented)
-    get componentItemConfig(): ComponentItemConfig;
+    get componentName(): string;
     get contentElement(): HTMLElement;
-    // (undocumented)
+    // @internal (undocumented)
     destroy(): void;
     // @deprecated
     extendState(state: Record<string, unknown>): void;
     // @deprecated (undocumented)
     getElement(): HTMLElement;
-    getInitialState(): JsonValue | undefined;
     // @deprecated
     getState(): JsonValue | undefined;
     // (undocumented)
     get height(): number | null;
     hide(): void;
+    get initialState(): JsonValue | undefined;
     // (undocumented)
     get isHidden(): boolean;
     // (undocumented)
     get layoutManager(): LayoutManager;
     // (undocumented)
     get parent(): ComponentItem;
+    replaceComponent(userItemConfig: UserComponentItemConfig): void;
     // @internal (undocumented)
     setDragSize(width: number, height: number): void;
     setSize(width: number, height: number): boolean;
@@ -81,6 +82,8 @@ export class ComponentContainer extends EventEmitter {
 export namespace ComponentContainer {
     // (undocumented)
     export type StateRequestEventHandler = (this: void) => JsonValue | undefined;
+    // @internal (undocumented)
+    export type UpdateItemConfigEventHandler = (itemConfig: ComponentItemConfig) => void;
 }
 
 // @public (undocumented)
@@ -88,7 +91,9 @@ export class ComponentItem extends ContentItem {
     // Warning: (ae-forgotten-export) The symbol "GroundItem" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    constructor(layoutManager: LayoutManager, _componentConfig: ComponentItemConfig, stackOrGroundItem: Stack | GroundItem);
+    constructor(layoutManager: LayoutManager, config: ComponentItemConfig, stackOrGroundItem: Stack | GroundItem);
+    // (undocumented)
+    applyUpdatableConfig(config: ComponentItemConfig): void;
     // (undocumented)
     close(): void;
     // (undocumented)
@@ -106,6 +111,10 @@ export class ComponentItem extends ContentItem {
     // @internal (undocumented)
     init(): void;
     // @internal (undocumented)
+    get initialWantMaximise(): boolean;
+    // (undocumented)
+    get reorderEnabled(): boolean;
+    // @internal (undocumented)
     setDragSize(width: number, height: number): void;
     // (undocumented)
     setTab(tab: Tab): void;
@@ -116,7 +125,7 @@ export class ComponentItem extends ContentItem {
     get tab(): Tab;
     // (undocumented)
     get title(): string;
-    // @internal (undocumented)
+    // (undocumented)
     toConfig(): ComponentItemConfig;
     // @internal (undocumented)
     updateSize(): void;
@@ -136,11 +145,15 @@ export interface ComponentItemConfig extends HeaderedItemConfig {
     // (undocumented)
     readonly content: [];
     // (undocumented)
+    readonly reorderEnabled: boolean;
+    // (undocumented)
     readonly title: string;
 }
 
 // @public (undocumented)
 export namespace ComponentItemConfig {
+    const // (undocumented)
+    defaultReorderEnabled = true;
     // (undocumented)
     export function isReact(config: ComponentItemConfig): config is ReactComponentConfig;
     // (undocumented)
@@ -162,39 +175,37 @@ export class ConfigurationError extends ExternalError {
 // @public
 export abstract class ContentItem extends EventEmitter {
     // @internal
-    constructor(layoutManager: LayoutManager, _config: ItemConfig, _parent: ContentItem | null, _element: HTMLElement);
+    constructor(layoutManager: LayoutManager, config: ItemConfig, _parent: ContentItem | null, _element: HTMLElement);
     addChild(contentItem: ContentItem, index?: number | null, suspendResize?: boolean): number;
-    addId(id: string): void;
+    // @internal (undocumented)
+    addPopInParentId(id: string): void;
     // @internal (undocumented)
     calculateConfigContent(): ItemConfig[];
     // (undocumented)
-    get config(): ItemConfig;
-    // (undocumented)
     get contentItems(): ContentItem[];
-    // @internal (undocumented)
-    deepAddChildContentItems(contentItems: ContentItem[]): void;
     deselect(): void;
     // @internal
     destroy(): void;
     // (undocumented)
     get element(): HTMLElement;
-    // (undocumented)
-    getConfigMaximisedItems(): ContentItem[];
     // @internal
     getElementArea(element?: HTMLElement): ContentItem.Area | null;
-    // (undocumented)
-    getItemsById(id: string): ContentItem[];
-    hasId(id: string): boolean;
+    // @internal (undocumented)
+    height: number;
     // @internal (undocumented)
     protected hide(): void;
     // Warning: (ae-forgotten-export) The symbol "AreaLinkedRect" needs to be exported by the entry point index.d.ts
     //
     // @internal (undocumented)
     highlightDropZone(x: number, y: number, area: AreaLinkedRect): void;
+    // (undocumented)
+    get id(): string;
     // @internal
     init(): void;
     // @internal (undocumented)
     protected initContentItems(): void;
+    // (undocumented)
+    get isClosable(): boolean;
     // (undocumented)
     isColumn: boolean;
     // (undocumented)
@@ -214,15 +225,20 @@ export abstract class ContentItem extends EventEmitter {
     // (undocumented)
     readonly layoutManager: LayoutManager;
     // @internal (undocumented)
+    minHeight: number;
+    // @internal (undocumented)
+    minWidth: number;
+    // @internal (undocumented)
     onDrop(contentItem: ContentItem, area: ContentItem.Area): void;
     // (undocumented)
     get parent(): ContentItem | null;
+    // @internal (undocumented)
+    get popInParentIds(): string[];
     popout(): BrowserPopout;
     // @internal (undocumented)
     protected processChildReplaced(index: number, newChild: ContentItem): void;
     remove(): void;
     removeChild(contentItem: ContentItem, keepChild?: boolean): void;
-    removeId(id: string): void;
     replaceChild(oldChild: ContentItem, newChild: ContentItem, _$destroyOldChild?: boolean): void;
     select(): void;
     // @internal (undocumented)
@@ -230,13 +246,15 @@ export abstract class ContentItem extends EventEmitter {
     // @internal (undocumented)
     show(): void;
     // (undocumented)
-    toConfig(): ItemConfig;
+    abstract toConfig(): ItemConfig;
     // (undocumented)
     get type(): ItemConfig.Type;
     // @internal (undocumented)
     protected updateContentItemsSize(): void;
     // @internal
     abstract updateSize(): void;
+    // @internal (undocumented)
+    width: number;
 }
 
 // @public (undocumented)
@@ -473,11 +491,11 @@ export const i18nStrings: string[];
 // @public (undocumented)
 export interface ItemConfig {
     // (undocumented)
-    content: readonly ItemConfig[];
+    readonly content: readonly ItemConfig[];
     // (undocumented)
-    height: number;
+    readonly height: number;
     // (undocumented)
-    id: string | string[];
+    readonly id: string;
     // (undocumented)
     readonly isClosable: boolean;
     // (undocumented)
@@ -485,11 +503,9 @@ export interface ItemConfig {
     // (undocumented)
     readonly minWidth: number;
     // (undocumented)
-    readonly reorderEnabled: boolean;
-    // (undocumented)
     readonly type: ItemConfig.Type;
     // (undocumented)
-    width: number;
+    readonly width: number;
 }
 
 // @public (undocumented)
@@ -502,12 +518,8 @@ export namespace ItemConfig {
     const // @internal (undocumented)
     defaults: ItemConfig;
     // (undocumented)
-    export function idEqualsOrContainsId(id: string | string[], otherId: string): boolean;
-    // (undocumented)
     export function isComponentItem(itemConfig: ItemConfig): itemConfig is ComponentItemConfig;
-    // Warning: (ae-incompatible-release-tags) The symbol "isGroundItem" is marked as @public, but its signature references "GroundItemConfig" which is marked as @internal
-    //
-    // (undocumented)
+    // @internal (undocumented)
     export function isGroundItem(itemConfig: ItemConfig): itemConfig is GroundItemConfig;
     // (undocumented)
     export function isStackItem(itemConfig: ItemConfig): itemConfig is StackItemConfig;
@@ -702,7 +714,7 @@ export abstract class LayoutManager extends EventEmitter {
     // @internal (undocumented)
     getArea(x: number, y: number): ContentItem.Area | null;
     // @internal (undocumented)
-    getComponent(container: ComponentContainer): ComponentItem.Component;
+    getComponent(container: ComponentContainer, itemConfig: ComponentItemConfig): ComponentItem.Component;
     getComponentEvent: LayoutManager.GetComponentEventHandler | undefined;
     // @internal
     getComponentInstantiator(config: ComponentItemConfig): LayoutManager.ComponentInstantiator;
@@ -712,8 +724,6 @@ export abstract class LayoutManager extends EventEmitter {
     get groundItem(): GroundItem | null;
     // (undocumented)
     get height(): number | null;
-    // @internal (undocumented)
-    hideAllActiveContentItems(): void;
     // @internal
     init(): void;
     // (undocumented)
@@ -748,7 +758,7 @@ export abstract class LayoutManager extends EventEmitter {
     // (undocumented)
     releaseComponentEvent: LayoutManager.ReleaseComponentEventHandler | undefined;
     removeDragSource(dragSource: DragSource): void;
-    // @deprecated (undocumented)
+    // @internal @deprecated (undocumented)
     get root(): GroundItem | null;
     // (undocumented)
     get rootItem(): ContentItem | undefined;
@@ -757,8 +767,6 @@ export abstract class LayoutManager extends EventEmitter {
     get selectedItem(): ContentItem | null;
     selectItem(item: ContentItem, silent: boolean): void;
     setSize(width: number, height: number): void;
-    // @internal (undocumented)
-    showAllActiveContentItems(): void;
     // @internal (undocumented)
     startComponentDrag(x: number, y: number, dragListener: DragListener, componentItem: ComponentItem, stack: Stack): void;
     // @internal (undocumented)
@@ -805,7 +813,7 @@ export namespace LayoutManager {
     // (undocumented)
     export type GetComponentConstructorCallback = (this: void, config: ComponentItemConfig) => ComponentConstructor;
     // (undocumented)
-    export type GetComponentEventHandler = (this: void, container: ComponentContainer) => ComponentItem.Component;
+    export type GetComponentEventHandler = (this: void, container: ComponentContainer, itemConfig: ComponentItemConfig) => ComponentItem.Component;
     // (undocumented)
     export type ReleaseComponentEventHandler = (this: void, container: ComponentContainer, component: ComponentItem.Component) => void;
 }
@@ -854,7 +862,7 @@ export interface ReactComponentConfig extends ComponentItemConfig {
     // (undocumented)
     readonly component: string;
     // (undocumented)
-    props?: unknown;
+    readonly props?: unknown;
     // (undocumented)
     readonly type: 'react-component';
 }
@@ -900,6 +908,8 @@ export class RowOrColumn extends ContentItem {
     replaceChild(oldChild: ContentItem, newChild: ContentItem): void;
     // @internal (undocumented)
     setParent(parent: ContentItem): void;
+    // (undocumented)
+    toConfig(): RowOrColumnItemConfig;
     updateSize(): void;
     // @internal
     validateDocking(): void;
@@ -939,7 +949,7 @@ export namespace RowOrColumnItemConfig {
 // @public (undocumented)
 export interface SerialisableComponentConfig extends ComponentItemConfig {
     // (undocumented)
-    componentState?: JsonValue;
+    readonly componentState?: JsonValue;
     // (undocumented)
     readonly type: 'component';
 }
@@ -955,7 +965,7 @@ export namespace SerialisableComponentConfig {
 // @public (undocumented)
 export class Stack extends ContentItem {
     // @internal
-    constructor(layoutManager: LayoutManager, _stackConfig: StackItemConfig, _stackParent: Stack.Parent);
+    constructor(layoutManager: LayoutManager, config: StackItemConfig, _stackParent: Stack.Parent);
     // (undocumented)
     addChild(contentItem: ContentItem, index?: number): number;
     // (undocumented)
@@ -964,7 +974,7 @@ export class Stack extends ContentItem {
     addSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): number;
     // (undocumented)
     get childElementContainer(): HTMLElement;
-    // (undocumented)
+    // @internal (undocumented)
     get contentAreaDimensions(): Stack.ContentAreaDimensions | null;
     // @internal (undocumented)
     destroy(): void;
@@ -972,7 +982,7 @@ export class Stack extends ContentItem {
     dock(mode?: boolean): void;
     // (undocumented)
     get dockEnabled(): boolean;
-    // (undocumented)
+    // @internal (undocumented)
     get docker(): Stack.Docker;
     // (undocumented)
     getActiveComponentItem(): ComponentItem;
@@ -990,6 +1000,8 @@ export class Stack extends ContentItem {
     highlightDropZone(x: number, y: number): void;
     // @internal (undocumented)
     init(): void;
+    // @internal (undocumented)
+    get initialWantMaximise(): boolean;
     // (undocumented)
     get isMaximised(): boolean;
     // (undocumented)
@@ -1018,8 +1030,6 @@ export class Stack extends ContentItem {
     setRowColumnClosable(value: boolean): void;
     // @internal (undocumented)
     setUndocked(): void;
-    // (undocumented)
-    get stackConfig(): StackItemConfig;
     // (undocumented)
     toConfig(): StackItemConfig;
     toggleMaximise(ev?: Event): void;
@@ -1138,6 +1148,7 @@ export interface UserComponentItemConfig extends UserHeaderedItemConfig {
     componentName: string;
     // (undocumented)
     readonly content?: [];
+    reorderEnabled?: boolean;
 }
 
 // @public (undocumented)
@@ -1176,7 +1187,7 @@ export namespace UserHeaderedItemConfig {
     }
     // (undocumented)
     export function resolveIdAndMaximised(config: UserHeaderedItemConfig): {
-        id: string | string[];
+        id: string;
         maximised: boolean;
     };
 }
@@ -1189,7 +1200,6 @@ export interface UserItemConfig {
     isClosable?: boolean;
     minHeight?: number;
     minWidth?: number;
-    reorderEnabled?: boolean;
     title?: string;
     type: ItemConfig.Type;
     width?: number;
@@ -1215,6 +1225,8 @@ export namespace UserItemConfig {
     export function resolve(user: UserItemConfig): ItemConfig;
     // (undocumented)
     export function resolveContent(content: UserItemConfig[] | undefined): ItemConfig[];
+    // (undocumented)
+    export function resolveId(id: string | string[] | undefined): string;
 }
 
 // @public (undocumented)

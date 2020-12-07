@@ -11,7 +11,7 @@ export class ColorComponent {
     private _inputChangeListener = () => this.handleInputChangeEvent();
     private _shownEventListener = () => this.handleShownEvent();
 
-    constructor(container: ComponentContainer, state: JsonValue | undefined) {
+    constructor(private _container: ComponentContainer, state: JsonValue | undefined) {
         let color: string;
         if (state === undefined) {
             color = ColorComponent.undefinedColor;
@@ -26,9 +26,9 @@ export class ColorComponent {
         this._paraElement = document.createElement("p");
         this._paraElement.style.textAlign = "left";
         this._paraElement.style.color = color;
-        const title = container.title;
+        const title = this._container.title;
         this._paraElement.innerText = (title ?? "unknown") + " component";
-        container.contentElement.appendChild(this._paraElement);
+        this._container.contentElement.appendChild(this._paraElement);
 
         this._inputElement = document.createElement('input');
         this._inputElement.type = "text";
@@ -36,11 +36,11 @@ export class ColorComponent {
         this._inputElement.style.display = "block";
 
         this._inputElement.addEventListener('input', this._inputChangeListener);
-        container.contentElement.appendChild(this._inputElement);
+        this._container.contentElement.appendChild(this._inputElement);
 
-        container.stateRequestEvent = () => this.handleContainerStateRequestEvent();
-        container.addEventListener('beforeComponentRelease', this._beforeComponentReleaseEventListener);
-        container.addEventListener('shown', this._shownEventListener);
+        this._container.stateRequestEvent = () => this.handleContainerStateRequestEvent();
+        this._container.addEventListener('beforeComponentRelease', this._beforeComponentReleaseEventListener);
+        this._container.addEventListener('shown', this._shownEventListener);
     }
 
     private handleInputChangeEvent() {
@@ -58,6 +58,10 @@ export class ColorComponent {
 
     private handleBeforeComponentReleaseEvent(): void {
         this._inputElement.removeEventListener('change', this._inputChangeListener);
+        this._container.contentElement.removeChild(this._inputElement);
+        this._container.contentElement.removeChild(this._paraElement);
+        this._container.removeEventListener('shown', this._shownEventListener);
+        this._container.removeEventListener('beforeComponentRelease', this._beforeComponentReleaseEventListener);
     }
 
     private handleShownEvent(): void {

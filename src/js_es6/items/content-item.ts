@@ -1,6 +1,5 @@
 import { ItemConfig } from '../config/config'
 import { BrowserPopout } from '../controls/browser-popout'
-import { ConfigurationError } from '../errors/external-error'
 import { AssertError, UnexpectedNullError } from '../errors/internal-error'
 import { LayoutManager } from '../layout-manager'
 import { EventEmitter } from '../utils/event-emitter'
@@ -20,7 +19,15 @@ import { Stack } from './stack'
 
 export abstract class ContentItem extends EventEmitter {
     /** @internal */
+    private _type: ItemConfig.Type;
+    /** @internal */
+    private _id: string;
+    /** @internal */
+    private _popInParentIds: string[] = [];
+    /** @internal */
     private _contentItems: ContentItem[];
+    /** @internal */
+    private _isClosable;
     /** @internal */
     private _pendingEventPropagations: Record<string, unknown>;
     /** @internal */
@@ -28,16 +35,28 @@ export abstract class ContentItem extends EventEmitter {
     /** @internal */
     private _isInitialised;
 
+    /** @internal */
+    width: number; // percentage
+    /** @internal */
+    minWidth: number; // percentage
+    /** @internal */
+    height: number; // percentage
+    /** @internal */
+    minHeight: number; // percentage
+
     isGround: boolean
     isRow: boolean
     isColumn: boolean
     isStack: boolean
     isComponent: boolean
 
-    get type(): ItemConfig.Type { return this._config.type; }
+    get type(): ItemConfig.Type { return this._type; }
+    get id(): string { return this._id; }
+    /** @internal */
+    get popInParentIds(): string[] { return this._popInParentIds; }
     get parent(): ContentItem | null { return this._parent; }
-    get config(): ItemConfig { return this._config; }
     get contentItems(): ContentItem[] { return this._contentItems; }
+    get isClosable(): boolean { return this._isClosable; }
     get element(): HTMLElement { return this._element; }
     get isInitialised(): boolean { return this._isInitialised; }
 
@@ -51,11 +70,14 @@ export abstract class ContentItem extends EventEmitter {
 
     /** @internal */
     constructor(readonly layoutManager: LayoutManager,
-        private _config: ItemConfig,
+        config: ItemConfig,
         private _parent: ContentItem | null,
         private readonly _element: HTMLElement
     ) {
         super();
+
+        this._type = config.type;
+        this._id = config.id;
 
         this._isInitialised = false;
         this.isGround = false;
@@ -64,12 +86,19 @@ export abstract class ContentItem extends EventEmitter {
         this.isStack = false;
         this.isComponent = false;
 
+        this.width = config.width;
+        this.minWidth = config.minWidth;
+        this.height = config.height;
+        this.minHeight = config.minHeight;
+
+        this._isClosable = config.isClosable;
+
         this._pendingEventPropagations = {};
         this._throttledEvents = ['stateChanged'];
 
         this.on(EventEmitter.ALL_EVENT, (name, ...args: unknown[]) => this.propagateEvent(name as string, args));
 
-        this._contentItems = this.createContentItems(this._config);
+        this._contentItems = this.createContentItems(config.content);
     }
 
     /**
@@ -108,30 +137,20 @@ export abstract class ContentItem extends EventEmitter {
         this._contentItems.splice(index, 1);
 
         /**
-         * Remove the item from the configuration
-         */
-        const content = this._config.content;
-        const contentCount = content.length;
-        if (contentCount === 1) {
-            this._config.content = [];
-        } else {
-            this._config.content = [...content.slice(0, index), ...content.slice(index + 1, contentCount)];
-        }
-
-        /**
          * If this node still contains other content items, adjust their size
          */
         if (this._contentItems.length > 0) {
             this.updateSize();
-
+        } else {
             /**
              * If this was the last content item, remove this node as well
              */
-        } else if (!this.isGround && this._config.isClosable === true) {
-            if (this._parent === null) {
-                throw new UnexpectedNullError('CIUC00874');
-            } else {
-                this._parent.removeChild(this);
+            if (!this.isGround && this._isClosable === true) {
+                if (this._parent === null) {
+                    throw new UnexpectedNullError('CIUC00874');
+                } else {
+                    this._parent.removeChild(this);
+                }
             }
         }
     }
@@ -150,18 +169,6 @@ export abstract class ContentItem extends EventEmitter {
         index ??= this._contentItems.length;
 
         this._contentItems.splice(index, 0, contentItem);
-
-        if (this._config.content === undefined) {
-            this._config.content = [];
-        }
-
-        const content = this._config.content;
-        const contentCount = content.length;
-        if (contentCount === 0) {
-            this._config.content = [contentItem._config];
-        } else {
-            this._config.content = [...content.slice(0, index), contentItem._config, ...content.slice(index, contentCount)];
-        }
         contentItem.setParent(this);
 
         if (this._isInitialised === true && contentItem._isInitialised === false) {
@@ -269,70 +276,7 @@ export abstract class ContentItem extends EventEmitter {
         }
     }
 
-    /**
-     * Checks whether a provided id is present
-     *
-     * @param id -
-     *
-     * @returns isPresent
-     */
-    hasId(id: string): boolean {
-        if (typeof this._config.id === 'string') {
-            return this._config.id === id;
-        } else {
-            if (this._config.id instanceof Array) {
-                return this._config.id.includes(id);
-            } else {
-                throw new AssertError('ACIHI55521', `ItemConfig.id is not string or string array ${this._config.id}`);
-            }
-        }
-    }
-
-    /**
-     * Adds an id. Adds it as a string if the component doesn't
-     * have an id yet or creates/uses an array
-     */
-    addId(id: string): void {
-        if (this.hasId(id)) {
-            return;
-        }
-
-        if (!this._config.id) {
-            this._config.id = id;
-        } else if (typeof this._config.id === 'string') {
-            this._config.id = [this._config.id, id];
-        } else if (this._config.id instanceof Array) {
-            this._config.id.push(id);
-        }
-    }
-
-    /**
-     * Removes an existing id. Throws an error
-     * if the id is not present
-     */
-    removeId(id: string): void {
-        if (!this.hasId(id)) {
-            throw new Error('Id not found');
-        }
-
-        if (typeof this._config.id === 'string') {
-            this._config.id = [];
-        } else if (this._config.id instanceof Array) {
-            const index = this._config.id.indexOf(id);
-            this._config.id.splice(index, 1);
-        }
-    }
-
-    getItemsById(id: string): ContentItem[] {
-        const result: ContentItem[] = [];
-        this.deepFilterAddChildContentItems(result, (item) => ItemConfig.idEqualsOrContainsId(item._config.id, id));
-        return result;
-    }
-
-    toConfig(): ItemConfig {
-        const content = this.calculateConfigContent();
-        return ItemConfig.createCopy(this._config, content);
-    }
+    abstract toConfig(): ItemConfig;
 
     /** @internal */
     calculateConfigContent(): ItemConfig[] {
@@ -344,35 +288,6 @@ export abstract class ContentItem extends EventEmitter {
             result[i] = item.toConfig();
         }
         return result;
-    }
-
-
-    getConfigMaximisedItems(): ContentItem[] {
-        const result: ContentItem[] = [];
-        this.deepFilterAddChildContentItems(result, (item) => {
-            const config = item._config;
-            if (ItemConfig.isStackItem(config) && config.maximised) {
-                return true;
-            } else {
-                if (ItemConfig.isComponentItem(config) && config.maximised) {
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-        });
-
-        return result;
-    }
-
-
-    /** @internal */
-    deepAddChildContentItems(contentItems: ContentItem[]): void {
-        for (let i = 0; i < this._contentItems.length; i++) {
-            const contentItem = this._contentItems[i];
-            contentItems.push(contentItem);
-            contentItem.deepAddChildContentItems(contentItems);
-        }
     }
 
     /** @internal */
@@ -393,7 +308,9 @@ export abstract class ContentItem extends EventEmitter {
 
     /** @internal */
     show(): void {
-        this.layoutManager.showAllActiveContentItems(); // not sure why this is done. (Code moved to Layout manager)
+        // Not sure why showAllActiveContentItems() was called. GoldenLayout seems to work fine without it.  Left commented code
+        // in source in case a reason for it becomes apparent.
+        // this.layoutManager.showAllActiveContentItems();
         setElementDisplayVisibility(this._element, true);
         this.layoutManager.updateSizeFromContainer();
 
@@ -459,6 +376,13 @@ export abstract class ContentItem extends EventEmitter {
     }
 
     /** @internal */
+    addPopInParentId(id: string): void {
+        if (!this.popInParentIds.includes(id)) {
+            this.popInParentIds.push(id);
+        }
+    }
+
+    /** @internal */
     protected initContentItems(): void {
         for (let i = 0; i < this._contentItems.length; i++) {
             this._contentItems[i].init();
@@ -467,7 +391,9 @@ export abstract class ContentItem extends EventEmitter {
 
     /** @internal */
     protected hide(): void {
-        this.layoutManager.hideAllActiveContentItems(); // not sure why this is done. (Code moved to Layout manager)
+        // Not sure why hideAllActiveContentItems() was called. GoldenLayout seems to work fine without it.  Left commented code
+        // in source in case a reason for it becomes apparent.
+        // this.layoutManager.hideAllActiveContentItems();
         setElementDisplayVisibility(this._element, false);
         this.layoutManager.updateSizeFromContainer();
     }
@@ -490,30 +416,13 @@ export abstract class ContentItem extends EventEmitter {
      * PLEASE NOTE, please see addChild for adding contentItems at runtime
      * @internal
      */
-    private createContentItems(config: ItemConfig) {
-        if (!(config.content instanceof Array)) {
-            throw new ConfigurationError('content must be an Array', JSON.stringify(config));
-        } else {
-            const count = config.content.length;
-            const result = new Array<ContentItem>(count);
-            for (let i = 0; i < config.content.length; i++) {
-                result[i] = this.layoutManager.createContentItem(config.content[i], this);
-            }
-            return result;
+    private createContentItems(content: readonly ItemConfig[]) {
+        const count = content.length;
+        const result = new Array<ContentItem>(count);
+        for (let i = 0; i < content.length; i++) {
+            result[i] = this.layoutManager.createContentItem(content[i], this);
         }
-    }
-
-    /** @internal */
-    private deepFilterAddChildContentItems(contentItems: ContentItem[],
-        checkAcceptFtn: ((this: void, item: ContentItem) => boolean)
-    ): void {
-        for (let i = 0; i < this._contentItems.length; i++) {
-            const contentItem = this._contentItems[i];
-            if (checkAcceptFtn(contentItem)) {
-                contentItems.push(contentItem);
-            }
-            contentItem.deepFilterAddChildContentItems(contentItems, checkAcceptFtn);
-        }
+        return result;
     }
 
     /**

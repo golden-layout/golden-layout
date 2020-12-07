@@ -1,4 +1,4 @@
-import { HeaderedItemConfig, ItemConfig, StackItemConfig } from '../config/config';
+import { ComponentItemConfig, HeaderedItemConfig, ItemConfig, StackItemConfig } from '../config/config';
 import { UserComponentItemConfig, UserItemConfig, UserSerialisableComponentConfig } from '../config/user-config';
 import { Header } from '../controls/header';
 import { AssertError, UnexpectedNullError } from '../errors/internal-error';
@@ -20,6 +20,8 @@ import { ContentItem } from './content-item';
 /** @public */
 export class Stack extends ContentItem {
     /** @internal */
+    private readonly _headerConfig: HeaderedItemConfig.Header | undefined;
+    /** @internal */
     private readonly _header: Header;
     /** @internal */
     private readonly _childElementContainer: HTMLElement;
@@ -38,7 +40,11 @@ export class Stack extends ContentItem {
     /** @internal */
     private _docker: Stack.Docker;
     /** @internal */
+    private readonly _initialWantMaximise: boolean;
+    /** @internal */
     private _isMaximised = false;
+    /** @internal */
+    private _initialActiveItemIndex: number;
 
     /** @internal */
     private _elementMouseEnterEventListener = () => this.onElementMouseEnter();
@@ -51,23 +57,26 @@ export class Stack extends ContentItem {
     /** @internal */
     private _minimisedListener = () => this.handleMinimised();
 
-    get stackConfig(): StackItemConfig { return this._stackConfig; }
     get childElementContainer(): HTMLElement { return this._childElementContainer; }
     get headerShow(): boolean { return this._header.show; }
     get headerSide(): Side { return this._header.side; }
     get headerLeftRightSided(): boolean { return this._header.leftRightSided; }
     get dockEnabled(): boolean { return this._header.dockEnabled; }
+    /** @internal */
     get docker(): Stack.Docker { return this._docker; }
+    /** @internal */
     get contentAreaDimensions(): Stack.ContentAreaDimensions | null { return this._contentAreaDimensions; }
+    /** @internal */
+    get initialWantMaximise(): boolean { return this._initialWantMaximise; }
     get isMaximised(): boolean { return this._isMaximised; }
 
     /** @internal */
-    constructor(layoutManager: LayoutManager, private readonly _stackConfig: StackItemConfig, private _stackParent: Stack.Parent) {
-        super(layoutManager, _stackConfig, _stackParent, createTemplateHtmlElement(Stack.templateHtml));
+    constructor(layoutManager: LayoutManager, config: StackItemConfig, private _stackParent: Stack.Parent) {
+        super(layoutManager, config, _stackParent, createTemplateHtmlElement(Stack.templateHtml));
 
-        const itemHeaderConfig = _stackConfig.header;
+        this._headerConfig = config.header;
         const layoutHeaderConfig = layoutManager.layoutConfig.header;
-        const configContent = _stackConfig.content;
+        const configContent = config.content;
         // If stack has only one component, then we can also check this for header settings
         let componentHeaderConfig: HeaderedItemConfig.Header | undefined;
         if (configContent.length !== 1) {
@@ -77,14 +86,17 @@ export class Stack extends ContentItem {
             componentHeaderConfig = (firstChildItemConfig as HeaderedItemConfig).header; // will be undefined if not component (and wont be stack)
         }
 
+        this._initialWantMaximise = config.maximised;
+        this._initialActiveItemIndex = config.activeItemIndex ?? 0; // make sure defined
+
         // check for defined value for each item in order of Stack (this Item), Component (first child), Manager.
-        const show = itemHeaderConfig?.show ?? componentHeaderConfig?.show ?? layoutHeaderConfig.show;
-        const popout = itemHeaderConfig?.popout ?? componentHeaderConfig?.popout ?? layoutHeaderConfig.popout;
-        const dock = itemHeaderConfig?.dock ?? componentHeaderConfig?.dock ?? layoutHeaderConfig.dock;
-        const maximise = itemHeaderConfig?.maximise ?? componentHeaderConfig?.maximise ?? layoutHeaderConfig.maximise;
-        const close = itemHeaderConfig?.close ?? componentHeaderConfig?.close ?? layoutHeaderConfig.close;
-        const minimise = itemHeaderConfig?.minimise ?? componentHeaderConfig?.minimise ?? layoutHeaderConfig.minimise;
-        const tabDropdown = itemHeaderConfig?.tabDropdown ?? componentHeaderConfig?.tabDropdown ?? layoutHeaderConfig.tabDropdown;
+        const show = this._headerConfig?.show ?? componentHeaderConfig?.show ?? layoutHeaderConfig.show;
+        const popout = this._headerConfig?.popout ?? componentHeaderConfig?.popout ?? layoutHeaderConfig.popout;
+        const dock = this._headerConfig?.dock ?? componentHeaderConfig?.dock ?? layoutHeaderConfig.dock;
+        const maximise = this._headerConfig?.maximise ?? componentHeaderConfig?.maximise ?? layoutHeaderConfig.maximise;
+        const close = this._headerConfig?.close ?? componentHeaderConfig?.close ?? layoutHeaderConfig.close;
+        const minimise = this._headerConfig?.minimise ?? componentHeaderConfig?.minimise ?? layoutHeaderConfig.minimise;
+        const tabDropdown = this._headerConfig?.tabDropdown ?? componentHeaderConfig?.tabDropdown ?? layoutHeaderConfig.tabDropdown;
         this._maximisedEnabled = maximise !== false;
         const headerSettings: Header.Settings = {
             show: show !== false,
@@ -105,7 +117,7 @@ export class Stack extends ContentItem {
 
         this._header = new Header(layoutManager,
             this, headerSettings,
-            this._stackConfig.isClosable && close !== false,
+            config.isClosable && close !== false,
             () => this.remove(),
             () => this.handleDockEvent(),
             () => this.handlePopoutEvent(),
@@ -170,21 +182,20 @@ export class Stack extends ContentItem {
         const contentItems = this.contentItems;
         const contentItemCount = contentItems.length;
         if (contentItemCount > 0) { // contentItemCount will be 0 on drag drop
-            const activeItemIndex = this._stackConfig.activeItemIndex ?? 0; // should never be undefined
-            if (activeItemIndex < 0 || activeItemIndex >= contentItemCount) {
-                throw new Error(`ActiveItemIndex out of range: ${activeItemIndex}: ${JSON.stringify(this._stackConfig)}`);
+            if (this._initialActiveItemIndex < 0 || this._initialActiveItemIndex >= contentItemCount) {
+                throw new Error(`ActiveItemIndex out of range: ${this._initialActiveItemIndex} id: ${this.id}`);
             } else {
                 for (let i = 0; i < contentItemCount; i++) {
                     const contentItem = contentItems[i];
                     if (!(contentItem instanceof ComponentItem)) {
-                        throw new Error(`Stack Content Item is not of type ComponentItem: ${i}: ${JSON.stringify(this._stackConfig)}`);
+                        throw new Error(`Stack Content Item is not of type ComponentItem: ${i} id: ${this.id}`);
                     } else {
                         this._header.createTab(contentItem, i);
                         contentItem.hide();
                     }
                 }
 
-                this.setActiveComponentItem(contentItems[activeItemIndex] as ComponentItem);
+                this.setActiveComponentItem(contentItems[this._initialActiveItemIndex] as ComponentItem);
             }
         }
         
@@ -382,14 +393,23 @@ export class Stack extends ContentItem {
     }
 
     toConfig(): StackItemConfig {
-        // cannot rely on ItemConfig.createCopy() to create StackItemConfig as header may have changed
-        const result = super.toConfig() as StackItemConfig;
-        result.maximised = this._isMaximised;
-        result.header = this.createHeaderConfig();
-        result.activeItemIndex = this.contentItems.indexOf(this._activeComponentItem);
-        if (result.activeItemIndex < 0) {
+        const activeItemIndex = this.contentItems.indexOf(this._activeComponentItem);
+        if (activeItemIndex < 0) {
             throw new AssertError('STC69221');
         } else {
+            const result: StackItemConfig = {
+                type: 'stack',
+                content: this.calculateConfigContent() as ComponentItemConfig[],
+                width: this.width,
+                minWidth: this.minWidth,
+                height: this.height,
+                minHeight: this.minHeight,
+                id: this.id,
+                isClosable: this.isClosable,
+                maximised: this._isMaximised,
+                header: this.createHeaderConfig(),
+                activeItemIndex,
+            }
             return result;
         }
     }
@@ -464,7 +484,7 @@ export class Stack extends ContentItem {
          * which would wrap the contentItem in a Stack) we need to check whether contentItem is a RowOrColumn.
          * If it is, we need to re-wrap it in a Stack like it was when it was dragged by its Tab (it was dragged!).
          */
-        if(contentItem.config.type === ItemConfig.Type.row || contentItem.config.type === ItemConfig.Type.column){
+        if(contentItem.type === ItemConfig.Type.row || contentItem.type === ItemConfig.Type.column){
             const itemConfig = StackItemConfig.createDefault();
             itemConfig.header = this.createHeaderConfig();
             const stack = this.layoutManager.createContentItem(itemConfig, this);
@@ -479,8 +499,8 @@ export class Stack extends ContentItem {
         if (hasCorrectParent) {
             const index = this._stackParent.contentItems.indexOf(this);
             this._stackParent.addChild(contentItem, insertBefore ? index : index + 1, true);
-            this.config[dimension] *= 0.5;
-            contentItem.config[dimension] = this.config[dimension];
+            this[dimension] *= 0.5;
+            contentItem[dimension] = this[dimension];
             this._stackParent.updateSize();
             /*
              * This handles items that are dropped on top or bottom of a row or left / right of a column. We need
@@ -495,8 +515,8 @@ export class Stack extends ContentItem {
             rowOrColumn.addChild(contentItem, insertBefore ? 0 : undefined, true);
             rowOrColumn.addChild(this, insertBefore ? undefined : 0, true);
 
-            this.config[dimension] = 50;
-            contentItem.config[dimension] = 50;
+            this[dimension] = 50;
+            contentItem[dimension] = 50;
             rowOrColumn.updateSize();
         }
         this._stackParent.validateDocking();
@@ -901,13 +921,12 @@ export class Stack extends ContentItem {
 
     /** @internal */
     private createHeaderConfig() {
-        const currentHeaderConfig = this._stackConfig.header;
         if (!this._headerSideChanged) {
-            return HeaderedItemConfig.Header.createCopy(currentHeaderConfig);
+            return HeaderedItemConfig.Header.createCopy(this._headerConfig);
         } else {
             const show = this._header.show ? this._header.side : false;
 
-            let result = HeaderedItemConfig.Header.createCopy(currentHeaderConfig, show);
+            let result = HeaderedItemConfig.Header.createCopy(this._headerConfig, show);
             if (result === undefined) {
                 result = {
                     show,

@@ -1,7 +1,7 @@
-import { ComponentItemConfig, HeaderedItemConfig, ReactComponentConfig, SerialisableComponentConfig } from '../config/config';
+import { ComponentItemConfig, HeaderedItemConfig, ItemConfig, ReactComponentConfig, SerialisableComponentConfig } from '../config/config';
 import { ComponentContainer } from '../container/component-container';
 import { Tab } from '../controls/tab';
-import { AssertError, UnexpectedNullError } from '../errors/internal-error';
+import { UnexpectedNullError } from '../errors/internal-error';
 import { LayoutManager } from '../layout-manager';
 import { createTemplateHtmlElement, getElementWidthAndHeight } from '../utils/utils';
 import { ContentItem } from './content-item';
@@ -11,36 +11,57 @@ import { Stack } from './stack';
 /** @public */
 export class ComponentItem extends ContentItem {
     /** @internal */
-    private readonly _componentName: string;
+    private readonly _isReact: boolean;
     /** @internal */
-    private _container: ComponentContainer;
+    private _reorderEnabled: boolean;
+    /** @internal */
+    private _headerConfig: HeaderedItemConfig.Header | undefined;
+    /** @internal */
+    private _reactComponent: string;
     /** @internal */
     private _title: string;
     /** @internal */
+    private readonly _initialWantMaximise: boolean;
+    /** @internal */
+    private _container: ComponentContainer;
+    /** @internal */
     private _tab: Tab;
 
-    get componentName(): string { return this._componentName; }
+    get componentName(): string { return this._container.componentName; }
+    get reorderEnabled(): boolean { return this._reorderEnabled; }
+    /** @internal */
+    get initialWantMaximise(): boolean { return this._initialWantMaximise; }
     get component(): ComponentItem.Component { return this._container.component; }
     get container(): ComponentContainer { return this._container; }
 
-    get headerConfig(): HeaderedItemConfig.Header | undefined { return this._componentConfig.header; }
+    get headerConfig(): HeaderedItemConfig.Header | undefined { return this._headerConfig; }
     get title(): string { return this._title; }
     get tab(): Tab { return this._tab; }
 
     /** @internal */
     constructor(layoutManager: LayoutManager,
-        private readonly _componentConfig: ComponentItemConfig,
+        config: ComponentItemConfig,
         stackOrGroundItem: Stack | GroundItem
     ) {
-        super(layoutManager, _componentConfig, stackOrGroundItem, createTemplateHtmlElement(ComponentItem.templateHtml));
+        super(layoutManager, config, stackOrGroundItem, createTemplateHtmlElement(ComponentItem.templateHtml));
 
         this.isComponent = true;
-        this._componentName = this._componentConfig.componentName;
-        this._title = this._componentConfig.title;
-        if (this._title === '') {
-            this._title = this._componentName;
+
+        if (ComponentItemConfig.isReact(config)) {
+            this._isReact = true;
+            this._reactComponent = config.component;
+        } else {
+            this._isReact = false;
         }
-        this._container = new ComponentContainer(this._componentConfig, this, layoutManager, this.element);
+
+        this._reorderEnabled = config.reorderEnabled;
+
+        this.applyUpdatableConfig(config);
+
+        this._initialWantMaximise = config.maximised;
+        this._container = new ComponentContainer(config, this, layoutManager, this.element,
+            (itemConfig) => this.handleUpdateItemConfigEvent(itemConfig)
+        );
     }
 
     /** @internal */
@@ -49,54 +70,56 @@ export class ComponentItem extends ContentItem {
         super.destroy();
     }
 
-    /** @internal */
+    applyUpdatableConfig(config: ComponentItemConfig): void {
+        this._title = config.title;
+        if (this._title === '') {
+            this._title = this.componentName;
+        }
+        this._headerConfig = config.header;
+    }
+
     toConfig(): ComponentItemConfig {
         const stateRequestEvent = this._container.stateRequestEvent;
         const state = stateRequestEvent === undefined ? this._container.getState() : stateRequestEvent();
 
-        const currentConfig = this._componentConfig;
         let result: ComponentItemConfig;
-        if (ComponentItemConfig.isSerialisable(currentConfig)) {
-            const serialisableResult: SerialisableComponentConfig = {
-                type: currentConfig.type,
+        if (this._isReact) {
+            const reactResult: ReactComponentConfig = {
+                type: ItemConfig.Type.reactComponent,
                 content: [],
-                width: currentConfig.width,
-                minWidth: currentConfig.minWidth,
-                height: currentConfig.height,
-                minHeight: currentConfig.minHeight,
-                id: currentConfig.id,
+                width: this.width,
+                minWidth: this.minWidth,
+                height: this.height,
+                minHeight: this.minHeight,
+                id: this.id,
                 maximised: false,
-                isClosable: currentConfig.isClosable,
-                reorderEnabled: currentConfig.reorderEnabled,
+                isClosable: this.isClosable,
+                reorderEnabled: this._reorderEnabled,
                 title: this._title,
-                header: HeaderedItemConfig.Header.createCopy(currentConfig.header),
-                componentName: currentConfig.componentName,
+                header: HeaderedItemConfig.Header.createCopy(this._headerConfig),
+                componentName: this.componentName,
+                component: this._reactComponent,
+                props: state,
+            }
+            result = reactResult;
+        } else {
+            const serialisableResult: SerialisableComponentConfig = {
+                type: ItemConfig.Type.serialisableComponent,
+                content: [],
+                width: this.width,
+                minWidth: this.minWidth,
+                height: this.height,
+                minHeight: this.minHeight,
+                id: this.id,
+                maximised: false,
+                isClosable: this.isClosable,
+                reorderEnabled: this._reorderEnabled,
+                title: this._title,
+                header: HeaderedItemConfig.Header.createCopy(this._headerConfig),
+                componentName: this.componentName,
                 componentState: state,
             }
             result = serialisableResult;
-        } else {
-            if (ComponentItemConfig.isReact(currentConfig)) {
-                const reactResult: ReactComponentConfig = {
-                    type: currentConfig.type,
-                    content: [],
-                    width: currentConfig.width,
-                    minWidth: currentConfig.minWidth,
-                    height: currentConfig.height,
-                    minHeight: currentConfig.minHeight,
-                    id: currentConfig.id,
-                    maximised: false,
-                    isClosable: currentConfig.isClosable,
-                    reorderEnabled: currentConfig.reorderEnabled,
-                    title: this._title,
-                    header: HeaderedItemConfig.Header.createCopy(currentConfig.header),
-                    componentName: currentConfig.componentName,
-                    component: currentConfig.component,
-                    props: state,
-                }
-                result = reactResult;
-            } else {
-                throw new AssertError('CITC75335');
-            }
         }
 
         return result;
@@ -163,6 +186,16 @@ export class ComponentItem extends ContentItem {
     show(): void {
         this._container.show();
         super.show();
+    }
+
+    /** @internal */
+    private handleUpdateItemConfigEvent(itemConfig: ComponentItemConfig) {
+        // Called if component is replaced. Update properties accordingly
+        if (ComponentItemConfig.isReact(itemConfig)) {
+            this._reactComponent = itemConfig.component;
+        }
+
+        this.applyUpdatableConfig(itemConfig);
     }
 
     /** @internal */

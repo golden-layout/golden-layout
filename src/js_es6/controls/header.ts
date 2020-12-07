@@ -358,7 +358,7 @@ export class Header extends EventEmitter {
                 for (let i = 0; i < len; i++) {
                     const tab = this._tabs[i];
                     const item = tab.componentItem;
-                    if (!item.config.isClosable) {
+                    if (!item.isClosable) {
                         isClosable = false;
                         break;
                     }

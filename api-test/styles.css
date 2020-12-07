@@ -29,6 +29,11 @@ body {
     flex-direction: row;
 }
 
+#replaceComponentSection {
+    display: flex;
+    flex-direction: row;
+}
+
 #predefinedLayoutsSection {
     display: flex;
     flex-direction: row;

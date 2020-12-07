@@ -1,4 +1,4 @@
-import { GoldenLayout, LayoutConfig, UserLayoutConfig, UserSerialisableComponentConfig } from "../dist/golden-layout";
+import { ContentItem, GoldenLayout, LayoutConfig, UserComponentItemConfig, UserLayoutConfig, UserSerialisableComponentConfig } from "../dist/golden-layout";
 import { BooleanComponent } from './boolean-component';
 import { ColorComponent } from './color-component';
 import { Layout, prefinedLayouts } from './predefined-layouts';
@@ -10,8 +10,8 @@ export class App {
     private _goldenLayout: GoldenLayout;
     private _registerExtraComponentTypesButton;
     private _registerExtraComponentTypesButtonClickListener = () => this.handleRegisterExtraComponentTypesButtonClick();
-    private _registeredComponentNamesSelect: HTMLSelectElement;
-    private _registeredComponentNamesSelectChangeListener = () => this.handleRegisteredComponentNamesSelectChange();
+    private _registeredComponentNamesForAddSelect: HTMLSelectElement;
+    private _registeredComponentNamesForAddSelectChangeListener = () => this.handleRegisteredComponentNamesForAddSelectChange();
     private _addComponentButton: HTMLButtonElement;
     private _addComponentButtonClickListener = () => this.handleAddComponentButtonClick();
     private _layoutSelect: HTMLSelectElement;
@@ -20,6 +20,10 @@ export class App {
     private _loadLayoutButtonClickListener = () => this.handleLoadLayoutButtonClick();
     private _loadComponentAsRootButton: HTMLButtonElement;
     private _loadComponentAsRootClickListener = () => this.handleLoadComponentAsRootButtonClick();
+    private _registeredComponentNamesForReplaceSelect: HTMLSelectElement;
+    private _registeredComponentNamesForReplaceSelectChangeListener = () => this.handleRegisteredComponentNamesForReplaceSelectChange();
+    private _replaceComponentButton: HTMLButtonElement;
+    private _replaceComponentButtonClickListener = () => this.handleReplaceComponentButtonClick();
     private _saveLayoutButton: HTMLButtonElement;
     private _saveLayoutButtonClickListener = () => this.handleSaveLayoutButtonClick();
     private _reloadSavedLayoutButton: HTMLButtonElement;
@@ -51,12 +55,12 @@ export class App {
         this._registerExtraComponentTypesButton = registerExtraComponentTypesButton;
         this._registerExtraComponentTypesButton.addEventListener('click', this._registerExtraComponentTypesButtonClickListener);
 
-        const registeredComponentNamesSelect = document.querySelector('#registeredComponentTypesSelect') as HTMLSelectElement;
-        if (registeredComponentNamesSelect === null) {
+        const registeredComponentNamesForAddSelect = document.querySelector('#registeredComponentTypesForAddSelect') as HTMLSelectElement;
+        if (registeredComponentNamesForAddSelect === null) {
             throw new Error()
         }
-        this._registeredComponentNamesSelect = registeredComponentNamesSelect;
-        this._registeredComponentNamesSelect.addEventListener('change', this._registeredComponentNamesSelectChangeListener);
+        this._registeredComponentNamesForAddSelect = registeredComponentNamesForAddSelect;
+        this._registeredComponentNamesForAddSelect.addEventListener('change', this._registeredComponentNamesForAddSelectChangeListener);
 
         const addComponentButton = document.querySelector('#addComponentButton') as HTMLButtonElement;
         if (addComponentButton === null) {
@@ -86,6 +90,20 @@ export class App {
         this._loadComponentAsRootButton = loadComponentAsRootButton;
         this._loadComponentAsRootButton.addEventListener('click', this._loadComponentAsRootClickListener);
 
+        const registeredComponentNamesForReplaceSelect = document.querySelector('#registeredComponentTypesForReplaceSelect') as HTMLSelectElement;
+        if (registeredComponentNamesForReplaceSelect === null) {
+            throw new Error()
+        }
+        this._registeredComponentNamesForReplaceSelect = registeredComponentNamesForReplaceSelect;
+        this._registeredComponentNamesForReplaceSelect.addEventListener('change', this._registeredComponentNamesForReplaceSelectChangeListener);
+
+        const replaceComponentButton = document.querySelector('#replaceComponentButton') as HTMLButtonElement;
+        if (replaceComponentButton === null) {
+            throw Error('Could not find replaceComponentButton');
+        }
+        this._replaceComponentButton = replaceComponentButton;
+        this._replaceComponentButton.addEventListener('click', this._replaceComponentButtonClickListener);
+
         const saveLayoutButton = document.querySelector('#saveLayoutButton') as HTMLButtonElement;
         if (saveLayoutButton === null) {
             throw Error('Could not find saveLayoutButton');
@@ -105,7 +123,8 @@ export class App {
     }
 
     start(): void {
-        this.loadRegisteredComponentNamesSelect();
+        this.loadRegisteredComponentNamesForAddSelect();
+        this.loadRegisteredComponentNamesForReplaceSelect();
         this.loadLayoutSelect();
     }
 
@@ -121,22 +140,23 @@ export class App {
         this._goldenLayout.registerComponentConstructor(TextComponent.typeName, TextComponent);
         this._goldenLayout.registerComponentConstructor(BooleanComponent.typeName, BooleanComponent);
         this._allComponentsRegistered = true;
-        this.loadRegisteredComponentNamesSelect();
+        this.loadRegisteredComponentNamesForAddSelect();
+        this.loadRegisteredComponentNamesForReplaceSelect();
         this.loadLayoutSelect();
         this._registerExtraComponentTypesButton.disabled = true;
     }
 
-    private handleRegisteredComponentNamesSelectChange() {
+    private handleRegisteredComponentNamesForAddSelectChange() {
         // nothing to do here
     }
 
     private handleAddComponentButtonClick() {
-        const componentName = this._registeredComponentNamesSelect.value;
+        const componentName = this._registeredComponentNamesForAddSelect.value;
         const userItemConfig: UserSerialisableComponentConfig = {
             componentName,
             type: 'component',
         }
-        this._goldenLayout.addItem(userItemConfig, 0)
+        this._goldenLayout.addItem(userItemConfig, 0);
     }
 
     private handleLayoutSelectChange() {
@@ -163,6 +183,24 @@ export class App {
         this._goldenLayout.loadComponentAsRoot(itemConfig);
     }
 
+    private handleRegisteredComponentNamesForReplaceSelectChange() {
+        // nothing to do here
+    }
+
+    private handleReplaceComponentButtonClick() {
+        const componentName = this._registeredComponentNamesForReplaceSelect.value;
+        const userItemConfig: UserSerialisableComponentConfig = {
+            componentName,
+            type: 'component',
+        }
+        const rootItem = this._goldenLayout.rootItem;
+        if (rootItem !== undefined) {
+            const content = [rootItem];
+            this.replaceComponentRecursively(content, userItemConfig);
+        }
+
+    }
+
     private handleSaveLayoutButtonClick() {
         this._savedLayout = this._goldenLayout.saveLayout();
         this._reloadSavedLayoutButton.disabled = false;
@@ -177,12 +215,21 @@ export class App {
         }
     }
 
-    private loadRegisteredComponentNamesSelect() {
-        this._registeredComponentNamesSelect.options.length = 0;
+    private loadRegisteredComponentNamesForAddSelect() {
+        this._registeredComponentNamesForAddSelect.options.length = 0;
         const names = this._goldenLayout.getRegisteredComponentTypeNames();
         for (const name of names) {
             const option = new Option(name);
-            this._registeredComponentNamesSelect.options.add(option);
+            this._registeredComponentNamesForAddSelect.options.add(option);
+        }
+    }
+
+    private loadRegisteredComponentNamesForReplaceSelect() {
+        this._registeredComponentNamesForReplaceSelect.options.length = 0;
+        const names = this._goldenLayout.getRegisteredComponentTypeNames();
+        for (const name of names) {
+            const option = new Option(name);
+            this._registeredComponentNamesForReplaceSelect.options.add(option);
         }
     }
 
@@ -196,6 +243,19 @@ export class App {
         for (const layout of layouts) {
             const option = new Option(layout.name);
             this._layoutSelect.options.add(option);
+        }
+    }
+
+    private replaceComponentRecursively(content: ContentItem[], itemConfig: UserComponentItemConfig) {
+        for (const item of content) {
+            if (ContentItem.isComponentItem(item)) {
+                const container = item.container;
+                if (container.componentName === ColorComponent.typeName) {
+                    container.replaceComponent(itemConfig);
+                }
+            } else {
+                this.replaceComponentRecursively(item.contentItems, itemConfig);
+            }
         }
     }
 }
