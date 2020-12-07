@@ -1,10 +1,10 @@
-import { ItemConfig } from '../config/config'
+import { ResolvedItemConfig } from '../config/resolved-config'
 import { BrowserPopout } from '../controls/browser-popout'
 import { AssertError, UnexpectedNullError } from '../errors/internal-error'
 import { LayoutManager } from '../layout-manager'
 import { EventEmitter } from '../utils/event-emitter'
 import { getJQueryOffset } from '../utils/jquery-legacy'
-import { AreaLinkedRect } from '../utils/types'
+import { AreaLinkedRect, ItemType } from '../utils/types'
 import { getUniqueId, setElementDisplayVisibility } from '../utils/utils'
 import { ComponentItem } from './component-item'
 import { Stack } from './stack'
@@ -19,7 +19,7 @@ import { Stack } from './stack'
 
 export abstract class ContentItem extends EventEmitter {
     /** @internal */
-    private _type: ItemConfig.Type;
+    private _type: ItemType;
     /** @internal */
     private _id: string;
     /** @internal */
@@ -50,7 +50,7 @@ export abstract class ContentItem extends EventEmitter {
     isStack: boolean
     isComponent: boolean
 
-    get type(): ItemConfig.Type { return this._type; }
+    get type(): ItemType { return this._type; }
     get id(): string { return this._id; }
     /** @internal */
     get popInParentIds(): string[] { return this._popInParentIds; }
@@ -70,7 +70,7 @@ export abstract class ContentItem extends EventEmitter {
 
     /** @internal */
     constructor(readonly layoutManager: LayoutManager,
-        config: ItemConfig,
+        config: ResolvedItemConfig,
         private _parent: ContentItem | null,
         private readonly _element: HTMLElement
     ) {
@@ -276,13 +276,13 @@ export abstract class ContentItem extends EventEmitter {
         }
     }
 
-    abstract toConfig(): ItemConfig;
+    abstract toConfig(): ResolvedItemConfig;
 
     /** @internal */
-    calculateConfigContent(): ItemConfig[] {
+    calculateConfigContent(): ResolvedItemConfig[] {
         const contentItems = this._contentItems;
         const count = contentItems.length;
-        const result = new Array<ItemConfig>(count);
+        const result = new Array<ResolvedItemConfig>(count);
         for (let i = 0; i < count; i++) {
             const item = contentItems[i];
             result[i] = item.toConfig();
@@ -416,7 +416,7 @@ export abstract class ContentItem extends EventEmitter {
      * PLEASE NOTE, please see addChild for adding contentItems at runtime
      * @internal
      */
-    private createContentItems(content: readonly ItemConfig[]) {
+    private createContentItems(content: readonly ResolvedItemConfig[]) {
         const count = content.length;
         const result = new Array<ContentItem>(count);
         for (let i = 0; i < content.length; i++) {

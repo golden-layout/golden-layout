@@ -1,4 +1,4 @@
-import { LayoutConfig } from '../config/config';
+import { ResolvedLayoutConfig } from '../config/resolved-config';
 
 /**
  * Minifies and unminifies configs by replacing frequent keys
@@ -74,16 +74,16 @@ export class ConfigMinifier {
      * replaces its keys and values recursively with
      * one letter counterparts
      */
-    minifyConfig(config: LayoutConfig): LayoutConfig {
-        return this.translateObject(config, true) as LayoutConfig;
+    minifyConfig(config: ResolvedLayoutConfig): ResolvedLayoutConfig {
+        return this.translateObject(config, true) as ResolvedLayoutConfig;
     }
 
     /**
      * Takes a configuration Object that was previously minified
      * using minifyConfig and returns its original version
      */
-    unminifyConfig(minifiedConfig: LayoutConfig): LayoutConfig {
-        return this.translateObject(minifiedConfig, false) as LayoutConfig;
+    unminifyConfig(minifiedConfig: ResolvedLayoutConfig): ResolvedLayoutConfig {
+        return this.translateObject(minifiedConfig, false) as ResolvedLayoutConfig;
     }
 
     private translateObject(from: Record<string, unknown>, minify: boolean) {

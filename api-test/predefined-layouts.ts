@@ -1,4 +1,4 @@
-import { ItemConfig, UserLayoutConfig, UserSerialisableComponentConfig } from '../dist/golden-layout';
+import { ItemType, UserLayoutConfig, UserSerialisableComponentConfig } from '../dist/golden-layout';
 import { BooleanComponent } from './boolean-component';
 import { ColorComponent } from './color-component';
 import { TextComponent } from './text-component';
@@ -10,7 +10,7 @@ export interface Layout {
 
 const miniRowConfig: UserLayoutConfig = {
     root: {
-        type: ItemConfig.Type.row,
+        type: ItemType.row,
         content: [
             {
                 type: "component",
@@ -41,7 +41,7 @@ const miniRowLayout: Layout = {
 
 const miniStackConfig: UserLayoutConfig = {
     root: {
-        type: ItemConfig.Type.stack,
+        type: ItemType.stack,
         content: [
             {
                 type: "component",
@@ -72,7 +72,7 @@ const miniStackLayout: Layout = {
 
 const componentConfig: UserLayoutConfig = {
     root: {
-        type: ItemConfig.Type.serialisableComponent,
+        type: ItemType.serialisableComponent,
         title: "Layout",
         header: { show: "top", popout: false },
         componentName: ColorComponent.typeName,

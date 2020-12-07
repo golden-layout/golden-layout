@@ -1,9 +1,9 @@
-import { ItemConfig, RowOrColumnItemConfig, StackItemConfig } from '../config/config'
+import { ResolvedRowOrColumnItemConfig, ResolvedStackItemConfig } from '../config/resolved-config'
 import { UserComponentItemConfig, UserItemConfig, UserRowOrColumnItemConfig, UserSerialisableComponentConfig, UserStackItemConfig } from '../config/user-config'
 import { Splitter } from '../controls/splitter'
 import { AssertError, UnexpectedNullError } from '../errors/internal-error'
 import { LayoutManager } from '../layout-manager'
-import { JsonValue, Side } from '../utils/types'
+import { WidthOrHeightPropertyName, ItemType, JsonValue, Side } from '../utils/types'
 import {
     createTemplateHtmlElement,
     getElementHeight,
@@ -32,7 +32,7 @@ export class RowOrColumn extends ContentItem {
     /** @internal */
     private readonly _splitterGrabSize: number;
     /** @internal */
-    private readonly _dimension: ItemConfig.HeightOrWidthPropertyName;
+    private readonly _dimension: WidthOrHeightPropertyName;
     /** @internal */
     private readonly _splitter: Splitter[] = [];
     /** @internal */
@@ -43,7 +43,7 @@ export class RowOrColumn extends ContentItem {
     private _splitterMaxPosition: number | null;
 
     /** @internal */
-    constructor(isColumn: boolean, layoutManager: LayoutManager, config: RowOrColumnItemConfig,
+    constructor(isColumn: boolean, layoutManager: LayoutManager, config: ResolvedRowOrColumnItemConfig,
         private _rowOrColumnParent: ContentItem
     ) {
         super(layoutManager, config, _rowOrColumnParent, createTemplateHtmlElement(RowOrColumn.createTemplateHtml(isColumn)));
@@ -61,8 +61,8 @@ export class RowOrColumn extends ContentItem {
         this._splitterMaxPosition = null;
 
         switch (config.type) {
-            case ItemConfig.Type.row:
-            case ItemConfig.Type.column:
+            case ItemType.row:
+            case ItemType.column:
                 this._configType = config.type;
                 break;
             default:
@@ -430,10 +430,10 @@ export class RowOrColumn extends ContentItem {
         super.setParent(parent);
     }
 
-    toConfig(): RowOrColumnItemConfig {
-        const result: RowOrColumnItemConfig = {
+    toConfig(): ResolvedRowOrColumnItemConfig {
+        const result: ResolvedRowOrColumnItemConfig = {
             type: this.type as 'row' | 'column',
-            content: this.calculateConfigContent() as (RowOrColumnItemConfig | StackItemConfig)[],
+            content: this.calculateConfigContent() as (ResolvedRowOrColumnItemConfig | ResolvedStackItemConfig)[],
             width: this.width,
             minWidth: this.minWidth,
             height: this.height,
@@ -842,7 +842,7 @@ export class RowOrColumn extends ContentItem {
 /** @public */
 export namespace RowOrColumn {
     /** @internal */
-    export function getElementDimensionSize(element: HTMLElement, dimension: ItemConfig.HeightOrWidthPropertyName): number {
+    export function getElementDimensionSize(element: HTMLElement, dimension: WidthOrHeightPropertyName): number {
         if (dimension === 'width') {
             return getElementWidth(element);
         } else {
@@ -851,7 +851,7 @@ export namespace RowOrColumn {
     }
 
     /** @internal */
-    export function setElementDimensionSize(element: HTMLElement, dimension: ItemConfig.HeightOrWidthPropertyName, value: number): void {
+    export function setElementDimensionSize(element: HTMLElement, dimension: WidthOrHeightPropertyName, value: number): void {
         if (dimension === 'width') {
             return setElementWidth(element, value);
         } else {

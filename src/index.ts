@@ -1,11 +1,4 @@
-// helper file for webpack build system
-// whatever is imported/exported here will be included in the build
-//import 'less/test.less'
-//import './less/goldenlayout-base.less'
-//import './less/goldenlayout-dark-theme.less'
-//
-
-export * from './js_es6/config/config';
+export * from './js_es6/config/resolved-config';
 export * from './js_es6/config/user-config';
 export { ComponentContainer } from './js_es6/container/component-container';
 export { BrowserPopout } from './js_es6/controls/browser-popout';
@@ -19,5 +12,5 @@ export { RowOrColumn } from './js_es6/items/row-or-column';
 export { Stack } from './js_es6/items/stack';
 export { LayoutManager } from './js_es6/layout-manager';
 export * from './js_es6/utils/i18n-strings';
-export { Json, JsonValue, JsonValueArray } from './js_es6/utils/types';
+export * from './js_es6/utils/types';
 

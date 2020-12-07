@@ -9,12 +9,24 @@ export class ApiError extends ExternalError {
     constructor(message: string);
 }
 
+// Warning: (ae-internal-missing-underscore) The name "AreaLinkedRect" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal (undocumented)
+export interface AreaLinkedRect {
+    // (undocumented)
+    x1: number;
+    // (undocumented)
+    x2: number;
+    // (undocumented)
+    y1: number;
+    // (undocumented)
+    y2: number;
+}
+
 // Warning: (ae-forgotten-export) The symbol "EventEmitter" needs to be exported by the entry point index.d.ts
 //
 // @public
 export class BrowserPopout extends EventEmitter {
-    // Warning: (ae-forgotten-export) The symbol "Rect" needs to be exported by the entry point index.d.ts
-    //
     // @internal
     constructor(_config: PopoutLayoutConfig, _initialWindowSize: Rect, _layoutManager: LayoutManager);
     // (undocumented)
@@ -194,8 +206,6 @@ export abstract class ContentItem extends EventEmitter {
     height: number;
     // @internal (undocumented)
     protected hide(): void;
-    // Warning: (ae-forgotten-export) The symbol "AreaLinkedRect" needs to be exported by the entry point index.d.ts
-    //
     // @internal (undocumented)
     highlightDropZone(x: number, y: number, area: AreaLinkedRect): void;
     // (undocumented)
@@ -248,7 +258,7 @@ export abstract class ContentItem extends EventEmitter {
     // (undocumented)
     abstract toConfig(): ItemConfig;
     // (undocumented)
-    get type(): ItemConfig.Type;
+    get type(): ItemType;
     // @internal (undocumented)
     protected updateContentItemsSize(): void;
     // @internal
@@ -295,23 +305,23 @@ export namespace GoldenLayout {
 // @internal (undocumented)
 export interface GroundItemConfig extends ItemConfig {
     // (undocumented)
-    height: 100;
+    readonly height: 100;
     // (undocumented)
-    id: '';
+    readonly id: '';
     // (undocumented)
-    isClosable: false;
+    readonly isClosable: false;
     // (undocumented)
-    minHeight: 0;
+    readonly minHeight: 0;
     // (undocumented)
-    minWidth: 0;
+    readonly minWidth: 0;
     // (undocumented)
-    reorderEnabled: false;
+    readonly reorderEnabled: false;
     // (undocumented)
-    title: '';
+    readonly title: '';
     // (undocumented)
     readonly type: 'ground';
     // (undocumented)
-    width: 100;
+    readonly width: 100;
 }
 
 // @internal (undocumented)
@@ -360,8 +370,6 @@ export class Header extends EventEmitter {
     setSide(value: Side): void;
     // @internal (undocumented)
     get show(): boolean;
-    // Warning: (ae-forgotten-export) The symbol "Side" needs to be exported by the entry point index.d.ts
-    //
     // @internal (undocumented)
     get side(): Side;
     // (undocumented)
@@ -436,7 +444,7 @@ export interface HeaderedItemConfig extends ItemConfig {
     // (undocumented)
     header: HeaderedItemConfig.Header | undefined;
     // (undocumented)
-    maximised: boolean;
+    readonly maximised: boolean;
 }
 
 // @public (undocumented)
@@ -503,43 +511,43 @@ export interface ItemConfig {
     // (undocumented)
     readonly minWidth: number;
     // (undocumented)
-    readonly type: ItemConfig.Type;
+    readonly type: ItemType;
     // (undocumented)
     readonly width: number;
 }
 
 // @public (undocumented)
 export namespace ItemConfig {
-    export function createCopy(original: ItemConfig, content?: ItemConfig[]): ItemConfig;
-    // (undocumented)
-    export function createDefault(type: Type): ItemConfig;
-    // (undocumented)
-    export type HeightOrWidthPropertyName = 'height' | 'width';
     const // @internal (undocumented)
     defaults: ItemConfig;
+    export function createCopy(original: ItemConfig, content?: ItemConfig[]): ItemConfig;
+    // (undocumented)
+    export function createDefault(type: ItemType): ItemConfig;
     // (undocumented)
     export function isComponentItem(itemConfig: ItemConfig): itemConfig is ComponentItemConfig;
     // @internal (undocumented)
     export function isGroundItem(itemConfig: ItemConfig): itemConfig is GroundItemConfig;
     // (undocumented)
     export function isStackItem(itemConfig: ItemConfig): itemConfig is StackItemConfig;
-    // (undocumented)
-    export type Type = 'ground' | 'row' | 'column' | 'stack' | 'component' | 'react-component';
-    // (undocumented)
-    export namespace Type {
-        const // (undocumented)
-        ground = "ground";
-        const // (undocumented)
-        row = "row";
-        const // (undocumented)
-        column = "column";
-        const // (undocumented)
-        stack = "stack";
-        const // (undocumented)
-        serialisableComponent = "component";
-        const // (undocumented)
-        reactComponent = "react-component";
-    }
+}
+
+// @public (undocumented)
+export type ItemType = 'ground' | 'row' | 'column' | 'stack' | 'component' | 'react-component';
+
+// @public (undocumented)
+export namespace ItemType {
+    const // (undocumented)
+    ground = "ground";
+    const // (undocumented)
+    row = "row";
+    const // (undocumented)
+    column = "column";
+    const // (undocumented)
+    stack = "stack";
+    const // (undocumented)
+    serialisableComponent = "component";
+    const // (undocumented)
+    reactComponent = "react-component";
 }
 
 // @public (undocumented)
@@ -649,7 +657,7 @@ export namespace LayoutConfig {
         // (undocumented)
         readonly reorderOnTabMenuClick: boolean;
         // (undocumented)
-        readonly responsiveMode: Settings.ResponsiveMode;
+        readonly responsiveMode: ResponsiveMode;
         // (undocumented)
         readonly selectionEnabled: boolean;
         // (undocumented)
@@ -659,21 +667,10 @@ export namespace LayoutConfig {
     }
     // (undocumented)
     export namespace Settings {
-        // (undocumented)
-        export function createCopy(original: Settings): Settings;
-        // (undocumented)
-        export type ResponsiveMode = 'none' | 'always' | 'onload';
         const // @internal (undocumented)
         defaults: LayoutConfig.Settings;
         // (undocumented)
-        export namespace ResponsiveMode {
-            const // (undocumented)
-            none = "none";
-            const // (undocumented)
-            always = "always";
-            const // (undocumented)
-            onload = "onload";
-        }
+        export function createCopy(original: Settings): Settings;
     }
 }
 
@@ -818,6 +815,16 @@ export namespace LayoutManager {
     export type ReleaseComponentEventHandler = (this: void, container: ComponentContainer, component: ComponentItem.Component) => void;
 }
 
+// Warning: (ae-internal-missing-underscore) The name "LeftAndTop" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal (undocumented)
+export interface LeftAndTop {
+    // (undocumented)
+    left: number;
+    // (undocumented)
+    top: number;
+}
+
 // @public (undocumented)
 export class PopoutBlockedError extends ExternalError {
     constructor(message: string);
@@ -877,6 +884,33 @@ export namespace ReactComponentConfig {
     export function createDefault(): ReactComponentConfig;
 }
 
+// Warning: (ae-internal-missing-underscore) The name "Rect" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal (undocumented)
+export interface Rect {
+    // (undocumented)
+    height: number;
+    // (undocumented)
+    left: number;
+    // (undocumented)
+    top: number;
+    // (undocumented)
+    width: number;
+}
+
+// @public (undocumented)
+export type ResponsiveMode = 'none' | 'always' | 'onload';
+
+// @public (undocumented)
+export namespace ResponsiveMode {
+    const // (undocumented)
+    none = "none";
+    const // (undocumented)
+    always = "always";
+    const // (undocumented)
+    onload = "onload";
+}
+
 // @public
 export type RootItemConfig = RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig;
 
@@ -920,9 +954,9 @@ export namespace RowOrColumn {
     // @internal (undocumented)
     export function createTemplateHtml(isColumn: boolean): string;
     // @internal (undocumented)
-    export function getElementDimensionSize(element: HTMLElement, dimension: ItemConfig.HeightOrWidthPropertyName): number;
+    export function getElementDimensionSize(element: HTMLElement, dimension: WidthOrHeightPropertyName): number;
     // @internal (undocumented)
-    export function setElementDimensionSize(element: HTMLElement, dimension: ItemConfig.HeightOrWidthPropertyName, value: number): void;
+    export function setElementDimensionSize(element: HTMLElement, dimension: WidthOrHeightPropertyName, value: number): void;
 }
 
 // @public
@@ -960,6 +994,21 @@ export namespace SerialisableComponentConfig {
     export function createCopy(original: SerialisableComponentConfig): SerialisableComponentConfig;
     // (undocumented)
     export function createDefault(): SerialisableComponentConfig;
+}
+
+// @public (undocumented)
+export type Side = 'top' | 'left' | 'right' | 'bottom';
+
+// @public (undocumented)
+export namespace Side {
+    const // (undocumented)
+    top = "top";
+    const // (undocumented)
+    left = "left";
+    const // (undocumented)
+    right = "right";
+    const // (undocumented)
+    bottom = "bottom";
 }
 
 // @public (undocumented)
@@ -1053,7 +1102,7 @@ export namespace Stack {
     // @internal (undocumented)
     export interface Docker {
         // (undocumented)
-        dimension: ItemConfig.HeightOrWidthPropertyName;
+        dimension: WidthOrHeightPropertyName;
         // (undocumented)
         docked: boolean;
         // (undocumented)
@@ -1090,7 +1139,7 @@ export namespace Stack {
 // @public (undocumented)
 export interface StackItemConfig extends HeaderedItemConfig {
     // (undocumented)
-    activeItemIndex: number;
+    readonly activeItemIndex: number;
     // (undocumented)
     readonly content: ComponentItemConfig[];
     // (undocumented)
@@ -1201,7 +1250,7 @@ export interface UserItemConfig {
     minHeight?: number;
     minWidth?: number;
     title?: string;
-    type: ItemConfig.Type;
+    type: ItemType;
     width?: number;
 }
 
@@ -1316,7 +1365,7 @@ export namespace UserLayoutConfig {
         popoutWholeStack?: boolean;
         reorderEnabled?: boolean;
         reorderOnTabMenuClick?: boolean;
-        responsiveMode?: LayoutConfig.Settings.ResponsiveMode;
+        responsiveMode?: ResponsiveMode;
         selectionEnabled?: boolean;
         // @deprecated
         showCloseIcon?: boolean;
@@ -1451,6 +1500,29 @@ export namespace UserStackItemConfig {
     export function resolve(user: UserStackItemConfig): StackItemConfig;
     // (undocumented)
     export function resolveContent(content: UserComponentItemConfig[] | undefined): ComponentItemConfig[];
+}
+
+// Warning: (ae-internal-missing-underscore) The name "WidthAndHeight" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal (undocumented)
+export interface WidthAndHeight {
+    // (undocumented)
+    height: number;
+    // (undocumented)
+    width: number;
+}
+
+// Warning: (ae-internal-missing-underscore) The name "WidthOrHeightPropertyName" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal (undocumented)
+export type WidthOrHeightPropertyName = 'width' | 'height';
+
+// @internal (undocumented)
+export namespace WidthOrHeightPropertyName {
+    const // (undocumented)
+    width = "width";
+    const // (undocumented)
+    height = "height";
 }
 
 

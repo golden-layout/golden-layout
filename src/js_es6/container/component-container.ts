@@ -1,4 +1,4 @@
-import { ComponentItemConfig } from '../config/config';
+import { ResolvedComponentItemConfig } from '../config/resolved-config';
 import { UserComponentItemConfig, UserItemConfig, UserReactComponentConfig, UserSerialisableComponentConfig } from '../config/user-config';
 import { Tab } from '../controls/tab';
 import { AssertError, UnexpectedNullError } from '../errors/internal-error';
@@ -53,7 +53,7 @@ export class ComponentContainer extends EventEmitter {
     get contentElement(): HTMLElement { return this._contentElement; }
 
     /** @internal */
-    constructor(config: ComponentItemConfig,
+    constructor(config: ResolvedComponentItemConfig,
         private readonly _parent: ComponentItem,
         private readonly _layoutManager: LayoutManager,
         private readonly _element: HTMLElement,
@@ -76,12 +76,12 @@ export class ComponentContainer extends EventEmitter {
             this._contentElement = contentElement;
         }
 
-        if (ComponentItemConfig.isSerialisable(config)) {
+        if (ResolvedComponentItemConfig.isSerialisable(config)) {
             this._isReact = false;
             this._initialState = config.componentState;
             this._state = this._initialState;
         } else {
-            if (ComponentItemConfig.isReact(config)) {
+            if (ResolvedComponentItemConfig.isReact(config)) {
                 this._isReact = true;
                 this._initialState = config.props as JsonValue;
                 this._state = this._initialState;
@@ -220,7 +220,7 @@ export class ComponentContainer extends EventEmitter {
     replaceComponent(userItemConfig: UserComponentItemConfig): void {
         this.releaseComponent();
 
-        let itemConfig: ComponentItemConfig;
+        let itemConfig: ResolvedComponentItemConfig;
         if (UserItemConfig.isSerialisableComponent(userItemConfig)) {
             if (this._isReact) {
                 throw new Error('Cannot replace React component with Serialisable component')
@@ -341,5 +341,5 @@ export type ItemContainer = ComponentContainer;
 export namespace ComponentContainer {
     export type StateRequestEventHandler = (this: void) => JsonValue | undefined;
     /** @internal */
-    export type UpdateItemConfigEventHandler = (itemConfig: ComponentItemConfig) => void;
+    export type UpdateItemConfigEventHandler = (itemConfig: ResolvedComponentItemConfig) => void;
 }

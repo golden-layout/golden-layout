@@ -1,4 +1,4 @@
-import { LayoutConfig, PopoutLayoutConfig } from '../config/config';
+import { ResolvedLayoutConfig, ResolvedPopoutLayoutConfig } from '../config/resolved-config';
 import { PopoutBlockedError } from '../errors/external-error';
 import { UnexpectedNullError, UnexpectedUndefinedError } from '../errors/internal-error';
 import { ContentItem } from '../items/content-item';
@@ -33,7 +33,7 @@ export class BrowserPopout extends EventEmitter {
      * @param _initialWindowSize - A map with width, height, top and left
      * @internal
      */
-    constructor(private _config: PopoutLayoutConfig,
+    constructor(private _config: ResolvedPopoutLayoutConfig,
         private _initialWindowSize: Rect,
         private _layoutManager: LayoutManager,
     ) {
@@ -44,7 +44,7 @@ export class BrowserPopout extends EventEmitter {
         this.createWindow();
     }
 
-    toConfig(): PopoutLayoutConfig {
+    toConfig(): ResolvedPopoutLayoutConfig {
         if (this._isInitialised === false) {
             throw new Error('Can\'t create config, layout not yet initialised');
         }
@@ -62,14 +62,14 @@ export class BrowserPopout extends EventEmitter {
             top = this._popoutWindow.screenY ?? this._popoutWindow.screenTop;
         }
 
-        const window: PopoutLayoutConfig.Window = {
+        const window: ResolvedPopoutLayoutConfig.Window = {
             width: this.getGlInstance().width,
             height: this.getGlInstance().height,
             left,
             top,
         };
 
-        const config: PopoutLayoutConfig = {
+        const config: ResolvedPopoutLayoutConfig = {
             root: glInstanceConfig.root,
             openPopouts: glInstanceConfig.openPopouts,
             settings: glInstanceConfig.settings,
@@ -133,7 +133,7 @@ export class BrowserPopout extends EventEmitter {
              * The callee (server [not server application]) is not available and disappeared
              */
             const glInstanceLayoutConfig = this.getGlInstance().saveLayout();
-            const copiedGlInstanceLayoutConfig = deepExtend({}, glInstanceLayoutConfig) as LayoutConfig;
+            const copiedGlInstanceLayoutConfig = deepExtend({}, glInstanceLayoutConfig) as ResolvedLayoutConfig;
             const copiedRoot = copiedGlInstanceLayoutConfig.root;
             if (copiedRoot === undefined) {
                 throw new UnexpectedUndefinedError('BPPIR19998');

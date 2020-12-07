@@ -1,12 +1,12 @@
 import { AssertError, UnreachableCaseError } from '../errors/internal-error';
-import { JsonValue, Side } from '../utils/types';
+import { ItemType, JsonValue, ResponsiveMode, Side } from '../utils/types';
 import { deepExtendValue } from '../utils/utils';
 
 /** @public */
-export interface ItemConfig {
+export interface ResolvedItemConfig {
     // see UserItemConfig for comments
-    readonly type: ItemConfig.Type;
-    readonly content: readonly ItemConfig[];
+    readonly type: ItemType;
+    readonly content: readonly ResolvedItemConfig[];
     readonly width: number;
     readonly minWidth: number;
     readonly height: number;
@@ -17,23 +17,10 @@ export interface ItemConfig {
 }
 
 /** @public */
-export namespace ItemConfig {
-    export type Type = 'ground' | 'row' | 'column' | 'stack' | 'component' | 'react-component';
-
-    export namespace Type {
-        export const ground = 'ground';
-        export const row = 'row';
-        export const column = 'column';
-        export const stack = 'stack';
-        export const serialisableComponent = 'component';
-        export const reactComponent = 'react-component';
-    }
-
-    export type HeightOrWidthPropertyName = 'height' | 'width';
-
+export namespace ResolvedItemConfig {
     /** @internal */
-    export const defaults: ItemConfig = {
-        type: ItemConfig.Type.ground, // not really default but need something
+    export const defaults: ResolvedItemConfig = {
+        type: ItemType.ground, // not really default but need something
         content: [],
         width: 50,
         minWidth: 0,
@@ -43,74 +30,74 @@ export namespace ItemConfig {
         isClosable: true,
     } as const;
 
-    /** Creates a copy of the original ItemConfig using an alternative content if specified */
-    export function createCopy(original: ItemConfig, content?: ItemConfig[]): ItemConfig {
+    /** Creates a copy of the original ResolvedItemConfig using an alternative content if specified */
+    export function createCopy(original: ResolvedItemConfig, content?: ResolvedItemConfig[]): ResolvedItemConfig {
         switch (original.type) {
-            case ItemConfig.Type.ground:
-            case ItemConfig.Type.row:
-            case ItemConfig.Type.column:
-                return RowOrColumnItemConfig.createCopy(original as RowOrColumnItemConfig,
-                    content as RowOrColumnItemConfig.ChildItemConfig[]);
+            case ItemType.ground:
+            case ItemType.row:
+            case ItemType.column:
+                return ResolvedRowOrColumnItemConfig.createCopy(original as ResolvedRowOrColumnItemConfig,
+                    content as ResolvedRowOrColumnItemConfig.ChildItemConfig[]);
 
-            case ItemConfig.Type.stack:
-                return StackItemConfig.createCopy(original as StackItemConfig, content as ComponentItemConfig[]);
+            case ItemType.stack:
+                return ResolvedStackItemConfig.createCopy(original as ResolvedStackItemConfig, content as ResolvedComponentItemConfig[]);
 
-            case ItemConfig.Type.serialisableComponent:
-                return SerialisableComponentConfig.createCopy(original as SerialisableComponentConfig);
+            case ItemType.serialisableComponent:
+                return ResolvedSerialisableComponentConfig.createCopy(original as ResolvedSerialisableComponentConfig);
 
-            case ItemConfig.Type.reactComponent:
-                return ReactComponentConfig.createCopy(original as ReactComponentConfig);
+            case ItemType.reactComponent:
+                return ResolvedReactComponentConfig.createCopy(original as ResolvedReactComponentConfig);
 
             default:
                 throw new UnreachableCaseError('CICC91354', original.type, 'Invalid Config Item type specified');
         }
     }
 
-    export function createDefault(type: Type): ItemConfig {
+    export function createDefault(type: ItemType): ResolvedItemConfig {
         switch (type) {
-            case ItemConfig.Type.ground:
+            case ItemType.ground:
                 throw new AssertError('CICCDR91562'); // Get default root from LayoutConfig
-            case ItemConfig.Type.row:
-            case ItemConfig.Type.column:
-                return RowOrColumnItemConfig.createDefault(type);
+            case ItemType.row:
+            case ItemType.column:
+                return ResolvedRowOrColumnItemConfig.createDefault(type);
 
-            case ItemConfig.Type.stack:
-                return StackItemConfig.createDefault();
+            case ItemType.stack:
+                return ResolvedStackItemConfig.createDefault();
 
-            case ItemConfig.Type.serialisableComponent:
-                return SerialisableComponentConfig.createDefault();
+            case ItemType.serialisableComponent:
+                return ResolvedSerialisableComponentConfig.createDefault();
 
-            case ItemConfig.Type.reactComponent:
-                return ReactComponentConfig.createDefault();
+            case ItemType.reactComponent:
+                return ResolvedReactComponentConfig.createDefault();
 
             default:
                 throw new UnreachableCaseError('CICCDD91563', type, 'Invalid Config Item type specified');
         }
     }
 
-    export function isComponentItem(itemConfig: ItemConfig): itemConfig is ComponentItemConfig {
-        return itemConfig.type === ItemConfig.Type.serialisableComponent || itemConfig.type === ItemConfig.Type.reactComponent;
+    export function isComponentItem(itemConfig: ResolvedItemConfig): itemConfig is ResolvedComponentItemConfig {
+        return itemConfig.type === ItemType.serialisableComponent || itemConfig.type === ItemType.reactComponent;
     }
 
-    export function isStackItem(itemConfig: ItemConfig): itemConfig is StackItemConfig {
-        return itemConfig.type === ItemConfig.Type.stack;
+    export function isStackItem(itemConfig: ResolvedItemConfig): itemConfig is ResolvedStackItemConfig {
+        return itemConfig.type === ItemType.stack;
     }
 
     /** @internal */
-    export function isGroundItem(itemConfig: ItemConfig): itemConfig is GroundItemConfig {
-        return itemConfig.type === ItemConfig.Type.ground;
+    export function isGroundItem(itemConfig: ResolvedItemConfig): itemConfig is ResolvedGroundItemConfig {
+        return itemConfig.type === ItemType.ground;
     }
 }
 
 // Stack or Component
 /** @public */
-export interface HeaderedItemConfig extends ItemConfig {
-    header: HeaderedItemConfig.Header | undefined; // undefined means get header settings from LayoutConfig
-    maximised: boolean;
+export interface ResolvedHeaderedItemConfig extends ResolvedItemConfig {
+    header: ResolvedHeaderedItemConfig.Header | undefined; // undefined means get header settings from LayoutConfig
+    readonly maximised: boolean;
 }
 
 /** @public */
-export namespace HeaderedItemConfig {
+export namespace ResolvedHeaderedItemConfig {
     export const defaultMaximised = false;
 
     export interface Header {
@@ -144,18 +131,18 @@ export namespace HeaderedItemConfig {
 }
 
 /** @public */
-export interface StackItemConfig extends HeaderedItemConfig {
+export interface ResolvedStackItemConfig extends ResolvedHeaderedItemConfig {
     readonly type: 'stack';
-    readonly content: ComponentItemConfig[];
-    activeItemIndex: number;
+    readonly content: ResolvedComponentItemConfig[];
+    readonly activeItemIndex: number;
 }
 
 /** @public */
-export namespace StackItemConfig {
+export namespace ResolvedStackItemConfig {
     export const defaultActiveItemIndex = 0;
 
-    export function createCopy(original: StackItemConfig, content?: ComponentItemConfig[]): StackItemConfig {
-        const result: StackItemConfig = {
+    export function createCopy(original: ResolvedStackItemConfig, content?: ResolvedComponentItemConfig[]): ResolvedStackItemConfig {
+        const result: ResolvedStackItemConfig = {
             type: original.type,
             content: content !== undefined ? copyContent(content) : copyContent(original.content),
             width: original.width,
@@ -166,31 +153,31 @@ export namespace StackItemConfig {
             maximised: original.maximised,
             isClosable: original.isClosable,
             activeItemIndex: original.activeItemIndex,
-            header: HeaderedItemConfig.Header.createCopy(original.header),
+            header: ResolvedHeaderedItemConfig.Header.createCopy(original.header),
         }
         return result;
     }
 
-    export function copyContent(original: ComponentItemConfig[]): ComponentItemConfig[] {
+    export function copyContent(original: ResolvedComponentItemConfig[]): ResolvedComponentItemConfig[] {
         const count = original.length;
-        const result = new Array<ComponentItemConfig>(count);
+        const result = new Array<ResolvedComponentItemConfig>(count);
         for (let i = 0; i < count; i++) {
-            result[i] = ItemConfig.createCopy(original[i]) as ComponentItemConfig;
+            result[i] = ResolvedItemConfig.createCopy(original[i]) as ResolvedComponentItemConfig;
         }
         return result;
     }
 
-    export function createDefault(): StackItemConfig {
-        const result: StackItemConfig = {
-            type: ItemConfig.Type.stack,
+    export function createDefault(): ResolvedStackItemConfig {
+        const result: ResolvedStackItemConfig = {
+            type: ItemType.stack,
             content: [],
-            width: ItemConfig.defaults.width,
-            minWidth: ItemConfig.defaults.minWidth,
-            height: ItemConfig.defaults.height,
-            minHeight: ItemConfig.defaults.minHeight,
-            id: ItemConfig.defaults.id,
-            maximised: HeaderedItemConfig.defaultMaximised,
-            isClosable: ItemConfig.defaults.isClosable,
+            width: ResolvedItemConfig.defaults.width,
+            minWidth: ResolvedItemConfig.defaults.minWidth,
+            height: ResolvedItemConfig.defaults.height,
+            minHeight: ResolvedItemConfig.defaults.minHeight,
+            id: ResolvedItemConfig.defaults.id,
+            maximised: ResolvedHeaderedItemConfig.defaultMaximised,
+            isClosable: ResolvedItemConfig.defaults.isClosable,
             activeItemIndex: defaultActiveItemIndex,
             header: undefined,
         }
@@ -199,7 +186,7 @@ export namespace StackItemConfig {
 }
 
 /** @public */
-export interface ComponentItemConfig extends HeaderedItemConfig {
+export interface ResolvedComponentItemConfig extends ResolvedHeaderedItemConfig {
     readonly content: [];
     readonly title: string;
     readonly reorderEnabled: boolean; // Takes precedence over LayoutConfig.reorderEnabled.
@@ -210,18 +197,18 @@ export interface ComponentItemConfig extends HeaderedItemConfig {
 }
 
 /** @public */
-export namespace ComponentItemConfig {
+export namespace ResolvedComponentItemConfig {
     export const defaultReorderEnabled = true;
 
-    export function isReact(config: ComponentItemConfig): config is ReactComponentConfig {
-        return config.type === ItemConfig.Type.reactComponent;
+    export function isReact(config: ResolvedComponentItemConfig): config is ResolvedReactComponentConfig {
+        return config.type === ItemType.reactComponent;
     }
-    export function isSerialisable(config: ComponentItemConfig): config is SerialisableComponentConfig {
-        return config.type === ItemConfig.Type.serialisableComponent;
+    export function isSerialisable(config: ResolvedComponentItemConfig): config is ResolvedSerialisableComponentConfig {
+        return config.type === ItemType.serialisableComponent;
     }
 
     /** @internal */
-    export function resolveComponentName(itemConfig: ComponentItemConfig): string {
+    export function resolveComponentName(itemConfig: ResolvedComponentItemConfig): string {
         if (isSerialisable(itemConfig)) {
             return itemConfig.componentName;
         } else {
@@ -235,16 +222,16 @@ export namespace ComponentItemConfig {
 }
 
 /** @public */
-export interface SerialisableComponentConfig extends ComponentItemConfig {
+export interface ResolvedSerialisableComponentConfig extends ResolvedComponentItemConfig {
     // see UserJsonComponentConfig for comments
     readonly type: 'component';
     readonly componentState?: JsonValue;
 }
 
 /** @public */
-export namespace SerialisableComponentConfig {
-    export function createCopy(original: SerialisableComponentConfig): SerialisableComponentConfig {
-        const result: SerialisableComponentConfig = {
+export namespace ResolvedSerialisableComponentConfig {
+    export function createCopy(original: ResolvedSerialisableComponentConfig): ResolvedSerialisableComponentConfig {
+        const result: ResolvedSerialisableComponentConfig = {
             type: original.type,
             content: [],
             width: original.width,
@@ -256,25 +243,25 @@ export namespace SerialisableComponentConfig {
             isClosable: original.isClosable,
             reorderEnabled: original.reorderEnabled,
             title: original.title,
-            header: HeaderedItemConfig.Header.createCopy(original.header),
+            header: ResolvedHeaderedItemConfig.Header.createCopy(original.header),
             componentName: original.componentName,
             componentState: deepExtendValue(undefined, original.componentState) as JsonValue,
         }
         return result;
     }
 
-    export function createDefault(): SerialisableComponentConfig {
-        const result: SerialisableComponentConfig = {
-            type: ItemConfig.Type.serialisableComponent,
+    export function createDefault(): ResolvedSerialisableComponentConfig {
+        const result: ResolvedSerialisableComponentConfig = {
+            type: ItemType.serialisableComponent,
             content: [],
-            width: ItemConfig.defaults.width,
-            minWidth: ItemConfig.defaults.minWidth,
-            height: ItemConfig.defaults.height,
-            minHeight: ItemConfig.defaults.minHeight,
-            id: ItemConfig.defaults.id,
-            maximised: HeaderedItemConfig.defaultMaximised,
-            isClosable: ItemConfig.defaults.isClosable,
-            reorderEnabled: ComponentItemConfig.defaultReorderEnabled,
+            width: ResolvedItemConfig.defaults.width,
+            minWidth: ResolvedItemConfig.defaults.minWidth,
+            height: ResolvedItemConfig.defaults.height,
+            minHeight: ResolvedItemConfig.defaults.minHeight,
+            id: ResolvedItemConfig.defaults.id,
+            maximised: ResolvedHeaderedItemConfig.defaultMaximised,
+            isClosable: ResolvedItemConfig.defaults.isClosable,
+            reorderEnabled: ResolvedComponentItemConfig.defaultReorderEnabled,
             title: '',
             header: undefined,
             componentName: '',
@@ -285,7 +272,7 @@ export namespace SerialisableComponentConfig {
 }
 
 /** @public */
-export interface ReactComponentConfig extends ComponentItemConfig {
+export interface ResolvedReactComponentConfig extends ResolvedComponentItemConfig {
     // see UserReactComponentConfig for comments
     readonly type: 'react-component';
     readonly component: string;
@@ -293,11 +280,11 @@ export interface ReactComponentConfig extends ComponentItemConfig {
 }
 
 /** @public */
-export namespace ReactComponentConfig {
+export namespace ResolvedReactComponentConfig {
     export const REACT_COMPONENT_ID = 'lm-react-component'
 
-    export function createCopy(original: ReactComponentConfig): ReactComponentConfig {
-        const result: ReactComponentConfig = {
+    export function createCopy(original: ResolvedReactComponentConfig): ResolvedReactComponentConfig {
+        const result: ResolvedReactComponentConfig = {
             type: original.type,
             content: [],
             width: original.width,
@@ -309,7 +296,7 @@ export namespace ReactComponentConfig {
             isClosable: original.isClosable,
             reorderEnabled: original.reorderEnabled,
             title: original.title,
-            header: HeaderedItemConfig.Header.createCopy(original.header),
+            header: ResolvedHeaderedItemConfig.Header.createCopy(original.header),
             componentName: REACT_COMPONENT_ID,
             component: original.component,
             props: deepExtendValue(undefined, original.props) as JsonValue,
@@ -317,18 +304,18 @@ export namespace ReactComponentConfig {
         return result;
     }
 
-    export function createDefault(): ReactComponentConfig {
-        const result: ReactComponentConfig = {
-            type: ItemConfig.Type.reactComponent,
+    export function createDefault(): ResolvedReactComponentConfig {
+        const result: ResolvedReactComponentConfig = {
+            type: ItemType.reactComponent,
             content: [],
-            width: ItemConfig.defaults.width,
-            minWidth: ItemConfig.defaults.minWidth,
-            height: ItemConfig.defaults.height,
-            minHeight: ItemConfig.defaults.minHeight,
-            id: ItemConfig.defaults.id,
-            maximised: HeaderedItemConfig.defaultMaximised,
-            isClosable: ItemConfig.defaults.isClosable,
-            reorderEnabled: ComponentItemConfig.defaultReorderEnabled,
+            width: ResolvedItemConfig.defaults.width,
+            minWidth: ResolvedItemConfig.defaults.minWidth,
+            height: ResolvedItemConfig.defaults.height,
+            minHeight: ResolvedItemConfig.defaults.minHeight,
+            id: ResolvedItemConfig.defaults.id,
+            maximised: ResolvedHeaderedItemConfig.defaultMaximised,
+            isClosable: ResolvedItemConfig.defaults.isClosable,
+            reorderEnabled: ResolvedComponentItemConfig.defaultReorderEnabled,
             title: '',
             header: undefined,
             componentName: '',
@@ -342,35 +329,35 @@ export namespace ReactComponentConfig {
 /** Base for Root or RowOrColumn ItemConfigs
  * @public
  */
-export interface RowOrColumnItemConfig extends ItemConfig {
+export interface ResolvedRowOrColumnItemConfig extends ResolvedItemConfig {
     readonly type: 'row' | 'column';
-    /** Note that RowOrColumn ItemConfig contents, can contain ComponentItem itemConfigs.  However
+    /** Note that RowOrColumn ResolvedItemConfig contents, can contain ComponentItem itemConfigs.  However
      * when ContentItems are created, these ComponentItem itemConfigs will create a Stack with a child ComponentItem.
      */
-    readonly content: readonly (RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig)[];
+    readonly content: readonly (ResolvedRowOrColumnItemConfig | ResolvedStackItemConfig | ResolvedComponentItemConfig)[];
 }
 
 /** @public */
-export namespace RowOrColumnItemConfig {
-    export type ChildItemConfig = RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig;
+export namespace ResolvedRowOrColumnItemConfig {
+    export type ChildItemConfig = ResolvedRowOrColumnItemConfig | ResolvedStackItemConfig | ResolvedComponentItemConfig;
 
-    export function isChildItemConfig(itemConfig: ItemConfig): itemConfig is ChildItemConfig {
+    export function isChildItemConfig(itemConfig: ResolvedItemConfig): itemConfig is ChildItemConfig {
         switch (itemConfig.type) {
-            case ItemConfig.Type.row:
-            case ItemConfig.Type.column:
-            case ItemConfig.Type.stack:
-            case ItemConfig.Type.reactComponent:
-            case ItemConfig.Type.serialisableComponent:
+            case ItemType.row:
+            case ItemType.column:
+            case ItemType.stack:
+            case ItemType.reactComponent:
+            case ItemType.serialisableComponent:
                 return true;
-            case ItemConfig.Type.ground:
+            case ItemType.ground:
                 return false;
             default:
                 throw new UnreachableCaseError('CROCOSPCICIC13687', itemConfig.type);
         }
     }
 
-    export function createCopy(original: RowOrColumnItemConfig, content?: ChildItemConfig[]): RowOrColumnItemConfig {
-        const result: RowOrColumnItemConfig = {
+    export function createCopy(original: ResolvedRowOrColumnItemConfig, content?: ChildItemConfig[]): ResolvedRowOrColumnItemConfig {
+        const result: ResolvedRowOrColumnItemConfig = {
             type: original.type,
             content: content !== undefined ? copyContent(content) : copyContent(original.content),
             width: original.width,
@@ -387,50 +374,50 @@ export namespace RowOrColumnItemConfig {
         const count = original.length;
         const result = new Array<ChildItemConfig>(count);
         for (let i = 0; i < count; i++) {
-            result[i] = ItemConfig.createCopy(original[i]) as ChildItemConfig;
+            result[i] = ResolvedItemConfig.createCopy(original[i]) as ChildItemConfig;
         }
         return result;
     }
 
-    export function createDefault(type: 'row' | 'column'): RowOrColumnItemConfig {
-        const result: RowOrColumnItemConfig = {
+    export function createDefault(type: 'row' | 'column'): ResolvedRowOrColumnItemConfig {
+        const result: ResolvedRowOrColumnItemConfig = {
             type,
             content: [],
-            width: ItemConfig.defaults.width,
-            minWidth: ItemConfig.defaults.minWidth,
-            height: ItemConfig.defaults.height,
-            minHeight: ItemConfig.defaults.minHeight,
-            id: ItemConfig.defaults.id,
-            isClosable: ItemConfig.defaults.isClosable,
+            width: ResolvedItemConfig.defaults.width,
+            minWidth: ResolvedItemConfig.defaults.minWidth,
+            height: ResolvedItemConfig.defaults.height,
+            minHeight: ResolvedItemConfig.defaults.minHeight,
+            id: ResolvedItemConfig.defaults.id,
+            isClosable: ResolvedItemConfig.defaults.isClosable,
         }
         return result;
     }
 }
 
 /** 
- * RootItemConfig is the topmost ItemConfig specified by the user.
+ * RootItemConfig is the topmost ResolvedItemConfig specified by the user.
  * Note that it does not have a corresponding contentItem.  It specifies the one and only child of the Ground ContentItem
  * Note that RootItemConfig can be an ComponentItem itemConfig.  However when the Ground ContentItem's child is created
  * a ComponentItem itemConfig will create a Stack with a child ComponentItem.
  * @public
 */
-export type RootItemConfig = RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig;
+export type ResolvedRootItemConfig = ResolvedRowOrColumnItemConfig | ResolvedStackItemConfig | ResolvedComponentItemConfig;
 
 /** @public */
-export namespace RootItemConfig {
-    export function createCopy(config: RootItemConfig): RootItemConfig {
-        return ItemConfig.createCopy(config) as RootItemConfig;
+export namespace ResolvedRootItemConfig {
+    export function createCopy(config: ResolvedRootItemConfig): ResolvedRootItemConfig {
+        return ResolvedItemConfig.createCopy(config) as ResolvedRootItemConfig;
     }
 
-    export function isRootItemConfig(itemConfig: ItemConfig): itemConfig is RootItemConfig {
+    export function isRootItemConfig(itemConfig: ResolvedItemConfig): itemConfig is ResolvedRootItemConfig {
         switch (itemConfig.type) {
-            case ItemConfig.Type.row:
-            case ItemConfig.Type.column:
-            case ItemConfig.Type.stack:
-            case ItemConfig.Type.reactComponent:
-            case ItemConfig.Type.serialisableComponent:
+            case ItemType.row:
+            case ItemType.column:
+            case ItemType.stack:
+            case ItemType.reactComponent:
+            case ItemType.serialisableComponent:
                 return true;
-            case ItemConfig.Type.ground:
+            case ItemType.ground:
                 return false;
             default:
                 throw new UnreachableCaseError('CROCOSPCICIC13687', itemConfig.type);
@@ -439,24 +426,24 @@ export namespace RootItemConfig {
 }
 
 /** @internal */
-export interface GroundItemConfig extends ItemConfig {
+export interface ResolvedGroundItemConfig extends ResolvedItemConfig {
     readonly type: 'ground';
-    width: 100,
-    minWidth: 0,
-    height: 100,
-    minHeight: 0,
-    id: '',
-    isClosable: false,
-    title: '',
-    reorderEnabled: false,
+    readonly width: 100,
+    readonly minWidth: 0,
+    readonly height: 100,
+    readonly minHeight: 0,
+    readonly id: '',
+    readonly isClosable: false,
+    readonly title: '',
+    readonly reorderEnabled: false,
 }
 
 /** @internal */
-export namespace GroundItemConfig {
-    export function create(rootItemConfig: RootItemConfig | undefined):GroundItemConfig {
+export namespace ResolvedGroundItemConfig {
+    export function create(rootItemConfig: ResolvedRootItemConfig | undefined):ResolvedGroundItemConfig {
         const content = rootItemConfig === undefined ? [] : [rootItemConfig];
         return {
-            type: ItemConfig.Type.ground,
+            type: ItemType.ground,
             content,
             width: 100,
             minWidth: 0,
@@ -471,48 +458,41 @@ export namespace GroundItemConfig {
 }
 
 /** @public */
-export interface LayoutConfig {
-    readonly root: RootItemConfig | undefined;
-    readonly openPopouts: PopoutLayoutConfig[];
-    readonly dimensions: LayoutConfig.Dimensions;
-    readonly settings: LayoutConfig.Settings;
-    readonly header: LayoutConfig.Header;
+export interface ResolvedLayoutConfig {
+    readonly root: ResolvedRootItemConfig | undefined;
+    readonly openPopouts: ResolvedPopoutLayoutConfig[];
+    readonly dimensions: ResolvedLayoutConfig.Dimensions;
+    readonly settings: ResolvedLayoutConfig.Settings;
+    readonly header: ResolvedLayoutConfig.Header;
     readonly resolved: true,
 }
 
 /** @public */
-export namespace LayoutConfig {
+export namespace ResolvedLayoutConfig {
     export interface Settings {
         // see UserConfig.Settings for comments
         readonly constrainDragToContainer: boolean;
-        readonly reorderEnabled: boolean; // also in ItemConfig which takes precedence
+        readonly reorderEnabled: boolean; // also in ResolvedItemConfig which takes precedence
         readonly selectionEnabled: boolean;
         readonly popoutWholeStack: boolean;
         readonly blockedPopoutsThrowError: boolean;
         readonly closePopoutsOnUnload: boolean;
-        readonly responsiveMode: Settings.ResponsiveMode;
+        readonly responsiveMode: ResponsiveMode;
         readonly tabOverlapAllowance: number;
         readonly reorderOnTabMenuClick: boolean;
         readonly tabControlOffset: number;
     }
 
     export namespace Settings {
-        export type ResponsiveMode = 'none' | 'always' | 'onload';
-        export namespace ResponsiveMode {
-            export const none = 'none';
-            export const always = 'always';
-            export const onload = 'onload';
-        }
-
         /** @internal */
-        export const defaults: LayoutConfig.Settings = {
+        export const defaults: ResolvedLayoutConfig.Settings = {
             constrainDragToContainer: true,
             reorderEnabled: true,
             selectionEnabled: false,
             popoutWholeStack: false,
             blockedPopoutsThrowError: true,
             closePopoutsOnUnload: true,
-            responsiveMode: LayoutConfig.Settings.ResponsiveMode.none, // was onload
+            responsiveMode: ResponsiveMode.none, // was onload
             tabOverlapAllowance: 0,
             reorderOnTabMenuClick: true,
             tabControlOffset: 10
@@ -559,7 +539,7 @@ export namespace LayoutConfig {
         }
 
         /** @internal */
-        export const defaults: LayoutConfig.Dimensions = {
+        export const defaults: ResolvedLayoutConfig.Dimensions = {
             borderWidth: 5,
             borderGrabWidth: 15,
             minItemHeight: 10,
@@ -594,7 +574,7 @@ export namespace LayoutConfig {
         }
 
         /** @internal */
-        export const defaults: LayoutConfig.Header = {
+        export const defaults: ResolvedLayoutConfig.Header = {
             show: Side.top,
             popout: 'open in new window',
             dock: 'dock',
@@ -605,57 +585,57 @@ export namespace LayoutConfig {
         } as const;
     }
 
-    export function isPopout(config: LayoutConfig): config is PopoutLayoutConfig {
+    export function isPopout(config: ResolvedLayoutConfig): config is ResolvedPopoutLayoutConfig {
         return 'parentId' in config;
     }
 
-    export function createDefault(): LayoutConfig {
-        const result: LayoutConfig = {
+    export function createDefault(): ResolvedLayoutConfig {
+        const result: ResolvedLayoutConfig = {
             root: undefined,
             openPopouts: [],
-            dimensions: LayoutConfig.Dimensions.defaults,
-            settings: LayoutConfig.Settings.defaults,
-            header: LayoutConfig.Header.defaults,
+            dimensions: ResolvedLayoutConfig.Dimensions.defaults,
+            settings: ResolvedLayoutConfig.Settings.defaults,
+            header: ResolvedLayoutConfig.Header.defaults,
             resolved: true,
         }
         return result;
     }
 
-    export function createCopy(config: LayoutConfig): LayoutConfig {
+    export function createCopy(config: ResolvedLayoutConfig): ResolvedLayoutConfig {
         if (isPopout(config)) {
-            return PopoutLayoutConfig.createCopy(config);
+            return ResolvedPopoutLayoutConfig.createCopy(config);
         } else {
-            const result: LayoutConfig = {
-                root: config.root === undefined ? undefined : RootItemConfig.createCopy(config.root),
-                openPopouts: LayoutConfig.copyOpenPopouts(config.openPopouts),
-                settings: LayoutConfig.Settings.createCopy(config.settings),
-                dimensions: LayoutConfig.Dimensions.createCopy(config.dimensions),
-                header: LayoutConfig.Header.createCopy(config.header),
+            const result: ResolvedLayoutConfig = {
+                root: config.root === undefined ? undefined : ResolvedRootItemConfig.createCopy(config.root),
+                openPopouts: ResolvedLayoutConfig.copyOpenPopouts(config.openPopouts),
+                settings: ResolvedLayoutConfig.Settings.createCopy(config.settings),
+                dimensions: ResolvedLayoutConfig.Dimensions.createCopy(config.dimensions),
+                header: ResolvedLayoutConfig.Header.createCopy(config.header),
                 resolved: config.resolved,
             }
             return result;
         }
     }
 
-    export function copyOpenPopouts(original: PopoutLayoutConfig[]): PopoutLayoutConfig[] {
+    export function copyOpenPopouts(original: ResolvedPopoutLayoutConfig[]): ResolvedPopoutLayoutConfig[] {
         const count = original.length;
-        const result = new Array<PopoutLayoutConfig>(count);
+        const result = new Array<ResolvedPopoutLayoutConfig>(count);
         for (let i = 0; i < count; i++) {
-            result[i] = PopoutLayoutConfig.createCopy(original[i]);
+            result[i] = ResolvedPopoutLayoutConfig.createCopy(original[i]);
         }
         return result;
     }
 }
 
 /** @public */
-export interface PopoutLayoutConfig extends LayoutConfig {
+export interface ResolvedPopoutLayoutConfig extends ResolvedLayoutConfig {
     readonly parentId: string | null;
     readonly indexInParent: number | null;
-    readonly window: PopoutLayoutConfig.Window;
+    readonly window: ResolvedPopoutLayoutConfig.Window;
 }
 
 /** @public */
-export namespace PopoutLayoutConfig {
+export namespace ResolvedPopoutLayoutConfig {
     export interface Window {
         readonly width: number | null,
         readonly height: number | null,
@@ -674,7 +654,7 @@ export namespace PopoutLayoutConfig {
         }
 
         /** @internal */
-        export const defaults: PopoutLayoutConfig.Window = {
+        export const defaults: ResolvedPopoutLayoutConfig.Window = {
             width: null,
             height: null,
             left: null,
@@ -682,21 +662,18 @@ export namespace PopoutLayoutConfig {
         } as const;
     }
 
-    export function createCopy(original: PopoutLayoutConfig): PopoutLayoutConfig {
-        const result: PopoutLayoutConfig = {
-            root: original.root === undefined ? undefined : RootItemConfig.createCopy(original.root),
-            openPopouts: LayoutConfig.copyOpenPopouts(original.openPopouts),
-            settings: LayoutConfig.Settings.createCopy(original.settings),
-            dimensions: LayoutConfig.Dimensions.createCopy(original.dimensions),
-            header: LayoutConfig.Header.createCopy(original.header),
+    export function createCopy(original: ResolvedPopoutLayoutConfig): ResolvedPopoutLayoutConfig {
+        const result: ResolvedPopoutLayoutConfig = {
+            root: original.root === undefined ? undefined : ResolvedRootItemConfig.createCopy(original.root),
+            openPopouts: ResolvedLayoutConfig.copyOpenPopouts(original.openPopouts),
+            settings: ResolvedLayoutConfig.Settings.createCopy(original.settings),
+            dimensions: ResolvedLayoutConfig.Dimensions.createCopy(original.dimensions),
+            header: ResolvedLayoutConfig.Header.createCopy(original.header),
             parentId: original.parentId,
             indexInParent: original.indexInParent,
-            window: PopoutLayoutConfig.Window.createCopy(original.window),
+            window: ResolvedPopoutLayoutConfig.Window.createCopy(original.window),
             resolved: original.resolved,
         }
         return result;
     }
 }
-
-/** @public @deprecated - use {@link (LayoutConfig:interface)} */
-export type Config = LayoutConfig;

@@ -1,4 +1,5 @@
-import { ComponentItemConfig, ItemConfig } from '../config/config';
+import { ResolvedComponentItemConfig, ResolvedItemConfig } from '../config/resolved-config';
+import { UserComponentItemConfig, UserItemConfig } from '../config/user-config';
 import { UnexpectedNullError } from '../errors/internal-error';
 import { ComponentItem } from '../items/component-item';
 import { GroundItem } from '../items/ground-item';
@@ -8,7 +9,7 @@ import { DragProxy } from './drag-proxy';
 
 /**
  * Allows for any DOM item to create a component on drag
- * start tobe dragged into the Layout
+ * start to be dragged into the Layout
  * @public
  */
 export class DragSource {
@@ -21,7 +22,7 @@ export class DragSource {
  
     /** @internal */
     constructor(private _element: HTMLElement,
-        private _itemConfigOrFtn: ComponentItemConfig | (() => ComponentItemConfig),
+        private _itemConfigOrFtn: UserComponentItemConfig | (() => UserComponentItemConfig),
         private _layoutManager: LayoutManager
     ) {
         this._dragListener = null;
@@ -63,15 +64,17 @@ export class DragSource {
      * @internal
      */
     private onDragStart(x: number, y: number) {
-        let itemConfig: ComponentItemConfig;
+        let itemConfig: UserComponentItemConfig;
         if (typeof this._itemConfigOrFtn === "function") {
             itemConfig = this._itemConfigOrFtn();
         } else {
             itemConfig = this._itemConfigOrFtn;
         }
 
+        const resolvedItemConfig = UserItemConfig.resolve(itemConfig);
+
         // const contentItem = this._layoutManager._$normalizeContentItem($.extend(true, {}, itemConfig));
-        const copiedConfig = ItemConfig.createCopy(itemConfig) as ComponentItemConfig;
+        const copiedConfig = ResolvedItemConfig.createCopy(resolvedItemConfig) as ResolvedComponentItemConfig;
 
         // Create a dummy ContentItem only for drag purposes
         // All ContentItems (except for GroundItem) need a parent.  When dragging, the parent is not used.

@@ -1,4 +1,4 @@
-import { LayoutConfig, PopoutLayoutConfig } from './config/config';
+import { ResolvedLayoutConfig, ResolvedPopoutLayoutConfig } from './config/resolved-config';
 import { UserLayoutConfig } from './config/user-config';
 import { LayoutManager } from './layout-manager';
 import { ConfigMinifier } from './utils/config-minifier';
@@ -152,7 +152,7 @@ export namespace GoldenLayout {
         const windowConfigKey = getQueryStringParam('gl-window');
         const isSubWindow = windowConfigKey !== null;  
 
-        let config: LayoutConfig | undefined;
+        let config: ResolvedLayoutConfig | undefined;
         if (windowConfigKey !== null) {
             const windowConfigStr = localStorage.getItem(windowConfigKey);
             if (windowConfigStr === null) {
@@ -160,7 +160,7 @@ export namespace GoldenLayout {
             }
             localStorage.removeItem(windowConfigKey);
             const minifiedWindowConfig = JSON.parse(windowConfigStr);
-            config = (new ConfigMinifier()).unminifyConfig(minifiedWindowConfig) as PopoutLayoutConfig;
+            config = (new ConfigMinifier()).unminifyConfig(minifiedWindowConfig) as ResolvedPopoutLayoutConfig;
         } else {
             if (userConfigOrOptionalContainer === undefined) {
                 config = undefined;
@@ -172,7 +172,7 @@ export namespace GoldenLayout {
                     if (UserLayoutConfig.isUserLayoutConfig(userConfigOrOptionalContainer)) {
                         config = UserLayoutConfig.resolve(userConfigOrOptionalContainer);
                     } else {
-                        config = userConfigOrOptionalContainer as LayoutConfig;
+                        config = userConfigOrOptionalContainer as ResolvedLayoutConfig;
                     }
                 }
             }

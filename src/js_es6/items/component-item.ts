@@ -1,8 +1,9 @@
-import { ComponentItemConfig, HeaderedItemConfig, ItemConfig, ReactComponentConfig, SerialisableComponentConfig } from '../config/config';
+import { ResolvedReactComponentConfig, ResolvedComponentItemConfig, ResolvedHeaderedItemConfig, ResolvedSerialisableComponentConfig } from '../config/resolved-config';
 import { ComponentContainer } from '../container/component-container';
 import { Tab } from '../controls/tab';
 import { UnexpectedNullError } from '../errors/internal-error';
 import { LayoutManager } from '../layout-manager';
+import { ItemType } from '../utils/types';
 import { createTemplateHtmlElement, getElementWidthAndHeight } from '../utils/utils';
 import { ContentItem } from './content-item';
 import { GroundItem } from './ground-item';
@@ -15,7 +16,7 @@ export class ComponentItem extends ContentItem {
     /** @internal */
     private _reorderEnabled: boolean;
     /** @internal */
-    private _headerConfig: HeaderedItemConfig.Header | undefined;
+    private _headerConfig: ResolvedHeaderedItemConfig.Header | undefined;
     /** @internal */
     private _reactComponent: string;
     /** @internal */
@@ -34,20 +35,20 @@ export class ComponentItem extends ContentItem {
     get component(): ComponentItem.Component { return this._container.component; }
     get container(): ComponentContainer { return this._container; }
 
-    get headerConfig(): HeaderedItemConfig.Header | undefined { return this._headerConfig; }
+    get headerConfig(): ResolvedHeaderedItemConfig.Header | undefined { return this._headerConfig; }
     get title(): string { return this._title; }
     get tab(): Tab { return this._tab; }
 
     /** @internal */
     constructor(layoutManager: LayoutManager,
-        config: ComponentItemConfig,
+        config: ResolvedComponentItemConfig,
         stackOrGroundItem: Stack | GroundItem
     ) {
         super(layoutManager, config, stackOrGroundItem, createTemplateHtmlElement(ComponentItem.templateHtml));
 
         this.isComponent = true;
 
-        if (ComponentItemConfig.isReact(config)) {
+        if (ResolvedComponentItemConfig.isReact(config)) {
             this._isReact = true;
             this._reactComponent = config.component;
         } else {
@@ -70,7 +71,7 @@ export class ComponentItem extends ContentItem {
         super.destroy();
     }
 
-    applyUpdatableConfig(config: ComponentItemConfig): void {
+    applyUpdatableConfig(config: ResolvedComponentItemConfig): void {
         this._title = config.title;
         if (this._title === '') {
             this._title = this.componentName;
@@ -78,14 +79,14 @@ export class ComponentItem extends ContentItem {
         this._headerConfig = config.header;
     }
 
-    toConfig(): ComponentItemConfig {
+    toConfig(): ResolvedComponentItemConfig {
         const stateRequestEvent = this._container.stateRequestEvent;
         const state = stateRequestEvent === undefined ? this._container.getState() : stateRequestEvent();
 
-        let result: ComponentItemConfig;
+        let result: ResolvedComponentItemConfig;
         if (this._isReact) {
-            const reactResult: ReactComponentConfig = {
-                type: ItemConfig.Type.reactComponent,
+            const reactResult: ResolvedReactComponentConfig = {
+                type: ItemType.reactComponent,
                 content: [],
                 width: this.width,
                 minWidth: this.minWidth,
@@ -96,15 +97,15 @@ export class ComponentItem extends ContentItem {
                 isClosable: this.isClosable,
                 reorderEnabled: this._reorderEnabled,
                 title: this._title,
-                header: HeaderedItemConfig.Header.createCopy(this._headerConfig),
+                header: ResolvedHeaderedItemConfig.Header.createCopy(this._headerConfig),
                 componentName: this.componentName,
                 component: this._reactComponent,
                 props: state,
             }
             result = reactResult;
         } else {
-            const serialisableResult: SerialisableComponentConfig = {
-                type: ItemConfig.Type.serialisableComponent,
+            const serialisableResult: ResolvedSerialisableComponentConfig = {
+                type: ItemType.serialisableComponent,
                 content: [],
                 width: this.width,
                 minWidth: this.minWidth,
@@ -115,7 +116,7 @@ export class ComponentItem extends ContentItem {
                 isClosable: this.isClosable,
                 reorderEnabled: this._reorderEnabled,
                 title: this._title,
-                header: HeaderedItemConfig.Header.createCopy(this._headerConfig),
+                header: ResolvedHeaderedItemConfig.Header.createCopy(this._headerConfig),
                 componentName: this.componentName,
                 componentState: state,
             }
@@ -189,9 +190,9 @@ export class ComponentItem extends ContentItem {
     }
 
     /** @internal */
-    private handleUpdateItemConfigEvent(itemConfig: ComponentItemConfig) {
+    private handleUpdateItemConfigEvent(itemConfig: ResolvedComponentItemConfig) {
         // Called if component is replaced. Update properties accordingly
-        if (ComponentItemConfig.isReact(itemConfig)) {
+        if (ResolvedComponentItemConfig.isReact(itemConfig)) {
             this._reactComponent = itemConfig.component;
         }
 

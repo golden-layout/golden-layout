@@ -1,25 +1,35 @@
 import { ConfigurationError } from '../errors/external-error';
 import { AssertError, UnreachableCaseError } from '../errors/internal-error';
-import { JsonValue, Side } from '../utils/types';
+import { ItemType, JsonValue, ResponsiveMode, Side } from '../utils/types';
 import {
-    ComponentItemConfig,
-    HeaderedItemConfig,
-    ItemConfig,
-    LayoutConfig,
-    PopoutLayoutConfig,
-    ReactComponentConfig,
-    RootItemConfig,
-    RowOrColumnItemConfig,
-    SerialisableComponentConfig,
-    StackItemConfig
-} from './config';
+
+
+    ResolvedLayoutConfig,
+    ResolvedPopoutLayoutConfig,
+    ResolvedReactComponentConfig, ResolvedComponentItemConfig,
+
+
+
+
+    ResolvedHeaderedItemConfig,
+    ResolvedItemConfig,
+
+
+
+
+
+
+    ResolvedStackItemConfig, ResolvedRootItemConfig,
+    ResolvedRowOrColumnItemConfig,
+    ResolvedSerialisableComponentConfig
+} from './resolved-config';
 
 /** @public */
 export interface UserItemConfig {
     /**
      * The type of the item. Possible values are 'row', 'column', 'stack', 'component' and 'react-component'.
      */
-    type: ItemConfig.Type;
+    type: ItemType;
 
     /**
      * An array of configurations for items that will be created as children of this item.
@@ -71,21 +81,21 @@ export interface UserItemConfig {
 
 /** @public */
 export namespace UserItemConfig {
-    export function resolve(user: UserItemConfig): ItemConfig {
+    export function resolve(user: UserItemConfig): ResolvedItemConfig {
         switch (user.type) {
-            case ItemConfig.Type.ground:
+            case ItemType.ground:
                 throw new ConfigurationError('UserItemConfig cannot specify type ground', JSON.stringify(user));
-            case ItemConfig.Type.row:
-            case ItemConfig.Type.column:
+            case ItemType.row:
+            case ItemType.column:
                 return UserRowOrColumnItemConfig.resolve(user as UserRowOrColumnItemConfig);
 
-            case ItemConfig.Type.stack:
+            case ItemType.stack:
                 return UserStackItemConfig.resolve(user as UserStackItemConfig);
 
-            case ItemConfig.Type.serialisableComponent:
+            case ItemType.serialisableComponent:
                 return UserSerialisableComponentConfig.resolve(user as UserSerialisableComponentConfig);
 
-            case ItemConfig.Type.reactComponent:
+            case ItemType.reactComponent:
                 return UserReactComponentConfig.resolve(user as UserReactComponentConfig);
 
             default:
@@ -93,12 +103,12 @@ export namespace UserItemConfig {
         }
     }
 
-    export function resolveContent(content: UserItemConfig[] | undefined): ItemConfig[] {
+    export function resolveContent(content: UserItemConfig[] | undefined): ResolvedItemConfig[] {
         if (content === undefined) {
             return [];
         } else {
             const count = content.length;
-            const result = new Array<ItemConfig>(count);
+            const result = new Array<ResolvedItemConfig>(count);
             for (let i = 0; i < count; i++) {
                 result[i] = UserItemConfig.resolve(content[i]);
             }
@@ -108,11 +118,11 @@ export namespace UserItemConfig {
 
     export function resolveId(id: string | string[] | undefined): string {
         if (id === undefined) {
-            return ItemConfig.defaults.id;
+            return ResolvedItemConfig.defaults.id;
         } else {
             if (Array.isArray(id)) {
                 if (id.length === 0) {
-                    return ItemConfig.defaults.id;
+                    return ResolvedItemConfig.defaults.id;
                 } else {
                     return id[0];
                 }
@@ -124,25 +134,25 @@ export namespace UserItemConfig {
     }
 
     export function isGround(config: UserItemConfig): config is UserItemConfig {
-        return config.type === ItemConfig.Type.ground;
+        return config.type === ItemType.ground;
     }
     export function isRow(config: UserItemConfig): config is UserItemConfig {
-        return config.type === ItemConfig.Type.row;
+        return config.type === ItemType.row;
     }
     export function isColumn(config: UserItemConfig): config is UserItemConfig {
-        return config.type === ItemConfig.Type.column;
+        return config.type === ItemType.column;
     }
     export function isStack(config: UserItemConfig): config is UserItemConfig {
-        return config.type === ItemConfig.Type.stack;
+        return config.type === ItemType.stack;
     }
     export function isComponent(config: UserItemConfig): config is UserSerialisableComponentConfig | UserReactComponentConfig {
         return isSerialisableComponent(config) || isReactComponent(config);
     }
     export function isSerialisableComponent(config: UserItemConfig): config is UserSerialisableComponentConfig {
-        return config.type === ItemConfig.Type.serialisableComponent;
+        return config.type === ItemType.serialisableComponent;
     }
     export function isReactComponent(config: UserItemConfig): config is UserReactComponentConfig {
-        return config.type === ItemConfig.Type.reactComponent;
+        return config.type === ItemType.reactComponent;
     }
 }
 
@@ -170,12 +180,12 @@ export namespace UserHeaderedItemConfig {
     }
 
     export namespace Header {
-        export function resolve(userHeader: Header | undefined, hasHeaders: boolean | undefined): HeaderedItemConfig.Header | undefined {
+        export function resolve(userHeader: Header | undefined, hasHeaders: boolean | undefined): ResolvedHeaderedItemConfig.Header | undefined {
             if (userHeader === undefined && hasHeaders === undefined) {
                 return undefined;
             } else {
-                const result: HeaderedItemConfig.Header = {
-                    show: userHeader?.show ?? (hasHeaders === undefined ? undefined : hasHeaders ? LayoutConfig.Header.defaults.show : false),
+                const result: ResolvedHeaderedItemConfig.Header = {
+                    show: userHeader?.show ?? (hasHeaders === undefined ? undefined : hasHeaders ? ResolvedLayoutConfig.Header.defaults.show : false),
                     popout: userHeader?.popout,
                     dock: userHeader?.dock,
                     maximise: userHeader?.maximise,
@@ -193,7 +203,7 @@ export namespace UserHeaderedItemConfig {
         let legacyId = config.id;
         let legacyMaximised = false;
         if (legacyId === undefined) {
-            id = ItemConfig.defaults.id;
+            id = ResolvedItemConfig.defaults.id;
         } else {
             if (Array.isArray(legacyId)) {
                 const idx = legacyId.findIndex((id) => id === legacyMaximisedId)
@@ -204,7 +214,7 @@ export namespace UserHeaderedItemConfig {
                 if (legacyId.length > 0) {
                     id = legacyId[0];
                 } else {
-                    id = ItemConfig.defaults.id;
+                    id = ResolvedItemConfig.defaults.id;
                 }
             } else {
                 id = legacyId;
@@ -232,34 +242,34 @@ export interface UserStackItemConfig extends UserHeaderedItemConfig {
 
 /** @public */
 export namespace UserStackItemConfig {
-    export function resolve(user: UserStackItemConfig): StackItemConfig {
+    export function resolve(user: UserStackItemConfig): ResolvedStackItemConfig {
         const { id, maximised } = UserHeaderedItemConfig.resolveIdAndMaximised(user);
-        const result: StackItemConfig = {
-            type: ItemConfig.Type.stack,
+        const result: ResolvedStackItemConfig = {
+            type: ItemType.stack,
             content: resolveContent(user.content),
-            width: user.width ?? ItemConfig.defaults.width,
-            minWidth: user.minWidth ?? ItemConfig.defaults.minWidth,
-            height: user.height ?? ItemConfig.defaults.height,
-            minHeight: user.minHeight ?? ItemConfig.defaults.minHeight,
+            width: user.width ?? ResolvedItemConfig.defaults.width,
+            minWidth: user.minWidth ?? ResolvedItemConfig.defaults.minWidth,
+            height: user.height ?? ResolvedItemConfig.defaults.height,
+            minHeight: user.minHeight ?? ResolvedItemConfig.defaults.minHeight,
             id,
             maximised,
-            isClosable: user.isClosable ?? ItemConfig.defaults.isClosable,
-            activeItemIndex: user.activeItemIndex ?? StackItemConfig.defaultActiveItemIndex,
+            isClosable: user.isClosable ?? ResolvedItemConfig.defaults.isClosable,
+            activeItemIndex: user.activeItemIndex ?? ResolvedStackItemConfig.defaultActiveItemIndex,
             header: UserHeaderedItemConfig.Header.resolve(user.header, user.hasHeaders),
         };
         return result;
     }
 
-    export function resolveContent(content: UserComponentItemConfig[] | undefined): ComponentItemConfig[] {
+    export function resolveContent(content: UserComponentItemConfig[] | undefined): ResolvedComponentItemConfig[] {
         if (content === undefined) {
             return [];
         } else {
             const count = content.length;
-            const result = new Array<ComponentItemConfig>(count);
+            const result = new Array<ResolvedComponentItemConfig>(count);
             for (let i = 0; i < count; i++) {
                 const userChildItemConfig = content[i];
                 const itemConfig = UserItemConfig.resolve(userChildItemConfig);
-                if (!ItemConfig.isComponentItem(itemConfig)) {
+                if (!ResolvedItemConfig.isComponentItem(itemConfig)) {
                     throw new AssertError('UCUSICRC91114', JSON.stringify(itemConfig));
                 } else {
                     result[i] = itemConfig;
@@ -296,7 +306,7 @@ export interface UserSerialisableComponentConfig extends UserComponentItemConfig
 
 /** @public */
 export namespace UserSerialisableComponentConfig {
-    export function resolve(user: UserSerialisableComponentConfig): SerialisableComponentConfig {
+    export function resolve(user: UserSerialisableComponentConfig): ResolvedSerialisableComponentConfig {
         if (user.componentName === undefined) {
             throw new Error('UserJsonComponentConfig.componentName is undefined');
         } else {
@@ -307,17 +317,17 @@ export namespace UserSerialisableComponentConfig {
             } else {
                 title = user.title;
             }
-            const result: SerialisableComponentConfig = {
+            const result: ResolvedSerialisableComponentConfig = {
                 type: user.type,
                 content: [],
-                width: user.width ?? ItemConfig.defaults.width,
-                minWidth: user.minWidth ?? ItemConfig.defaults.minWidth,
-                height: user.height ?? ItemConfig.defaults.height,
-                minHeight: user.minHeight ?? ItemConfig.defaults.minHeight,
+                width: user.width ?? ResolvedItemConfig.defaults.width,
+                minWidth: user.minWidth ?? ResolvedItemConfig.defaults.minWidth,
+                height: user.height ?? ResolvedItemConfig.defaults.height,
+                minHeight: user.minHeight ?? ResolvedItemConfig.defaults.minHeight,
                 id,
                 maximised,
-                isClosable: user.isClosable ?? ItemConfig.defaults.isClosable,
-                reorderEnabled: user.reorderEnabled ?? ComponentItemConfig.defaultReorderEnabled,
+                isClosable: user.isClosable ?? ResolvedItemConfig.defaults.isClosable,
+                reorderEnabled: user.reorderEnabled ?? ResolvedComponentItemConfig.defaultReorderEnabled,
                 title,
                 header: UserHeaderedItemConfig.Header.resolve(user.header, user.hasHeaders),
                 componentName: user.componentName,
@@ -340,7 +350,7 @@ export interface UserReactComponentConfig extends UserComponentItemConfig {
 
 /** @public */
 export namespace UserReactComponentConfig {
-    export function resolve(user: UserReactComponentConfig): ReactComponentConfig {
+    export function resolve(user: UserReactComponentConfig): ResolvedReactComponentConfig {
         if (user.component === undefined) {
             throw new Error('UserReactComponentConfig.componentName is undefined');
         } else {
@@ -351,20 +361,20 @@ export namespace UserReactComponentConfig {
             } else {
                 title = user.title;
             }
-            const result: ReactComponentConfig = {
-                type: ItemConfig.Type.reactComponent,
+            const result: ResolvedReactComponentConfig = {
+                type: ItemType.reactComponent,
                 content: [],
-                width: user.width ?? ItemConfig.defaults.width,
-                minWidth: user.minWidth ?? ItemConfig.defaults.minWidth,
-                height: user.height ?? ItemConfig.defaults.height,
-                minHeight: user.minHeight ?? ItemConfig.defaults.minHeight,
+                width: user.width ?? ResolvedItemConfig.defaults.width,
+                minWidth: user.minWidth ?? ResolvedItemConfig.defaults.minWidth,
+                height: user.height ?? ResolvedItemConfig.defaults.height,
+                minHeight: user.minHeight ?? ResolvedItemConfig.defaults.minHeight,
                 id,
                 maximised,
-                isClosable: user.isClosable ?? ItemConfig.defaults.isClosable,
-                reorderEnabled: user.reorderEnabled ?? ComponentItemConfig.defaultReorderEnabled,
+                isClosable: user.isClosable ?? ResolvedItemConfig.defaults.isClosable,
+                reorderEnabled: user.reorderEnabled ?? ResolvedComponentItemConfig.defaultReorderEnabled,
                 title,
                 header: UserHeaderedItemConfig.Header.resolve(user.header, user.hasHeaders),
-                componentName: ReactComponentConfig.REACT_COMPONENT_ID,
+                componentName: ResolvedReactComponentConfig.REACT_COMPONENT_ID,
                 component: user.component,
                 props: user.props,
             };
@@ -386,45 +396,45 @@ export namespace UserRowOrColumnItemConfig {
 
     export function isChildItemConfig(itemConfig: UserItemConfig): itemConfig is ChildItemConfig {
         switch (itemConfig.type) {
-            case ItemConfig.Type.row:
-            case ItemConfig.Type.column:
-            case ItemConfig.Type.stack:
-            case ItemConfig.Type.reactComponent:
-            case ItemConfig.Type.serialisableComponent:
+            case ItemType.row:
+            case ItemType.column:
+            case ItemType.stack:
+            case ItemType.reactComponent:
+            case ItemType.serialisableComponent:
                 return true;
-            case ItemConfig.Type.ground:
+            case ItemType.ground:
                 return false;
             default:
                 throw new UnreachableCaseError('UROCOSPCICIC13687', itemConfig.type);
         }
     }
 
-    export function resolve(user: UserRowOrColumnItemConfig): RowOrColumnItemConfig {
-        const result: RowOrColumnItemConfig = {
+    export function resolve(user: UserRowOrColumnItemConfig): ResolvedRowOrColumnItemConfig {
+        const result: ResolvedRowOrColumnItemConfig = {
             type: user.type,
             content: UserRowOrColumnItemConfig.resolveContent(user.content),
-            width: user.width ?? ItemConfig.defaults.width,
-            minWidth: user.width ?? ItemConfig.defaults.minWidth,
-            height: user.height ?? ItemConfig.defaults.height,
-            minHeight: user.height ?? ItemConfig.defaults.minHeight,
+            width: user.width ?? ResolvedItemConfig.defaults.width,
+            minWidth: user.width ?? ResolvedItemConfig.defaults.minWidth,
+            height: user.height ?? ResolvedItemConfig.defaults.height,
+            minHeight: user.height ?? ResolvedItemConfig.defaults.minHeight,
             id: UserItemConfig.resolveId(user.id),
-            isClosable: user.isClosable ?? ItemConfig.defaults.isClosable,
+            isClosable: user.isClosable ?? ResolvedItemConfig.defaults.isClosable,
         }
         return result;
     }
-    export function resolveContent(content: ChildItemConfig[] | undefined): RowOrColumnItemConfig.ChildItemConfig[] {
+    export function resolveContent(content: ChildItemConfig[] | undefined): ResolvedRowOrColumnItemConfig.ChildItemConfig[] {
         if (content === undefined) {
             return [];
         } else {
             const count = content.length;
-            const result = new Array<RowOrColumnItemConfig.ChildItemConfig>(count);
+            const result = new Array<ResolvedRowOrColumnItemConfig.ChildItemConfig>(count);
             for (let i = 0; i < count; i++) {
                 const userChildItemConfig = content[i];
                 if (!UserRowOrColumnItemConfig.isChildItemConfig(userChildItemConfig)) {
                     throw new ConfigurationError('ItemConfig is not Row, Column or Stack', userChildItemConfig);
                 } else {
                     const childItemConfig = UserItemConfig.resolve(userChildItemConfig);
-                    if (!RowOrColumnItemConfig.isChildItemConfig(childItemConfig)) {
+                    if (!ResolvedRowOrColumnItemConfig.isChildItemConfig(childItemConfig)) {
                         throw new AssertError('UROCOSPIC99512', JSON.stringify(childItemConfig));
                     } else {
                         result[i] = childItemConfig;
@@ -443,25 +453,25 @@ export type UserRootItemConfig = UserRowOrColumnItemConfig | UserStackItemConfig
 export namespace UserRootItemConfig {
     export function isUserRootItemConfig(itemConfig: UserItemConfig): itemConfig is UserRootItemConfig {
         switch (itemConfig.type) {
-            case ItemConfig.Type.row:
-            case ItemConfig.Type.column:
-            case ItemConfig.Type.stack:
-            case ItemConfig.Type.reactComponent:
-            case ItemConfig.Type.serialisableComponent:
+            case ItemType.row:
+            case ItemType.column:
+            case ItemType.stack:
+            case ItemType.reactComponent:
+            case ItemType.serialisableComponent:
                 return true;
-            case ItemConfig.Type.ground:
+            case ItemType.ground:
                 return false;
             default:
                 throw new UnreachableCaseError('URICIR23687', itemConfig.type);
         }
     }
 
-    export function resolve(user: UserRootItemConfig | undefined): RootItemConfig | undefined {
+    export function resolve(user: UserRootItemConfig | undefined): ResolvedRootItemConfig | undefined {
         if (user === undefined) {
             return undefined;
         } else {
             const result = UserItemConfig.resolve(user);
-            if (!RootItemConfig.isRootItemConfig(result)) {
+            if (!ResolvedRootItemConfig.isRootItemConfig(result)) {
                 throw new ConfigurationError('ItemConfig is not Row, Column or Stack', JSON.stringify(user));
             } else {
                 return result;
@@ -562,7 +572,7 @@ export namespace UserLayoutConfig {
          * Specifies Responsive Mode (more info needed).
          * Default: none
          */
-        responsiveMode?: LayoutConfig.Settings.ResponsiveMode;
+        responsiveMode?: ResponsiveMode;
 
         /**
          * Specifies Maximum pixel overlap per tab.
@@ -583,18 +593,18 @@ export namespace UserLayoutConfig {
     }
 
     export namespace Settings {
-        export function resolve(user: Settings | undefined): LayoutConfig.Settings {
-            const result: LayoutConfig.Settings = {
-                constrainDragToContainer: user?.constrainDragToContainer ?? LayoutConfig.Settings.defaults.constrainDragToContainer,
-                reorderEnabled: user?.reorderEnabled ?? LayoutConfig.Settings.defaults.reorderEnabled,
-                selectionEnabled: user?.selectionEnabled ?? LayoutConfig.Settings.defaults.selectionEnabled,
-                popoutWholeStack: user?.popoutWholeStack ?? LayoutConfig.Settings.defaults.popoutWholeStack,
-                blockedPopoutsThrowError: user?.blockedPopoutsThrowError ?? LayoutConfig.Settings.defaults.blockedPopoutsThrowError,
-                closePopoutsOnUnload: user?.closePopoutsOnUnload ?? LayoutConfig.Settings.defaults.closePopoutsOnUnload,
-                responsiveMode: user?.responsiveMode ?? LayoutConfig.Settings.defaults.responsiveMode,
-                tabOverlapAllowance: user?.tabOverlapAllowance ?? LayoutConfig.Settings.defaults.tabOverlapAllowance,
-                reorderOnTabMenuClick: user?.reorderOnTabMenuClick ?? LayoutConfig.Settings.defaults.reorderOnTabMenuClick,
-                tabControlOffset: user?.tabControlOffset ?? LayoutConfig.Settings.defaults.tabControlOffset,
+        export function resolve(user: Settings | undefined): ResolvedLayoutConfig.Settings {
+            const result: ResolvedLayoutConfig.Settings = {
+                constrainDragToContainer: user?.constrainDragToContainer ?? ResolvedLayoutConfig.Settings.defaults.constrainDragToContainer,
+                reorderEnabled: user?.reorderEnabled ?? ResolvedLayoutConfig.Settings.defaults.reorderEnabled,
+                selectionEnabled: user?.selectionEnabled ?? ResolvedLayoutConfig.Settings.defaults.selectionEnabled,
+                popoutWholeStack: user?.popoutWholeStack ?? ResolvedLayoutConfig.Settings.defaults.popoutWholeStack,
+                blockedPopoutsThrowError: user?.blockedPopoutsThrowError ?? ResolvedLayoutConfig.Settings.defaults.blockedPopoutsThrowError,
+                closePopoutsOnUnload: user?.closePopoutsOnUnload ?? ResolvedLayoutConfig.Settings.defaults.closePopoutsOnUnload,
+                responsiveMode: user?.responsiveMode ?? ResolvedLayoutConfig.Settings.defaults.responsiveMode,
+                tabOverlapAllowance: user?.tabOverlapAllowance ?? ResolvedLayoutConfig.Settings.defaults.tabOverlapAllowance,
+                reorderOnTabMenuClick: user?.reorderOnTabMenuClick ?? ResolvedLayoutConfig.Settings.defaults.reorderOnTabMenuClick,
+                tabControlOffset: user?.tabControlOffset ?? ResolvedLayoutConfig.Settings.defaults.tabControlOffset,
             }
             return result;
         }
@@ -646,15 +656,15 @@ export namespace UserLayoutConfig {
     }
 
     export namespace Dimensions {
-        export function resolve(user: Dimensions | undefined): LayoutConfig.Dimensions {
-            const result: LayoutConfig.Dimensions = {
-                borderWidth: user?.borderWidth ?? LayoutConfig.Dimensions.defaults.borderWidth,
-                borderGrabWidth: user?.borderGrabWidth ?? LayoutConfig.Dimensions.defaults.borderGrabWidth,
-                minItemHeight: user?.minItemHeight ?? LayoutConfig.Dimensions.defaults.minItemHeight,
-                minItemWidth: user?.minItemWidth ?? LayoutConfig.Dimensions.defaults.minItemWidth,
-                headerHeight: user?.headerHeight ?? LayoutConfig.Dimensions.defaults.headerHeight,
-                dragProxyWidth: user?.dragProxyWidth ?? LayoutConfig.Dimensions.defaults.dragProxyWidth,
-                dragProxyHeight: user?.dragProxyHeight ?? LayoutConfig.Dimensions.defaults.dragProxyHeight,
+        export function resolve(user: Dimensions | undefined): ResolvedLayoutConfig.Dimensions {
+            const result: ResolvedLayoutConfig.Dimensions = {
+                borderWidth: user?.borderWidth ?? ResolvedLayoutConfig.Dimensions.defaults.borderWidth,
+                borderGrabWidth: user?.borderGrabWidth ?? ResolvedLayoutConfig.Dimensions.defaults.borderGrabWidth,
+                minItemHeight: user?.minItemHeight ?? ResolvedLayoutConfig.Dimensions.defaults.minItemHeight,
+                minItemWidth: user?.minItemWidth ?? ResolvedLayoutConfig.Dimensions.defaults.minItemWidth,
+                headerHeight: user?.headerHeight ?? ResolvedLayoutConfig.Dimensions.defaults.headerHeight,
+                dragProxyWidth: user?.dragProxyWidth ?? ResolvedLayoutConfig.Dimensions.defaults.dragProxyWidth,
+                dragProxyHeight: user?.dragProxyHeight ?? ResolvedLayoutConfig.Dimensions.defaults.dragProxyHeight,
             }
             return result;
         }
@@ -734,28 +744,28 @@ export namespace UserLayoutConfig {
     export namespace Header {
         export function resolve(userHeader: Header | undefined,
             userSettings: UserLayoutConfig.Settings | undefined, userLabels: UserLayoutConfig.Labels | undefined
-        ): LayoutConfig.Header {
+        ): ResolvedLayoutConfig.Header {
             let show: false | Side;
             if (userHeader?.show !== undefined) {
                 show = userHeader.show;
             } else {
                 if (userSettings !== undefined && userSettings.hasHeaders !== undefined) {
-                    show = userSettings.hasHeaders ? LayoutConfig.Header.defaults.show : false;
+                    show = userSettings.hasHeaders ? ResolvedLayoutConfig.Header.defaults.show : false;
                 } else {
-                    show = LayoutConfig.Header.defaults.show;
+                    show = ResolvedLayoutConfig.Header.defaults.show;
                 }
             }
-            const result: LayoutConfig.Header = {
+            const result: ResolvedLayoutConfig.Header = {
                 show,
                 popout: userHeader?.popout ?? userLabels?.popout ??
-                    (userSettings?.showPopoutIcon === false ? false : LayoutConfig.Header.defaults.popout),
-                dock: userHeader?.popin ?? userLabels?.popin ?? LayoutConfig.Header.defaults.dock,
+                    (userSettings?.showPopoutIcon === false ? false : ResolvedLayoutConfig.Header.defaults.popout),
+                dock: userHeader?.popin ?? userLabels?.popin ?? ResolvedLayoutConfig.Header.defaults.dock,
                 maximise: userHeader?.maximise ?? userLabels?.maximise ??
-                    (userSettings?.showMaximiseIcon === false ? false : LayoutConfig.Header.defaults.maximise),
+                    (userSettings?.showMaximiseIcon === false ? false : ResolvedLayoutConfig.Header.defaults.maximise),
                 close: userHeader?.close ?? userLabels?.close ??
-                    (userSettings?.showCloseIcon === false ? false : LayoutConfig.Header.defaults.close),
-                minimise: userHeader?.minimise ?? userLabels?.minimise ?? LayoutConfig.Header.defaults.minimise,
-                tabDropdown: userHeader?.tabDropdown ?? userLabels?.tabDropdown ?? LayoutConfig.Header.defaults.tabDropdown,
+                    (userSettings?.showCloseIcon === false ? false : ResolvedLayoutConfig.Header.defaults.close),
+                minimise: userHeader?.minimise ?? userLabels?.minimise ?? ResolvedLayoutConfig.Header.defaults.minimise,
+                tabDropdown: userHeader?.tabDropdown ?? userLabels?.tabDropdown ?? ResolvedLayoutConfig.Header.defaults.tabDropdown,
             }
             return result;
         }
@@ -765,7 +775,7 @@ export namespace UserLayoutConfig {
         return 'parentId' in config || 'indexInParent' in config || 'window' in config;
     }
 
-    export function resolve(user: UserLayoutConfig): LayoutConfig {
+    export function resolve(user: UserLayoutConfig): ResolvedLayoutConfig {
         if (isPopout(user)) {
             return UserPopoutLayoutConfig.resolve(user);
         } else {
@@ -779,7 +789,7 @@ export namespace UserLayoutConfig {
                     userRoot = undefined;
                 }
             }
-            const config: LayoutConfig = {
+            const config: ResolvedLayoutConfig = {
                 resolved: true,
                 root: UserRootItemConfig.resolve(userRoot),
                 openPopouts: UserLayoutConfig.resolveOpenPopouts(user.openPopouts),
@@ -791,8 +801,8 @@ export namespace UserLayoutConfig {
         }
     }
 
-    export function fromLayoutConfig(config: LayoutConfig): UserLayoutConfig {
-        const copiedConfig = LayoutConfig.createCopy(config);
+    export function fromLayoutConfig(config: ResolvedLayoutConfig): UserLayoutConfig {
+        const copiedConfig = ResolvedLayoutConfig.createCopy(config);
         const result: UserLayoutConfig = {
             root: copiedConfig.root as UserRootItemConfig,
             openPopouts: copiedConfig.openPopouts as unknown as UserPopoutLayoutConfig[],
@@ -803,17 +813,17 @@ export namespace UserLayoutConfig {
         return result;
     }
 
-    export function isUserLayoutConfig(configOrUserConfig: LayoutConfig | UserLayoutConfig): configOrUserConfig is UserLayoutConfig {
-        const config = configOrUserConfig as LayoutConfig;
+    export function isUserLayoutConfig(configOrUserConfig: ResolvedLayoutConfig | UserLayoutConfig): configOrUserConfig is UserLayoutConfig {
+        const config = configOrUserConfig as ResolvedLayoutConfig;
         return config.resolved === undefined || !config.resolved;
     }
 
-    export function resolveOpenPopouts(userPopoutConfigs: UserPopoutLayoutConfig[] | undefined): PopoutLayoutConfig[] {
+    export function resolveOpenPopouts(userPopoutConfigs: UserPopoutLayoutConfig[] | undefined): ResolvedPopoutLayoutConfig[] {
         if (userPopoutConfigs === undefined) {
             return [];
         } else {
             const count = userPopoutConfigs.length;
-            const result = new Array<PopoutLayoutConfig>(count);
+            const result = new Array<ResolvedPopoutLayoutConfig>(count);
             for (let i = 0; i < count; i++) {
                 result[i] = UserPopoutLayoutConfig.resolve(userPopoutConfigs[i]);
             }
@@ -861,10 +871,10 @@ export namespace UserPopoutLayoutConfig {
 
     export namespace Window {
         export function resolve(userWindow: Window | undefined,
-            userDimensions: Dimensions | undefined): PopoutLayoutConfig.Window
+            userDimensions: Dimensions | undefined): ResolvedPopoutLayoutConfig.Window
         {
-            let result: PopoutLayoutConfig.Window;
-            const defaults = PopoutLayoutConfig.Window.defaults;
+            let result: ResolvedPopoutLayoutConfig.Window;
+            const defaults = ResolvedPopoutLayoutConfig.Window.defaults;
             if (userWindow !== undefined) {
                 result = {
                     width: userWindow.width ?? defaults.width,
@@ -884,7 +894,7 @@ export namespace UserPopoutLayoutConfig {
         }
     }
 
-    export function resolve(user: UserPopoutLayoutConfig): PopoutLayoutConfig {
+    export function resolve(user: UserPopoutLayoutConfig): ResolvedPopoutLayoutConfig {
         let userRoot: UserRootItemConfig | undefined;
         if (user.root !== undefined) {
             userRoot = user.root;
@@ -896,7 +906,7 @@ export namespace UserPopoutLayoutConfig {
             }
         }
 
-        const config: PopoutLayoutConfig = {
+        const config: ResolvedPopoutLayoutConfig = {
             root: UserRootItemConfig.resolve(userRoot),
             openPopouts: UserLayoutConfig.resolveOpenPopouts(user.openPopouts),
             settings: UserLayoutConfig.Settings.resolve(user.settings),

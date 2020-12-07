@@ -1,11 +1,11 @@
-import { ComponentItemConfig, HeaderedItemConfig, ItemConfig, StackItemConfig } from '../config/config';
+import { ResolvedComponentItemConfig, ResolvedHeaderedItemConfig, ResolvedItemConfig, ResolvedStackItemConfig } from '../config/resolved-config';
 import { UserComponentItemConfig, UserItemConfig, UserSerialisableComponentConfig } from '../config/user-config';
 import { Header } from '../controls/header';
 import { AssertError, UnexpectedNullError } from '../errors/internal-error';
 import { LayoutManager } from '../layout-manager';
 import { DragListener } from '../utils/drag-listener';
 import { getJQueryOffset } from '../utils/jquery-legacy';
-import { AreaLinkedRect, JsonValue, Side, WidthAndHeight } from '../utils/types';
+import { AreaLinkedRect, ItemType, JsonValue, Side, WidthAndHeight, WidthOrHeightPropertyName } from '../utils/types';
 import {
     createTemplateHtmlElement,
     getElementHeight,
@@ -20,7 +20,7 @@ import { ContentItem } from './content-item';
 /** @public */
 export class Stack extends ContentItem {
     /** @internal */
-    private readonly _headerConfig: HeaderedItemConfig.Header | undefined;
+    private readonly _headerConfig: ResolvedHeaderedItemConfig.Header | undefined;
     /** @internal */
     private readonly _header: Header;
     /** @internal */
@@ -71,19 +71,19 @@ export class Stack extends ContentItem {
     get isMaximised(): boolean { return this._isMaximised; }
 
     /** @internal */
-    constructor(layoutManager: LayoutManager, config: StackItemConfig, private _stackParent: Stack.Parent) {
+    constructor(layoutManager: LayoutManager, config: ResolvedStackItemConfig, private _stackParent: Stack.Parent) {
         super(layoutManager, config, _stackParent, createTemplateHtmlElement(Stack.templateHtml));
 
         this._headerConfig = config.header;
         const layoutHeaderConfig = layoutManager.layoutConfig.header;
         const configContent = config.content;
         // If stack has only one component, then we can also check this for header settings
-        let componentHeaderConfig: HeaderedItemConfig.Header | undefined;
+        let componentHeaderConfig: ResolvedHeaderedItemConfig.Header | undefined;
         if (configContent.length !== 1) {
             componentHeaderConfig = undefined;
         } else {
             const firstChildItemConfig = configContent[0];
-            componentHeaderConfig = (firstChildItemConfig as HeaderedItemConfig).header; // will be undefined if not component (and wont be stack)
+            componentHeaderConfig = (firstChildItemConfig as ResolvedHeaderedItemConfig).header; // will be undefined if not component (and wont be stack)
         }
 
         this._initialWantMaximise = config.maximised;
@@ -392,14 +392,14 @@ export class Stack extends ContentItem {
         this._header.destroy();
     }
 
-    toConfig(): StackItemConfig {
+    toConfig(): ResolvedStackItemConfig {
         const activeItemIndex = this.contentItems.indexOf(this._activeComponentItem);
         if (activeItemIndex < 0) {
             throw new AssertError('STC69221');
         } else {
-            const result: StackItemConfig = {
+            const result: ResolvedStackItemConfig = {
                 type: 'stack',
-                content: this.calculateConfigContent() as ComponentItemConfig[],
+                content: this.calculateConfigContent() as ResolvedComponentItemConfig[],
                 width: this.width,
                 minWidth: this.minWidth,
                 height: this.height,
@@ -471,7 +471,7 @@ export class Stack extends ContentItem {
          * The content item can be either a component or a stack. If it is a component, wrap it into a stack
          */
         if (contentItem.isComponent) {
-            const itemConfig = StackItemConfig.createDefault();
+            const itemConfig = ResolvedStackItemConfig.createDefault();
             itemConfig.header = this.createHeaderConfig();
             const stack = this.layoutManager.createAndInitContentItem(itemConfig, this);
             stack.addChild(contentItem);
@@ -484,8 +484,8 @@ export class Stack extends ContentItem {
          * which would wrap the contentItem in a Stack) we need to check whether contentItem is a RowOrColumn.
          * If it is, we need to re-wrap it in a Stack like it was when it was dragged by its Tab (it was dragged!).
          */
-        if(contentItem.type === ItemConfig.Type.row || contentItem.type === ItemConfig.Type.column){
-            const itemConfig = StackItemConfig.createDefault();
+        if(contentItem.type === ItemType.row || contentItem.type === ItemType.column){
+            const itemConfig = ResolvedStackItemConfig.createDefault();
             itemConfig.header = this.createHeaderConfig();
             const stack = this.layoutManager.createContentItem(itemConfig, this);
             stack.addChild(contentItem)
@@ -507,8 +507,8 @@ export class Stack extends ContentItem {
              * to create the appropriate contentItem for them to live in
              */
         } else {
-            const type = isVertical ? ItemConfig.Type.column : ItemConfig.Type.row;
-            const itemConfig = ItemConfig.createDefault(type) as ItemConfig;
+            const type = isVertical ? ItemType.column : ItemType.row;
+            const itemConfig = ResolvedItemConfig.createDefault(type) as ResolvedItemConfig;
             const rowOrColumn = this.layoutManager.createContentItem(itemConfig, this);
             this._stackParent.replaceChild(this, rowOrColumn);
 
@@ -702,16 +702,16 @@ export class Stack extends ContentItem {
             const content: WidthAndHeight = getElementWidthAndHeight(this.element);
 
             if (this._header.show) {
-                const dimension = this._header.leftRightSided ? WidthAndHeight.widthPropertyName : WidthAndHeight.heightPropertyName;
+                const dimension = this._header.leftRightSided ? WidthOrHeightPropertyName.width : WidthOrHeightPropertyName.height;
                 content[dimension] -= this.layoutManager.layoutConfig.dimensions.headerHeight;
             }
             if (isDocked) {
                 content[this._docker.dimension] = this._docker.realSize;
             }
-            if (!isDocked || this._docker.dimension === WidthAndHeight.heightPropertyName) {
+            if (!isDocked || this._docker.dimension === WidthOrHeightPropertyName.height) {
                 this._childElementContainer.style.width = numberToPixels(content.width);
             }
-            if (!isDocked || this._docker.dimension === WidthAndHeight.widthPropertyName) {
+            if (!isDocked || this._docker.dimension === WidthOrHeightPropertyName.width) {
                 this._childElementContainer.style.height = numberToPixels(content.height);
             }
 
@@ -922,11 +922,11 @@ export class Stack extends ContentItem {
     /** @internal */
     private createHeaderConfig() {
         if (!this._headerSideChanged) {
-            return HeaderedItemConfig.Header.createCopy(this._headerConfig);
+            return ResolvedHeaderedItemConfig.Header.createCopy(this._headerConfig);
         } else {
             const show = this._header.show ? this._header.side : false;
 
-            let result = HeaderedItemConfig.Header.createCopy(this._headerConfig, show);
+            let result = ResolvedHeaderedItemConfig.Header.createCopy(this._headerConfig, show);
             if (result === undefined) {
                 result = {
                     show,
@@ -969,7 +969,7 @@ export namespace Stack {
     /** @internal */
     export interface Docker {
         docked: boolean;
-        dimension: ItemConfig.HeightOrWidthPropertyName;
+        dimension: WidthOrHeightPropertyName;
         size: number;
         realSize: number;
     }

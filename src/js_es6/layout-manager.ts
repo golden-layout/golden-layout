@@ -1,12 +1,17 @@
 import {
-    ComponentItemConfig,
-    ItemConfig,
-    LayoutConfig,
-    PopoutLayoutConfig,
-    RootItemConfig,
-    RowOrColumnItemConfig,
-    StackItemConfig
-} from './config/config'
+
+    ResolvedLayoutConfig,
+    ResolvedPopoutLayoutConfig, ResolvedComponentItemConfig,
+
+
+    ResolvedItemConfig,
+
+
+
+
+    ResolvedStackItemConfig, ResolvedRootItemConfig,
+    ResolvedRowOrColumnItemConfig
+} from './config/resolved-config'
 import { UserComponentItemConfig, UserLayoutConfig, UserRowOrColumnItemConfig, UserSerialisableComponentConfig, UserStackItemConfig } from './config/user-config'
 import { ComponentContainer } from './container/component-container'
 import { BrowserPopout } from './controls/browser-popout'
@@ -26,7 +31,7 @@ import { DragListener } from './utils/drag-listener'
 import { EventEmitter } from './utils/event-emitter'
 import { EventHub } from './utils/event-hub'
 import { I18nStringId, I18nStrings, i18nStrings } from './utils/i18n-strings'
-import { JsonValue, Rect } from './utils/types'
+import { ItemType, JsonValue, Rect, ResponsiveMode } from './utils/types'
 import {
     createTemplateHtmlElement,
     deepExtendValue,
@@ -104,7 +109,7 @@ export abstract class LayoutManager extends EventEmitter {
     protected get maximisedItem(): ContentItem | null { return this._maximisedItem; }
 
     readonly isSubWindow: boolean;
-    layoutConfig: LayoutConfig;
+    layoutConfig: ResolvedLayoutConfig;
 
     /**
      * If a new component is required and:
@@ -158,7 +163,7 @@ export abstract class LayoutManager extends EventEmitter {
 
         let layoutConfig = parameters.layoutConfig;
         if (layoutConfig === undefined) {
-            layoutConfig = LayoutConfig.createDefault();
+            layoutConfig = ResolvedLayoutConfig.createDefault();
         }
 
         this.layoutConfig = layoutConfig;
@@ -217,7 +222,7 @@ export abstract class LayoutManager extends EventEmitter {
      * one letter codes
      * @internal
      */
-    minifyConfig(config: LayoutConfig): LayoutConfig {
+    minifyConfig(config: ResolvedLayoutConfig): ResolvedLayoutConfig {
         return (new ConfigMinifier()).minifyConfig(config);
     }
 
@@ -226,7 +231,7 @@ export abstract class LayoutManager extends EventEmitter {
      * using minifyConfig and returns its original version
      * @internal
      */
-    unminifyConfig(config: LayoutConfig): LayoutConfig {
+    unminifyConfig(config: ResolvedLayoutConfig): ResolvedLayoutConfig {
         return (new ConfigMinifier()).unminifyConfig(config);
     }
 
@@ -332,8 +337,8 @@ export abstract class LayoutManager extends EventEmitter {
      * @param config - The item config
      * @internal
      */
-    getComponentInstantiator(config: ComponentItemConfig): LayoutManager.ComponentInstantiator {
-        const name = ComponentItemConfig.resolveComponentName(config)
+    getComponentInstantiator(config: ResolvedComponentItemConfig): LayoutManager.ComponentInstantiator {
+        const name = ResolvedComponentItemConfig.resolveComponentName(config)
         let constructorToUse = this._componentTypes[name]
         if (constructorToUse === undefined) {
             if (this._getComponentConstructorFtn !== undefined) {
@@ -351,10 +356,10 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /** @internal */
-    getComponent(container: ComponentContainer, itemConfig: ComponentItemConfig): ComponentItem.Component {
+    getComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentItem.Component {
         let component: ComponentItem.Component;
-        if (ComponentItemConfig.isSerialisable(itemConfig)) {
-            const name = ComponentItemConfig.resolveComponentName(itemConfig);
+        if (ResolvedComponentItemConfig.isSerialisable(itemConfig)) {
+            const name = ResolvedComponentItemConfig.resolveComponentName(itemConfig);
             let instantiator = this._componentTypes[name]
             if (instantiator === undefined) {
                 if (this._getComponentConstructorFtn !== undefined) {
@@ -401,7 +406,7 @@ export abstract class LayoutManager extends EventEmitter {
                 }
             }
         } else {
-            if (ComponentItemConfig.isReact(itemConfig)) {
+            if (ResolvedComponentItemConfig.isReact(itemConfig)) {
                 // uncomment lines below and remove not implemented exception when react-component-handler ready
                 // componentInstantiator = {
                 //     constructor: ReactComponentHandler,
@@ -472,7 +477,7 @@ export abstract class LayoutManager extends EventEmitter {
      * @public
      * @returns GoldenLayout configuration
      */
-    saveLayout(): LayoutConfig {
+    saveLayout(): ResolvedLayoutConfig {
         if (this._isInitialised === false) {
             throw new Error('Can\'t create config, layout not yet initialised');
         } else {
@@ -489,7 +494,7 @@ export abstract class LayoutManager extends EventEmitter {
             } else {
                 const groundContent = this._groundItem.calculateConfigContent();
 
-                let rootItemConfig: RootItemConfig | undefined;
+                let rootItemConfig: ResolvedRootItemConfig | undefined;
                 if (groundContent.length !== 1) {
                     rootItemConfig = undefined;
                 } else {
@@ -500,17 +505,17 @@ export abstract class LayoutManager extends EventEmitter {
                 * Retrieve config for subwindows
                 */
                 this.reconcilePopoutWindows();
-                const openPopouts: PopoutLayoutConfig[] = [];
+                const openPopouts: ResolvedPopoutLayoutConfig[] = [];
                 for (let i = 0; i < this._openPopouts.length; i++) {
                     openPopouts.push(this._openPopouts[i].toConfig());
                 }
 
-                const config: LayoutConfig = {
+                const config: ResolvedLayoutConfig = {
                     root: rootItemConfig,
                     openPopouts,
-                    settings:  LayoutConfig.Settings.createCopy(this.layoutConfig.settings),
-                    dimensions: LayoutConfig.Dimensions.createCopy(this.layoutConfig.dimensions),
-                    header: LayoutConfig.Header.createCopy(this.layoutConfig.header),
+                    settings:  ResolvedLayoutConfig.Settings.createCopy(this.layoutConfig.settings),
+                    dimensions: ResolvedLayoutConfig.Dimensions.createCopy(this.layoutConfig.dimensions),
+                    header: ResolvedLayoutConfig.Header.createCopy(this.layoutConfig.header),
                     resolved: true,
                 }
         
@@ -522,13 +527,13 @@ export abstract class LayoutManager extends EventEmitter {
     /**
      * @deprecated Use {@link (LayoutManager:class).saveLayout}
      */
-    toConfig(): LayoutConfig {
+    toConfig(): ResolvedLayoutConfig {
         return this.saveLayout();
     }
 
     /**
      * Adds a new child ContentItem under the root ContentItem.  If a root does not exist, then create root ContentItem instead
-     * @param userItemConfig - ItemConfig of child to be added.
+     * @param userItemConfig - ResolvedItemConfig of child to be added.
      * @param index - Position under root. If undefined, then last.
      * @returns New ContentItem created.
     */
@@ -542,7 +547,7 @@ export abstract class LayoutManager extends EventEmitter {
 
     /**
      * Adds a new child ContentItem under the root ContentItem.  If a root does not exist, then create root ContentItem instead
-     * @param userItemConfig - ItemConfig of child to be added.
+     * @param userItemConfig - ResolvedItemConfig of child to be added.
      * @param index - Position under root. If undefined, then last.
      * @returns -1 if added as root otherwise index in root ContentItem's content
     */
@@ -589,7 +594,7 @@ export abstract class LayoutManager extends EventEmitter {
         }
     }
 
-    /** Loads the specified component ItemConfig as root.
+    /** Loads the specified component ResolvedItemConfig as root.
      * This can be used to display a Component all by itself.  The layout cannot be changed other than having another new layout loaded.
      * Note that, if this layout is saved and reloaded, it will reload with the Component as a child of a Stack.
     */
@@ -652,7 +657,7 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /** @public */
-    createAndInitContentItem(config: ItemConfig, parent: ContentItem): ContentItem {
+    createAndInitContentItem(config: ResolvedItemConfig, parent: ContentItem): ContentItem {
         const newItem = this.createContentItem(config, parent);
         newItem.init();
         return newItem;
@@ -662,11 +667,11 @@ export abstract class LayoutManager extends EventEmitter {
      * Recursively creates new item tree structures based on a provided
      * ItemConfiguration object
      *
-     * @param config - ItemConfig
+     * @param config - ResolvedItemConfig
      * @param parent - The item the newly created item should be a child of
      * @internal
      */
-    createContentItem(config: ItemConfig, parent: ContentItem): ContentItem {
+    createContentItem(config: ResolvedItemConfig, parent: ContentItem): ContentItem {
         if (typeof config.type !== 'string') {
             throw new ConfigurationError('Missing parameter \'type\'', JSON.stringify(config));
         }
@@ -681,7 +686,7 @@ export abstract class LayoutManager extends EventEmitter {
          */
         if (
             // If this is a component
-            ItemConfig.isComponentItem(config) &&
+            ResolvedItemConfig.isComponentItem(config) &&
 
             // and it's not already within a stack
             !(parent instanceof Stack) &&
@@ -692,8 +697,8 @@ export abstract class LayoutManager extends EventEmitter {
             // and it's not the topmost item in a new window
             !(this.isSubWindow === true && parent instanceof GroundItem)
         ) {
-            const stackConfig: StackItemConfig = {
-                type: ItemConfig.Type.stack,
+            const stackConfig: ResolvedStackItemConfig = {
+                type: ItemType.stack,
                 content: [config],
                 width: config.width,
                 minWidth: config.minWidth,
@@ -717,14 +722,14 @@ export abstract class LayoutManager extends EventEmitter {
      * Creates a popout window with the specified content at the specified position
      *
      * @param itemConfigOrContentItem - The content of the popout window's layout manager derived from either
-     * a {@link (ContentItem:class)} or {@link (ItemConfig:interface)} or ItemConfig content (array of {@link (ItemConfig:interface)})
+     * a {@link (ContentItem:class)} or {@link (ItemConfig:interface)} or ResolvedItemConfig content (array of {@link (ItemConfig:interface)})
      * @param positionAndSize - The width, height, left and top of Popout window
      * @param parentId -The id of the element this item will be appended to when popIn is called
      * @param indexInParent - The position of this item within its parent element
      */
 
-    createPopout(itemConfigOrContentItem: ContentItem | RootItemConfig,
-        positionAndSize: PopoutLayoutConfig.Window,
+    createPopout(itemConfigOrContentItem: ContentItem | ResolvedRootItemConfig,
+        positionAndSize: ResolvedPopoutLayoutConfig.Window,
         parentId: string | null,
         indexInParent: number | null
     ): BrowserPopout {
@@ -737,7 +742,7 @@ export abstract class LayoutManager extends EventEmitter {
 
     /** @internal */
     createPopoutFromContentItem(item: ContentItem,
-        window: PopoutLayoutConfig.Window | undefined,
+        window: ResolvedPopoutLayoutConfig.Window | undefined,
         parentId: string | null,
         indexInParent: number | null | undefined,
     ): BrowserPopout {
@@ -786,7 +791,7 @@ export abstract class LayoutManager extends EventEmitter {
             const itemConfig = item.toConfig();
             item.remove();
 
-            if (!RootItemConfig.isRootItemConfig(itemConfig)) {
+            if (!ResolvedRootItemConfig.isRootItemConfig(itemConfig)) {
                 throw new Error(`${i18nStrings[I18nStringId.PopoutCannotBeCreatedWithGroundItemConfig]}`);
             } else {
                 return this.createPopoutFromItemConfig(itemConfig, window, parentId, indexInParent);
@@ -795,14 +800,14 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /** @internal */
-    private createPopoutFromItemConfig(rootItemConfig: RootItemConfig,
-        window: PopoutLayoutConfig.Window,
+    private createPopoutFromItemConfig(rootItemConfig: ResolvedRootItemConfig,
+        window: ResolvedPopoutLayoutConfig.Window,
         parentId: string | null,
         indexInParent: number | null
     ) {
         const layoutConfig = this.toConfig();
 
-        const popoutLayoutConfig: PopoutLayoutConfig = {
+        const popoutLayoutConfig: ResolvedPopoutLayoutConfig = {
             root: rootItemConfig,
             openPopouts: [],
             settings: layoutConfig.settings,
@@ -818,7 +823,7 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /** @internal */
-    createPopoutFromPopoutLayoutConfig(config: PopoutLayoutConfig): BrowserPopout {
+    createPopoutFromPopoutLayoutConfig(config: ResolvedPopoutLayoutConfig): BrowserPopout {
         const configWindow = config.window;
         const initialWindow: Rect = { 
             left: configWindow.left ?? (globalThis.screenX || globalThis.screenLeft + 20),
@@ -851,7 +856,7 @@ export abstract class LayoutManager extends EventEmitter {
 	 *          removeDragSource() later to get rid of the drag listeners.
      *          2) undefined if constrainDragToContainer is specified
      */
-    createDragSource(element: HTMLElement, itemConfig: ComponentItemConfig | (() => ComponentItemConfig)): DragSource | undefined {
+    createDragSource(element: HTMLElement, itemConfig: ResolvedComponentItemConfig | (() => ResolvedComponentItemConfig)): DragSource | undefined {
         if (this.layoutConfig.settings.constrainDragToContainer) {
             return undefined;
         } else {
@@ -920,15 +925,15 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /** @internal */
-    private createContentItemFromConfig(config: ItemConfig, parent: ContentItem): ContentItem {
+    private createContentItemFromConfig(config: ResolvedItemConfig, parent: ContentItem): ContentItem {
         switch (config.type) {
-            case ItemConfig.Type.ground: throw new AssertError('LMCCIFC68871');
-            case ItemConfig.Type.row: return new RowOrColumn(false, this, config as RowOrColumnItemConfig, parent);
-            case ItemConfig.Type.column: return new RowOrColumn(true, this, config as RowOrColumnItemConfig, parent);
-            case ItemConfig.Type.stack: return new Stack(this, config as StackItemConfig, parent as Stack.Parent);
-            case ItemConfig.Type.serialisableComponent:
-            case ItemConfig.Type.reactComponent:
-                return new ComponentItem(this, config as ComponentItemConfig, parent as Stack);
+            case ItemType.ground: throw new AssertError('LMCCIFC68871');
+            case ItemType.row: return new RowOrColumn(false, this, config as ResolvedRowOrColumnItemConfig, parent);
+            case ItemType.column: return new RowOrColumn(true, this, config as ResolvedRowOrColumnItemConfig, parent);
+            case ItemType.stack: return new Stack(this, config as ResolvedStackItemConfig, parent as Stack.Parent);
+            case ItemType.serialisableComponent:
+            case ItemType.reactComponent:
+                return new ComponentItem(this, config as ResolvedComponentItemConfig, parent as Stack);
             default:
                 throw new UnreachableCaseError('CCC913564', config.type, 'Invalid Config Item type specified');
         }
@@ -1317,8 +1322,8 @@ export abstract class LayoutManager extends EventEmitter {
      */
     private useResponsiveLayout() {
         const settings = this.layoutConfig.settings;
-        const alwaysResponsiveMode = settings.responsiveMode === LayoutConfig.Settings.ResponsiveMode.always;
-        const onLoadResponsiveModeAndFirst = settings.responsiveMode === LayoutConfig.Settings.ResponsiveMode.onload && this._firstLoad;
+        const alwaysResponsiveMode = settings.responsiveMode === ResponsiveMode.always;
+        const onLoadResponsiveModeAndFirst = settings.responsiveMode === ResponsiveMode.onload && this._firstLoad;
         return alwaysResponsiveMode || onLoadResponsiveModeAndFirst;
     }
 
@@ -1386,15 +1391,15 @@ export abstract class LayoutManager extends EventEmitter {
 export namespace LayoutManager {
     export type ComponentConstructor = new(container: ComponentContainer, state: JsonValue | undefined) => ComponentItem.Component;
     export type ComponentFactoryFunction = (container: ComponentContainer, state: JsonValue | undefined) => ComponentItem.Component;
-   export type GetComponentConstructorCallback = (this: void, config: ComponentItemConfig) => ComponentConstructor
+   export type GetComponentConstructorCallback = (this: void, config: ResolvedComponentItemConfig) => ComponentConstructor
     export type GetComponentEventHandler =
-        (this: void, container: ComponentContainer, itemConfig: ComponentItemConfig) => ComponentItem.Component;
+        (this: void, container: ComponentContainer, itemConfig: ResolvedComponentItemConfig) => ComponentItem.Component;
     export type ReleaseComponentEventHandler =
         (this: void, container: ComponentContainer, component: ComponentItem.Component) => void;
 
     /** @internal */
     export interface ConstructorParameters {
-        layoutConfig: LayoutConfig | undefined;
+        layoutConfig: ResolvedLayoutConfig | undefined;
         isSubWindow: boolean;
         containerElement: HTMLElement | undefined;
     }

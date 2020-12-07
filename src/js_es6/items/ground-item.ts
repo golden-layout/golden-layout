@@ -1,8 +1,8 @@
-import { ComponentItemConfig, GroundItemConfig, HeaderedItemConfig, ItemConfig, RootItemConfig, StackItemConfig } from '../config/config';
+import { ResolvedGroundItemConfig, ResolvedComponentItemConfig, ResolvedHeaderedItemConfig, ResolvedItemConfig, ResolvedStackItemConfig, ResolvedRootItemConfig } from '../config/resolved-config';
 import { UserComponentItemConfig, UserItemConfig, UserRowOrColumnItemConfig, UserSerialisableComponentConfig, UserStackItemConfig } from '../config/user-config';
 import { AssertError, UnexpectedNullError, UnexpectedUndefinedError } from '../errors/internal-error';
 import { LayoutManager } from '../layout-manager';
-import { AreaLinkedRect, JsonValue } from '../utils/types';
+import { AreaLinkedRect, ItemType, JsonValue } from '../utils/types';
 import { createTemplateHtmlElement, getElementWidthAndHeight, setElementHeight, setElementWidth } from '../utils/utils';
 import { ComponentItem } from './component-item';
 import { ContentItem } from './content-item';
@@ -18,9 +18,9 @@ export class GroundItem extends ContentItem {
     private readonly _childElementContainer: HTMLElement;
     private readonly _containerElement: HTMLElement;
 
-    constructor(layoutManager: LayoutManager, rootItemConfig: RootItemConfig | undefined, containerElement: HTMLElement) {
+    constructor(layoutManager: LayoutManager, rootItemConfig: ResolvedRootItemConfig | undefined, containerElement: HTMLElement) {
       
-        super(layoutManager, GroundItemConfig.create(rootItemConfig), null, createTemplateHtmlElement(GroundItem.templateHtml));
+        super(layoutManager, ResolvedGroundItemConfig.create(rootItemConfig), null, createTemplateHtmlElement(GroundItem.templateHtml));
 
         this.isGround = true;
         this._childElementContainer = this.element;
@@ -46,7 +46,7 @@ export class GroundItem extends ContentItem {
      * Loads a new Layout
      * Internal only.  To load a new layout with API, use {@link (LayoutManager:class).loadLayout}
      */
-    loadRoot(rootItemConfig: RootItemConfig | undefined): void {
+    loadRoot(rootItemConfig: ResolvedRootItemConfig | undefined): void {
         // Remove existing root if it exists
         this.clearRoot();
 
@@ -129,7 +129,7 @@ export class GroundItem extends ContentItem {
         // Remove existing root if it exists
         this.clearRoot();
 
-        const itemConfig = UserItemConfig.resolve(userItemConfig) as ComponentItemConfig;
+        const itemConfig = UserItemConfig.resolve(userItemConfig) as ResolvedComponentItemConfig;
 
         if (itemConfig.maximised) {
             throw new Error('Root Component cannot be maximised');
@@ -160,14 +160,14 @@ export class GroundItem extends ContentItem {
     }
 
     /** @internal */
-    calculateConfigContent(): RootItemConfig[] {
+    calculateConfigContent(): ResolvedRootItemConfig[] {
         const contentItems = this.contentItems;
         const count = contentItems.length;
-        const result = new Array<RootItemConfig>(count);
+        const result = new Array<ResolvedRootItemConfig>(count);
         for (let i = 0; i < count; i++) {
             const item = contentItems[i];
             const itemConfig = item.toConfig();
-            if (RootItemConfig.isRootItemConfig(itemConfig)) {
+            if (ResolvedRootItemConfig.isRootItemConfig(itemConfig)) {
                 result[i] = itemConfig;
             } else {
                 throw new AssertError('RCCC66832');
@@ -237,10 +237,10 @@ export class GroundItem extends ContentItem {
     onDrop(contentItem: ContentItem, area: GroundItem.Area): void {
 
         if (contentItem.isComponent) {
-            const itemConfig = StackItemConfig.createDefault();
-            // since ItemConfig.contentItems not set up, we need to add header from Component
+            const itemConfig = ResolvedStackItemConfig.createDefault();
+            // since ResolvedItemConfig.contentItems not set up, we need to add header from Component
             const component = contentItem as ComponentItem;
-            itemConfig.header = HeaderedItemConfig.Header.createCopy(component.headerConfig);
+            itemConfig.header = ResolvedHeaderedItemConfig.Header.createCopy(component.headerConfig);
             const stack = this.layoutManager.createAndInitContentItem(itemConfig, this);
             stack.addChild(contentItem);
             contentItem = stack;
@@ -254,19 +254,19 @@ export class GroundItem extends ContentItem {
              * which would wrap the contentItem in a Stack) we need to check whether contentItem is a RowOrColumn.
              * If it is, we need to re-wrap it in a Stack like it was when it was dragged by its Tab (it was dragged!).
              */
-            if(contentItem.type === ItemConfig.Type.row || contentItem.type === ItemConfig.Type.column){
-                const itemConfig = StackItemConfig.createDefault();
+            if(contentItem.type === ItemType.row || contentItem.type === ItemType.column){
+                const itemConfig = ResolvedStackItemConfig.createDefault();
                 const stack = this.layoutManager.createContentItem(itemConfig, this);
                 stack.addChild(contentItem)
                 contentItem = stack
             }
 
-            const type = area.side[0] == 'x' ? ItemConfig.Type.row : ItemConfig.Type.column;
+            const type = area.side[0] == 'x' ? ItemType.row : ItemType.column;
             const dimension = area.side[0] == 'x' ? 'width' : 'height';
             const insertBefore = area.side[1] == '2';
             const column = this.contentItems[0];
             if (!(column instanceof RowOrColumn) || column.type !== type) {
-                const itemConfig = ItemConfig.createDefault(type);
+                const itemConfig = ResolvedItemConfig.createDefault(type);
                 const rowOrColumn = this.layoutManager.createContentItem(itemConfig, this);
                 this.replaceChild(column, rowOrColumn);
                 rowOrColumn.addChild(contentItem, insertBefore ? 0 : undefined, true);
@@ -327,7 +327,7 @@ export class GroundItem extends ContentItem {
         return result;
     }
 
-    toConfig(): ItemConfig {
+    toConfig(): ResolvedItemConfig {
         throw new Error('Cannot generate GroundItem config');
     }
 
