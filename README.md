@@ -100,7 +100,7 @@ Config parameters in GoldenLayout API methods will be of type "Config".  The one
 1. Resolved Configs\
 Golden-Layout internally uses "Resolved Config"s. Whenever an API function is passed a "Config", GoldenLayout will resolve it to its corresponding "Resolved Config".  This resolving process will set default values where an optional value has not been specified. It will also handle backwards compatibility.  This allows the GoldenLayout library to always work with fully configured Configs.
 
-For persistence of configs, always save the "Resolved Config" returned by LayoutManager.saveLayout. When reloading a saved Layout, first convert the saved "Resolved Config" to a "Config" by calling `LayoutConfig.fromResolved()`.
+For persistence of configs, always save the "Resolved Config" returned by `LayoutManager.saveLayout()`. When reloading a saved Layout, first convert the saved "Resolved Config" to a "Config" by calling `LayoutConfig.fromResolved()`.
 
 Both "Resolved Config" and "Config" have 2 types of interface hierarchies:
 1. `ItemConfig`\
@@ -138,7 +138,7 @@ Use in conjunction with `getComponentEvent` to release/dispose any component cre
 Will load the new layout specified in its `LayoutConfig` parameter.  This can also be subsequently called whenever the GoldenLayout layout is to be replaced.
 1. `saveLayout()` (new function)\
 Saves the current layout as a `LayoutConfig`. Replaces the existing `toConfig()` function
-1. Do not call `toConfig()`. `Call LayoutManager.saveLayout()` instead.
+1. Do not call `toConfig()`. Call `LayoutManager.saveLayout()` instead.
 1. `setSize()` (new function)\
 Sets the size of the GoldenLayout instance in pixels. Replaces the existing `updateSize()` function.
 1. Do not use `updateSize()`.  Use the new `LayoutManager.setSize()` instead.
@@ -161,10 +161,10 @@ Returns HTMLElement which hosts component
 1. `initialState` (new getter)\
 Gets the componentState of the `ComponentItemConfig` used to create the contained component.
 1. `stateRequestEvent` (new event)\
-If set, `stateRequestEvent` is fired whenever GoldenLayout wants the latest state for a component. Calling `LayoutManager.saveLayout` will cause this event to be fired (if it is defined).  If it is not defined, then the initial state in the ItemConfig or the latest state set in `setState()` will be saved.
+If set, `stateRequestEvent` is fired whenever GoldenLayout wants the latest state for a component. Calling `LayoutManager.saveLayout()` will cause this event to be fired (if it is defined).  If it is not defined, then the initial state in the ItemConfig or the latest state set in `setState()` will be saved.
 1. `beforeComponentRelease` (new EventEmitter event)\
 `beforeComponentRelease` is emitted on the container before a component is released.  Components can use this event to dispose of resources.
-1. Do not use `getState()` unless you are using the deprecated `setState()`. Use `getInitialState()` if you have migrated to the new `ComponentContainer.stateRequestEvent`.
+1. Do not use `getState()` unless you are using the deprecated `setState()`. Use `ComponentContainer.initialState` getter if you have migrated to the new `ComponentContainer.stateRequestEvent`.
 1. `setState()` has been marked as deprecated. If possible, use the new `stateRequestEvent` event instead.
 1. `replaceComponent()` allows you to replace a component in a container without otherwise affecting the layout.
 
