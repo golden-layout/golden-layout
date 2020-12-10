@@ -107,7 +107,7 @@ declare module 'golden-layout' {
          * @param itemConfiguration An item configuration (can be an entire tree of items)
          * @param parent A parent item
          */
-        createContentItem(itemConfiguration?: GoldenLayout.ItemConfigType, parent?: GoldenLayout.ContentItem): GoldenLayout.ContentItem;
+        createContentItem(itemConfiguration?: GoldenLayout.ItemConfigContent, parent?: GoldenLayout.ContentItem): GoldenLayout.ContentItem;
 
         /**
          * Creates a new popout window with configOrContentItem as contents at the position specified in dimensions
@@ -120,7 +120,7 @@ declare module 'golden-layout' {
          *                  when popIn is clicked
          * @param indexInParent The index at which the child window's contents will be appended to. Default: null
          */
-        createPopout(configOrContentItem: GoldenLayout.ItemConfigType | GoldenLayout.ContentItem,
+        createPopout(configOrContentItem: GoldenLayout.ItemConfigContent | GoldenLayout.ContentItem,
                      dimensions: {
                          width: number,
                          height: number,
@@ -137,7 +137,7 @@ declare module 'golden-layout' {
          * @return the dragSource that was created. This can be used to remove the
          *         dragSource from the layout later.
          */
-        createDragSource(element: HTMLElement | JQuery, itemConfiguration: GoldenLayout.ItemConfigType): GoldenLayout.DragSource;
+        createDragSource(element: HTMLElement | JQuery, itemConfiguration: GoldenLayout.ItemConfigContent): GoldenLayout.DragSource;
 
         /**
          * Removes a dragSource from the layout.
@@ -202,7 +202,7 @@ declare module 'golden-layout' {
 
     namespace GoldenLayout {
 
-        export type ItemConfigType = ItemConfig | ComponentConfig | ReactComponentConfig;
+        export type ItemConfigContent = ItemConfig | ComponentConfig | ReactComponentConfig;
 
         export interface Settings {
             /**
@@ -337,17 +337,17 @@ declare module 'golden-layout' {
              */
             popout?: string;
         }
-
+        export type ItemConfigContentType = 'row' | 'column' | 'stack' | 'component' | 'react-component'
         export interface ItemConfig {
             /**
              * The type of the item. Possible values are 'row', 'column', 'stack', 'component' and 'react-component'.
              */
-            type: string;
+            type: ItemConfigContentType;
 
             /**
              * An array of configurations for items that will be created as children of this item.
              */
-            content?: ItemConfigType[];
+            content?: ItemConfigContent[];
 
             /**
              * The width of this item, relative to the other children of its parent in percent
@@ -407,19 +407,19 @@ declare module 'golden-layout' {
             settings?: Settings;
             dimensions?: Dimensions;
             labels?: Labels;
-            content?: ItemConfigType[];
+            content?: ItemConfigContent[];
         }
-
+        export type ContentItemType = 'row' | 'column' | 'stack' | 'component' | 'root'
         export interface ContentItem extends EventEmitter {
             /**
              * This items configuration in its current state
              */
-            config: ItemConfigType;
+            config: ItemConfigContent;
 
             /**
              * The type of the item. Can be row, column, stack, component or root
              */
-            type: string;
+            type: ContentItemType;
 
             /**
              * An array of items that are children of this item
@@ -493,7 +493,7 @@ declare module 'golden-layout' {
              * @param itemOrItemConfig A content item (or tree of content items) or an ItemConfiguration to create the item from
              * @param index last index  An optional index that determines at which position the new item should be added. Default: last index.
              */
-            addChild(itemOrItemConfig: ContentItem | ItemConfigType, index?: number): void;
+            addChild(itemOrItemConfig: ContentItem | ItemConfigContent, index?: number): void;
 
             /**
              * Destroys the item and all it's children
@@ -507,7 +507,7 @@ declare module 'golden-layout' {
              * @param oldChild    ContentItem The contentItem that should be removed
              * @param newChild A content item (or tree of content items) or an ItemConfiguration to create the item from
              */
-            replaceChild(oldChild: ContentItem, newChild: ContentItem | ItemConfigType): void;
+            replaceChild(oldChild: ContentItem, newChild: ContentItem | ItemConfigContent): void;
 
             /**
              * Updates the items size. To actually assign a new size from within a component, use container.setSize( width, height )
@@ -605,7 +605,7 @@ declare module 'golden-layout' {
              * Returns all items with the specified type
              * @param type 'row', 'column', 'stack', 'component' or 'root'
              */
-            getItemsByType(type: string): ContentItem[];
+            getItemsByType(type: ContentItemType): ContentItem[];
 
             /**
              * Returns all instances of the component with the specified componentName
