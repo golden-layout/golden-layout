@@ -337,12 +337,12 @@ declare module 'golden-layout' {
              */
             popout?: string;
         }
-
+        export type ItemConfigContentType = 'row' | 'column' | 'stack' | 'component' | 'react-component'
         export interface ItemConfig {
             /**
              * The type of the item. Possible values are 'row', 'column', 'stack', 'component' and 'react-component'.
              */
-            type: string;
+            type: ItemConfigContentType;
 
             /**
              * An array of configurations for items that will be created as children of this item.
@@ -409,7 +409,7 @@ declare module 'golden-layout' {
             labels?: Labels;
             content?: ItemConfigType[];
         }
-
+        export type ContentItemType = 'row' | 'column' | 'stack' | 'component' | 'root'
         export interface ContentItem extends EventEmitter {
             /**
              * This items configuration in its current state
@@ -419,7 +419,7 @@ declare module 'golden-layout' {
             /**
              * The type of the item. Can be row, column, stack, component or root
              */
-            type: string;
+            type: ContentItemType;
 
             /**
              * An array of items that are children of this item
@@ -605,7 +605,7 @@ declare module 'golden-layout' {
              * Returns all items with the specified type
              * @param type 'row', 'column', 'stack', 'component' or 'root'
              */
-            getItemsByType(type: string): ContentItem[];
+            getItemsByType(type: ContentItemType): ContentItem[];
 
             /**
              * Returns all instances of the component with the specified componentName
