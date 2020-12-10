@@ -108,6 +108,8 @@ This specifies the config for a content item.
 1. `LayoutConfig` (previously the `Config` interface)\
 This specifies the config for a layout.
 
+The resolved `ItemConfig.id` property now has type `string` (instead of its previous `string | string[]` type).  For backwards compatibilitiy, `ItemConfig.id` will still accept an array of strings, however it will resolve it to a string by using the first element and discarding the rest.  It is strongly recommended that applications be modified to assign a string instead of array of string to `id`, as `ItemConfig.id` type may be narrowed to `string` in the future.
+
 A `LayoutConfig` has a `root` property which specifies the ItemConfig of root content item of the layout.  `root` is not optional and must always be specified.
 
 For examples of how to create LayoutConfigs, please refer to the api-test program in the repository.
@@ -149,6 +151,8 @@ Specifies the root content item of the layout (not the Ground content item).
 #### Content Items
 1. `AbstractContentItem` has been renamed to `ContentItem`
 1. `config` property has been removed. Use the toConfig() method instead (as recommended in the original GoldenLayout documentation).
+1. Some of the previous `config` properties such as `id` and `type` are now available as properties of `ContentItem` or its descendants (where appropriate).
+1. `id` now has type `string`.  (It used to be `string | string[]`.)
 1. `ItemContainer` has been renamed to `ComponentContainer`
 1. `Component` has been renamed to `ComponentItem`.  "Component" now refers to the external component hosted inside GoldenLayout
 1. `Root` has been renamed to `GroundItem` and has been marked as internal only. Applications should never access GroundItem.  Note that the layout's root ContentItem is GroundItem's only child.  You can access this root ContentItem with `LayoutManager.rootItem`.
