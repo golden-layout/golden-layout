@@ -342,7 +342,7 @@ declare module 'golden-layout' {
             /**
              * The type of the item. Possible values are 'row', 'column', 'stack', 'component' and 'react-component'.
              */
-            type: string;
+            type: 'row' | 'column' | 'stack' | 'component' | 'react-component';
 
             /**
              * An array of configurations for items that will be created as children of this item.
@@ -419,7 +419,7 @@ declare module 'golden-layout' {
             /**
              * The type of the item. Can be row, column, stack, component or root
              */
-            type: string;
+            type: 'row' | 'column' | 'stack' | 'component' | 'root';
 
             /**
              * An array of items that are children of this item
@@ -605,7 +605,7 @@ declare module 'golden-layout' {
              * Returns all items with the specified type
              * @param type 'row', 'column', 'stack', 'component' or 'root'
              */
-            getItemsByType(type: string): ContentItem[];
+            getItemsByType(type: 'row' | 'column' | 'stack' | 'component' | 'root'): ContentItem[];
 
             /**
              * Returns all instances of the component with the specified componentName
