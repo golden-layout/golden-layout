@@ -108,7 +108,7 @@ This specifies the config for a content item.
 1. `LayoutConfig` (previously the `Config` interface)\
 This specifies the config for a layout.
 
-The resolved `ItemConfig.id` property now has type `string` (instead of its previous `string | string[]` type).  For backwards compatibilitiy, `ItemConfig.id` will still accept an array of strings, however it will resolve it to a string by using the first element and discarding the rest.  It is strongly recommended that applications be modified to assign a string instead of array of string to `id`, as `ItemConfig.id` type may be narrowed to `string` in the future.
+The (optional) `ItemConfig.id` property now has type `string` (instead of its previous `string | string[]` type).  For backwards compatibility, when `ItemConfig.id` is resolved, it will still accept an `id` with of type string array. This will allow handling of legacy saved configs in which `id` contains an array of strings (including possibly the legacy maximise indicator). When such an `id` is resolved, the array is first checked for the legacy maximise indicator and then the first element becomes the `id` string value.  The remaining elements are discarded.
 
 A `LayoutConfig` has a `root` property which specifies the ItemConfig of root content item of the layout.  `root` is not optional and must always be specified.
 

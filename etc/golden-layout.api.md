@@ -460,7 +460,7 @@ export const i18nStrings: string[];
 export interface ItemConfig {
     content?: ItemConfig[];
     height?: number;
-    id?: string | string[];
+    id?: string;
     isClosable?: boolean;
     minHeight?: number;
     minWidth?: number;

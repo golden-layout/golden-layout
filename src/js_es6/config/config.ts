@@ -53,7 +53,7 @@ export interface ItemConfig {
      * Do NOT assign an array.  This only exists for legacy purposes.  If an array is assigned, the first element
      * will become the id.
      */
-    id?: string | string[];
+    id?: string;
 
     /**
      * Determines if the item is closable. If false, the x on the items tab will be hidden and container.close()
@@ -190,7 +190,8 @@ export namespace HeaderedItemConfig {
 
     export function resolveIdAndMaximised(config: HeaderedItemConfig): { id: string, maximised: boolean} {
         let id: string;
-        let legacyId = config.id;
+        // To support legacy configs with Id saved as an array of string, assign config.id to a type which includes string array
+        let legacyId: string | string[] | undefined = config.id;
         let legacyMaximised = false;
         if (legacyId === undefined) {
             id = ResolvedItemConfig.defaults.id;
