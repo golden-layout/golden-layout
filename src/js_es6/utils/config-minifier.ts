@@ -1,5 +1,3 @@
-import { ResolvedLayoutConfig } from '../config/resolved-config';
-
 /**
  * Minifies and unminifies configs by replacing frequent keys
  * and values with one letter substitutes. Config options must
@@ -7,136 +5,121 @@ import { ResolvedLayoutConfig } from '../config/resolved-config';
  * @internal
 */
 
-export class ConfigMinifier {
-    _keys: readonly string[];
-    _values: readonly (boolean | string)[];
+export namespace ConfigMinifier {
 
-    constructor() {
-        this._keys = [
-            'settings',
-            'hasHeaders',
-            'constrainDragToContainer',
-            'selectionEnabled',
-            'dimensions',
-            'borderWidth',
-            'minItemHeight',
-            'minItemWidth',
-            'headerHeight',
-            'dragProxyWidth',
-            'dragProxyHeight',
-            'labels',
-            'close',
-            'maximise',
-            'minimise',
-            'popout',
-            'content',
-            'componentName',
-            'componentState',
-            'id',
-            'width',
-            'type',
-            'height',
-            'isClosable',
-            'title',
-            'popoutWholeStack',
-            'openPopouts',
-            'parentId',
-            'activeItemIndex',
-            'reorderEnabled',
-            'borderGrabWidth',
+    export type YY = 'id' | 'title';
+    export const enum XX {
+        id = 'id'
+    }
+    const keys: readonly string[] = [
+        'settings',
+        'hasHeaders',
+        'constrainDragToContainer',
+        'selectionEnabled',
+        'dimensions',
+        'borderWidth',
+        'minItemHeight',
+        'minItemWidth',
+        'headerHeight',
+        'dragProxyWidth',
+        'dragProxyHeight',
+        'labels',
+        'close',
+        'maximise',
+        'minimise',
+        'popout',
+        'content',
+        'componentType',
+        'componentState',
+        'id',
+        'width',
+        'type',
+        'height',
+        'isClosable',
+        'title',
+        'popoutWholeStack',
+        'openPopouts',
+        'parentId',
+        'activeItemIndex',
+        'reorderEnabled',
+        'borderGrabWidth',
 
 
 
 
-            //Maximum 36 entries, do not cross this line!
-        ];
-        if (this._keys.length > 36) {
+        //Maximum 36 entries, do not cross this line!
+    ];
+
+    const values: readonly (boolean | string)[] = [
+        true,
+        false,
+        'row',
+        'column',
+        'stack',
+        'component',
+        'close',
+        'maximise',
+        'minimise',
+        'open in new window'
+    ];
+
+    export function checkInitialise(): void {
+        if (keys.length > 36) {
             throw new Error('Too many keys in config minifier map');
         }
-
-        this._values = [
-            true,
-            false,
-            'row',
-            'column',
-            'stack',
-            'component',
-            'close',
-            'maximise',
-            'minimise',
-            'open in new window'
-        ];
     }
 
-
-    /**
-     * Takes a GoldenLayout configuration object and
-     * replaces its keys and values recursively with
-     * one letter counterparts
-     */
-    minifyConfig(config: ResolvedLayoutConfig): ResolvedLayoutConfig {
-        return this.translateObject(config, true) as ResolvedLayoutConfig;
-    }
-
-    /**
-     * Takes a configuration Object that was previously minified
-     * using minifyConfig and returns its original version
-     */
-    unminifyConfig(minifiedConfig: ResolvedLayoutConfig): ResolvedLayoutConfig {
-        return this.translateObject(minifiedConfig, false) as ResolvedLayoutConfig;
-    }
-
-    private translateObject(from: Record<string, unknown>, minify: boolean) {
+    export function translateObject(from: Record<string, unknown>, minify: boolean): Record<string, unknown> {
         const to: Record<string, unknown> = {};
         for (const key in from) {
             if (from.hasOwnProperty(key)) { // In case something has extended Object prototypes
                 let translatedKey: string;
                 if (minify) {
-                    translatedKey = this.minifyKey(key);
+                    translatedKey = minifyKey(key);
                 } else {
-                    translatedKey = this.unminifyKey(key);
+                    translatedKey = unminifyKey(key);
                 }
 
                 const fromValue = from[key];
-                to[translatedKey] = this.translateValue(fromValue, minify);
+                to[translatedKey] = translateValue(fromValue, minify);
             }
         }
 
         return to;
     }
 
-    private translateArray(from: unknown[], minify: boolean) {
+    function translateArray(from: unknown[], minify: boolean) {
         const length = from.length;
         const to = new Array<unknown>(length);
         for (let i = 0; i < length; i++) {
             // In original code, array indices were numbers and not translated
             const fromValue = from[i];
-            to[i] = this.translateValue(fromValue, minify);
+            to[i] = translateValue(fromValue, minify);
         }
         return to;
     }
 
-    private translateValue(from: unknown, minify: boolean) {
+    function translateValue(from: unknown, minify: boolean) {
         if (typeof from === 'object') {
             if (from === null) {
                 return null;
             } else {
                 if (from instanceof Array) {
-                    return this.translateArray(from, minify);
+                    return translateArray(from, minify);
                 } else {
-                    return this.translateObject(from as Record<string, unknown>, minify);
+                    return translateObject(from as Record<string, unknown>, minify);
                 }
             }
         } else {
             if (minify) {
-                return this.minifyValue(from);
+                return minifyValue(from);
             } else {
-                return this.unminifyValue(from);
+                return unminifyValue(from);
             }
         }
     }
 
-    private minifyKey(value: string) {
+    function minifyKey(value: string) {
         /**
          * If a value actually is a single character, prefix it
          * with ___ to avoid mistaking it for a minification code
@@ -145,7 +128,7 @@ export class ConfigMinifier {
             return '___' + value;
         }
     
-        const index = this.indexOfKey(value);
+        const index = indexOfKey(value);
     
         /**
          * value not found in the dictionary, return it unmodified
@@ -161,13 +144,13 @@ export class ConfigMinifier {
         }
     }
 
-    private unminifyKey(key: string) {
+    function unminifyKey(key: string) {
         /**
          * value is a single character. Assume that it's a translation
          * and return the original value from the dictionary
          */
         if (key.length === 1) {
-            return this._keys[parseInt(key, 36)];
+            return keys[parseInt(key, 36)];
         }
     
         /**
@@ -184,7 +167,7 @@ export class ConfigMinifier {
         return key;
     }
 
-    private minifyValue(value: unknown) {
+    function minifyValue(value: unknown) {
         /**
          * If a value actually is a single character, prefix it
          * with ___ to avoid mistaking it for a minification code
@@ -193,7 +176,7 @@ export class ConfigMinifier {
             return '___' + value;
         }
     
-        const index = this.indexOfValue(value);
+        const index = indexOfValue(value);
     
         /**
          * value not found in the dictionary, return it unmodified
@@ -209,13 +192,13 @@ export class ConfigMinifier {
         }
     }
 
-    private unminifyValue(value: unknown) {
+    function unminifyValue(value: unknown) {
         /**
          * value is a single character. Assume that it's a translation
          * and return the original value from the dictionary
          */
         if (typeof value === 'string' && value.length === 1) {
-            return this._values[parseInt(value, 36)];
+            return values[parseInt(value, 36)];
         }
 
         /**
@@ -232,18 +215,18 @@ export class ConfigMinifier {
         return value;
     }
 
-    private indexOfKey(key: string) {
-        for (let i = 0; i < this._keys.length; i++) {
-            if (this._keys[i] === key) {
+    function indexOfKey(key: string) {
+        for (let i = 0; i < keys.length; i++) {
+            if (keys[i] === key) {
                 return i;
             }
         }
         return -1;
     }
 
-    private indexOfValue(value: unknown) {
-        for (let i = 0; i < this._values.length; i++) {
-            if (this._values[i] === value) {
+    function indexOfValue(value: unknown) {
+        for (let i = 0; i < values.length; i++) {
+            if (values[i] === value) {
                 return i;
             }
         }

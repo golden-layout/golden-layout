@@ -70,19 +70,19 @@ export class RowOrColumn extends ContentItem {
         }
     }
 
-    newSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): ComponentItem {
+    newSerialisableComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): ComponentItem {
         const itemConfig: SerialisableComponentConfig = {
             type: 'component',
-            componentName: componentTypeName,
+            componentType,
             componentState,
         };
         return this.newItem(itemConfig, index) as ComponentItem;
     }
 
-    addSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): number {
+    addSerialisableComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): number {
         const itemConfig: SerialisableComponentConfig = {
             type: 'component',
-            componentName: componentTypeName,
+            componentType,
             componentState,
         };
         return this.addItem(itemConfig, index);

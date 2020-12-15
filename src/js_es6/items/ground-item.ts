@@ -56,10 +56,10 @@ export class GroundItem extends ContentItem {
         }
     }
 
-    newSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): ComponentItem {
+    newSerialisableComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): ComponentItem {
         const itemConfig: SerialisableComponentConfig = {
             type: 'component',
-            componentName: componentTypeName,
+            componentType,
             componentState,
         };
         return this.newItem(itemConfig, index) as ComponentItem;
@@ -69,10 +69,10 @@ export class GroundItem extends ContentItem {
      * Adds a Serialisable Component child to root ContentItem.
      * Internal only.  To load a add with API, use {@link (LayoutManager:class).addSerialisableComponent}
      */
-    addSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): number {
+    addSerialisableComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): number {
         const itemConfig: SerialisableComponentConfig = {
             type: 'component',
-            componentName: componentTypeName,
+            componentType,
             componentState,
         };
         return this.addItem(itemConfig, index);

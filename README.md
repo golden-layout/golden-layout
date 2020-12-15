@@ -110,7 +110,16 @@ This specifies the config for a layout.
 
 The (optional) `ItemConfig.id` property now has type `string` (instead of its previous `string | string[]` type).  For backwards compatibility, when `ItemConfig.id` is resolved, it will still accept an `id` with of type string array. This will allow handling of legacy saved configs in which `id` contains an array of strings (including possibly the legacy maximise indicator). When such an `id` is resolved, the array is first checked for the legacy maximise indicator and then the first element becomes the `id` string value.  The remaining elements are discarded.
 
+The `ComponentItemConfig.componentName` property has now been replaced by property `ComponentItemConfig.componentType`.  `componentType` is of type `JsonValue`.  While a component type can now be specified by values that can be serialised by JSON, `componentType` must be of type `string` if it is registered with one of the following functions:
+1. `LayoutManager.registerComponent()` (deprecated)
+1. `LayoutManager.registerComponentConstructor()`
+1. `LayoutManager.registerComponentFactoryFunction()`
+
 A `LayoutConfig` has a `root` property which specifies the ItemConfig of root content item of the layout.  `root` is not optional and must always be specified.
+
+`ResolvedLayoutConfig` now has functions to minify and unminify configurations:
+1. `minifyConfig()` Replaces `LayoutManager.minifyConfig()`
+1. `unminifyConfig()` Replaces `LayoutManager.unminifyConfig()`
 
 For examples of how to create LayoutConfigs, please refer to the api-test program in the repository.
 
@@ -139,7 +148,8 @@ Use in conjunction with `getComponentEvent` to release/dispose any component cre
 1. `loadLayout()` (new function)\
 Will load the new layout specified in its `LayoutConfig` parameter.  This can also be subsequently called whenever the GoldenLayout layout is to be replaced.
 1. `saveLayout()` (new function)\
-Saves the current layout as a `LayoutConfig`. Replaces the existing `toConfig()` function
+Saves the current layout as a `LayoutConfig`. Replaces the existing `toConfig()` function.
+1. Do not uses `minifyConfig()` of `unminifyConfig()` functions.  Use the respective functions in `ResolvedLayoutConfig`.
 1. Do not call `toConfig()`. Call `LayoutManager.saveLayout()` instead.
 1. `setSize()` (new function)\
 Sets the size of the GoldenLayout instance in pixels. Replaces the existing `updateSize()` function.
@@ -156,7 +166,7 @@ Specifies the root content item of the layout (not the Ground content item).
 1. `ItemContainer` has been renamed to `ComponentContainer`
 1. `Component` has been renamed to `ComponentItem`.  "Component" now refers to the external component hosted inside GoldenLayout
 1. `Root` has been renamed to `GroundItem` and has been marked as internal only. Applications should never access GroundItem.  Note that the layout's root ContentItem is GroundItem's only child.  You can access this root ContentItem with `LayoutManager.rootItem`.
-1. `Stack.getActiveContentItem()` and `Stack.setActiveContentItem()` have been renamed to respective `Stack.getActiveComponentItem()` and `Stack.setActiveComponentItem()`
+1. `Stack.getActiveContentItem()` and `Stack.setActiveContentItem()` have been renamed to respective `Stpack.getActiveComponentItem()` and `Stack.setActiveComponentItem()`
 
 #### ComponentContainer
 1. `contentElement` (new property - replaces `getElement()`)\

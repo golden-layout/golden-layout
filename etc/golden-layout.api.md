@@ -47,8 +47,10 @@ export class ComponentContainer extends EventEmitter {
     close(): void;
     // (undocumented)
     get component(): ComponentItem.Component;
+    // @internal @deprecated (undocumented)
+    get componentName(): JsonValue;
     // (undocumented)
-    get componentName(): string;
+    get componentType(): JsonValue;
     get contentElement(): HTMLElement;
     // @internal (undocumented)
     destroy(): void;
@@ -110,8 +112,10 @@ export class ComponentItem extends ContentItem {
     close(): void;
     // (undocumented)
     get component(): ComponentItem.Component;
+    // @internal @deprecated (undocumented)
+    get componentName(): JsonValue;
     // (undocumented)
-    get componentName(): string;
+    get componentType(): JsonValue;
     // (undocumented)
     get container(): ComponentContainer;
     // @internal (undocumented)
@@ -153,10 +157,18 @@ export namespace ComponentItem {
 
 // @public (undocumented)
 export interface ComponentItemConfig extends HeaderedItemConfig {
-    componentName: string;
+    // @deprecated
+    componentName?: string;
+    componentType: JsonValue;
     // (undocumented)
     readonly content?: [];
     reorderEnabled?: boolean;
+}
+
+// @public (undocumented)
+export namespace ComponentItemConfig {
+    // (undocumented)
+    export function componentTypeToTitle(componentType: JsonValue): string;
 }
 
 // @public @deprecated (undocumented)
@@ -440,6 +452,8 @@ export const enum I18nStringId {
     // (undocumented)
     ComponentIsAlreadyRegistered = 2,
     // (undocumented)
+    ComponentTypeMustBeOfTypeString = 3,
+    // (undocumented)
     PleaseRegisterAConstructorFunction = 1,
     // (undocumented)
     PopoutCannotBeCreatedWithGroundItemConfig = 0
@@ -640,7 +654,7 @@ export abstract class LayoutManager extends EventEmitter {
     // @internal
     constructor(parameters: LayoutManager.ConstructorParameters);
     addItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig, index?: number): number;
-    addSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): number;
+    addSerialisableComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): number;
     // @internal (undocumented)
     calculateItemAreas(): void;
     // @internal (undocumented)
@@ -696,7 +710,7 @@ export abstract class LayoutManager extends EventEmitter {
     protected get maximisedItem(): ContentItem | null;
     // @internal (undocumented)
     maximiseItem(contentItem: ContentItem): void;
-    // @internal
+    // @deprecated
     minifyConfig(config: ResolvedLayoutConfig): ResolvedLayoutConfig;
     // @internal (undocumented)
     minimiseItem(contentItem: ContentItem): void;
@@ -706,8 +720,8 @@ export abstract class LayoutManager extends EventEmitter {
     get openPopouts(): BrowserPopout[];
     // @deprecated
     registerComponent(name: string, componentConstructorOrFactoryFtn: LayoutManager.ComponentConstructor | LayoutManager.ComponentFactoryFunction): void;
-    registerComponentConstructor(name: string, componentConstructor: LayoutManager.ComponentConstructor): void;
-    registerComponentFactoryFunction(name: string, componentFactoryFunction: LayoutManager.ComponentFactoryFunction): void;
+    registerComponentConstructor(typeName: string, componentConstructor: LayoutManager.ComponentConstructor): void;
+    registerComponentFactoryFunction(typeName: string, componentFactoryFunction: LayoutManager.ComponentFactoryFunction): void;
     // @deprecated
     registerComponentFunction(callback: LayoutManager.GetComponentConstructorCallback): void;
     registerGetComponentConstructorCallback(callback: LayoutManager.GetComponentConstructorCallback): void;
@@ -735,7 +749,7 @@ export abstract class LayoutManager extends EventEmitter {
     //
     // @internal (undocumented)
     get transitionIndicator(): TransitionIndicator | null;
-    // @internal
+    // @deprecated
     unminifyConfig(config: ResolvedLayoutConfig): ResolvedLayoutConfig;
     updateRootSize(): void;
     // @deprecated (undocumented)
@@ -865,7 +879,7 @@ export interface Rect {
 
 // @public (undocumented)
 export interface ResolvedComponentItemConfig extends ResolvedHeaderedItemConfig {
-    readonly componentName: string;
+    readonly componentType: JsonValue;
     // (undocumented)
     readonly content: [];
     // (undocumented)
@@ -879,11 +893,13 @@ export namespace ResolvedComponentItemConfig {
     const // (undocumented)
     defaultReorderEnabled = true;
     // (undocumented)
+    export function copyComponentType(componentType: JsonValue): JsonValue;
+    // (undocumented)
     export function isReact(config: ResolvedComponentItemConfig): config is ResolvedReactComponentConfig;
     // (undocumented)
     export function isSerialisable(config: ResolvedComponentItemConfig): config is ResolvedSerialisableComponentConfig;
     // @internal (undocumented)
-    export function resolveComponentName(itemConfig: ResolvedComponentItemConfig): string;
+    export function resolveComponentTypeName(itemConfig: ResolvedComponentItemConfig): string;
 }
 
 // Warning: (ae-internal-missing-underscore) The name "ResolvedGroundItemConfig" should be prefixed with an underscore because the declaration is marked as @internal
@@ -1061,6 +1077,7 @@ export namespace ResolvedLayoutConfig {
     }
     // (undocumented)
     export function isPopout(config: ResolvedLayoutConfig): config is ResolvedPopoutLayoutConfig;
+    export function minifyConfig(layoutConfig: ResolvedLayoutConfig): ResolvedLayoutConfig;
     // (undocumented)
     export interface Settings {
         // (undocumented)
@@ -1091,6 +1108,7 @@ export namespace ResolvedLayoutConfig {
         // (undocumented)
         export function createCopy(original: Settings): Settings;
     }
+    export function unminifyConfig(minifiedConfig: ResolvedLayoutConfig): ResolvedLayoutConfig;
 }
 
 // @public (undocumented)
@@ -1249,14 +1267,14 @@ export class RowOrColumn extends ContentItem {
     // (undocumented)
     addItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig, index?: number): number;
     // (undocumented)
-    addSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): number;
+    addSerialisableComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): number;
     dock(contentItem: Stack, mode?: boolean, collapsed?: boolean): void;
     // @internal
     init(): void;
     // (undocumented)
     newItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig, index?: number): ContentItem;
     // (undocumented)
-    newSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): ComponentItem;
+    newSerialisableComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): ComponentItem;
     removeChild(contentItem: ContentItem, keepChild: boolean): void;
     replaceChild(oldChild: ContentItem, newChild: ContentItem): void;
     // @internal (undocumented)
@@ -1335,7 +1353,7 @@ export class Stack extends ContentItem {
     // (undocumented)
     addItem(itemConfig: ComponentItemConfig, index?: number): number;
     // (undocumented)
-    addSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): number;
+    addSerialisableComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): number;
     // (undocumented)
     get childElementContainer(): HTMLElement;
     // @internal (undocumented)
@@ -1371,7 +1389,7 @@ export class Stack extends ContentItem {
     // (undocumented)
     newItem(itemConfig: ComponentItemConfig, index?: number): ContentItem;
     // (undocumented)
-    newSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): ComponentItem;
+    newSerialisableComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): ComponentItem;
     // @internal
     onDrop(contentItem: ContentItem, area: ContentItem.Area): void;
     // @internal

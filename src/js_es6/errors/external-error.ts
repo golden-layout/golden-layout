@@ -15,7 +15,7 @@ export class ConfigurationError extends ExternalError {
 /** @public */
 export class PopoutBlockedError extends ExternalError {
     constructor(message: string) {
-        super('popoutBlocked', message);
+        super('PopoutBlocked', message);
     }    
 }
 

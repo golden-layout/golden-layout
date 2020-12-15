@@ -14,7 +14,7 @@ export class ComponentContainer extends EventEmitter {
     /** @internal */
     private readonly _isReact: boolean;
     /** @internal */
-    private _componentName: string;
+    private _componentType: JsonValue;
     /** @internal */
     private _component: ComponentItem.Component;
     /** @internal */
@@ -27,7 +27,7 @@ export class ComponentContainer extends EventEmitter {
     private _isClosable;
     /** @internal */
     private _initialState: JsonValue | undefined;
-    /** @internal @deprecated use initialState */
+    /** @internal */
     private _state: JsonValue | undefined;
     /** @internal */
     private _isShownWithZeroDimensions;
@@ -41,7 +41,9 @@ export class ComponentContainer extends EventEmitter {
     get width(): number | null { return this._width; }
     get height(): number | null { return this._height; }
     get parent(): ComponentItem { return this._parent; }
-    get componentName(): string { return this._componentName; }
+    /** @internal @deprecated use {@link (ComponentContainer:class).componentType} */
+    get componentName(): JsonValue { return this._componentType; }
+    get componentType(): JsonValue { return this._componentType; }
     get component(): ComponentItem.Component { return this._component; }
     get tab(): Tab { return this._tab; }
     get title(): string { return this._parent.title; }
@@ -66,7 +68,7 @@ export class ComponentContainer extends EventEmitter {
         this._isHidden = false;
         this._isShownWithZeroDimensions = false;
 
-        this._componentName = config.componentName;
+        this._componentType = config.componentType;
         this._isClosable = config.isClosable;
 
         const contentElement = this._element.querySelector('.lm_content') as HTMLElement;
@@ -245,7 +247,7 @@ export class ComponentContainer extends EventEmitter {
             }
         }
 
-        this._componentName = resolvedItemConfig.componentName;
+        this._componentType = resolvedItemConfig.componentType;
 
         this._updateItemConfigEvent(resolvedItemConfig);
 

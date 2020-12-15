@@ -3,7 +3,6 @@ import { PopoutBlockedError } from '../errors/external-error';
 import { UnexpectedNullError, UnexpectedUndefinedError } from '../errors/internal-error';
 import { ContentItem } from '../items/content-item';
 import { LayoutManager } from '../layout-manager';
-import { ConfigMinifier } from '../utils/config-minifier';
 import { EventEmitter } from '../utils/event-emitter';
 import { Rect } from '../utils/types';
 import { deepExtend, getUniqueId } from '../utils/utils';
@@ -263,7 +262,7 @@ export class BrowserPopout extends EventEmitter {
      */
     private createUrl(): string {
         const storageKey = 'gl-window-config-' + getUniqueId();
-        const config = (new ConfigMinifier()).minifyConfig(this._config);
+        const config = ResolvedLayoutConfig.minifyConfig(this._config);
 
         try {
             localStorage.setItem(storageKey, JSON.stringify(config));

@@ -3,7 +3,7 @@ import { ComponentContainer } from '../container/component-container';
 import { Tab } from '../controls/tab';
 import { UnexpectedNullError } from '../errors/internal-error';
 import { LayoutManager } from '../layout-manager';
-import { ItemType } from '../utils/types';
+import { ItemType, JsonValue } from '../utils/types';
 import { createTemplateHtmlElement, getElementWidthAndHeight } from '../utils/utils';
 import { ContentItem } from './content-item';
 import { GroundItem } from './ground-item';
@@ -28,7 +28,9 @@ export class ComponentItem extends ContentItem {
     /** @internal */
     private _tab: Tab;
 
-    get componentName(): string { return this._container.componentName; }
+    /** @internal @deprecated use {@link (ComponentItem:class).componentType} */
+    get componentName(): JsonValue { return this._container.componentType; }
+    get componentType(): JsonValue { return this._container.componentType; }
     get reorderEnabled(): boolean { return this._reorderEnabled; }
     /** @internal */
     get initialWantMaximise(): boolean { return this._initialWantMaximise; }
@@ -73,9 +75,6 @@ export class ComponentItem extends ContentItem {
 
     applyUpdatableConfig(config: ResolvedComponentItemConfig): void {
         this._title = config.title;
-        if (this._title === '') {
-            this._title = this.componentName;
-        }
         this._headerConfig = config.header;
     }
 
@@ -98,7 +97,7 @@ export class ComponentItem extends ContentItem {
                 reorderEnabled: this._reorderEnabled,
                 title: this._title,
                 header: ResolvedHeaderedItemConfig.Header.createCopy(this._headerConfig),
-                componentName: this.componentName,
+                componentType: ResolvedComponentItemConfig.copyComponentType(this.componentType),
                 component: this._reactComponent,
                 props: state,
             }
@@ -117,7 +116,7 @@ export class ComponentItem extends ContentItem {
                 reorderEnabled: this._reorderEnabled,
                 title: this._title,
                 header: ResolvedHeaderedItemConfig.Header.createCopy(this._headerConfig),
-                componentName: this.componentName,
+                componentType: ResolvedComponentItemConfig.copyComponentType(this.componentType),
                 componentState: state,
             }
             result = serialisableResult;

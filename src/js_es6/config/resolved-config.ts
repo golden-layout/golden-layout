@@ -1,4 +1,7 @@
+import { ApiError } from '../errors/external-error';
 import { AssertError, UnreachableCaseError } from '../errors/internal-error';
+import { ConfigMinifier } from '../utils/config-minifier';
+import { I18nStringId, i18nStrings } from '../utils/i18n-strings';
 import { ItemType, JsonValue, ResponsiveMode, Side } from '../utils/types';
 import { deepExtendValue } from '../utils/utils';
 
@@ -193,7 +196,7 @@ export interface ResolvedComponentItemConfig extends ResolvedHeaderedItemConfig 
     /**
      * The name of the component as specified in layout.registerComponent. Mandatory if type is 'component'.
      */
-    readonly componentName: string;
+    readonly componentType: JsonValue;
 }
 
 /** @public */
@@ -208,9 +211,14 @@ export namespace ResolvedComponentItemConfig {
     }
 
     /** @internal */
-    export function resolveComponentName(itemConfig: ResolvedComponentItemConfig): string {
+    export function resolveComponentTypeName(itemConfig: ResolvedComponentItemConfig): string {
         if (isSerialisable(itemConfig)) {
-            return itemConfig.componentName;
+            const componentType = itemConfig.componentType;
+            if (typeof componentType === 'string') {
+                return componentType;
+            } else {
+                throw new ApiError(`${i18nStrings[I18nStringId.ComponentTypeMustBeOfTypeString]}: ${itemConfig.toString()}`);
+            }
         } else {
             if (isReact(itemConfig)) {
                 return itemConfig.component; // This looks wrong.  Hopefully React logic can be updated to improve this
@@ -218,6 +226,10 @@ export namespace ResolvedComponentItemConfig {
                 throw new AssertError('COCRCN60054');
             }
         }
+    }
+
+    export function copyComponentType(componentType: JsonValue): JsonValue {
+        return deepExtendValue({}, componentType) as JsonValue
     }
 }
 
@@ -244,7 +256,7 @@ export namespace ResolvedSerialisableComponentConfig {
             reorderEnabled: original.reorderEnabled,
             title: original.title,
             header: ResolvedHeaderedItemConfig.Header.createCopy(original.header),
-            componentName: original.componentName,
+            componentType: original.componentType,
             componentState: deepExtendValue(undefined, original.componentState) as JsonValue,
         }
         return result;
@@ -264,7 +276,7 @@ export namespace ResolvedSerialisableComponentConfig {
             reorderEnabled: ResolvedComponentItemConfig.defaultReorderEnabled,
             title: '',
             header: undefined,
-            componentName: '',
+            componentType: '',
             componentState: {},
         }
         return result;
@@ -297,7 +309,7 @@ export namespace ResolvedReactComponentConfig {
             reorderEnabled: original.reorderEnabled,
             title: original.title,
             header: ResolvedHeaderedItemConfig.Header.createCopy(original.header),
-            componentName: REACT_COMPONENT_ID,
+            componentType: REACT_COMPONENT_ID,
             component: original.component,
             props: deepExtendValue(undefined, original.props) as JsonValue,
         }
@@ -318,7 +330,7 @@ export namespace ResolvedReactComponentConfig {
             reorderEnabled: ResolvedComponentItemConfig.defaultReorderEnabled,
             title: '',
             header: undefined,
-            componentName: '',
+            componentType: '',
             component: '',
             props: undefined,
         }
@@ -624,6 +636,23 @@ export namespace ResolvedLayoutConfig {
             result[i] = ResolvedPopoutLayoutConfig.createCopy(original[i]);
         }
         return result;
+    }
+
+    /**
+     * Takes a GoldenLayout configuration object and
+     * replaces its keys and values recursively with
+     * one letter counterparts
+     */
+    export function minifyConfig(layoutConfig: ResolvedLayoutConfig): ResolvedLayoutConfig {
+        return ConfigMinifier.translateObject(layoutConfig, true) as ResolvedLayoutConfig;
+    }
+
+    /**
+     * Takes a configuration Object that was previously minified
+     * using minifyConfig and returns its original version
+     */
+    export function unminifyConfig(minifiedConfig: ResolvedLayoutConfig): ResolvedLayoutConfig {
+        return ConfigMinifier.translateObject(minifiedConfig, false) as ResolvedLayoutConfig;
     }
 }
 

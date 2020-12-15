@@ -10,8 +10,8 @@ export class App {
     private _goldenLayout: GoldenLayout;
     private _registerExtraComponentTypesButton;
     private _registerExtraComponentTypesButtonClickListener = () => this.handleRegisterExtraComponentTypesButtonClick();
-    private _registeredComponentNamesForAddSelect: HTMLSelectElement;
-    private _registeredComponentNamesForAddSelectChangeListener = () => this.handleRegisteredComponentNamesForAddSelectChange();
+    private _registeredComponentTypesForAddSelect: HTMLSelectElement;
+    private _registeredComponentTypesForAddSelectChangeListener = () => this.handleRegisteredComponentTypesForAddSelectChange();
     private _addComponentButton: HTMLButtonElement;
     private _addComponentButtonClickListener = () => this.handleAddComponentButtonClick();
     private _layoutSelect: HTMLSelectElement;
@@ -20,8 +20,8 @@ export class App {
     private _loadLayoutButtonClickListener = () => this.handleLoadLayoutButtonClick();
     private _loadComponentAsRootButton: HTMLButtonElement;
     private _loadComponentAsRootClickListener = () => this.handleLoadComponentAsRootButtonClick();
-    private _registeredComponentNamesForReplaceSelect: HTMLSelectElement;
-    private _registeredComponentNamesForReplaceSelectChangeListener = () => this.handleRegisteredComponentNamesForReplaceSelectChange();
+    private _registeredComponentTypesForReplaceSelect: HTMLSelectElement;
+    private _registeredComponentTypesForReplaceSelectChangeListener = () => this.handleRegisteredComponentTypesForReplaceSelectChange();
     private _replaceComponentButton: HTMLButtonElement;
     private _replaceComponentButtonClickListener = () => this.handleReplaceComponentButtonClick();
     private _saveLayoutButton: HTMLButtonElement;
@@ -55,12 +55,12 @@ export class App {
         this._registerExtraComponentTypesButton = registerExtraComponentTypesButton;
         this._registerExtraComponentTypesButton.addEventListener('click', this._registerExtraComponentTypesButtonClickListener);
 
-        const registeredComponentNamesForAddSelect = document.querySelector('#registeredComponentTypesForAddSelect') as HTMLSelectElement;
-        if (registeredComponentNamesForAddSelect === null) {
+        const registeredComponentTypesForAddSelect = document.querySelector('#registeredComponentTypesForAddSelect') as HTMLSelectElement;
+        if (registeredComponentTypesForAddSelect === null) {
             throw new Error()
         }
-        this._registeredComponentNamesForAddSelect = registeredComponentNamesForAddSelect;
-        this._registeredComponentNamesForAddSelect.addEventListener('change', this._registeredComponentNamesForAddSelectChangeListener);
+        this._registeredComponentTypesForAddSelect = registeredComponentTypesForAddSelect;
+        this._registeredComponentTypesForAddSelect.addEventListener('change', this._registeredComponentTypesForAddSelectChangeListener);
 
         const addComponentButton = document.querySelector('#addComponentButton') as HTMLButtonElement;
         if (addComponentButton === null) {
@@ -90,12 +90,12 @@ export class App {
         this._loadComponentAsRootButton = loadComponentAsRootButton;
         this._loadComponentAsRootButton.addEventListener('click', this._loadComponentAsRootClickListener);
 
-        const registeredComponentNamesForReplaceSelect = document.querySelector('#registeredComponentTypesForReplaceSelect') as HTMLSelectElement;
-        if (registeredComponentNamesForReplaceSelect === null) {
+        const registeredComponentTypesForReplaceSelect = document.querySelector('#registeredComponentTypesForReplaceSelect') as HTMLSelectElement;
+        if (registeredComponentTypesForReplaceSelect === null) {
             throw new Error()
         }
-        this._registeredComponentNamesForReplaceSelect = registeredComponentNamesForReplaceSelect;
-        this._registeredComponentNamesForReplaceSelect.addEventListener('change', this._registeredComponentNamesForReplaceSelectChangeListener);
+        this._registeredComponentTypesForReplaceSelect = registeredComponentTypesForReplaceSelect;
+        this._registeredComponentTypesForReplaceSelect.addEventListener('change', this._registeredComponentTypesForReplaceSelectChangeListener);
 
         const replaceComponentButton = document.querySelector('#replaceComponentButton') as HTMLButtonElement;
         if (replaceComponentButton === null) {
@@ -123,8 +123,8 @@ export class App {
     }
 
     start(): void {
-        this.loadRegisteredComponentNamesForAddSelect();
-        this.loadRegisteredComponentNamesForReplaceSelect();
+        this.loadRegisteredComponentTypesForAddSelect();
+        this.loadRegisteredComponentTypesForReplaceSelect();
         this.loadLayoutSelect();
     }
 
@@ -140,20 +140,20 @@ export class App {
         this._goldenLayout.registerComponentConstructor(TextComponent.typeName, TextComponent);
         this._goldenLayout.registerComponentConstructor(BooleanComponent.typeName, BooleanComponent);
         this._allComponentsRegistered = true;
-        this.loadRegisteredComponentNamesForAddSelect();
-        this.loadRegisteredComponentNamesForReplaceSelect();
+        this.loadRegisteredComponentTypesForAddSelect();
+        this.loadRegisteredComponentTypesForReplaceSelect();
         this.loadLayoutSelect();
         this._registerExtraComponentTypesButton.disabled = true;
     }
 
-    private handleRegisteredComponentNamesForAddSelectChange() {
+    private handleRegisteredComponentTypesForAddSelectChange() {
         // nothing to do here
     }
 
     private handleAddComponentButtonClick() {
-        const componentName = this._registeredComponentNamesForAddSelect.value;
+        const componentType = this._registeredComponentTypesForAddSelect.value;
         const itemConfig: SerialisableComponentConfig = {
-            componentName,
+            componentType,
             type: 'component',
         }
         this._goldenLayout.addItem(itemConfig, 0);
@@ -177,20 +177,20 @@ export class App {
     private handleLoadComponentAsRootButtonClick() {
         const itemConfig: SerialisableComponentConfig = {
             type: 'component',
-            componentName: ColorComponent.typeName,
+            componentType: ColorComponent.typeName,
             componentState: 'yellow',
         };
         this._goldenLayout.loadComponentAsRoot(itemConfig);
     }
 
-    private handleRegisteredComponentNamesForReplaceSelectChange() {
+    private handleRegisteredComponentTypesForReplaceSelectChange() {
         // nothing to do here
     }
 
     private handleReplaceComponentButtonClick() {
-        const componentName = this._registeredComponentNamesForReplaceSelect.value;
+        const componentType = this._registeredComponentTypesForReplaceSelect.value;
         const itemConfig: SerialisableComponentConfig = {
-            componentName,
+            componentType,
             type: 'component',
         }
         const rootItem = this._goldenLayout.rootItem;
@@ -215,21 +215,21 @@ export class App {
         }
     }
 
-    private loadRegisteredComponentNamesForAddSelect() {
-        this._registeredComponentNamesForAddSelect.options.length = 0;
+    private loadRegisteredComponentTypesForAddSelect() {
+        this._registeredComponentTypesForAddSelect.options.length = 0;
         const names = this._goldenLayout.getRegisteredComponentTypeNames();
         for (const name of names) {
             const option = new Option(name);
-            this._registeredComponentNamesForAddSelect.options.add(option);
+            this._registeredComponentTypesForAddSelect.options.add(option);
         }
     }
 
-    private loadRegisteredComponentNamesForReplaceSelect() {
-        this._registeredComponentNamesForReplaceSelect.options.length = 0;
+    private loadRegisteredComponentTypesForReplaceSelect() {
+        this._registeredComponentTypesForReplaceSelect.options.length = 0;
         const names = this._goldenLayout.getRegisteredComponentTypeNames();
         for (const name of names) {
             const option = new Option(name);
-            this._registeredComponentNamesForReplaceSelect.options.add(option);
+            this._registeredComponentTypesForReplaceSelect.options.add(option);
         }
     }
 
@@ -250,7 +250,7 @@ export class App {
         for (const item of content) {
             if (ContentItem.isComponentItem(item)) {
                 const container = item.container;
-                if (container.componentName === ColorComponent.typeName) {
+                if (container.componentType === ColorComponent.typeName) {
                     container.replaceComponent(itemConfig);
                 }
             } else {

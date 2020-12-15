@@ -64,7 +64,7 @@ export interface ItemConfig {
 
     /**
      * The title of the item as displayed on its tab and on popout windows
-     * Default: componentName or ''
+     * Default: componentType.toString() or ''
      */
     title?: string;
 }
@@ -275,14 +275,37 @@ export namespace StackItemConfig {
 export interface ComponentItemConfig extends HeaderedItemConfig {
     readonly content?: [];
     /**
-     * The name of the component as specified in layout.registerComponent. Mandatory if type is 'component'.
+     * The type of the component.
+     * @deprecated use {@link (ComponentItemConfig:interface).componentType} instead
      */
-    componentName: string;
+    componentName?: string;
+
+    /**
+     * The type of the component.
+     * `componentType` must be of type `string` if it is registered with any of the following functions:
+     * * {@link (LayoutManager:class).registerComponent} (deprecated)
+     * * {@link (LayoutManager:class).registerComponentConstructor}
+     * * {@link (LayoutManager:class).registerComponentFactoryFunction}
+     */
+    componentType: JsonValue;
 
     /**
      * Default: true
      */
     reorderEnabled?: boolean;  // Takes precedence over LayoutConfig.reorderEnabled.
+}
+
+/** @public */
+export namespace ComponentItemConfig {
+    export function componentTypeToTitle(componentType: JsonValue): string {
+        const componentTypeType = typeof componentType;
+        switch (componentTypeType) {
+            case 'string': return componentType as string;
+            case 'number': return (componentType as number).toString();
+            case 'boolean': return (componentType as boolean).toString();
+            default: return '';
+        }
+    }
 }
 
 /** @public */
@@ -298,13 +321,17 @@ export interface SerialisableComponentConfig extends ComponentItemConfig {
 /** @public */
 export namespace SerialisableComponentConfig {
     export function resolve(itemConfig: SerialisableComponentConfig): ResolvedSerialisableComponentConfig {
-        if (itemConfig.componentName === undefined) {
-            throw new Error('SerialisableComponentConfig.componentName is undefined');
+        let componentType: JsonValue | undefined = itemConfig.componentType;
+        if (componentType === undefined) {
+            componentType = itemConfig.componentName;
+        }
+        if (componentType === undefined) {
+            throw new Error('SerialisableComponentConfig.componentType is undefined');
         } else {
             const { id, maximised } = HeaderedItemConfig.resolveIdAndMaximised(itemConfig);
             let title: string;
             if (itemConfig.title === undefined || itemConfig.title === '') {
-                title = itemConfig.componentName;
+                title = ComponentItemConfig.componentTypeToTitle(componentType);
             } else {
                 title = itemConfig.title;
             }
@@ -321,7 +348,7 @@ export namespace SerialisableComponentConfig {
                 reorderEnabled: itemConfig.reorderEnabled ?? ResolvedComponentItemConfig.defaultReorderEnabled,
                 title,
                 header: HeaderedItemConfig.Header.resolve(itemConfig.header, itemConfig.hasHeaders),
-                componentName: itemConfig.componentName,
+                componentType,
                 componentState: itemConfig.componentState ?? {},
             };
             return result;
@@ -343,12 +370,12 @@ export interface ReactComponentConfig extends ComponentItemConfig {
 export namespace ReactComponentConfig {
     export function resolve(itemConfig: ReactComponentConfig): ResolvedReactComponentConfig {
         if (itemConfig.component === undefined) {
-            throw new Error('ReactComponentConfig.componentName is undefined');
+            throw new Error('ReactComponentConfig.component is undefined');
         } else {
             const { id, maximised } = HeaderedItemConfig.resolveIdAndMaximised(itemConfig);
             let title: string;
-            if (itemConfig.title === undefined || itemConfig.title === '') {
-                title = itemConfig.componentName;
+            if (itemConfig.title === undefined) {
+                title = '';
             } else {
                 title = itemConfig.title;
             }
@@ -365,7 +392,7 @@ export namespace ReactComponentConfig {
                 reorderEnabled: itemConfig.reorderEnabled ?? ResolvedComponentItemConfig.defaultReorderEnabled,
                 title,
                 header: HeaderedItemConfig.Header.resolve(itemConfig.header, itemConfig.hasHeaders),
-                componentName: ResolvedReactComponentConfig.REACT_COMPONENT_ID,
+                componentType: ResolvedReactComponentConfig.REACT_COMPONENT_ID,
                 component: itemConfig.component,
                 props: itemConfig.props,
             };

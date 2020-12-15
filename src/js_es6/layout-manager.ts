@@ -1,39 +1,32 @@
-import { StackItemConfig, ComponentItemConfig, LayoutConfig, RowOrColumnItemConfig, SerialisableComponentConfig } from './config/config'
+import { ComponentItemConfig, LayoutConfig, RowOrColumnItemConfig, SerialisableComponentConfig, StackItemConfig } from './config/config';
 import {
     ResolvedComponentItemConfig,
-
-
-    ResolvedItemConfig, ResolvedLayoutConfig,
+    ResolvedItemConfig,
+    ResolvedLayoutConfig,
     ResolvedPopoutLayoutConfig,
-
-
-
-
-
-
-
     ResolvedRootItemConfig,
-    ResolvedRowOrColumnItemConfig, ResolvedStackItemConfig
-} from './config/resolved-config'
-import { ComponentContainer } from './container/component-container'
-import { BrowserPopout } from './controls/browser-popout'
-import { DragProxy } from './controls/drag-proxy'
-import { DragSource } from './controls/drag-source'
-import { DropTargetIndicator } from './controls/drop-target-indicator'
-import { TransitionIndicator } from './controls/transition-indicator'
-import { ApiError, ConfigurationError } from './errors/external-error'
-import { AssertError, UnexpectedNullError, UnreachableCaseError } from './errors/internal-error'
-import { ComponentItem } from './items/component-item'
-import { ContentItem } from './items/content-item'
-import { GroundItem } from './items/ground-item'
-import { RowOrColumn } from './items/row-or-column'
-import { Stack } from './items/stack'
-import { ConfigMinifier } from './utils/config-minifier'
-import { DragListener } from './utils/drag-listener'
-import { EventEmitter } from './utils/event-emitter'
-import { EventHub } from './utils/event-hub'
-import { I18nStringId, I18nStrings, i18nStrings } from './utils/i18n-strings'
-import { ItemType, JsonValue, Rect, ResponsiveMode } from './utils/types'
+    ResolvedRowOrColumnItemConfig,
+    ResolvedStackItemConfig
+} from "./config/resolved-config";
+import { ComponentContainer } from './container/component-container';
+import { BrowserPopout } from './controls/browser-popout';
+import { DragProxy } from './controls/drag-proxy';
+import { DragSource } from './controls/drag-source';
+import { DropTargetIndicator } from './controls/drop-target-indicator';
+import { TransitionIndicator } from './controls/transition-indicator';
+import { ApiError, ConfigurationError } from './errors/external-error';
+import { AssertError, UnexpectedNullError, UnreachableCaseError } from './errors/internal-error';
+import { ComponentItem } from './items/component-item';
+import { ContentItem } from './items/content-item';
+import { GroundItem } from './items/ground-item';
+import { RowOrColumn } from './items/row-or-column';
+import { Stack } from './items/stack';
+import { ConfigMinifier } from './utils/config-minifier';
+import { DragListener } from './utils/drag-listener';
+import { EventEmitter } from './utils/event-emitter';
+import { EventHub } from './utils/event-hub';
+import { I18nStringId, I18nStrings, i18nStrings } from './utils/i18n-strings';
+import { ItemType, JsonValue, Rect, ResponsiveMode } from './utils/types';
 import {
     createTemplateHtmlElement,
     deepExtendValue,
@@ -41,7 +34,7 @@ import {
     removeFromArray,
     setElementHeight,
     setElementWidth
-} from './utils/utils'
+} from './utils/utils';
 
 /** @internal */
 declare global {
@@ -172,6 +165,7 @@ export abstract class LayoutManager extends EventEmitter {
         this.isSubWindow = parameters.isSubWindow;
 
         I18nStrings.checkInitialise();
+        ConfigMinifier.checkInitialise();
 
         if (parameters.containerElement !== undefined) {
             this._containerElement = parameters.containerElement;
@@ -222,19 +216,19 @@ export abstract class LayoutManager extends EventEmitter {
      * Takes a GoldenLayout configuration object and
      * replaces its keys and values recursively with
      * one letter codes
-     * @internal
+     * @deprecated use {@link (ResolvedLayoutConfig:namespace).minifyConfig} instead
      */
     minifyConfig(config: ResolvedLayoutConfig): ResolvedLayoutConfig {
-        return (new ConfigMinifier()).minifyConfig(config);
+        return ResolvedLayoutConfig.minifyConfig(config);
     }
 
     /**
      * Takes a configuration Object that was previously minified
      * using minifyConfig and returns its original version
-     * @internal
+     * @deprecated use {@link (ResolvedLayoutConfig:namespace).unminifyConfig} instead
      */
     unminifyConfig(config: ResolvedLayoutConfig): ResolvedLayoutConfig {
-        return (new ConfigMinifier()).unminifyConfig(config);
+        return ResolvedLayoutConfig.unminifyConfig(config);
     }
 
     /**
@@ -263,16 +257,16 @@ export abstract class LayoutManager extends EventEmitter {
     /**
      * Register a new component type with the layout manager.
      */
-    registerComponentConstructor(name: string, componentConstructor: LayoutManager.ComponentConstructor): void {
+    registerComponentConstructor(typeName: string, componentConstructor: LayoutManager.ComponentConstructor): void {
         if (typeof componentConstructor !== 'function') {
             throw new Error(i18nStrings[I18nStringId.PleaseRegisterAConstructorFunction]);
         }
 
-        if (this._componentTypes[name] !== undefined) {
-            throw new Error(`${i18nStrings[I18nStringId.ComponentIsAlreadyRegistered]}: ${name}`);
+        if (this._componentTypes[typeName] !== undefined) {
+            throw new Error(`${i18nStrings[I18nStringId.ComponentIsAlreadyRegistered]}: ${typeName}`);
         }
 
-        this._componentTypes[name] = {
+        this._componentTypes[typeName] = {
             constructor: componentConstructor,
             factoryFunction: undefined,
         }
@@ -281,16 +275,16 @@ export abstract class LayoutManager extends EventEmitter {
     /**
      * Register a new component with the layout manager.
      */
-    registerComponentFactoryFunction(name: string, componentFactoryFunction: LayoutManager.ComponentFactoryFunction): void {
+    registerComponentFactoryFunction(typeName: string, componentFactoryFunction: LayoutManager.ComponentFactoryFunction): void {
         if (typeof componentFactoryFunction !== 'function') {
             throw new Error('Please register a constructor function');
         }
 
-        if (this._componentTypes[name] !== undefined) {
-            throw new Error('Component ' + name + ' is already registered');
+        if (this._componentTypes[typeName] !== undefined) {
+            throw new Error('Component ' + typeName + ' is already registered');
         }
 
-        this._componentTypes[name] = {
+        this._componentTypes[typeName] = {
             constructor: undefined,
             factoryFunction: componentFactoryFunction,
         }
@@ -340,8 +334,8 @@ export abstract class LayoutManager extends EventEmitter {
      * @internal
      */
     getComponentInstantiator(config: ResolvedComponentItemConfig): LayoutManager.ComponentInstantiator {
-        const name = ResolvedComponentItemConfig.resolveComponentName(config)
-        let constructorToUse = this._componentTypes[name]
+        const typeName = ResolvedComponentItemConfig.resolveComponentTypeName(config)
+        let constructorToUse = this._componentTypes[typeName]
         if (constructorToUse === undefined) {
             if (this._getComponentConstructorFtn !== undefined) {
                 constructorToUse = {
@@ -351,7 +345,7 @@ export abstract class LayoutManager extends EventEmitter {
             }
         }
         if (constructorToUse === undefined) {
-            throw new ConfigurationError('Unknown component constructor "' + name + '"', undefined);
+            throw new ConfigurationError('Unknown component constructor "' + typeName + '"', undefined);
         }
 
         return constructorToUse;
@@ -361,8 +355,8 @@ export abstract class LayoutManager extends EventEmitter {
     getComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentItem.Component {
         let component: ComponentItem.Component;
         if (ResolvedComponentItemConfig.isSerialisable(itemConfig)) {
-            const name = ResolvedComponentItemConfig.resolveComponentName(itemConfig);
-            let instantiator = this._componentTypes[name]
+            const typeName = ResolvedComponentItemConfig.resolveComponentTypeName(itemConfig);
+            let instantiator = this._componentTypes[typeName]
             if (instantiator === undefined) {
                 if (this._getComponentConstructorFtn !== undefined) {
                     instantiator = {
@@ -379,7 +373,7 @@ export abstract class LayoutManager extends EventEmitter {
                     componentState = undefined;
                 } else {
                     // make copy
-                    componentState = deepExtendValue({}, itemConfig.componentState as Record<string, unknown>) as JsonValue;
+                    componentState = deepExtendValue({}, itemConfig.componentState) as JsonValue;
                 }
 
                 // This next (commented out) if statement is a bad hack. Looks like someone wanted the component name passed
@@ -579,17 +573,17 @@ export abstract class LayoutManager extends EventEmitter {
     /**
      * Adds a new child Serialisable ComponentItem under the root ContentItem.  If a root does not exist,
      * then create root ContentItem instead.
-     * @param componentTypeName - Name of component type to be created.
+     * @param componentType - Type of component to be created.
      * @param state - Optional initial state to be assigned to component
      * @returns -1 if added as root otherwise index in root ContentItem's content
      */
-    addSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): number {
+    addSerialisableComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): number {
         if (this._groundItem === null) {
             throw new Error('Cannot add component before init');
         } else {
             const itemConfig: SerialisableComponentConfig = {
                 type: 'component',
-                componentName: componentTypeName,
+                componentType,
                 componentState,
             };
             return this.addItem(itemConfig, index);

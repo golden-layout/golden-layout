@@ -19,7 +19,7 @@ const miniRowConfig: LayoutConfig = {
                     show: "top",
                 },
                 isClosable: false,
-                componentName: ColorComponent.typeName,
+                componentType: ColorComponent.typeName,
                 width: 30,
                 componentState: 'gold',
             } as SerialisableComponentConfig,
@@ -27,7 +27,7 @@ const miniRowConfig: LayoutConfig = {
                 title: "Layout",
                 header: { show: "top", popout: false },
                 type: "component",
-                componentName: ColorComponent.typeName,
+                componentType: ColorComponent.typeName,
                 componentState: undefined,
             } as SerialisableComponentConfig,
         ],
@@ -50,7 +50,7 @@ const miniStackConfig: LayoutConfig = {
                     show: "top",
                 },
                 isClosable: false,
-                componentName: ColorComponent.typeName,
+                componentType: ColorComponent.typeName,
                 width: 30,
                 componentState: 'white',
             } as SerialisableComponentConfig,
@@ -58,7 +58,7 @@ const miniStackConfig: LayoutConfig = {
                 title: "Layout",
                 header: { show: "top", popout: false },
                 type: "component",
-                componentName: ColorComponent.typeName,
+                componentType: ColorComponent.typeName,
                 componentState: 'green',
             } as SerialisableComponentConfig,
         ],
@@ -75,7 +75,7 @@ const componentConfig: LayoutConfig = {
         type: ItemType.serialisableComponent,
         title: "Layout",
         header: { show: "top", popout: false },
-        componentName: ColorComponent.typeName,
+        componentType: ColorComponent.typeName,
         componentState: 'green',
     } as SerialisableComponentConfig,
 };
@@ -97,7 +97,7 @@ const standardConfig: LayoutConfig = {
                         title: "Fnts 100",
                         header: { show: "bottom" },
                         type: "component",
-                        componentName: ColorComponent.typeName,
+                        componentType: ColorComponent.typeName,
                     },
                     {
                         type: "row",
@@ -107,7 +107,7 @@ const standardConfig: LayoutConfig = {
                                 title: "Golden",
                                 header: { show: "right" },
                                 isClosable: false,
-                                componentName: ColorComponent.typeName,
+                                componentType: ColorComponent.typeName,
                                 width: 30,
                                 componentState: {
                                     bg: "golden_layout_spiral.png",
@@ -120,7 +120,7 @@ const standardConfig: LayoutConfig = {
                                     popout: false,
                                 },
                                 type: "component",
-                                componentName: ColorComponent.typeName,
+                                componentType: ColorComponent.typeName,
                                 componentState: {
                                     bg: "golden_layout_text.png",
                                 },
@@ -133,7 +133,7 @@ const standardConfig: LayoutConfig = {
                             {
                                 type: "component",
                                 title: "Acme, inc.",
-                                componentName: ColorComponent.typeName,
+                                componentType: ColorComponent.typeName,
                                 componentState: {
                                     companyName: "Stock X",
                                 },
@@ -141,7 +141,7 @@ const standardConfig: LayoutConfig = {
                             {
                                 type: "component",
                                 title: "LexCorp plc.",
-                                componentName: ColorComponent.typeName,
+                                componentType: ColorComponent.typeName,
                                 componentState: {
                                     companyName: "Stock Y",
                                 },
@@ -149,7 +149,7 @@ const standardConfig: LayoutConfig = {
                             {
                                 type: "component",
                                 title: "Springshield plc.",
-                                componentName: ColorComponent.typeName,
+                                componentType: ColorComponent.typeName,
                                 componentState: {
                                     companyName: "Stock Z",
                                 },
@@ -170,7 +170,7 @@ const standardConfig: LayoutConfig = {
                             {
                                 type: "component",
                                 title: "comp 1",
-                                componentName: ColorComponent.typeName,
+                                componentType: ColorComponent.typeName,
                                 componentState: {
                                     companyName: "Stock X",
                                 },
@@ -178,7 +178,7 @@ const standardConfig: LayoutConfig = {
                             {
                                 type: "component",
                                 title: "comp 2",
-                                componentName: ColorComponent.typeName,
+                                componentType: ColorComponent.typeName,
                                 componentState: {
                                     companyName: "Stock Y",
                                 },
@@ -186,7 +186,7 @@ const standardConfig: LayoutConfig = {
                             {
                                 type: "component",
                                 title: "comp 3",
-                                componentName: ColorComponent.typeName,
+                                componentType: ColorComponent.typeName,
                                 componentState: {
                                     companyName: "Stock Z",
                                 },
@@ -221,7 +221,7 @@ const responsiveConfig: LayoutConfig = {
                     {
                         title: "Fnts 100",
                         type: "component",
-                        componentName: ColorComponent.typeName,
+                        componentType: ColorComponent.typeName,
                     },
                     {
                         type: "row",
@@ -229,7 +229,7 @@ const responsiveConfig: LayoutConfig = {
                             {
                                 type: "component",
                                 title: "Golden",
-                                componentName: ColorComponent.typeName,
+                                componentType: ColorComponent.typeName,
                                 width: 30,
                                 componentState: {
                                     bg: "golden_layout_spiral.png",
@@ -243,7 +243,7 @@ const responsiveConfig: LayoutConfig = {
                             {
                                 type: "component",
                                 title: "Acme, inc.",
-                                componentName: ColorComponent.typeName,
+                                componentType: ColorComponent.typeName,
                                 componentState: {
                                     companyName: "Stock X",
                                 },
@@ -251,7 +251,7 @@ const responsiveConfig: LayoutConfig = {
                             {
                                 type: "component",
                                 title: "LexCorp plc.",
-                                componentName: ColorComponent.typeName,
+                                componentType: ColorComponent.typeName,
                                 componentState: {
                                     companyName: "Stock Y",
                                 },
@@ -259,7 +259,7 @@ const responsiveConfig: LayoutConfig = {
                             {
                                 type: "component",
                                 title: "Springshield plc.",
-                                componentName: ColorComponent.typeName,
+                                componentType: ColorComponent.typeName,
                                 componentState: {
                                     companyName: "Stock Z",
                                 },
@@ -272,14 +272,14 @@ const responsiveConfig: LayoutConfig = {
                 width: 30,
                 title: "Layout",
                 type: "component",
-                componentName: ColorComponent.typeName,
+                componentType: ColorComponent.typeName,
                 componentState: { bg: "golden_layout_text.png" },
             } as SerialisableComponentConfig,
             {
                 width: 20,
                 type: "component",
                 title: "Market",
-                componentName: ColorComponent.typeName,
+                componentType: ColorComponent.typeName,
                 componentState: {
                     className: "market-content",
                     style: [
@@ -307,13 +307,13 @@ const responsiveConfig: LayoutConfig = {
                         height: 20,
                         type: "component",
                         title: "Performance",
-                        componentName: ColorComponent.typeName,
+                        componentType: ColorComponent.typeName,
                     },
                     {
                         height: 80,
                         type: "component",
                         title: "Profile",
-                        componentName: ColorComponent.typeName,
+                        componentType: ColorComponent.typeName,
                     },
                 ],
             },
@@ -342,7 +342,7 @@ const tabDropdownConfig: LayoutConfig = {
                     {
                         title: "Fnts 100",
                         type: "component",
-                        componentName: TextComponent.typeName,
+                        componentType: TextComponent.typeName,
                     },
                     {
                         type: "row",
@@ -350,7 +350,7 @@ const tabDropdownConfig: LayoutConfig = {
                             {
                                 type: "component",
                                 title: "Golden",
-                                componentName: TextComponent.typeName,
+                                componentType: TextComponent.typeName,
                                 width: 30,
                                 componentState: {
                                     text: 'hello',
@@ -364,7 +364,7 @@ const tabDropdownConfig: LayoutConfig = {
                             {
                                 type: "component",
                                 title: "Acme, inc.",
-                                componentName: ColorComponent.typeName,
+                                componentType: ColorComponent.typeName,
                                 componentState: {
                                     companyName: "Stock X",
                                 },
@@ -372,7 +372,7 @@ const tabDropdownConfig: LayoutConfig = {
                             {
                                 type: "component",
                                 title: "LexCorp plc.",
-                                componentName: ColorComponent.typeName,
+                                componentType: ColorComponent.typeName,
                                 componentState: {
                                     companyName: "Stock Y",
                                 },
@@ -380,7 +380,7 @@ const tabDropdownConfig: LayoutConfig = {
                             {
                                 type: "component",
                                 title: "Springshield plc.",
-                                componentName: ColorComponent.typeName,
+                                componentType: ColorComponent.typeName,
                                 componentState: {
                                     companyName: "Stock Z",
                                 },
@@ -396,42 +396,42 @@ const tabDropdownConfig: LayoutConfig = {
                     {
                         type: "component",
                         title: "Market",
-                        componentName: ColorComponent.typeName,
+                        componentType: ColorComponent.typeName,
                     },
                     {
                         type: "component",
                         title: "Performance",
-                        componentName: ColorComponent.typeName,
+                        componentType: ColorComponent.typeName,
                     },
                     {
                         type: "component",
                         title: "Trend",
-                        componentName: ColorComponent.typeName,
+                        componentType: ColorComponent.typeName,
                     },
                     {
                         type: "component",
                         title: "Balance",
-                        componentName: ColorComponent.typeName,
+                        componentType: ColorComponent.typeName,
                     },
                     {
                         type: "component",
                         title: "Budget",
-                        componentName: ColorComponent.typeName,
+                        componentType: ColorComponent.typeName,
                     },
                     {
                         type: "component",
                         title: "Curve",
-                        componentName: ColorComponent.typeName,
+                        componentType: ColorComponent.typeName,
                     },
                     {
                         type: "component",
                         title: "Standing",
-                        componentName: ColorComponent.typeName,
+                        componentType: ColorComponent.typeName,
                     },
                     {
                         type: "component",
                         title: "Lasting",
-                        componentName: ColorComponent.typeName,
+                        componentType: ColorComponent.typeName,
                         componentState: {
                             bg: "golden_layout_spiral.png",
                         },
@@ -439,7 +439,7 @@ const tabDropdownConfig: LayoutConfig = {
                     {
                         type: "component",
                         title: "Profile",
-                        componentName: ColorComponent.typeName,
+                        componentType: ColorComponent.typeName,
                     },
                 ],
             },
@@ -447,7 +447,7 @@ const tabDropdownConfig: LayoutConfig = {
                 width: 30,
                 title: "Layout",
                 type: "component",
-                componentName: BooleanComponent.typeName,
+                componentType: BooleanComponent.typeName,
                 componentState: true,
             } as SerialisableComponentConfig,
         ],

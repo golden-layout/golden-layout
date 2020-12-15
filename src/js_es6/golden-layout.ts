@@ -1,7 +1,6 @@
 import { ResolvedLayoutConfig, ResolvedPopoutLayoutConfig } from './config/resolved-config';
 import { LayoutConfig } from './config/config';
 import { LayoutManager } from './layout-manager';
-import { ConfigMinifier } from './utils/config-minifier';
 import { createTemplateHtmlElement, getQueryStringParam } from './utils/utils';
 
 /** @public */
@@ -159,8 +158,8 @@ export namespace GoldenLayout {
                 throw new Error('Null gl-window Config');
             }
             localStorage.removeItem(windowConfigKey);
-            const minifiedWindowConfig = JSON.parse(windowConfigStr);
-            config = (new ConfigMinifier()).unminifyConfig(minifiedWindowConfig) as ResolvedPopoutLayoutConfig;
+            const minifiedWindowConfig = JSON.parse(windowConfigStr) as ResolvedPopoutLayoutConfig;
+            config = ResolvedLayoutConfig.unminifyConfig(minifiedWindowConfig);
         } else {
             if (configOrOptionalContainer === undefined) {
                 config = undefined;
