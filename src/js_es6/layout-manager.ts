@@ -326,37 +326,43 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /**
-     * Returns a previously registered component.  Attempts to utilize registered 
-     * component by name first, then falls back to the component function.  If either
-     * lack a response for what the component should be, it throws an error.
+     * Returns a previously registered component instantiator.  Attempts to utilize registered 
+     * component type by first, then falls back to the component constructor callback function (if registered).
+     * If neither gets an instantiator, then returns `undefined`.
+     * Note that `undefined` will return if config.componentType is not a string
      *
      * @param config - The item config
-     * @internal
+     * @public
      */
-    getComponentInstantiator(config: ResolvedComponentItemConfig): LayoutManager.ComponentInstantiator {
+    getComponentInstantiator(config: ResolvedComponentItemConfig): LayoutManager.ComponentInstantiator | undefined {
+        let instantiator: LayoutManager.ComponentInstantiator | undefined;
+
         const typeName = ResolvedComponentItemConfig.resolveComponentTypeName(config)
-        let constructorToUse = this._componentTypes[typeName]
-        if (constructorToUse === undefined) {
+        if (typeName !== undefined) {
+            instantiator = this._componentTypes[typeName];
+        }
+        if (instantiator === undefined) {
             if (this._getComponentConstructorFtn !== undefined) {
-                constructorToUse = {
+                instantiator = {
                     constructor: this._getComponentConstructorFtn(config),
                     factoryFunction: undefined,
                 }
             }
         }
-        if (constructorToUse === undefined) {
-            throw new ConfigurationError('Unknown component constructor "' + typeName + '"', undefined);
-        }
 
-        return constructorToUse;
+        return instantiator;
     }
 
     /** @internal */
     getComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentItem.Component {
         let component: ComponentItem.Component;
         if (ResolvedComponentItemConfig.isSerialisable(itemConfig)) {
+            let instantiator: LayoutManager.ComponentInstantiator | undefined;
+
             const typeName = ResolvedComponentItemConfig.resolveComponentTypeName(itemConfig);
-            let instantiator = this._componentTypes[typeName]
+            if (typeName !== undefined) {
+                instantiator = this._componentTypes[typeName];
+            }
             if (instantiator === undefined) {
                 if (this._getComponentConstructorFtn !== undefined) {
                     instantiator = {
@@ -1400,7 +1406,7 @@ export namespace LayoutManager {
         containerElement: HTMLElement | undefined;
     }
 
-    /** @internal */
+    /** @public */
     export interface ComponentInstantiator {
         constructor: ComponentConstructor | undefined;
         factoryFunction: ComponentFactoryFunction | undefined;

@@ -46,7 +46,8 @@ export interface AreaLinkedRect {
 }
 
 /** @public */
-export type JsonValue = string | number | boolean | null | Json | JsonValueArray;
+// eslint-disable-next-line @typescript-eslint/ban-types
+export type JsonValue = string | number | boolean | null | Json | object | JsonValueArray;
 /** @public */
 export interface Json {
     [name: string]: JsonValue;
@@ -56,6 +57,11 @@ export type JsonValueArray = Array<JsonValue>
 /** @public */
 export namespace JsonValue {
     export function isJson(value: JsonValue): value is Json {
+        return isJsonObject(value);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    export function isJsonObject(value: JsonValue): value is Json | object {
         return !Array.isArray(value) && value !== null && typeof value === 'object';
     }
 }

@@ -452,8 +452,6 @@ export const enum I18nStringId {
     // (undocumented)
     ComponentIsAlreadyRegistered = 2,
     // (undocumented)
-    ComponentTypeMustBeOfTypeString = 3,
-    // (undocumented)
     PleaseRegisterAConstructorFunction = 1,
     // (undocumented)
     PopoutCannotBeCreatedWithGroundItemConfig = 0
@@ -533,12 +531,14 @@ export interface Json {
 }
 
 // @public (undocumented)
-export type JsonValue = string | number | boolean | null | Json | JsonValueArray;
+export type JsonValue = string | number | boolean | null | Json | object | JsonValueArray;
 
 // @public (undocumented)
 export namespace JsonValue {
     // (undocumented)
     export function isJson(value: JsonValue): value is Json;
+    // (undocumented)
+    export function isJsonObject(value: JsonValue): value is Json | object;
 }
 
 // @public (undocumented)
@@ -688,8 +688,7 @@ export abstract class LayoutManager extends EventEmitter {
     // @internal (undocumented)
     getComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentItem.Component;
     getComponentEvent: LayoutManager.GetComponentEventHandler | undefined;
-    // @internal
-    getComponentInstantiator(config: ResolvedComponentItemConfig): LayoutManager.ComponentInstantiator;
+    getComponentInstantiator(config: ResolvedComponentItemConfig): LayoutManager.ComponentInstantiator | undefined;
     // (undocumented)
     getRegisteredComponentTypeNames(): string[];
     // @internal (undocumented)
@@ -766,7 +765,7 @@ export namespace LayoutManager {
     export type ComponentConstructor = new (container: ComponentContainer, state: JsonValue | undefined) => ComponentItem.Component;
     // (undocumented)
     export type ComponentFactoryFunction = (container: ComponentContainer, state: JsonValue | undefined) => ComponentItem.Component;
-    // @internal (undocumented)
+    // (undocumented)
     export interface ComponentInstantiator {
         // (undocumented)
         constructor: ComponentConstructor | undefined;
@@ -899,7 +898,7 @@ export namespace ResolvedComponentItemConfig {
     // (undocumented)
     export function isSerialisable(config: ResolvedComponentItemConfig): config is ResolvedSerialisableComponentConfig;
     // @internal (undocumented)
-    export function resolveComponentTypeName(itemConfig: ResolvedComponentItemConfig): string;
+    export function resolveComponentTypeName(itemConfig: ResolvedComponentItemConfig): string | undefined;
 }
 
 // Warning: (ae-internal-missing-underscore) The name "ResolvedGroundItemConfig" should be prefixed with an underscore because the declaration is marked as @internal

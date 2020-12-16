@@ -1,7 +1,5 @@
-import { ApiError } from '../errors/external-error';
 import { AssertError, UnreachableCaseError } from '../errors/internal-error';
 import { ConfigMinifier } from '../utils/config-minifier';
-import { I18nStringId, i18nStrings } from '../utils/i18n-strings';
 import { ItemType, JsonValue, ResponsiveMode, Side } from '../utils/types';
 import { deepExtendValue } from '../utils/utils';
 
@@ -211,13 +209,13 @@ export namespace ResolvedComponentItemConfig {
     }
 
     /** @internal */
-    export function resolveComponentTypeName(itemConfig: ResolvedComponentItemConfig): string {
+    export function resolveComponentTypeName(itemConfig: ResolvedComponentItemConfig): string | undefined {
         if (isSerialisable(itemConfig)) {
             const componentType = itemConfig.componentType;
             if (typeof componentType === 'string') {
                 return componentType;
             } else {
-                throw new ApiError(`${i18nStrings[I18nStringId.ComponentTypeMustBeOfTypeString]}: ${itemConfig.toString()}`);
+                return undefined;
             }
         } else {
             if (isReact(itemConfig)) {

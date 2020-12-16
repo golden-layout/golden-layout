@@ -5,7 +5,6 @@ export const enum I18nStringId {
     PopoutCannotBeCreatedWithGroundItemConfig,
     PleaseRegisterAConstructorFunction,
     ComponentIsAlreadyRegistered,
-    ComponentTypeMustBeOfTypeString,
 }
 
 /** @public */
@@ -35,10 +34,6 @@ export namespace I18nStrings {
         ComponentIsAlreadyRegistered: {
             id: I18nStringId.ComponentIsAlreadyRegistered,
             default: 'Component is already registered',
-        },
-        ComponentTypeMustBeOfTypeString: {
-            id: I18nStringId.ComponentTypeMustBeOfTypeString,
-            default: 'Component Type must be of type string',
         },
     }
 
