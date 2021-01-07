@@ -76,7 +76,7 @@ export class DragListener extends EventEmitter {
     }
 
     private onMouseDown(oEvent: MouseEvent) {
-        oEvent.preventDefault();
+        // oEvent.preventDefault();
 
         if (oEvent.button === 0) {
             const coordinates = this.getMouseCoordinates(oEvent);
@@ -85,7 +85,7 @@ export class DragListener extends EventEmitter {
     }
 
     private onTouchStart(oEvent: TouchEvent) {
-        oEvent.preventDefault();
+        // oEvent.preventDefault();
 
         const coordinates = this.getTouchCoordinates(oEvent);
         if (coordinates !== undefined) {
@@ -108,7 +108,7 @@ export class DragListener extends EventEmitter {
 
     private onMouseMove(oEvent: MouseEvent) {
         if (this._mouseTouchTracking) {
-            oEvent.preventDefault();
+            // oEvent.preventDefault();
 
             const coordinates = this.getMouseCoordinates(oEvent);
             const dragEvent: EventEmitter.DragEvent = {
@@ -123,7 +123,7 @@ export class DragListener extends EventEmitter {
 
     private onTouchMove(oEvent: TouchEvent) {
         if (this._mouseTouchTracking) {
-            oEvent.preventDefault();
+            // oEvent.preventDefault();
 
             const coordinates = this.getTouchCoordinates(oEvent);
             if (coordinates !== undefined) {

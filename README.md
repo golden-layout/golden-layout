@@ -90,6 +90,8 @@ If you wish to use the api-test application, then from within the new GoldenLayo
 
 ### Migration guide
 
+JQuery is no longer used.
+
 The following API changes have been made:
 
 #### Config
@@ -196,6 +198,9 @@ The library distribution includes 2 TypeScript declaration (typing) files:
 1. `golden-layout-untrimmed.d.ts` which contains all (public and internal) API elements.  Use this declaration file if you wish to access any API element in the library however please take the above warning into account.
 
 Note that the allocation of API elements to either public or internal has not been finalised.  However any element used in either the api-test application or the example Angular application will remain labelled as public.
+
+### Events propagation
+Mouse and touch events are now propagated so that they can also be handled globally.
 
 ### Popout and docking
 Work is still underway in debugging Popout and docking. Do not migrate your application if it uses this feature.

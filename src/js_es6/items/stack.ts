@@ -1,4 +1,4 @@
-import { ItemConfig, ComponentItemConfig, SerialisableComponentConfig } from '../config/config';
+import { ComponentItemConfig, ItemConfig, SerialisableComponentConfig } from '../config/config';
 import { ResolvedComponentItemConfig, ResolvedHeaderedItemConfig, ResolvedItemConfig, ResolvedStackItemConfig } from '../config/resolved-config';
 import { Header } from '../controls/header';
 import { AssertError, UnexpectedNullError } from '../errors/internal-error';
@@ -364,7 +364,7 @@ export class Stack extends ContentItem {
      */
     toggleMaximise(ev?: Event): void {
         if (ev !== undefined) {
-            ev.preventDefault();
+            // ev.preventDefault();
         }
         if (!this.isMaximised) {
             this.dock(false);

@@ -191,19 +191,19 @@ export class Tab {
     private onTabMouseDown(event: MouseEvent) {
         // left mouse button
         if (event.button === 0) {
-            event.stopPropagation();
+            // event.stopPropagation();
             this.notifyActivate();
 
             // middle mouse button
         } else if (event.button === 1 && this._componentItem.isClosable) {
-            event.stopPropagation();
+            // event.stopPropagation();
             this.notifyClose();
         }
     }
 
     /** @internal */
     private onTabTouchStart(event: TouchEvent) {
-        event.stopPropagation();
+        // event.stopPropagation();
         this.notifyActivate();
     }
 
@@ -212,13 +212,13 @@ export class Tab {
      * @internal
      */
     private onCloseClick(event: MouseEvent) {
-        event.stopPropagation();
+        // event.stopPropagation();
         this.notifyClose();
     }
 
     /** @internal */
     private onCloseTouchStart(event: TouchEvent) {
-        event.stopPropagation();
+        // event.stopPropagation();
         this.notifyClose();
     }
 
@@ -228,7 +228,7 @@ export class Tab {
      * @internal
      */
     private onCloseMousedown(event: MouseEvent): void {
-        event.stopPropagation();
+        // event.stopPropagation();
     }
 
     private notifyClose() {
