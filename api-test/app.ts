@@ -28,11 +28,14 @@ export class App {
     private _saveLayoutButtonClickListener = () => this.handleSaveLayoutButtonClick();
     private _reloadSavedLayoutButton: HTMLButtonElement;
     private _reloadSavedLayoutButtonClickListener = () => this.handleReloadSavedLayoutButtonClick();
+    private _clickCount = 0;
+    private _clickCountSpan: HTMLSpanElement;
  
     private _allComponentsRegistered = false;
     private _savedLayout: ResolvedLayoutConfig | undefined;
 
     private _windowResizeListener = () => this.handleWindowResizeEvent();
+    private _globalClickListener = () => this.handleGlobalClickEvent();
 
     constructor() {
         const controlsElement = document.querySelector('#controls') as HTMLElement;
@@ -119,7 +122,10 @@ export class App {
         this._reloadSavedLayoutButton.disabled = true;
         this._reloadSavedLayoutButton.addEventListener('click', this._reloadSavedLayoutButtonClickListener);
 
+        this._clickCountSpan = document.querySelector('#clickCountSpan') as HTMLSpanElement;
+
         globalThis.addEventListener('resize', this._windowResizeListener);
+        globalThis.addEventListener('click', this._globalClickListener);
     }
 
     start(): void {
@@ -134,6 +140,11 @@ export class App {
         const controlsWidth = this._controlsElement.offsetWidth;
         const height = document.body.offsetHeight;
         this._goldenLayout.setSize(bodyWidth - controlsWidth, height)
+    }
+
+    private handleGlobalClickEvent() {
+        this._clickCount++;
+        this._clickCountSpan.innerText = this._clickCount.toString();
     }
     
     private handleRegisterExtraComponentTypesButtonClick() {
