@@ -87,13 +87,13 @@ export class Tab {
             this._componentItem.on('destroy', this._contentItemDestroyListener);
         }
 
-        this._element.addEventListener('mousedown', this._tabMouseDownListener);
-        this._element.addEventListener('touchstart', this._tabTouchStartListener);
+        this._element.addEventListener('mousedown', this._tabMouseDownListener, { passive: true });
+        this._element.addEventListener('touchstart', this._tabTouchStartListener, { passive: true });
 
         if (this._componentItem.isClosable) {
-            this._closeElement.addEventListener('click', this._closeClickListener);
-            this._closeElement.addEventListener('touchstart', this._closeTouchStartListener);
-            this._closeElement.addEventListener('mousedown', this._closeMouseDownListener);
+            this._closeElement.addEventListener('click', this._closeClickListener, { passive: true });
+            this._closeElement.addEventListener('touchstart', this._closeTouchStartListener, { passive: true });
+            this._closeElement.addEventListener('mousedown', this._closeMouseDownListener, { passive: true });
         } else {
             this._closeElement.remove();
             this._closeElement = undefined;

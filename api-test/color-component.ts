@@ -35,7 +35,7 @@ export class ColorComponent {
         this._inputElement.value = color;
         this._inputElement.style.display = "block";
 
-        this._inputElement.addEventListener('input', this._inputChangeListener);
+        this._inputElement.addEventListener('input', this._inputChangeListener, { passive: true });
         this._container.contentElement.appendChild(this._inputElement);
 
         this._container.stateRequestEvent = () => this.handleContainerStateRequestEvent();

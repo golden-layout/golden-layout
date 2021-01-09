@@ -899,11 +899,6 @@ export abstract class LayoutManager extends EventEmitter {
      * @param silent - Whether to notify the item of its selection
      */
     selectItem(item: ContentItem, silent: boolean): void {
-
-        if (this.layoutConfig.settings.selectionEnabled !== true) {
-            throw new Error('Please set selectionEnabled to true to use this feature');
-        }
-
         if (item === this._selectedItem) {
             return;
         }
@@ -1208,10 +1203,10 @@ export abstract class LayoutManager extends EventEmitter {
      */
     private bindEvents() {
         if (this._isFullPage) {
-            globalThis.addEventListener('resize', this._windowResizeListener);
+            globalThis.addEventListener('resize', this._windowResizeListener, { passive: true });
         }
-        globalThis.addEventListener('unload', this._windowUnloadListener);
-        globalThis.addEventListener('beforeunload', this._windowUnloadListener);
+        globalThis.addEventListener('unload', this._windowUnloadListener, { passive: true });
+        globalThis.addEventListener('beforeunload', this._windowUnloadListener, { passive: true });
     }
 
     /**

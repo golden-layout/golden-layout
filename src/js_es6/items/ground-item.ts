@@ -1,4 +1,4 @@
-import { ItemConfig, StackItemConfig, ComponentItemConfig, RowOrColumnItemConfig, SerialisableComponentConfig } from '../config/config';
+import { ComponentItemConfig, ItemConfig, RowOrColumnItemConfig, SerialisableComponentConfig, StackItemConfig } from '../config/config';
 import { ResolvedComponentItemConfig, ResolvedGroundItemConfig, ResolvedHeaderedItemConfig, ResolvedItemConfig, ResolvedRootItemConfig, ResolvedStackItemConfig } from '../config/resolved-config';
 import { AssertError, UnexpectedNullError, UnexpectedUndefinedError } from '../errors/internal-error';
 import { LayoutManager } from '../layout-manager';
@@ -153,7 +153,7 @@ export class GroundItem extends ContentItem {
             index = super.addChild(contentItem, index);
 
             this.updateSize();
-            this.emitBubblingEvent('stateChanged');
+            this.emitBaseBubblingEvent('stateChanged');
 
             return index;
         }

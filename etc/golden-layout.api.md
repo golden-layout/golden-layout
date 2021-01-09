@@ -23,8 +23,6 @@ export interface AreaLinkedRect {
     y2: number;
 }
 
-// Warning: (ae-forgotten-export) The symbol "EventEmitter" needs to be exported by the entry point index.d.ts
-//
 // @public
 export class BrowserPopout extends EventEmitter {
     // @internal
@@ -255,6 +253,8 @@ export abstract class ContentItem extends EventEmitter {
     // (undocumented)
     abstract toConfig(): ResolvedItemConfig;
     // (undocumented)
+    tryBubbleEvent(name: string, args: unknown[]): void;
+    // (undocumented)
     get type(): ItemType;
     // @internal (undocumented)
     protected updateContentItemsSize(): void;
@@ -273,6 +273,162 @@ export namespace ContentItem {
         // (undocumented)
         surface: number;
     }
+}
+
+// @public
+export class EventEmitter {
+    addEventListener<K extends keyof EventEmitter.EventParamsMap>(eventName: K, callback: EventEmitter.Callback<K>): void;
+    emit<K extends keyof EventEmitter.EventParamsMap>(eventName: K, ...args: EventEmitter.EventParamsMap[K]): void;
+    // (undocumented)
+    emitBaseBubblingEvent<K extends keyof EventEmitter.EventParamsMap>(eventName: K): void;
+    // @internal (undocumented)
+    emitUnknown(eventName: string, ...args: EventEmitter.UnknownParams): void;
+    // @internal (undocumented)
+    emitUnknownBubblingEvent(eventName: string): void;
+    // (undocumented)
+    off<K extends keyof EventEmitter.EventParamsMap>(eventName: K, callback: EventEmitter.Callback<K>): void;
+    // (undocumented)
+    on<K extends keyof EventEmitter.EventParamsMap>(eventName: K, callback: EventEmitter.Callback<K>): void;
+    removeEventListener<K extends keyof EventEmitter.EventParamsMap>(eventName: K, callback: EventEmitter.Callback<K>): void;
+    trigger: <K extends "hide" | "show" | "closed" | "open" | "close" | "drag" | "resize" | "maximised" | "__all" | "activeContentItemChanged" | "beforeItemDestroyed" | "destroy" | "dragStart" | "dragStop" | "initialised" | "itemCreated" | "itemDestroyed" | "itemDropped" | "minimised" | "popIn" | "selectionChanged" | "shown" | "stateChanged" | "tab" | "tabCreated" | "titleChanged" | "windowClosed" | "windowOpened" | "beforeComponentRelease" | "stackHeaderClick" | "stackHeaderTouchStart">(eventName: K, ...args: EventEmitter.EventParamsMap[K]) => void;
+    // (undocumented)
+    tryBubbleEvent(name: string, args: unknown[]): void;
+    unbind: <K extends "hide" | "show" | "closed" | "open" | "close" | "drag" | "resize" | "maximised" | "__all" | "activeContentItemChanged" | "beforeItemDestroyed" | "destroy" | "dragStart" | "dragStop" | "initialised" | "itemCreated" | "itemDestroyed" | "itemDropped" | "minimised" | "popIn" | "selectionChanged" | "shown" | "stateChanged" | "tab" | "tabCreated" | "titleChanged" | "windowClosed" | "windowOpened" | "beforeComponentRelease" | "stackHeaderClick" | "stackHeaderTouchStart">(eventName: K, callback: EventEmitter.Callback<K>) => void;
+}
+
+// @public (undocumented)
+export namespace EventEmitter {
+    const ALL_EVENT = "__all";
+    const // (undocumented)
+    headerClickEventName = "stackHeaderClick";
+    const // (undocumented)
+    headerTouchStartEventName = "stackHeaderTouchStart";
+    // (undocumented)
+    export type BeforeComponentReleaseParams = [component: unknown];
+    // (undocumented)
+    export class BubblingEvent {
+        constructor(_name: string, _origin: EventEmitter);
+        // (undocumented)
+        isPropagationStopped: boolean;
+        // (undocumented)
+        get name(): string;
+        // (undocumented)
+        get origin(): EventEmitter;
+        // (undocumented)
+        stopPropagation(): void;
+    }
+    // (undocumented)
+    export type BubblingEventParam = [EventEmitter.BubblingEvent];
+    // (undocumented)
+    export type Callback<K extends keyof EventEmitter.EventParamsMap> = (this: void, ...args: EventParamsMap[K]) => void;
+    // (undocumented)
+    export class ClickBubblingEvent extends BubblingEvent {
+        constructor(name: string, origin: EventEmitter, _mouseEvent: MouseEvent);
+        // (undocumented)
+        get mouseEvent(): MouseEvent;
+        }
+    // (undocumented)
+    export type ClickBubblingEventParam = [ClickBubblingEvent];
+    // (undocumented)
+    export interface DragEvent {
+        // (undocumented)
+        mouseEvent: MouseEvent | undefined;
+        // (undocumented)
+        pageX: number;
+        // (undocumented)
+        pageY: number;
+        // (undocumented)
+        touchEvent: TouchEvent | undefined;
+    }
+    // (undocumented)
+    export type DragParams = [offsetX: number, offsetY: number, event: DragEvent];
+    // (undocumented)
+    export type DragStartParams = [originalX: number, originalY: number];
+    // (undocumented)
+    export type DragStopParams = [event: DragEvent];
+    // (undocumented)
+    export interface EventParamsMap {
+        // (undocumented)
+        "__all": UnknownParams;
+        // (undocumented)
+        "activeContentItemChanged": UnknownParam;
+        // (undocumented)
+        "beforeComponentRelease": BeforeComponentReleaseParams;
+        // (undocumented)
+        "beforeItemDestroyed": BubblingEventParam;
+        // (undocumented)
+        "close": NoParams;
+        // (undocumented)
+        "closed": NoParams;
+        // (undocumented)
+        "destroy": NoParams;
+        // (undocumented)
+        "drag": DragParams;
+        // (undocumented)
+        "dragStart": DragStartParams;
+        // (undocumented)
+        "dragStop": DragStopParams;
+        // (undocumented)
+        "hide": NoParams;
+        // (undocumented)
+        "initialised": NoParams;
+        // (undocumented)
+        "itemCreated": BubblingEventParam;
+        // (undocumented)
+        "itemDestroyed": BubblingEventParam;
+        // (undocumented)
+        "itemDropped": UnknownParam;
+        // (undocumented)
+        "maximised": NoParams;
+        // (undocumented)
+        "minimised": NoParams;
+        // (undocumented)
+        "open": NoParams;
+        // (undocumented)
+        "popIn": NoParams;
+        // (undocumented)
+        "resize": NoParams;
+        // (undocumented)
+        "selectionChanged": UnknownParam;
+        // (undocumented)
+        "show": NoParams;
+        // (undocumented)
+        "shown": NoParams;
+        // (undocumented)
+        "stackHeaderClick": ClickBubblingEventParam;
+        // (undocumented)
+        "stackHeaderTouchStart": TouchStartBubblingEventParam;
+        // (undocumented)
+        "stateChanged": NoParams;
+        // (undocumented)
+        "tab": UnknownParam;
+        // (undocumented)
+        "tabCreated": UnknownParam;
+        // (undocumented)
+        "titleChanged": StringParam;
+        // (undocumented)
+        "windowClosed": UnknownParam;
+        // (undocumented)
+        "windowOpened": UnknownParam;
+    }
+    // (undocumented)
+    export type NoParams = [];
+    // (undocumented)
+    export type StringParam = [string];
+    // (undocumented)
+    export class TouchStartBubblingEvent extends BubblingEvent {
+        constructor(name: string, origin: EventEmitter, _touchEvent: TouchEvent);
+        // (undocumented)
+        get touchEvent(): TouchEvent;
+        }
+    // (undocumented)
+    export type TouchStartBubblingEventParam = [TouchStartBubblingEvent];
+    // @internal (undocumented)
+    export type UnknownCallback = (this: void, ...args: UnknownParams) => void;
+    // (undocumented)
+    export type UnknownParam = [unknown];
+    // (undocumented)
+    export type UnknownParams = unknown[];
 }
 
 // @public (undocumented)
@@ -300,7 +456,7 @@ export namespace GoldenLayout {
 // @public
 export class Header extends EventEmitter {
     // @internal
-    constructor(_layoutManager: LayoutManager, _parent: Stack, settings: Header.Settings, _configClosable: boolean, closeEvent: Header.CloseEvent, _dockEvent: Header.DockEvent | undefined, _popoutEvent: Header.PopoutEvent | undefined, _maximiseToggleEvent: Header.MaximiseToggleEvent | undefined, _headerClickTouchEvent: Header.HeaderClickTouchEvent | undefined, _componentRemoveEvent: Header.ComponentRemoveEvent | undefined, _componentActivateEvent: Header.ComponentActivateEvent | undefined, _componentDragStartEvent: Header.ComponentDragStartEvent | undefined, _stateChangedEvent: Header.StateChangedEvent | undefined);
+    constructor(_layoutManager: LayoutManager, _parent: Stack, settings: Header.Settings, _configClosable: boolean, closeEvent: Header.CloseEvent, _dockEvent: Header.DockEvent | undefined, _popoutEvent: Header.PopoutEvent | undefined, _maximiseToggleEvent: Header.MaximiseToggleEvent | undefined, _clickEvent: Header.ClickEvent | undefined, _touchStartEvent: Header.TouchStartEvent | undefined, _componentRemoveEvent: Header.ComponentRemoveEvent | undefined, _componentActivateEvent: Header.ComponentActivateEvent | undefined, _componentDragStartEvent: Header.ComponentDragStartEvent | undefined, _stateChangedEvent: Header.StateChangedEvent | undefined);
     // @deprecated
     get activeContentItem(): ContentItem | null;
     // @deprecated (undocumented)
@@ -354,6 +510,8 @@ export class Header extends EventEmitter {
 // @public (undocumented)
 export namespace Header {
     // @internal (undocumented)
+    export type ClickEvent = (this: void, ev: MouseEvent) => void;
+    // @internal (undocumented)
     export type CloseEvent = (this: void) => void;
     // @internal (undocumented)
     export type ComponentActivateEvent = (this: void, componentItem: ComponentItem) => void;
@@ -365,8 +523,6 @@ export namespace Header {
     export type ComponentRemoveEvent = (this: void, componentItem: ComponentItem) => void;
     // @internal (undocumented)
     export type DockEvent = (this: void) => void;
-    // @internal (undocumented)
-    export type HeaderClickTouchEvent = (this: void) => void;
     // @internal (undocumented)
     export type MaximiseToggleEvent = (this: void, ev: Event) => void;
     // @internal (undocumented)
@@ -404,6 +560,8 @@ export namespace Header {
     }
     // @internal (undocumented)
     export type StateChangedEvent = (this: void) => void;
+    // @internal (undocumented)
+    export type TouchStartEvent = (this: void, ev: TouchEvent) => void;
 }
 
 // @public (undocumented)
@@ -632,7 +790,6 @@ export namespace LayoutConfig {
         reorderEnabled?: boolean;
         reorderOnTabMenuClick?: boolean;
         responsiveMode?: ResponsiveMode;
-        selectionEnabled?: boolean;
         // @deprecated
         showCloseIcon?: boolean;
         // @deprecated
@@ -1093,8 +1250,6 @@ export namespace ResolvedLayoutConfig {
         readonly reorderOnTabMenuClick: boolean;
         // (undocumented)
         readonly responsiveMode: ResponsiveMode;
-        // (undocumented)
-        readonly selectionEnabled: boolean;
         // (undocumented)
         readonly tabControlOffset: number;
         // (undocumented)

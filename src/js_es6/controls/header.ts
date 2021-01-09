@@ -65,9 +65,9 @@ export class Header extends EventEmitter {
     private readonly _tabs: Tab[] = [];
 
     /** @internal */
-    private readonly _headerClickListener = (ev: MouseEvent) => this.onHeaderClick(ev);
+    private readonly _clickListener = (ev: MouseEvent) => this.onClick(ev);
     /** @internal */
-    private readonly _headerTouchStartListener = (ev: TouchEvent) => this.onHeaderTouchStart(ev);
+    private readonly _touchStartListener = (ev: TouchEvent) => this.onTouchStart(ev);
     /** @internal */
     private readonly _documentMouseUpListener = () => this.hideAdditionalTabsDropdown();
 
@@ -132,7 +132,8 @@ export class Header extends EventEmitter {
         private _dockEvent: Header.DockEvent | undefined,
         private _popoutEvent: Header.PopoutEvent | undefined,
         private _maximiseToggleEvent: Header.MaximiseToggleEvent | undefined,
-        private _headerClickTouchEvent: Header.HeaderClickTouchEvent | undefined,
+        private _clickEvent: Header.ClickEvent | undefined,
+        private _touchStartEvent: Header.TouchStartEvent | undefined,
         private _componentRemoveEvent: Header.ComponentRemoveEvent | undefined,
         private _componentActivateEvent: Header.ComponentActivateEvent | undefined,
         private _componentDragStartEvent: Header.ComponentDragStartEvent | undefined,
@@ -159,11 +160,8 @@ export class Header extends EventEmitter {
 
         this._element = createTemplateHtmlElement(_template);
 
-        if (this._layoutManager.layoutConfig.settings.selectionEnabled === true) {
-            this._element.classList.add('lm_selectable');
-            this._element.addEventListener('click', this._headerClickListener);
-            this._element.addEventListener('touchstart', this._headerTouchStartListener);
-        }
+        this._element.addEventListener('click', this._clickListener, { passive: true });
+        this._element.addEventListener('touchstart', this._touchStartListener, { passive: true });
 
         const tabsContainerElement = this._element.querySelector('.lm_tabs');
         if (tabsContainerElement === null) {
@@ -181,7 +179,7 @@ export class Header extends EventEmitter {
                     throw new UnexpectedNullError('HCC21222');
                 } else {
                     this._controlsContainerElement = controlsContainerElement as HTMLElement;
-                    globalThis.document.addEventListener('mouseup', this._documentMouseUpListener);
+                    globalThis.document.addEventListener('mouseup', this._documentMouseUpListener, { passive: true });
 
                     this._tabControlOffset = this._layoutManager.layoutConfig.settings.tabControlOffset;
                     this.createControls(closeEvent);
@@ -200,7 +198,8 @@ export class Header extends EventEmitter {
         this._dockEvent = undefined;
         this._popoutEvent = undefined;
         this._maximiseToggleEvent = undefined;
-        this._headerClickTouchEvent = undefined;
+        this._clickEvent = undefined;
+        this._touchStartEvent = undefined;
         this._componentRemoveEvent = undefined;
         this._componentActivateEvent = undefined;
         this._componentDragStartEvent = undefined;
@@ -445,7 +444,9 @@ export class Header extends EventEmitter {
             const tabElement = this._tabs[i].element;
 
             //Put the tab in the tabContainer so its true width can be checked
-            this._tabsContainerElement.appendChild(tabElement);
+            if (tabElement.parentElement !== this._tabsContainerElement) {
+                this._tabsContainerElement.appendChild(tabElement);
+            }
             const tabMarginRightPixels = getComputedStyle(activeTab.element).marginRight;
             const tabMarginRight = pixelsToNumber(tabMarginRightPixels);
             const tabWidth = tabElement.offsetWidth + tabMarginRight;
@@ -486,7 +487,9 @@ export class Header extends EventEmitter {
                             this._tabs[j].element.style.marginLeft = marginLeft;
                         }
                         this._lastVisibleTabIndex = i;
-                        this._tabsContainerElement.appendChild(tabElement);
+                        if (tabElement.parentElement !== this._tabsContainerElement) {
+                            this._tabsContainerElement.appendChild(tabElement);
+                        }
                     } else {
                         tabOverlapAllowanceExceeded = true;
                     }
@@ -495,7 +498,9 @@ export class Header extends EventEmitter {
                     //Active tab should show even if allowance exceeded. (We left room.)
                     tabElement.style.zIndex = 'auto';
                     tabElement.style.marginLeft = '';
-                    this._tabsContainerElement.appendChild(tabElement);
+                    if (tabElement.parentElement !== this._tabsContainerElement) {
+                        this._tabsContainerElement.appendChild(tabElement);
+                    }
                 }
 
                 if (tabOverlapAllowanceExceeded && i !== activeIndex) {
@@ -504,7 +509,9 @@ export class Header extends EventEmitter {
                         tabElement.style.zIndex = 'auto';
                         tabElement.style.marginLeft = '';
                         
-                        this._tabDropdownContainerElement.appendChild(tabElement);
+                        if (tabElement.parentElement !== this._tabDropdownContainerElement) {
+                            this._tabDropdownContainerElement.appendChild(tabElement);
+                        }
                     } else {
                         //We now know the tab menu must be shown, so we have to recalculate everything.
                         this.updateTabSizes(true);
@@ -516,7 +523,9 @@ export class Header extends EventEmitter {
                 this._lastVisibleTabIndex = i;
                 tabElement.style.zIndex = 'auto';
                 tabElement.style.marginLeft = '';
-                this._tabsContainerElement.appendChild(tabElement);
+                if (tabElement.parentElement !== this._tabsContainerElement) {
+                    this._tabsContainerElement.appendChild(tabElement);
+                }
             }
         }
     }
@@ -646,9 +655,9 @@ export class Header extends EventEmitter {
      * Invoked when the header's background is clicked (not it's tabs or controls)
      * @internal
      */
-    private onHeaderClick(event: MouseEvent) {
-        if (event.target === this._element.childNodes[0]) {
-            this.notifyHeaderClickTouch();
+    private onClick(event: MouseEvent) {
+        if (event.target === this._element) {
+            this.notifyClick(event);
         }
     }
 
@@ -656,18 +665,27 @@ export class Header extends EventEmitter {
      * Invoked when the header's background is touched (not it's tabs or controls)
      * @internal
      */
-    private onHeaderTouchStart(event: TouchEvent) {
-        if (event.target === this._element.childNodes[0]) {
-            this.notifyHeaderClickTouch();
+    private onTouchStart(event: TouchEvent) {
+        if (event.target === this._element) {
+            this.notifyTouchStart(event);
         }
     }
 
     /** @internal */
-    private notifyHeaderClickTouch() {
-        if (this._headerClickTouchEvent === undefined) {
-            throw new UnexpectedUndefinedError('HNHCT46834');
+    private notifyClick(ev: MouseEvent) {
+        if (this._clickEvent === undefined) {
+            throw new UnexpectedUndefinedError('HNHC46834');
         } else {
-            this._headerClickTouchEvent();
+            this._clickEvent(ev);
+        }
+    }
+
+    /** @internal */
+    private notifyTouchStart(ev: TouchEvent) {
+        if (this._touchStartEvent === undefined) {
+            throw new UnexpectedUndefinedError('HNHTS46834');
+        } else {
+            this._touchStartEvent(ev);
         }
     }
 
@@ -692,7 +710,9 @@ export namespace Header {
     /** @internal */
     export type MaximiseToggleEvent = (this: void, ev: Event) => void;
     /** @internal */
-    export type HeaderClickTouchEvent = (this: void) => void;
+    export type ClickEvent = (this: void, ev: MouseEvent) => void;
+    /** @internal */
+    export type TouchStartEvent = (this: void, ev: TouchEvent) => void;
     /** @internal */
     export type ComponentRemoveEvent = (this: void, componentItem: ComponentItem) => void;
     /** @internal */

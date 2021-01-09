@@ -1,5 +1,5 @@
-import { ResolvedLayoutConfig, ResolvedPopoutLayoutConfig } from './config/resolved-config';
 import { LayoutConfig } from './config/config';
+import { ResolvedLayoutConfig, ResolvedPopoutLayoutConfig } from './config/resolved-config';
 import { LayoutManager } from './layout-manager';
 import { createTemplateHtmlElement, getQueryStringParam } from './utils/utils';
 
@@ -56,7 +56,7 @@ export class GoldenLayout extends LayoutManager {
          * If the document isn't ready yet, wait for it.
          */
         if (document.readyState === 'loading' || document.body === null) {
-            document.addEventListener('addEventListener', () => this.init());
+            document.addEventListener('DOMContentLoaded', () => this.init(), { passive: true });
             return;
         }
 

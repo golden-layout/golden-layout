@@ -11,6 +11,7 @@ export { ContentItem } from './js_es6/items/content-item';
 export { RowOrColumn } from './js_es6/items/row-or-column';
 export { Stack } from './js_es6/items/stack';
 export { LayoutManager } from './js_es6/layout-manager';
+export { EventEmitter } from './js_es6/utils/event-emitter';
 export * from './js_es6/utils/i18n-strings';
 export * from './js_es6/utils/types';
 

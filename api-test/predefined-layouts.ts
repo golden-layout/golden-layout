@@ -62,7 +62,7 @@ const miniStackConfig: LayoutConfig = {
                 componentState: 'green',
             } as SerialisableComponentConfig,
         ],
-    },
+    }
 };
 
 const miniStackLayout: Layout = {

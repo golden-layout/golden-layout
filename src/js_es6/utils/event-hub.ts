@@ -37,7 +37,7 @@ export class EventHub extends EventEmitter {
         this._childEventSource = null;
         this.on(EventEmitter.ALL_EVENT, (name, ...args) => this.onEventFromThis(name as string, args));
 
-        globalThis.addEventListener(EventHub.ChildEventName, this._childEventListener);
+        globalThis.addEventListener(EventHub.ChildEventName, this._childEventListener, { passive: true });
     }
 
     /**

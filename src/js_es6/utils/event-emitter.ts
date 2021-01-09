@@ -1,6 +1,6 @@
 /**
  * A generic and very fast EventEmitter implementation. On top of emitting the actual event it emits an
- * {@link (EventEmitter:class).ALL_EVENT} event for every event triggered. This allows to hook into it and proxy events forwards
+ * {@link (EventEmitter:namespace).ALL_EVENT} event for every event triggered. This allows to hook into it and proxy events forwards
  * @public
  */
 export class EventEmitter {
@@ -8,6 +8,11 @@ export class EventEmitter {
     private _allEventSubscriptions: EventEmitter.UnknownCallback[] = [];
     /** @internal */
     private _subscriptionsMap = new Map<string, EventEmitter.UnknownCallback[]>();
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    tryBubbleEvent(name: string, args: unknown[]): void {
+        // overridden by ContentItem
+    }
 
     /**
      * Emit an event and notify listeners
@@ -26,14 +31,8 @@ export class EventEmitter {
             }
         }
 
-        const unknownArgs = args as EventEmitter.UnknownParams;
-        unknownArgs.unshift(eventName);
-
-        const allEventSubs = this._allEventSubscriptions.slice();
-
-        for (let i = 0; i < allEventSubs.length; i++) {
-            allEventSubs[i](unknownArgs);
-        }
+        this.emitAllEvent(eventName, args);
+        this.tryBubbleEvent(eventName, args);
     }
 
     /** @internal */
@@ -47,22 +46,12 @@ export class EventEmitter {
             }
         }
 
-        args.unshift(eventName);
-
-        const allEventSubs = this._allEventSubscriptions.slice();
-
-        for (let i = 0; i < allEventSubs.length; i++) {
-            allEventSubs[i](...args);
-        }
+        this.emitAllEvent(eventName, args);
+        this.tryBubbleEvent(eventName, args);
     }
 
-    /**
-     * Emit an event that bubbles up the item tree.
-     *
-     * @param eventName - The name of the event
-     * @internal
-     */
-    emitBubblingEvent<K extends keyof EventEmitter.EventParamsMap>(eventName: K): void {
+    /* @internal **/
+    emitBaseBubblingEvent<K extends keyof EventEmitter.EventParamsMap>(eventName: K): void {
         const event = new EventEmitter.BubblingEvent(eventName, this);
         this.emitUnknown(eventName, event);
     }
@@ -150,6 +139,20 @@ export class EventEmitter {
             subscriptions.splice(idx, 1);
         }
     }
+
+    private emitAllEvent(eventName: string, args: unknown[]) {
+        const allEventSubscriptionsCount = this._allEventSubscriptions.length;
+        if (allEventSubscriptionsCount > 0) {
+            const unknownArgs = args.slice() as EventEmitter.UnknownParams;
+            unknownArgs.unshift(eventName);
+    
+            const allEventSubcriptions = this._allEventSubscriptions.slice();
+    
+            for (let i = 0; i < allEventSubscriptionsCount; i++) {
+                allEventSubcriptions[i](unknownArgs);
+            }
+        }
+    }
 }
 
 /** @public */
@@ -158,6 +161,9 @@ export namespace EventEmitter {
      * The name of the event that's triggered for every event
      */
     export const ALL_EVENT = '__all';
+
+    export const headerClickEventName = 'stackHeaderClick';
+    export const headerTouchStartEventName = 'stackHeaderTouchStart';
 
     /** @internal */
     export type UnknownCallback = (this: void, ...args: UnknownParams) => void;
@@ -193,6 +199,8 @@ export namespace EventEmitter {
         "windowClosed": UnknownParam;
         "windowOpened": UnknownParam;
         "beforeComponentRelease": BeforeComponentReleaseParams;
+        "stackHeaderClick": ClickBubblingEventParam;
+        "stackHeaderTouchStart": TouchStartBubblingEventParam;
     }
 
     export type UnknownParams = unknown[];
@@ -204,20 +212,36 @@ export namespace EventEmitter {
     export type DragStopParams = [event: DragEvent];
     export type DragParams = [offsetX: number, offsetY: number, event: DragEvent];
     export type BeforeComponentReleaseParams = [component: unknown];
+    export type ClickBubblingEventParam = [ClickBubblingEvent];
+    export type TouchStartBubblingEventParam = [TouchStartBubblingEvent];
 
     export class BubblingEvent {
-        name: string;
-        isPropagationStopped: boolean;
-        origin: EventEmitter;
+        isPropagationStopped = false;
+
+        get name(): string { return this._name; }
+        get origin(): EventEmitter { return this._origin; }
     
-        constructor(name: string, origin: EventEmitter) {
-            this.name = name;
-            this.origin = origin;
-            this.isPropagationStopped = false;
+        constructor(private readonly _name: string, private readonly _origin: EventEmitter) {
         }
     
         stopPropagation(): void {
             this.isPropagationStopped = true;
+        }
+    }
+
+    export class ClickBubblingEvent extends BubblingEvent {
+        get mouseEvent(): MouseEvent { return this._mouseEvent; }
+
+        constructor(name: string, origin: EventEmitter, private readonly _mouseEvent: MouseEvent) {
+            super(name, origin);
+        }
+    }
+
+    export class TouchStartBubblingEvent extends BubblingEvent {
+        get touchEvent(): TouchEvent { return this._touchEvent; }
+
+        constructor(name: string, origin: EventEmitter, private readonly _touchEvent: TouchEvent) {
+            super(name, origin);
         }
     }
 

@@ -540,13 +540,6 @@ export namespace LayoutConfig {
         reorderEnabled?: boolean;
 
         /**
-         * If true, the user can select items by clicking on their header. This sets the value of layout.selectedItem to
-         * the clicked item, highlights its header and the layout emits a 'selectionChanged' event.
-         * Default: false
-         */
-        selectionEnabled?: boolean;
-
-        /**
          * Decides what will be opened in a new window if the user clicks the popout icon. If true the entire stack will
          * be transferred to the new window, if false only the active component will be opened.
          * Default: false
@@ -615,7 +608,6 @@ export namespace LayoutConfig {
             const result: ResolvedLayoutConfig.Settings = {
                 constrainDragToContainer: settings?.constrainDragToContainer ?? ResolvedLayoutConfig.Settings.defaults.constrainDragToContainer,
                 reorderEnabled: settings?.reorderEnabled ?? ResolvedLayoutConfig.Settings.defaults.reorderEnabled,
-                selectionEnabled: settings?.selectionEnabled ?? ResolvedLayoutConfig.Settings.defaults.selectionEnabled,
                 popoutWholeStack: settings?.popoutWholeStack ?? ResolvedLayoutConfig.Settings.defaults.popoutWholeStack,
                 blockedPopoutsThrowError: settings?.blockedPopoutsThrowError ?? ResolvedLayoutConfig.Settings.defaults.blockedPopoutsThrowError,
                 closePopoutsOnUnload: settings?.closePopoutsOnUnload ?? ResolvedLayoutConfig.Settings.defaults.closePopoutsOnUnload,

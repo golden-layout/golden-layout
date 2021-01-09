@@ -33,20 +33,32 @@ body {
 
 #addComponentSection {
     display: flex;
-    flex-direction: row;
 }
 
 #replaceComponentSection {
     display: flex;
-    flex-direction: row;
 }
 
 #predefinedLayoutsSection {
     display: flex;
-    flex-direction: row;
 }
 
 #saveAndReloadLayoutSection {
     display: flex;
-    flex-direction: row;
+}
+
+#clickCount {
+    display: flex;
+    flex-wrap: nowrap;
+    white-space: pre;
+}
+
+#stackHeaderClick {
+    display: flex;
+    flex-wrap: nowrap;
+    white-space: pre;
+}
+
+#stackHeaderClickedDiv {
+    display: inline-flex;
 }

@@ -67,10 +67,6 @@ $dropDownArrowForeColor: var(--color-layout-drop-down-arrow-fore, #ffffff); // A
     height: 20px;
     user-select: none;
 
-    &.lm_selectable {
-        cursor: pointer;
-    }
-
     .lm_controls {
         background: $singlePaneContentBkgdColor;
         top: 2px;

@@ -208,8 +208,8 @@ export class BrowserPopout extends EventEmitter {
             }
         }
 
-        this._popoutWindow.addEventListener('load', () => this.positionWindow())
-        this._popoutWindow.addEventListener('beforeunload', () => this._onClose())
+        this._popoutWindow.addEventListener('load', () => this.positionWindow(), { passive: true })
+        this._popoutWindow.addEventListener('beforeunload', () => this._onClose(), { passive: true })
 
         /**
          * Polling the childwindow to find out if GoldenLayout has been initialised

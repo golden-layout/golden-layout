@@ -483,7 +483,6 @@ export namespace ResolvedLayoutConfig {
         // see Config.Settings for comments
         readonly constrainDragToContainer: boolean;
         readonly reorderEnabled: boolean; // also in ResolvedItemConfig which takes precedence
-        readonly selectionEnabled: boolean;
         readonly popoutWholeStack: boolean;
         readonly blockedPopoutsThrowError: boolean;
         readonly closePopoutsOnUnload: boolean;
@@ -498,7 +497,6 @@ export namespace ResolvedLayoutConfig {
         export const defaults: ResolvedLayoutConfig.Settings = {
             constrainDragToContainer: true,
             reorderEnabled: true,
-            selectionEnabled: false,
             popoutWholeStack: false,
             blockedPopoutsThrowError: true,
             closePopoutsOnUnload: true,
@@ -512,7 +510,6 @@ export namespace ResolvedLayoutConfig {
             return {
                 constrainDragToContainer: original.constrainDragToContainer,
                 reorderEnabled: original.reorderEnabled,
-                selectionEnabled: original.selectionEnabled,
                 popoutWholeStack: original.popoutWholeStack,
                 blockedPopoutsThrowError: original.blockedPopoutsThrowError,
                 closePopoutsOnUnload: original.closePopoutsOnUnload,

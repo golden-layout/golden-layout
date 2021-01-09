@@ -119,6 +119,8 @@ The `ComponentItemConfig.componentName` property has now been replaced by proper
 
 A `LayoutConfig` has a `root` property which specifies the ItemConfig of root content item of the layout.  `root` is not optional and must always be specified.
 
+The `LayoutConfig` `selectionEnabled` property has been removed. Clicking of Stack Headers can now be handled with the new `stackHeaderClick` event (which is always enabled).
+
 `ResolvedLayoutConfig` now has functions to minify and unminify configurations:
 1. `minifyConfig()` Replaces `LayoutManager.minifyConfig()`
 1. `unminifyConfig()` Replaces `LayoutManager.unminifyConfig()`
@@ -199,8 +201,15 @@ The library distribution includes 2 TypeScript declaration (typing) files:
 
 Note that the allocation of API elements to either public or internal has not been finalised.  However any element used in either the api-test application or the example Angular application will remain labelled as public.
 
-### Events propagation
-Mouse and touch events are now propagated so that they can also be handled globally.
+### Events
+1. All DOM events are now propagated so that they can be handled by parents or globally.
+1. preventDefault() is never called and .addEventListener() is always called with passive: true.
+1. Bubbling Events are now emitted with the parameter EventEmitter.BubblingEvent (or descendant)
+1. New EventEmitter events:
+    * beforeComponentRelease
+    * stackHeaderClick - Bubbling event. Fired when stack header is clicked - but not tab.
+    * stackHeaderTouchStart - Bubbling event. Fired when stack header is touched - but not tab.
+
 
 ### Popout and docking
 Work is still underway in debugging Popout and docking. Do not migrate your application if it uses this feature.

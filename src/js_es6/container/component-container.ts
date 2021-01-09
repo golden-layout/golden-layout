@@ -1,4 +1,4 @@
-import { ItemConfig, ComponentItemConfig, ReactComponentConfig, SerialisableComponentConfig } from '../config/config';
+import { ComponentItemConfig, ItemConfig, ReactComponentConfig, SerialisableComponentConfig } from '../config/config';
 import { ResolvedComponentItemConfig } from '../config/resolved-config';
 import { Tab } from '../controls/tab';
 import { AssertError, UnexpectedNullError } from '../errors/internal-error';
@@ -279,7 +279,7 @@ export class ComponentContainer extends EventEmitter {
      */
     setState(state: JsonValue): void {
         this._state = state;
-        this._parent.emitBubblingEvent('stateChanged');
+        this._parent.emitBaseBubblingEvent('stateChanged');
     }
 
     /**

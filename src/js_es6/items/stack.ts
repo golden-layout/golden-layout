@@ -4,6 +4,7 @@ import { Header } from '../controls/header';
 import { AssertError, UnexpectedNullError } from '../errors/internal-error';
 import { LayoutManager } from '../layout-manager';
 import { DragListener } from '../utils/drag-listener';
+import { EventEmitter } from '../utils/event-emitter';
 import { getJQueryOffset } from '../utils/jquery-legacy';
 import { AreaLinkedRect, ItemType, JsonValue, Side, WidthAndHeight, WidthOrHeightPropertyName } from '../utils/types';
 import {
@@ -122,7 +123,8 @@ export class Stack extends ContentItem {
             () => this.handleDockEvent(),
             () => this.handlePopoutEvent(),
             (ev) => this.toggleMaximise(ev),
-            () => this.handleHeaderClickTouchEvent(),
+            (ev) => this.handleHeaderClickEvent(ev),
+            (ev) => this.handleHeaderTouchStartEvent(ev),
             (item) => this.handleHeaderComponentRemoveEvent(item),
             (item) => this.handleHeaderComponentActivateEvent(item),
             (x, y, dragListener, item) => this.handleHeaderComponentStartDragEvent(x, y, dragListener, item),
@@ -144,8 +146,8 @@ export class Stack extends ContentItem {
             this.on('minimised', this._minimisedListener);
         }
 
-        this.element.addEventListener('mouseenter', this._elementMouseEnterEventListener);
-        this.element.addEventListener('mouseleave', this._elementMouseLeaveEventListener);
+        this.element.addEventListener('mouseenter', this._elementMouseEnterEventListener, { passive: true });
+        this.element.addEventListener('mouseleave', this._elementMouseLeaveEventListener, { passive: true });
         this.element.appendChild(this._header.element);
         this.element.appendChild(this._childElementContainer);
 
@@ -229,7 +231,7 @@ export class Stack extends ContentItem {
                 componentItem.show();
                 this.emit('activeContentItemChanged', componentItem);
                 this.layoutManager.emit('activeContentItemChanged', componentItem);
-                this.emitBubblingEvent('stateChanged');
+                this.emitBaseBubblingEvent('stateChanged');
             }
         }
     }
@@ -334,7 +336,7 @@ export class Stack extends ContentItem {
             if (this._stackParent.isRow || this._stackParent.isColumn) {
                 this._stackParent.validateDocking();
             }
-            this.emitBubblingEvent('stateChanged');
+            this.emitBaseBubblingEvent('stateChanged');
 
             return index;
         }
@@ -355,7 +357,7 @@ export class Stack extends ContentItem {
             if (this._stackParent.isRow || this._stackParent.isColumn) {
                 this._stackParent.validateDocking();
             }
-            this.emitBubblingEvent('stateChanged');
+            this.emitBaseBubblingEvent('stateChanged');
         }
     }
 
@@ -376,7 +378,7 @@ export class Stack extends ContentItem {
         }
 
         this._isMaximised = !this._isMaximised;
-        this.emitBubblingEvent('stateChanged');
+        this.emitBaseBubblingEvent('stateChanged');
     }
 
     /** @internal */
@@ -720,7 +722,7 @@ export class Stack extends ContentItem {
                 this.contentItems[i].element.style.height = numberToPixels(content.height);
             }
             this.emit('resize');
-            this.emitBubblingEvent('stateChanged');
+            this.emitBaseBubblingEvent('stateChanged');
         }
     }
 
@@ -893,12 +895,21 @@ export class Stack extends ContentItem {
 
     /** @internal */
     private handleStateChangedEvent() {
-        this.emitBubblingEvent('stateChanged');
+        this.emitBaseBubblingEvent('stateChanged');
     }
 
     /** @internal */
-    private handleHeaderClickTouchEvent() {
-        this.select();
+    private handleHeaderClickEvent(ev: MouseEvent) {
+        const eventName = EventEmitter.headerClickEventName;
+        const bubblingEvent = new EventEmitter.ClickBubblingEvent(eventName, this, ev);
+        this.emit(eventName, bubblingEvent);
+    }
+
+    /** @internal */
+    private handleHeaderTouchStartEvent(ev: TouchEvent) {
+        const eventName = EventEmitter.headerTouchStartEventName;
+        const bubblingEvent = new EventEmitter.TouchStartBubblingEvent(eventName, this, ev);
+        this.emit(eventName, bubblingEvent);
     }
 
     /** @internal */

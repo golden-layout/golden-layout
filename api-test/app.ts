@@ -1,4 +1,4 @@
-import { ComponentItemConfig, ContentItem, GoldenLayout, LayoutConfig, ResolvedLayoutConfig, SerialisableComponentConfig } from "../dist/golden-layout";
+import { ComponentItemConfig, ContentItem, EventEmitter, GoldenLayout, LayoutConfig, ResolvedLayoutConfig, SerialisableComponentConfig, Stack } from "../dist/golden-layout";
 import { BooleanComponent } from './boolean-component';
 import { ColorComponent } from './color-component';
 import { Layout, prefinedLayouts } from './predefined-layouts';
@@ -28,14 +28,19 @@ export class App {
     private _saveLayoutButtonClickListener = () => this.handleSaveLayoutButtonClick();
     private _reloadSavedLayoutButton: HTMLButtonElement;
     private _reloadSavedLayoutButtonClickListener = () => this.handleReloadSavedLayoutButtonClick();
-    private _clickCount = 0;
-    private _clickCountSpan: HTMLSpanElement;
+    private _bubbleClickCount = 0;
+    private _bubbleClickCountSpan: HTMLSpanElement;
+    private _captureClickCount = 0;
+    private _captureClickCountSpan: HTMLSpanElement;
+    private _stackHeaderClickedDiv: HTMLDivElement;
+    private _stackHeaderClickedItemCountSpan: HTMLSpanElement;
  
     private _allComponentsRegistered = false;
     private _savedLayout: ResolvedLayoutConfig | undefined;
 
     private _windowResizeListener = () => this.handleWindowResizeEvent();
-    private _globalClickListener = () => this.handleGlobalClickEvent();
+    private _globalBubbleClickListener = () => this.handleGlobalBubbleClickEvent();
+    private _globalCaptureClickListener = () => this.handleGlobalCaptureClickEvent();
 
     constructor() {
         const controlsElement = document.querySelector('#controls') as HTMLElement;
@@ -50,69 +55,74 @@ export class App {
         this._layoutElement = layoutElement;
         this._goldenLayout = new GoldenLayout(this._layoutElement);
         this._goldenLayout.registerComponentConstructor(ColorComponent.typeName, ColorComponent);
+        this._goldenLayout.addEventListener('stackHeaderClick', (event) => this.handleStackHeaderClick(event));
 
         const registerExtraComponentTypesButton = document.querySelector('#registerExtraComponentTypesButton') as HTMLButtonElement;
         if (registerExtraComponentTypesButton === null) {
             throw Error('Could not find RegisterExtraComponentTypesButton');
         }
         this._registerExtraComponentTypesButton = registerExtraComponentTypesButton;
-        this._registerExtraComponentTypesButton.addEventListener('click', this._registerExtraComponentTypesButtonClickListener);
+        this._registerExtraComponentTypesButton.addEventListener('click', this._registerExtraComponentTypesButtonClickListener,
+            { passive: true }
+        );
 
         const registeredComponentTypesForAddSelect = document.querySelector('#registeredComponentTypesForAddSelect') as HTMLSelectElement;
         if (registeredComponentTypesForAddSelect === null) {
             throw new Error()
         }
         this._registeredComponentTypesForAddSelect = registeredComponentTypesForAddSelect;
-        this._registeredComponentTypesForAddSelect.addEventListener('change', this._registeredComponentTypesForAddSelectChangeListener);
+        this._registeredComponentTypesForAddSelect.addEventListener('change', this._registeredComponentTypesForAddSelectChangeListener,
+            { passive: true }
+        );
 
         const addComponentButton = document.querySelector('#addComponentButton') as HTMLButtonElement;
         if (addComponentButton === null) {
             throw Error('Could not find addComponentButton');
         }
         this._addComponentButton = addComponentButton;
-        this._addComponentButton.addEventListener('click', this._addComponentButtonClickListener);
+        this._addComponentButton.addEventListener('click', this._addComponentButtonClickListener, { passive: true });
 
         const layoutSelect = document.querySelector('#layoutSelect') as HTMLSelectElement;
         if (layoutSelect === null) {
             throw new Error()
         }
         this._layoutSelect = layoutSelect;
-        this._layoutSelect.addEventListener('change', this._layoutSelectChangeListener);
+        this._layoutSelect.addEventListener('change', this._layoutSelectChangeListener, { passive: true });
 
         const loadLayoutButton = document.querySelector('#loadLayoutButton') as HTMLButtonElement;
         if (loadLayoutButton === null) {
             throw Error('Could not find loadLayoutButton');
         }
         this._loadLayoutButton = loadLayoutButton;
-        this._loadLayoutButton.addEventListener('click', this._loadLayoutButtonClickListener);
+        this._loadLayoutButton.addEventListener('click', this._loadLayoutButtonClickListener, { passive: true });
 
         const loadComponentAsRootButton = document.querySelector('#loadComponentAsRootButton') as HTMLButtonElement;
         if (loadComponentAsRootButton === null) {
             throw Error('Could not find loadComponentAsRootButton');
         }
         this._loadComponentAsRootButton = loadComponentAsRootButton;
-        this._loadComponentAsRootButton.addEventListener('click', this._loadComponentAsRootClickListener);
+        this._loadComponentAsRootButton.addEventListener('click', this._loadComponentAsRootClickListener, { passive: true });
 
         const registeredComponentTypesForReplaceSelect = document.querySelector('#registeredComponentTypesForReplaceSelect') as HTMLSelectElement;
         if (registeredComponentTypesForReplaceSelect === null) {
             throw new Error()
         }
         this._registeredComponentTypesForReplaceSelect = registeredComponentTypesForReplaceSelect;
-        this._registeredComponentTypesForReplaceSelect.addEventListener('change', this._registeredComponentTypesForReplaceSelectChangeListener);
+        this._registeredComponentTypesForReplaceSelect.addEventListener('change', this._registeredComponentTypesForReplaceSelectChangeListener, { passive: true });
 
         const replaceComponentButton = document.querySelector('#replaceComponentButton') as HTMLButtonElement;
         if (replaceComponentButton === null) {
             throw Error('Could not find replaceComponentButton');
         }
         this._replaceComponentButton = replaceComponentButton;
-        this._replaceComponentButton.addEventListener('click', this._replaceComponentButtonClickListener);
+        this._replaceComponentButton.addEventListener('click', this._replaceComponentButtonClickListener, { passive: true });
 
         const saveLayoutButton = document.querySelector('#saveLayoutButton') as HTMLButtonElement;
         if (saveLayoutButton === null) {
             throw Error('Could not find saveLayoutButton');
         }
         this._saveLayoutButton = saveLayoutButton;
-        this._saveLayoutButton.addEventListener('click', this._saveLayoutButtonClickListener);
+        this._saveLayoutButton.addEventListener('click', this._saveLayoutButtonClickListener, { passive: true });
 
         const reloadSavedLayoutButton = document.querySelector('#reloadSavedLayoutButton') as HTMLButtonElement;
         if (reloadSavedLayoutButton === null) {
@@ -120,12 +130,36 @@ export class App {
         }
         this._reloadSavedLayoutButton = reloadSavedLayoutButton;
         this._reloadSavedLayoutButton.disabled = true;
-        this._reloadSavedLayoutButton.addEventListener('click', this._reloadSavedLayoutButtonClickListener);
+        this._reloadSavedLayoutButton.addEventListener('click', this._reloadSavedLayoutButtonClickListener, { passive: true });
 
-        this._clickCountSpan = document.querySelector('#clickCountSpan') as HTMLSpanElement;
+        const bubbleClickCountSpan = document.querySelector('#bubbleClickCountSpan') as HTMLSpanElement;
+        if (bubbleClickCountSpan === null) {
+            throw Error('Could not find bubbleClickCountSpan');
+        }
+        this._bubbleClickCountSpan = bubbleClickCountSpan;
+        this._bubbleClickCountSpan.innerText = this._bubbleClickCount.toString();
+        const captureClickCountSpan = document.querySelector('#captureClickCountSpan') as HTMLSpanElement;
+        if (captureClickCountSpan === null) {
+            throw Error('Could not find captureClickCountSpan');
+        }
+        this._captureClickCountSpan = captureClickCountSpan;
+        this._captureClickCountSpan.innerText = this._captureClickCount.toString();
 
-        globalThis.addEventListener('resize', this._windowResizeListener);
-        globalThis.addEventListener('click', this._globalClickListener);
+        const stackHeaderClickedDiv = document.querySelector('#stackHeaderClickedDiv') as HTMLDivElement;
+        if (stackHeaderClickedDiv === null) {
+            throw Error('Could not find stackHeaderClickedDiv');
+        }
+        this._stackHeaderClickedDiv = stackHeaderClickedDiv;
+        this._stackHeaderClickedDiv.style.display = 'none';
+        const stackHeaderClickedItemCountSpan = document.querySelector('#stackHeaderClickedItemCountSpan') as HTMLSpanElement;
+        if (stackHeaderClickedItemCountSpan === null) {
+            throw Error('Could not find stackHeaderClickedItemCountSpan');
+        }
+        this._stackHeaderClickedItemCountSpan = stackHeaderClickedItemCountSpan;
+
+        globalThis.addEventListener('resize', this._windowResizeListener, { passive: true });
+        globalThis.addEventListener('click', this._globalBubbleClickListener, { passive: true });
+        globalThis.addEventListener('click', this._globalCaptureClickListener, { capture: true, passive: true });
     }
 
     start(): void {
@@ -142,9 +176,14 @@ export class App {
         this._goldenLayout.setSize(bodyWidth - controlsWidth, height)
     }
 
-    private handleGlobalClickEvent() {
-        this._clickCount++;
-        this._clickCountSpan.innerText = this._clickCount.toString();
+    private handleGlobalBubbleClickEvent() {
+        this._bubbleClickCount++;
+        this._bubbleClickCountSpan.innerText = this._bubbleClickCount.toString();
+    }
+    
+    private handleGlobalCaptureClickEvent() {
+        this._captureClickCount++;
+        this._captureClickCountSpan.innerText = this._captureClickCount.toString();
     }
     
     private handleRegisterExtraComponentTypesButtonClick() {
@@ -161,6 +200,18 @@ export class App {
         // nothing to do here
     }
 
+    private handleLayoutSelectChange() {
+        // nothing to do here
+    }
+
+    private handleStackHeaderClick(event: EventEmitter.ClickBubblingEvent) {
+        const stack = event.origin as Stack;
+        const itemCount = stack.contentItems.length;
+        this._stackHeaderClickedItemCountSpan.innerText = itemCount.toString();
+        this._stackHeaderClickedDiv.style.display = '';
+        setTimeout(() => { this._stackHeaderClickedDiv.style.display = 'none'; }, 1000);
+    }
+
     private handleAddComponentButtonClick() {
         const componentType = this._registeredComponentTypesForAddSelect.value;
         const itemConfig: SerialisableComponentConfig = {
@@ -168,10 +219,6 @@ export class App {
             type: 'component',
         }
         this._goldenLayout.addItem(itemConfig, 0);
-    }
-
-    private handleLayoutSelectChange() {
-        // nothing to do here
     }
 
     private handleLoadLayoutButtonClick() {

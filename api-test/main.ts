@@ -10,7 +10,7 @@ declare global {
 
 if (document.readyState !== "loading") run();
 // in case the document is already rendered
-else document.addEventListener("DOMContentLoaded", run);
+else document.addEventListener("DOMContentLoaded", run, { passive: true });
 
 function run() {
     const app = new App();

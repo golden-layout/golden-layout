@@ -1,4 +1,4 @@
-import { ResolvedReactComponentConfig, ResolvedComponentItemConfig, ResolvedHeaderedItemConfig, ResolvedSerialisableComponentConfig } from '../config/resolved-config';
+import { ResolvedComponentItemConfig, ResolvedHeaderedItemConfig, ResolvedReactComponentConfig, ResolvedSerialisableComponentConfig } from '../config/resolved-config';
 import { ComponentContainer } from '../container/component-container';
 import { Tab } from '../controls/tab';
 import { UnexpectedNullError } from '../errors/internal-error';

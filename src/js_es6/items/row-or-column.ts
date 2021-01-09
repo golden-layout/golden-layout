@@ -1,4 +1,4 @@
-import { ItemConfig, StackItemConfig, ComponentItemConfig, RowOrColumnItemConfig, SerialisableComponentConfig } from '../config/config'
+import { ComponentItemConfig, ItemConfig, RowOrColumnItemConfig, SerialisableComponentConfig, StackItemConfig } from '../config/config'
 import { ResolvedRowOrColumnItemConfig, ResolvedStackItemConfig } from '../config/resolved-config'
 import { Splitter } from '../controls/splitter'
 import { AssertError, UnexpectedNullError } from '../errors/internal-error'
@@ -151,7 +151,7 @@ export class RowOrColumn extends ContentItem {
         const newItemSize = (1 / this.contentItems.length) * 100;
 
         if (suspendResize === true) {
-            this.emitBubblingEvent('stateChanged');
+            this.emitBaseBubblingEvent('stateChanged');
             return index;
         }
 
@@ -165,7 +165,7 @@ export class RowOrColumn extends ContentItem {
         }
 
         this.updateSize();
-        this.emitBubblingEvent('stateChanged');
+        this.emitBaseBubblingEvent('stateChanged');
         this.validateDocking();
 
         return index;
@@ -273,7 +273,7 @@ export class RowOrColumn extends ContentItem {
             }
         } else {
             this.updateSize();
-            this.emitBubblingEvent('stateChanged');
+            this.emitBaseBubblingEvent('stateChanged');
             this.validateDocking();
         }
     }
@@ -286,7 +286,7 @@ export class RowOrColumn extends ContentItem {
         super.replaceChild(oldChild, newChild);
         newChild[this._dimension] = size;
         this.updateSize();
-        this.emitBubblingEvent('stateChanged');
+        this.emitBaseBubblingEvent('stateChanged');
     }
 
     /**
@@ -372,7 +372,7 @@ export class RowOrColumn extends ContentItem {
         }
         contentItem.element.classList.toggle('lm_docked', contentItem.docker.docked);
         this.updateSize();
-        this.emitBubblingEvent('stateChanged');
+        this.emitBaseBubblingEvent('stateChanged');
         this.validateDocking();
     }
 
@@ -450,7 +450,7 @@ export class RowOrColumn extends ContentItem {
             this.calculateRelativeSizes();
             this.setAbsoluteSizes();
         }
-        this.emitBubblingEvent('stateChanged');
+        this.emitBaseBubblingEvent('stateChanged');
         this.emit('resize');
     }
 

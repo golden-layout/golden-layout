@@ -12,8 +12,8 @@ export class HeaderButton {
     constructor(private _header: Header, label: string, cssClass: string, private _pushEvent: HeaderButton.PushEvent) {
         this._element = createTemplateHtmlElement('<li class="' + cssClass + '" title="' + label + '"></li>');
         this._header.on('destroy', () => this._$destroy());
-        this._element.addEventListener('click', this._clickEventListener);
-        this._element.addEventListener('touchstart', this._touchStartEventListener);
+        this._element.addEventListener('click', this._clickEventListener, { passive: true });
+        this._element.addEventListener('touchstart', this._touchStartEventListener, { passive: true });
         this._header.controlsContainerElement.appendChild(this._element);
     }
 

@@ -53,8 +53,8 @@ export class DragListener extends EventEmitter {
 
         this._dragging = false;
 
-        this._eElement.addEventListener('mousedown', this._mouseDownEventListener);
-        this._eElement.addEventListener('touchstart', this._touchStartEventListener);
+        this._eElement.addEventListener('mousedown', this._mouseDownEventListener, { passive: true });
+        this._eElement.addEventListener('touchstart', this._touchStartEventListener, { passive: true });
     }
 
     destroy(): void {
@@ -97,10 +97,10 @@ export class DragListener extends EventEmitter {
         this._nOriginalX = coordinates.x;
         this._nOriginalY = coordinates.y;
 
-        this._oDocument.addEventListener('mousemove', this._mouseMoveEventListener);
-        this._oDocument.addEventListener('touchmove', this._touchMoveEventListener);
-        this._oDocument.addEventListener('mouseup', this._mouseUpEventListener);
-        this._oDocument.addEventListener('touchend', this._touchEndEventListener);
+        this._oDocument.addEventListener('mousemove', this._mouseMoveEventListener, { passive: true });
+        this._oDocument.addEventListener('touchmove', this._touchMoveEventListener, { passive: true });
+        this._oDocument.addEventListener('mouseup', this._mouseUpEventListener, { passive: true });
+        this._oDocument.addEventListener('touchend', this._touchEndEventListener, { passive: true });
         this._mouseTouchTracking = true;
 
         this._timeout = setTimeout(() => this.startDrag(), this._nDelay);

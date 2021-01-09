@@ -96,8 +96,6 @@ export abstract class ContentItem extends EventEmitter {
         this._pendingEventPropagations = {};
         this._throttledEvents = ['stateChanged'];
 
-        this.on(EventEmitter.ALL_EVENT, (name, ...args: unknown[]) => this.propagateEvent(name as string, args));
-
         this._contentItems = this.createContentItems(config.content);
     }
 
@@ -252,7 +250,7 @@ export abstract class ContentItem extends EventEmitter {
     popout(): BrowserPopout {
         const parentId = getUniqueId();
         const browserPopout = this.layoutManager.createPopoutFromContentItem(this, undefined, parentId, undefined);
-        this.emitBubblingEvent('stateChanged');
+        this.emitBaseBubblingEvent('stateChanged');
         return browserPopout;
     }
 
@@ -329,9 +327,9 @@ export abstract class ContentItem extends EventEmitter {
         }
         this._contentItems = [];
 
-        this.emitBubblingEvent('beforeItemDestroyed');
+        this.emitBaseBubblingEvent('beforeItemDestroyed');
         this._element.remove();
-        this.emitBubblingEvent('itemDestroyed');
+        this.emitBaseBubblingEvent('itemDestroyed');
     }
 
     /**
@@ -366,7 +364,7 @@ export abstract class ContentItem extends EventEmitter {
      */
     init(): void {
         this._isInitialised = true;
-        this.emitBubblingEvent('itemCreated');
+        this.emitBaseBubblingEvent('itemCreated');
         this.emitUnknownBubblingEvent(this.type + 'Created');
     }
 
@@ -455,6 +453,28 @@ export abstract class ContentItem extends EventEmitter {
         }
     }
 
+    tryBubbleEvent(name: string, args: unknown[]): void {
+        if (args.length === 1) {
+            const event = args[0];
+            if (event instanceof EventEmitter.BubblingEvent &&
+                event.isPropagationStopped === false &&
+                this._isInitialised === true
+            ) {
+                /**
+                 * In some cases (e.g. if an element is created from a DragSource) it
+                 * doesn't have a parent and is not a child of GroundItem. If that's the case
+                 * propagate the bubbling event from the top level of the substree directly
+                 * to the layoutManager
+                 */
+                if (this.isGround === false && this._parent) {
+                    this._parent.emitUnknown(name, event);
+                } else {
+                    this.scheduleEventPropagationToLayoutManager(name, event);
+                }
+            }
+        }
+    }
+
     /**
      * All raw events bubble up to the Ground element. Some events that
      * are propagated to - and emitted by - the layoutManager however are
@@ -465,7 +485,7 @@ export abstract class ContentItem extends EventEmitter {
      */
     private scheduleEventPropagationToLayoutManager(name: string, event: EventEmitter.BubblingEvent) {
         if (this._throttledEvents.indexOf(name) === -1) {
-            this.layoutManager.emitUnknown(name, event.origin);
+            this.layoutManager.emitUnknown(name, event);
         } else {
             if (this._pendingEventPropagations[name] !== true) {
                 this._pendingEventPropagations[name] = true;
