@@ -138,7 +138,8 @@ export class Stack extends ContentItem {
 
         this.isStack = true;
 
-        this._childElementContainer = createTemplateHtmlElement('<div class="lm_items"></div>');
+        this._childElementContainer = document.createElement('section');
+        this._childElementContainer.classList.add('lm_items');
 
         this.on('resize', this._resizeListener);
         if (this._maximisedEnabled) {

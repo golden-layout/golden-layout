@@ -71,6 +71,7 @@ $dropDownArrowForeColor: var(--color-layout-drop-down-arrow-fore, #ffffff); // A
         background: $singlePaneContentBkgdColor;
         top: 2px;
         right: 0;
+        display: flex;
     }
 
     // Single Tab container. A single Tab is set for each pane, a group of Tabs are contained in ".lm_header"
@@ -149,7 +150,7 @@ $dropDownArrowForeColor: var(--color-layout-drop-down-arrow-fore, #ffffff); // A
 // Pane controls (popout, maximize, minimize, close)
 .lm_controls {
     // All Pane controls shares these
-    > li {
+    > * {
         position: relative;
         background-position: center center;
         background-repeat: no-repeat;

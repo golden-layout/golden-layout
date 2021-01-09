@@ -102,8 +102,9 @@
   .lm_controls {
     position: absolute;
     right: 3px;
+    display: flex;
 
-    > li {
+    > * {
       cursor: pointer;
       float: left;
       width: @width4;
@@ -120,6 +121,7 @@
 
   .lm_tabs {
     position: absolute;
+    display: flex;
   }
 
   // Single Tab container. A single Tab is set for each pane, a group of Tabs are contained in ".lm_header"

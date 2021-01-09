@@ -1,13 +1,8 @@
-import { UnexpectedNullError, UnexpectedUndefinedError } from '../errors/internal-error';
+import { UnexpectedUndefinedError } from '../errors/internal-error';
 import { ComponentItem } from '../items/component-item';
 import { LayoutManager } from '../layout-manager';
 import { DragListener } from '../utils/drag-listener';
-import { createTemplateHtmlElement, stripTags } from '../utils/utils';
-
-/** @internal */
-const _template = '<li class="lm_tab"><i class="lm_left"></i>' +
-        '<span class="lm_title"></span><div class="lm_close_tab"></div>' +
-        '<i class="lm_right"></i></li>'
+import { stripTags } from '../utils/utils';
 
 /**
  * Represents an individual tab within a Stack's header
@@ -15,11 +10,11 @@ const _template = '<li class="lm_tab"><i class="lm_left"></i>' +
  */
 export class Tab {
     /** @internal */
-    private readonly _element: HTMLElement;
+    private readonly _element: HTMLDivElement;
     /** @internal */
-    private readonly _titleElement: HTMLElement;
+    private readonly _titleElement: HTMLSpanElement;
     /** @internal */
-    private readonly _closeElement: HTMLElement | undefined;
+    private readonly _closeElement: HTMLDivElement | undefined;
 
     /** @internal */
     private _dragListener: DragListener | undefined;
@@ -27,19 +22,20 @@ export class Tab {
     private _isActive = false;
 
     /** @internal */
-    private readonly _tabMouseDownListener = (ev: MouseEvent) => this.onTabMouseDown(ev);
+    private readonly _tabClickListener = (ev: MouseEvent) => this.onTabClickDown(ev);
     /** @internal */
     private readonly _tabTouchStartListener = (ev: TouchEvent) => this.onTabTouchStart(ev);
     /** @internal */
-    private readonly _closeClickListener = (ev: MouseEvent) => this.onCloseClick(ev);
+    private readonly _closeClickListener = () => this.onCloseClick();
     /** @internal */
-    private readonly _closeTouchStartListener = (ev: TouchEvent) => this.onCloseTouchStart(ev);
-    /** @internal */
-    private readonly _closeMouseDownListener = (ev: MouseEvent) => this.onCloseMousedown(ev);
+    private readonly _closeTouchStartListener = () => this.onCloseTouchStart();
+    // /** @internal */
+    // private readonly _closeMouseDownListener = () => this.onCloseMousedown();
     /** @internal */
     private readonly _dragStartListener = (x: number, y: number) => this.onDragStart(x, y);
     /** @internal */
     private readonly _contentItemDestroyListener = () => this.onContentItemDestroy();
+    private readonly _tabTitleChangedListener = (title: string) => this.setTitle(title)
 
     get isActive(): boolean { return this._isActive; }
     // get header(): Header { return this._header; }
@@ -57,19 +53,15 @@ export class Tab {
         private _activateEvent: Tab.ActivateEvent | undefined,
         private _dragStartEvent: Tab.DragStartEvent | undefined
     ) {
-        this._element = createTemplateHtmlElement(_template);
-        const titleElement = this._element.querySelector<HTMLElement>('.lm_title');
-        if (titleElement === null) {
-            throw new UnexpectedNullError('Bad Tab Template');
-        } else {
-            this._titleElement = titleElement;
-        }
-        const closeElement = this._element.querySelector<HTMLElement>('.lm_close_tab');
-        if (closeElement === null) {
-            throw new UnexpectedNullError('TCCEN08743');
-        } else {
-            this._closeElement = closeElement;
-        }
+        this._element = document.createElement('div');
+        this._element.classList.add('lm_tab');
+        this._titleElement = document.createElement('span'); 
+        this._titleElement.classList.add('lm_title');
+        this._closeElement = document.createElement('div'); 
+        this._closeElement.classList.add('lm_close_tab');
+        this._element.appendChild(this._titleElement);
+        this._element.appendChild(this._closeElement);
+
         if (_componentItem.isClosable) {
             this._closeElement.style.display = '';
         } else {
@@ -77,7 +69,7 @@ export class Tab {
         }
 
         this.setTitle(_componentItem.title);
-        this._componentItem.on('titleChanged', (title) => this.setTitle(title));
+        this._componentItem.on('titleChanged', this._tabTitleChangedListener);
 
         const reorderEnabled = _componentItem.reorderEnabled ?? this._layoutManager.layoutConfig.settings.reorderEnabled;
 
@@ -87,13 +79,13 @@ export class Tab {
             this._componentItem.on('destroy', this._contentItemDestroyListener);
         }
 
-        this._element.addEventListener('mousedown', this._tabMouseDownListener, { passive: true });
+        this._element.addEventListener('click', this._tabClickListener, { passive: true });
         this._element.addEventListener('touchstart', this._tabTouchStartListener, { passive: true });
 
         if (this._componentItem.isClosable) {
             this._closeElement.addEventListener('click', this._closeClickListener, { passive: true });
             this._closeElement.addEventListener('touchstart', this._closeTouchStartListener, { passive: true });
-            this._closeElement.addEventListener('mousedown', this._closeMouseDownListener, { passive: true });
+            // this._closeElement.addEventListener('mousedown', this._closeMouseDownListener, { passive: true });
         } else {
             this._closeElement.remove();
             this._closeElement = undefined;
@@ -110,7 +102,7 @@ export class Tab {
      * html tags) of the same string.
      */
     setTitle(title: string): void {
-        this._element.setAttribute('title', stripTags(title));
+        this._element.title = stripTags(title);
         this._titleElement.innerText = title;
     }
 
@@ -139,11 +131,12 @@ export class Tab {
         this._closeEvent = undefined;
         this._activateEvent = undefined;
         this._dragStartEvent = undefined;
-        this._element.removeEventListener('mousedown', this._tabMouseDownListener);
+        this._element.removeEventListener('click', this._tabClickListener);
         this._element.removeEventListener('touchstart', this._tabTouchStartListener);
         this._closeElement?.removeEventListener('click', this._closeClickListener);
         this._closeElement?.removeEventListener('touchstart', this._closeTouchStartListener);
-        this._closeElement?.removeEventListener('mousedown', this._closeMouseDownListener);
+        // this._closeElement?.removeEventListener('mousedown', this._closeMouseDownListener);
+        this._componentItem.off('titleChanged', this._tabTitleChangedListener);
         if (this._dragListener !== undefined) {
             this._componentItem.off('destroy', this._contentItemDestroyListener);
             this._dragListener.off('dragStart', this._dragStartListener);
@@ -188,37 +181,39 @@ export class Tab {
      * Callback when the tab is clicked
      * @internal
      */
-    private onTabMouseDown(event: MouseEvent) {
-        // left mouse button
-        if (event.button === 0) {
-            // event.stopPropagation();
-            this.notifyActivate();
+    private onTabClickDown(event: MouseEvent) {
+        const target = event.target;
+        if (target === this._element || target === this._titleElement) {
+            // left mouse button
+            if (event.button === 0) {
+                // event.stopPropagation();
+                this.notifyActivate();
 
-            // middle mouse button
-        } else if (event.button === 1 && this._componentItem.isClosable) {
-            // event.stopPropagation();
-            this.notifyClose();
+                // middle mouse button
+            } else if (event.button === 1 && this._componentItem.isClosable) {
+                // event.stopPropagation();
+                this.notifyClose();
+            }
         }
     }
 
     /** @internal */
     private onTabTouchStart(event: TouchEvent) {
-        // event.stopPropagation();
-        this.notifyActivate();
+        if (event.target === this._element) {
+            this.notifyActivate();
+        }
     }
 
     /**
      * Callback when the tab's close button is clicked
      * @internal
      */
-    private onCloseClick(event: MouseEvent) {
-        // event.stopPropagation();
+    private onCloseClick() {
         this.notifyClose();
     }
 
     /** @internal */
-    private onCloseTouchStart(event: TouchEvent) {
-        // event.stopPropagation();
+    private onCloseTouchStart() {
         this.notifyClose();
     }
 
@@ -227,10 +222,11 @@ export class Tab {
      * to prevent tab from activating.
      * @internal
      */
-    private onCloseMousedown(event: MouseEvent): void {
-        // event.stopPropagation();
-    }
+    // private onCloseMousedown(): void {
+    //     // event.stopPropagation();
+    // }
 
+    /** @internal */
     private notifyClose() {
         if (this._closeEvent === undefined) {
             throw new UnexpectedUndefinedError('TNC15007');
@@ -239,6 +235,7 @@ export class Tab {
         }
     }
 
+    /** @internal */
     private notifyActivate() {
         if (this._activateEvent === undefined) {
             throw new UnexpectedUndefinedError('TNA15007');

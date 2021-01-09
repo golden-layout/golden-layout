@@ -6,17 +6,9 @@ import { LayoutManager } from '../layout-manager';
 import { DragListener } from '../utils/drag-listener';
 import { EventEmitter } from '../utils/event-emitter';
 import { Side } from '../utils/types';
-import { createTemplateHtmlElement, numberToPixels, pixelsToNumber, setElementDisplayVisibility } from '../utils/utils';
+import { numberToPixels, pixelsToNumber, setElementDisplayVisibility } from '../utils/utils';
 import { HeaderButton } from './header-button';
 import { Tab } from './tab';
-
-/** @internal */
-const _template = 
-    '<div class="lm_header"> ' +
-    '<ul class="lm_tabs"></ul> ' +
-    '<ul class="lm_controls"></ul> ' +
-    '<ul class="lm_tabdropdown_list"></ul> ' +
-    '</div>';
 
 /**
  * This class represents a header above a Stack ContentItem.
@@ -158,34 +150,27 @@ export class Header extends EventEmitter {
 
         this._canRemoveComponent = this._configClosable;
 
-        this._element = createTemplateHtmlElement(_template);
+        // this._element = createTemplateHtmlElement(_template);
+        this._element = document.createElement('section');
+        this._element.classList.add('lm_header');
+        this._tabsContainerElement = document.createElement('section');
+        this._tabsContainerElement.classList.add('lm_tabs');
+        this._controlsContainerElement = document.createElement('section');
+        this._controlsContainerElement.classList.add('lm_controls');
+        this._tabDropdownContainerElement = document.createElement('section');
+        this._tabDropdownContainerElement.classList.add('lm_tabdropdown_list');
+        this._tabDropdownContainerElement.style.display = 'none';
+        this._element.appendChild(this._tabsContainerElement);
+        this._element.appendChild(this._controlsContainerElement);
+        this._element.appendChild(this._tabDropdownContainerElement);
 
         this._element.addEventListener('click', this._clickListener, { passive: true });
         this._element.addEventListener('touchstart', this._touchStartListener, { passive: true });
 
-        const tabsContainerElement = this._element.querySelector('.lm_tabs');
-        if (tabsContainerElement === null) {
-            throw new UnexpectedNullError('HCT21223');
-        } else {
-            this._tabsContainerElement = tabsContainerElement as HTMLElement;
-            const tabDropdownContainerElement = this._element.querySelector('.lm_tabdropdown_list');
-            if (tabDropdownContainerElement === null) {
-                throw new UnexpectedNullError('HCTD21224');
-            } else {
-                this._tabDropdownContainerElement = tabDropdownContainerElement as HTMLElement;
-                this._tabDropdownContainerElement.style.display = 'none';
-                const controlsContainerElement = this._element.querySelector('.lm_controls');
-                if (controlsContainerElement === null) {
-                    throw new UnexpectedNullError('HCC21222');
-                } else {
-                    this._controlsContainerElement = controlsContainerElement as HTMLElement;
-                    globalThis.document.addEventListener('mouseup', this._documentMouseUpListener, { passive: true });
+        globalThis.document.addEventListener('mouseup', this._documentMouseUpListener, { passive: true });
 
-                    this._tabControlOffset = this._layoutManager.layoutConfig.settings.tabControlOffset;
-                    this.createControls(closeEvent);
-                }
-            }
-        }
+        this._tabControlOffset = this._layoutManager.layoutConfig.settings.tabControlOffset;
+        this.createControls(closeEvent);
     }
 
     /**

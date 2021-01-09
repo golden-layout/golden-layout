@@ -74,7 +74,7 @@ export class ComponentItem extends ContentItem {
     }
 
     applyUpdatableConfig(config: ResolvedComponentItemConfig): void {
-        this._title = config.title;
+        this.setTitle(config.title);
         this._headerConfig = config.header;
     }
 

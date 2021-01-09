@@ -1,4 +1,3 @@
-import { createTemplateHtmlElement } from '../utils/utils';
 import { Header } from './header';
 
 /** @internal */
@@ -10,14 +9,16 @@ export class HeaderButton {
     get element(): HTMLElement { return this._element; }
 
     constructor(private _header: Header, label: string, cssClass: string, private _pushEvent: HeaderButton.PushEvent) {
-        this._element = createTemplateHtmlElement('<li class="' + cssClass + '" title="' + label + '"></li>');
-        this._header.on('destroy', () => this._$destroy());
+        this._element = document.createElement('div');
+        this._element.classList.add(cssClass);
+        this._element.title = label;
+        this._header.on('destroy', () => this.destroy());
         this._element.addEventListener('click', this._clickEventListener, { passive: true });
         this._element.addEventListener('touchstart', this._touchStartEventListener, { passive: true });
         this._header.controlsContainerElement.appendChild(this._element);
     }
 
-    _$destroy(): void {
+    destroy(): void {
         this._element.removeEventListener('click', this._clickEventListener);
         this._element.removeEventListener('touchstart', this._touchStartEventListener);
         this._element.parentNode?.removeChild(this._element);
