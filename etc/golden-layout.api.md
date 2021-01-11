@@ -41,17 +41,23 @@ export class BrowserPopout extends EventEmitter {
 // @public (undocumented)
 export class ComponentContainer extends EventEmitter {
     // @internal
-    constructor(config: ResolvedComponentItemConfig, _parent: ComponentItem, _layoutManager: LayoutManager, _element: HTMLElement, _updateItemConfigEvent: ComponentContainer.UpdateItemConfigEventHandler);
+    constructor(_config: ResolvedComponentItemConfig, _parent: ComponentItem, _layoutManager: LayoutManager, _element: HTMLElement, _updateItemConfigEvent: ComponentContainer.UpdateItemConfigEventHandler, _showEvent: ComponentContainer.ShowEventHandler, _hideEvent: ComponentContainer.HideEventHandler);
+    // @internal (undocumented)
+    checkEmitHide(): void;
+    // @internal (undocumented)
+    checkEmitShow(): void;
     close(): void;
     // (undocumented)
     get component(): ComponentItem.Component;
+    // (undocumented)
+    get componentItemConfig(): ResolvedComponentItemConfig;
     // @internal @deprecated (undocumented)
     get componentName(): JsonValue;
     // (undocumented)
     get componentType(): JsonValue;
-    get contentElement(): HTMLElement;
     // @internal (undocumented)
     destroy(): void;
+    get element(): HTMLElement;
     // @deprecated
     extendState(state: Record<string, unknown>): void;
     // @deprecated (undocumented)
@@ -81,6 +87,8 @@ export class ComponentContainer extends EventEmitter {
     setTitle(title: string): void;
     show(): void;
     // (undocumented)
+    get state(): JsonValue | undefined;
+    // (undocumented)
     stateRequestEvent: ComponentContainer.StateRequestEventHandler | undefined;
     // (undocumented)
     get tab(): Tab;
@@ -92,6 +100,10 @@ export class ComponentContainer extends EventEmitter {
 
 // @public (undocumented)
 export namespace ComponentContainer {
+    // @internal (undocumented)
+    export type HideEventHandler = (this: void) => void;
+    // @internal (undocumented)
+    export type ShowEventHandler = (this: void) => void;
     // (undocumented)
     export type StateRequestEventHandler = (this: void) => JsonValue | undefined;
     // @internal (undocumented)
@@ -100,12 +112,11 @@ export namespace ComponentContainer {
 
 // @public (undocumented)
 export class ComponentItem extends ContentItem {
-    // Warning: (ae-forgotten-export) The symbol "GroundItem" needs to be exported by the entry point index.d.ts
-    //
     // @internal
-    constructor(layoutManager: LayoutManager, config: ResolvedComponentItemConfig, stackOrGroundItem: Stack | GroundItem);
+    constructor(layoutManager: LayoutManager, config: ResolvedComponentItemConfig, _parentItem: ComponentParentableItem);
     // (undocumented)
     applyUpdatableConfig(config: ResolvedComponentItemConfig): void;
+    blur(suppressEvent?: boolean): void;
     // (undocumented)
     close(): void;
     // (undocumented)
@@ -118,6 +129,9 @@ export class ComponentItem extends ContentItem {
     get container(): ComponentContainer;
     // @internal (undocumented)
     destroy(): void;
+    focus(suppressEvent?: boolean): void;
+    // (undocumented)
+    get focused(): boolean;
     // (undocumented)
     get headerConfig(): ResolvedHeaderedItemConfig.Header | undefined;
     // @internal (undocumented)
@@ -126,10 +140,18 @@ export class ComponentItem extends ContentItem {
     init(): void;
     // @internal (undocumented)
     get initialWantMaximise(): boolean;
+    // Warning: (ae-forgotten-export) The symbol "ComponentParentableItem" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    get parentItem(): ComponentParentableItem;
     // (undocumented)
     get reorderEnabled(): boolean;
     // @internal (undocumented)
+    setBlurred(suppressEvent: boolean): void;
+    // @internal (undocumented)
     setDragSize(width: number, height: number): void;
+    // @internal (undocumented)
+    setFocused(suppressEvent: boolean): void;
     // (undocumented)
     setTab(tab: Tab): void;
     setTitle(title: string): void;
@@ -149,8 +171,6 @@ export class ComponentItem extends ContentItem {
 export namespace ComponentItem {
     // (undocumented)
     export type Component = unknown;
-    const // @internal (undocumented)
-    templateHtml: string;
 }
 
 // @public (undocumented)
@@ -190,7 +210,6 @@ export abstract class ContentItem extends EventEmitter {
     calculateConfigContent(): ResolvedItemConfig[];
     // (undocumented)
     get contentItems(): ContentItem[];
-    deselect(): void;
     // @internal
     destroy(): void;
     // (undocumented)
@@ -217,6 +236,8 @@ export abstract class ContentItem extends EventEmitter {
     isComponent: boolean;
     // (undocumented)
     static isComponentItem(item: ContentItem): item is ComponentItem;
+    // (undocumented)
+    static isComponentParentableItem(item: ContentItem): item is ComponentParentableItem;
     // (undocumented)
     isGround: boolean;
     // (undocumented)
@@ -245,7 +266,6 @@ export abstract class ContentItem extends EventEmitter {
     remove(): void;
     removeChild(contentItem: ContentItem, keepChild?: boolean): void;
     replaceChild(oldChild: ContentItem, newChild: ContentItem, _$destroyOldChild?: boolean): void;
-    select(): void;
     // @internal (undocumented)
     setParent(parent: ContentItem): void;
     // @internal (undocumented)
@@ -290,10 +310,10 @@ export class EventEmitter {
     // (undocumented)
     on<K extends keyof EventEmitter.EventParamsMap>(eventName: K, callback: EventEmitter.Callback<K>): void;
     removeEventListener<K extends keyof EventEmitter.EventParamsMap>(eventName: K, callback: EventEmitter.Callback<K>): void;
-    trigger: <K extends "hide" | "show" | "closed" | "open" | "close" | "drag" | "resize" | "maximised" | "__all" | "activeContentItemChanged" | "beforeItemDestroyed" | "destroy" | "dragStart" | "dragStop" | "initialised" | "itemCreated" | "itemDestroyed" | "itemDropped" | "minimised" | "popIn" | "selectionChanged" | "shown" | "stateChanged" | "tab" | "tabCreated" | "titleChanged" | "windowClosed" | "windowOpened" | "beforeComponentRelease" | "stackHeaderClick" | "stackHeaderTouchStart">(eventName: K, ...args: EventEmitter.EventParamsMap[K]) => void;
+    trigger: <K extends "hide" | "show" | "closed" | "open" | "blur" | "close" | "drag" | "focus" | "resize" | "maximised" | "__all" | "activeContentItemChanged" | "destroy" | "dragStart" | "dragStop" | "initialised" | "itemDropped" | "minimised" | "popIn" | "shown" | "stateChanged" | "tab" | "tabCreated" | "titleChanged" | "windowClosed" | "windowOpened" | "beforeComponentRelease" | "beforeItemDestroyed" | "itemCreated" | "itemDestroyed" | "stackHeaderClick" | "stackHeaderTouchStart">(eventName: K, ...args: EventEmitter.EventParamsMap[K]) => void;
     // (undocumented)
     tryBubbleEvent(name: string, args: unknown[]): void;
-    unbind: <K extends "hide" | "show" | "closed" | "open" | "close" | "drag" | "resize" | "maximised" | "__all" | "activeContentItemChanged" | "beforeItemDestroyed" | "destroy" | "dragStart" | "dragStop" | "initialised" | "itemCreated" | "itemDestroyed" | "itemDropped" | "minimised" | "popIn" | "selectionChanged" | "shown" | "stateChanged" | "tab" | "tabCreated" | "titleChanged" | "windowClosed" | "windowOpened" | "beforeComponentRelease" | "stackHeaderClick" | "stackHeaderTouchStart">(eventName: K, callback: EventEmitter.Callback<K>) => void;
+    unbind: <K extends "hide" | "show" | "closed" | "open" | "blur" | "close" | "drag" | "focus" | "resize" | "maximised" | "__all" | "activeContentItemChanged" | "destroy" | "dragStart" | "dragStop" | "initialised" | "itemDropped" | "minimised" | "popIn" | "shown" | "stateChanged" | "tab" | "tabCreated" | "titleChanged" | "windowClosed" | "windowOpened" | "beforeComponentRelease" | "beforeItemDestroyed" | "itemCreated" | "itemDestroyed" | "stackHeaderClick" | "stackHeaderTouchStart">(eventName: K, callback: EventEmitter.Callback<K>) => void;
 }
 
 // @public (undocumented)
@@ -307,23 +327,25 @@ export namespace EventEmitter {
     export type BeforeComponentReleaseParams = [component: unknown];
     // (undocumented)
     export class BubblingEvent {
-        constructor(_name: string, _origin: EventEmitter);
+        constructor(_name: string, _target: EventEmitter);
         // (undocumented)
         isPropagationStopped: boolean;
         // (undocumented)
         get name(): string;
-        // (undocumented)
+        // @deprecated (undocumented)
         get origin(): EventEmitter;
         // (undocumented)
         stopPropagation(): void;
-    }
+        // (undocumented)
+        get target(): EventEmitter;
+        }
     // (undocumented)
     export type BubblingEventParam = [EventEmitter.BubblingEvent];
     // (undocumented)
     export type Callback<K extends keyof EventEmitter.EventParamsMap> = (this: void, ...args: EventParamsMap[K]) => void;
     // (undocumented)
     export class ClickBubblingEvent extends BubblingEvent {
-        constructor(name: string, origin: EventEmitter, _mouseEvent: MouseEvent);
+        constructor(name: string, target: EventEmitter, _mouseEvent: MouseEvent);
         // (undocumented)
         get mouseEvent(): MouseEvent;
         }
@@ -357,6 +379,8 @@ export namespace EventEmitter {
         // (undocumented)
         "beforeItemDestroyed": BubblingEventParam;
         // (undocumented)
+        "blur": BubblingEventParam;
+        // (undocumented)
         "close": NoParams;
         // (undocumented)
         "closed": NoParams;
@@ -368,6 +392,8 @@ export namespace EventEmitter {
         "dragStart": DragStartParams;
         // (undocumented)
         "dragStop": DragStopParams;
+        // (undocumented)
+        "focus": BubblingEventParam;
         // (undocumented)
         "hide": NoParams;
         // (undocumented)
@@ -388,8 +414,6 @@ export namespace EventEmitter {
         "popIn": NoParams;
         // (undocumented)
         "resize": NoParams;
-        // (undocumented)
-        "selectionChanged": UnknownParam;
         // (undocumented)
         "show": NoParams;
         // (undocumented)
@@ -417,7 +441,7 @@ export namespace EventEmitter {
     export type StringParam = [string];
     // (undocumented)
     export class TouchStartBubblingEvent extends BubblingEvent {
-        constructor(name: string, origin: EventEmitter, _touchEvent: TouchEvent);
+        constructor(name: string, target: EventEmitter, _touchEvent: TouchEvent);
         // (undocumented)
         get touchEvent(): TouchEvent;
         }
@@ -456,7 +480,7 @@ export namespace GoldenLayout {
 // @public
 export class Header extends EventEmitter {
     // @internal
-    constructor(_layoutManager: LayoutManager, _parent: Stack, settings: Header.Settings, _configClosable: boolean, closeEvent: Header.CloseEvent, _dockEvent: Header.DockEvent | undefined, _popoutEvent: Header.PopoutEvent | undefined, _maximiseToggleEvent: Header.MaximiseToggleEvent | undefined, _clickEvent: Header.ClickEvent | undefined, _touchStartEvent: Header.TouchStartEvent | undefined, _componentRemoveEvent: Header.ComponentRemoveEvent | undefined, _componentActivateEvent: Header.ComponentActivateEvent | undefined, _componentDragStartEvent: Header.ComponentDragStartEvent | undefined, _stateChangedEvent: Header.StateChangedEvent | undefined);
+    constructor(_layoutManager: LayoutManager, _parent: Stack, settings: Header.Settings, _configClosable: boolean, closeEvent: Header.CloseEvent, _dockEvent: Header.DockEvent | undefined, _popoutEvent: Header.PopoutEvent | undefined, _maximiseToggleEvent: Header.MaximiseToggleEvent | undefined, _clickEvent: Header.ClickEvent | undefined, _touchStartEvent: Header.TouchStartEvent | undefined, _componentRemoveEvent: Header.ComponentRemoveEvent | undefined, _componentFocusEvent: Header.ComponentFocusEvent | undefined, _componentDragStartEvent: Header.ComponentDragStartEvent | undefined, _stateChangedEvent: Header.StateChangedEvent | undefined);
     // @deprecated
     get activeContentItem(): ContentItem | null;
     // @deprecated (undocumented)
@@ -513,12 +537,12 @@ export namespace Header {
     export type ClickEvent = (this: void, ev: MouseEvent) => void;
     // @internal (undocumented)
     export type CloseEvent = (this: void) => void;
-    // @internal (undocumented)
-    export type ComponentActivateEvent = (this: void, componentItem: ComponentItem) => void;
     // Warning: (ae-forgotten-export) The symbol "DragListener" needs to be exported by the entry point index.d.ts
     //
     // @internal (undocumented)
     export type ComponentDragStartEvent = (this: void, x: number, y: number, dragListener: DragListener, componentItem: ComponentItem) => void;
+    // @internal (undocumented)
+    export type ComponentFocusEvent = (this: void, componentItem: ComponentItem) => void;
     // @internal (undocumented)
     export type ComponentRemoveEvent = (this: void, componentItem: ComponentItem) => void;
     // @internal (undocumented)
@@ -712,8 +736,6 @@ export interface LayoutConfig {
     header?: LayoutConfig.Header;
     // @deprecated (undocumented)
     labels?: LayoutConfig.Labels;
-    // @deprecated (undocumented)
-    maximisedItemId?: string | null;
     // (undocumented)
     openPopouts?: PopoutLayoutConfig[];
     // (undocumented)
@@ -814,8 +836,7 @@ export abstract class LayoutManager extends EventEmitter {
     addSerialisableComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): number;
     // @internal (undocumented)
     calculateItemAreas(): void;
-    // @internal (undocumented)
-    clearSelectedItem(): void;
+    clearComponentFocus(suppressEvent?: boolean): void;
     // @internal
     closeWindow(): void;
     // (undocumented)
@@ -825,7 +846,7 @@ export abstract class LayoutManager extends EventEmitter {
     // @internal
     createContentItem(config: ResolvedItemConfig, parent: ContentItem): ContentItem;
     // Warning: (ae-forgotten-export) The symbol "DragSource" needs to be exported by the entry point index.d.ts
-    createDragSource(element: HTMLElement, itemConfig: ResolvedComponentItemConfig | (() => ResolvedComponentItemConfig)): DragSource | undefined;
+    createDragSource(element: HTMLElement, itemConfig: ResolvedComponentItemConfig | (() => ResolvedComponentItemConfig), extraAllowableChildTargets?: HTMLElement[]): DragSource | undefined;
     createPopout(itemConfigOrContentItem: ContentItem | ResolvedRootItemConfig, positionAndSize: ResolvedPopoutLayoutConfig.Window, parentId: string | null, indexInParent: number | null): BrowserPopout;
     // @internal (undocumented)
     createPopoutFromContentItem(item: ContentItem, window: ResolvedPopoutLayoutConfig.Window | undefined, parentId: string | null, indexInParent: number | null | undefined): BrowserPopout;
@@ -840,6 +861,9 @@ export abstract class LayoutManager extends EventEmitter {
     //
     // @internal (undocumented)
     get eventHub(): EventHub;
+    focusComponent(item: ComponentItem, suppressEvent?: boolean): void;
+    // (undocumented)
+    get focusedComponentItem(): ComponentItem | undefined;
     // @internal (undocumented)
     getArea(x: number, y: number): ContentItem.Area | null;
     // @internal (undocumented)
@@ -848,8 +872,10 @@ export abstract class LayoutManager extends EventEmitter {
     getComponentInstantiator(config: ResolvedComponentItemConfig): LayoutManager.ComponentInstantiator | undefined;
     // (undocumented)
     getRegisteredComponentTypeNames(): string[];
+    // Warning: (ae-forgotten-export) The symbol "GroundItem" needs to be exported by the entry point index.d.ts
+    //
     // @internal (undocumented)
-    get groundItem(): GroundItem | null;
+    get groundItem(): GroundItem | undefined;
     // (undocumented)
     get height(): number | null;
     // @internal
@@ -887,13 +913,11 @@ export abstract class LayoutManager extends EventEmitter {
     releaseComponentEvent: LayoutManager.ReleaseComponentEventHandler | undefined;
     removeDragSource(dragSource: DragSource): void;
     // @internal @deprecated (undocumented)
-    get root(): GroundItem | null;
+    get root(): GroundItem | undefined;
     // (undocumented)
     get rootItem(): ContentItem | undefined;
     saveLayout(): ResolvedLayoutConfig;
-    // (undocumented)
-    get selectedItem(): ContentItem | null;
-    selectItem(item: ContentItem, silent: boolean): void;
+    setFocusedComponentItem(item: ComponentItem | undefined, suppressEvents?: boolean): void;
     setSize(width: number, height: number): void;
     // @internal (undocumented)
     startComponentDrag(x: number, y: number, dragListener: DragListener, componentItem: ComponentItem, stack: Stack): void;
@@ -938,6 +962,10 @@ export namespace LayoutManager {
         // (undocumented)
         layoutConfig: ResolvedLayoutConfig | undefined;
     }
+    // (undocumented)
+    export function createMaximisePlaceElement(document: Document): HTMLElement;
+    // (undocumented)
+    export function createTabDropPlaceholderElement(document: Document): HTMLElement;
     // (undocumented)
     export type GetComponentConstructorCallback = (this: void, config: ResolvedComponentItemConfig) => ComponentConstructor;
     // (undocumented)
@@ -1499,11 +1527,11 @@ export namespace Side {
 }
 
 // @public (undocumented)
-export class Stack extends ContentItem {
+export class Stack extends ComponentParentableItem {
     // @internal
     constructor(layoutManager: LayoutManager, config: ResolvedStackItemConfig, _stackParent: Stack.Parent);
     // (undocumented)
-    addChild(contentItem: ContentItem, index?: number): number;
+    addChild(contentItem: ContentItem, index?: number, focus?: boolean): number;
     // (undocumented)
     addItem(itemConfig: ComponentItemConfig, index?: number): number;
     // (undocumented)
@@ -1511,7 +1539,7 @@ export class Stack extends ContentItem {
     // (undocumented)
     get childElementContainer(): HTMLElement;
     // @internal (undocumented)
-    get contentAreaDimensions(): Stack.ContentAreaDimensions | null;
+    get contentAreaDimensions(): Stack.ContentAreaDimensions | undefined;
     // @internal (undocumented)
     destroy(): void;
     // @internal (undocumented)
@@ -1553,13 +1581,15 @@ export class Stack extends ContentItem {
     // (undocumented)
     removeChild(contentItem: ContentItem, keepChild: boolean): void;
     // (undocumented)
-    setActiveComponentItem(componentItem: ComponentItem): void;
+    setActiveComponentItem(componentItem: ComponentItem, focus: boolean): void;
     // @deprecated (undocumented)
     setActiveContentItem(item: ContentItem): void;
     // @internal (undocumented)
     setDockable(value: boolean): void;
     // @internal (undocumented)
     setDocked(value: Stack.Docker): void;
+    // @internal (undocumented)
+    setFocusedValue(value: boolean): void;
     // @internal (undocumented)
     setParent(parent: ContentItem): void;
     // @internal (undocumented)
@@ -1586,6 +1616,8 @@ export namespace Stack {
     export type ContentAreaDimensions = {
         [segment: string]: ContentAreaDimension;
     };
+    // @internal (undocumented)
+    export function createElement(document: Document): HTMLDivElement;
     // @internal (undocumented)
     export interface Docker {
         // (undocumented)
@@ -1619,8 +1651,6 @@ export namespace Stack {
         // (undocumented)
         Top = "top"
     }
-    const // @internal (undocumented)
-    templateHtml = "<div class=\"lm_item lm_stack\"></div>";
 }
 
 // @public (undocumented)
@@ -1643,7 +1673,7 @@ export namespace StackItemConfig {
 // @public
 export class Tab {
     // @internal
-    constructor(_layoutManager: LayoutManager, _componentItem: ComponentItem, _closeEvent: Tab.CloseEvent | undefined, _activateEvent: Tab.ActivateEvent | undefined, _dragStartEvent: Tab.DragStartEvent | undefined);
+    constructor(_layoutManager: LayoutManager, _componentItem: ComponentItem, _closeEvent: Tab.CloseEvent | undefined, _focusEvent: Tab.FocusEvent | undefined, _dragStartEvent: Tab.DragStartEvent | undefined);
     // (undocumented)
     get closeElement(): HTMLElement | undefined;
     // (undocumented)
@@ -1667,11 +1697,11 @@ export class Tab {
 // @public (undocumented)
 export namespace Tab {
     // @internal (undocumented)
-    export type ActivateEvent = (componentItem: ComponentItem) => void;
-    // @internal (undocumented)
     export type CloseEvent = (componentItem: ComponentItem) => void;
     // @internal (undocumented)
     export type DragStartEvent = (x: number, y: number, dragListener: DragListener, componentItem: ComponentItem) => void;
+    // @internal (undocumented)
+    export type FocusEvent = (componentItem: ComponentItem) => void;
 }
 
 // Warning: (ae-internal-missing-underscore) The name "WidthAndHeight" should be prefixed with an underscore because the declaration is marked as @internal

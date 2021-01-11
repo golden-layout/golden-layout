@@ -15,20 +15,21 @@ import { DragSource } from './controls/drag-source';
 import { DropTargetIndicator } from './controls/drop-target-indicator';
 import { TransitionIndicator } from './controls/transition-indicator';
 import { ApiError, ConfigurationError } from './errors/external-error';
-import { AssertError, UnexpectedNullError, UnreachableCaseError } from './errors/internal-error';
+import { AssertError, UnexpectedNullError, UnexpectedUndefinedError, UnreachableCaseError } from './errors/internal-error';
 import { ComponentItem } from './items/component-item';
+import { ComponentParentableItem } from './items/component-parentable-item';
 import { ContentItem } from './items/content-item';
 import { GroundItem } from './items/ground-item';
 import { RowOrColumn } from './items/row-or-column';
 import { Stack } from './items/stack';
 import { ConfigMinifier } from './utils/config-minifier';
+import { DomConstants } from './utils/dom-constants';
 import { DragListener } from './utils/drag-listener';
 import { EventEmitter } from './utils/event-emitter';
 import { EventHub } from './utils/event-hub';
 import { I18nStringId, I18nStrings, i18nStrings } from './utils/i18n-strings';
 import { ItemType, JsonValue, Rect, ResponsiveMode } from './utils/types';
 import {
-    createTemplateHtmlElement,
     deepExtendValue,
     getElementWidthAndHeight,
     removeFromArray,
@@ -56,7 +57,7 @@ export abstract class LayoutManager extends EventEmitter {
     /** @internal */
     private _isInitialised = false;
     /** @internal */
-    private _groundItem: GroundItem | null = null;
+    private _groundItem: GroundItem | undefined = undefined;
     /** @internal */
     private _openPopouts: BrowserPopout[] = [];
     /** @internal */
@@ -72,9 +73,9 @@ export abstract class LayoutManager extends EventEmitter {
     /** @internal */
     private _maximisedItem: ContentItem | null = null;
     /** @internal */
-    private _maximisePlaceholder = createTemplateHtmlElement('<div class="lm_maximise_place"></div>');
+    private _maximisePlaceholder = LayoutManager.createMaximisePlaceElement(document);
     /** @internal */
-    private _tabDropPlaceholder = createTemplateHtmlElement('<div class="lm_drop_tab_placeholder"></div>');
+    private _tabDropPlaceholder = LayoutManager.createTabDropPlaceholderElement(document);
     /** @internal */
     private _dragSources: DragSource[] = [];
     /** @internal */
@@ -88,7 +89,7 @@ export abstract class LayoutManager extends EventEmitter {
     /** @internal */
     private _height: number | null = null;
     /** @internal */
-    private _selectedItem: ContentItem | null = null;
+    private _focusedComponentItem: ComponentItem | undefined;
 
     /** @internal */
     private _getComponentConstructorFtn: LayoutManager.GetComponentConstructorCallback;
@@ -121,9 +122,9 @@ export abstract class LayoutManager extends EventEmitter {
     get container(): HTMLElement { return this._containerElement; }
     get isInitialised(): boolean { return this._isInitialised; }
     /** @internal */
-    get groundItem(): GroundItem | null { return this._groundItem; }
+    get groundItem(): GroundItem | undefined { return this._groundItem; }
     /** @internal @deprecated use {@link (LayoutManager:class).groundItem} instead */
-    get root(): GroundItem | null { return this._groundItem; }
+    get root(): GroundItem | undefined { return this._groundItem; }
     get openPopouts(): BrowserPopout[] { return this._openPopouts; }
     /** @internal */
     get dropTargetIndicator(): DropTargetIndicator | null { return this._dropTargetIndicator; }
@@ -134,7 +135,7 @@ export abstract class LayoutManager extends EventEmitter {
     /** @internal */
     get eventHub(): EventHub { return this._eventHub; }
     get rootItem(): ContentItem | undefined {
-        if (this._groundItem === null) {
+        if (this._groundItem === undefined) {
             throw new Error('Cannot access rootItem before init');
         } else {
             const groundContentItems = this._groundItem.contentItems;
@@ -145,7 +146,7 @@ export abstract class LayoutManager extends EventEmitter {
             }
         }
     }
-    get selectedItem(): ContentItem | null { return this._selectedItem; }
+    get focusedComponentItem(): ComponentItem | undefined { return this._focusedComponentItem; }
     /** @internal */
     get tabDropPlaceholder(): HTMLElement { return this._tabDropPlaceholder; }
 
@@ -188,7 +189,7 @@ export abstract class LayoutManager extends EventEmitter {
             }
             globalThis.removeEventListener('unload', this._windowUnloadListener);
             globalThis.removeEventListener('beforeunload', this._windowUnloadListener);
-            if (this._groundItem !== null) {
+            if (this._groundItem !== undefined) {
                 this._groundItem.destroy();
             }
             this._tabDropPlaceholder.remove();
@@ -462,8 +463,8 @@ export abstract class LayoutManager extends EventEmitter {
             // In case application not correctly using legacy constructor
             throw new Error('GoldenLayout: Need to call init() if LayoutConfig with defined root passed to constructor')
         } else {
-            if (this._groundItem === null) {
-                throw new UnexpectedNullError('LMLL11119');
+            if (this._groundItem === undefined) {
+                throw new UnexpectedUndefinedError('LMLL11119');
             } else {
                 this.layoutConfig = LayoutConfig.resolve(layoutConfig);
                 this._groundItem.loadRoot(this.layoutConfig.root);
@@ -491,8 +492,8 @@ export abstract class LayoutManager extends EventEmitter {
             /*
             * Content
             */
-            if (this._groundItem === null) {
-                throw new UnexpectedNullError('LMTC18244');
+            if (this._groundItem === undefined) {
+                throw new UnexpectedUndefinedError('LMTC18244');
             } else {
                 const groundContent = this._groundItem.calculateConfigContent();
 
@@ -540,7 +541,7 @@ export abstract class LayoutManager extends EventEmitter {
      * @returns New ContentItem created.
     */
     newItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig,  index?: number): ContentItem {
-        if (this._groundItem === null) {
+        if (this._groundItem === undefined) {
             throw new Error('Cannot add item before init');
         } else {
             return this._groundItem.newItem(itemConfig, index);
@@ -554,7 +555,7 @@ export abstract class LayoutManager extends EventEmitter {
      * @returns -1 if added as root otherwise index in root ContentItem's content
     */
     addItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig,  index?: number): number {
-        if (this._groundItem === null) {
+        if (this._groundItem === undefined) {
             throw new Error('Cannot add item before init');
         } else {
             return this._groundItem.addItem(itemConfig, index);
@@ -569,7 +570,7 @@ export abstract class LayoutManager extends EventEmitter {
      * @returns New ComponentItem created.
      */
     newSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): ComponentItem {
-        if (this._groundItem === null) {
+        if (this._groundItem === undefined) {
             throw new Error('Cannot add component before init');
         } else {
             return this._groundItem.newSerialisableComponent(componentTypeName, componentState, index);
@@ -584,7 +585,7 @@ export abstract class LayoutManager extends EventEmitter {
      * @returns -1 if added as root otherwise index in root ContentItem's content
      */
     addSerialisableComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): number {
-        if (this._groundItem === null) {
+        if (this._groundItem === undefined) {
             throw new Error('Cannot add component before init');
         } else {
             const itemConfig: SerialisableComponentConfig = {
@@ -601,7 +602,7 @@ export abstract class LayoutManager extends EventEmitter {
      * Note that, if this layout is saved and reloaded, it will reload with the Component as a child of a Stack.
     */
     loadComponentAsRoot(itemConfig: ComponentItemConfig): void {
-        if (this._groundItem === null) {
+        if (this._groundItem === undefined) {
             throw new Error('Cannot add item before init');
         } else {
             this._groundItem.loadComponentAsRoot(itemConfig);
@@ -624,8 +625,8 @@ export abstract class LayoutManager extends EventEmitter {
         this._height = height;
 
         if (this._isInitialised === true) {
-            if (this._groundItem === null) {
-                throw new UnexpectedNullError('LMUS18881');
+            if (this._groundItem === undefined) {
+                throw new UnexpectedUndefinedError('LMUS18881');
             } else {
                 this._groundItem.setSize(this._width, this._height);
 
@@ -651,8 +652,8 @@ export abstract class LayoutManager extends EventEmitter {
      * Update the size of the root ContentItem.  This will update the size of all contentItems in the tree
      */
     updateRootSize(): void {
-        if (this._groundItem === null) {
-            throw new UnexpectedNullError('LMURS28881');
+        if (this._groundItem === undefined) {
+            throw new UnexpectedUndefinedError('LMURS28881');
         } else {
             this._groundItem.updateSize();
         }
@@ -858,11 +859,14 @@ export abstract class LayoutManager extends EventEmitter {
 	 *          removeDragSource() later to get rid of the drag listeners.
      *          2) undefined if constrainDragToContainer is specified
      */
-    createDragSource(element: HTMLElement, itemConfig: ResolvedComponentItemConfig | (() => ResolvedComponentItemConfig)): DragSource | undefined {
+    createDragSource(element: HTMLElement,
+        itemConfig: ResolvedComponentItemConfig | (() => ResolvedComponentItemConfig),
+        extraAllowableChildTargets: HTMLElement[] = [],
+    ): DragSource | undefined {
         if (this.layoutConfig.settings.constrainDragToContainer) {
             return undefined;
         } else {
-            const dragSource = new DragSource(element, itemConfig, this);
+            const dragSource = new DragSource(element, extraAllowableChildTargets, itemConfig, this);
             this._dragSources.push(dragSource);
 
             return dragSource;
@@ -891,34 +895,63 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /**
-     * Programmatically selects an item. This deselects
-     * the currently selected item, selects the specified item
-     * and emits a selectionChanged event
+     * Programmatically focuses an item. This focuses the specified component item
+     * and the item emits a focus event
      *
-     * @param item -
-     * @param silent - Whether to notify the item of its selection
+     * @param item - The component item to be focused
+     * @param suppressEvent - Whether to emit focus event
      */
-    selectItem(item: ContentItem, silent: boolean): void {
-        if (item === this._selectedItem) {
-            return;
-        }
-
-        if (this._selectedItem !== null) {
-            this._selectedItem.deselect();
-        }
-
-        if (item && silent !== true) {
-            item.select();
-        }
-
-        this._selectedItem = item;
-
-        this.emit('selectionChanged', item);
+    focusComponent(item: ComponentItem, suppressEvent = false): void {
+        this.setFocusedComponentItem(item, suppressEvent);
     }
 
-    /** @Internal */
-    clearSelectedItem(): void {
-        this._selectedItem = null;
+    /**
+     * Programmatically blurs (defocuses) the currently focused component.
+     * If a component item is focused, then it is blurred and and the item emits a blur event
+     *
+     * @param item - The component item to be blurred
+     * @param suppressEvent - Whether to emit blur event
+     */
+    clearComponentFocus(suppressEvent = false): void {
+        this.setFocusedComponentItem(undefined, suppressEvent);
+    }
+
+    /**
+     * Programmatically focuses a component item or removes focus (blurs) from an existing focused component item.
+     *
+     * @param item - If defined, specifies the component item to be given focus.  If undefined, clear component focus.
+     * @param suppressEvents - Whether to emit focus and blur events
+     */
+    setFocusedComponentItem(item: ComponentItem | undefined, suppressEvents = false): void {
+        if (item !== this._focusedComponentItem) {
+
+            let newFocusedParentItem: ComponentParentableItem | undefined;
+            if (item === undefined) {
+                newFocusedParentItem === undefined;
+            } else {
+                newFocusedParentItem = item.parentItem;
+            }
+
+            if (this._focusedComponentItem !== undefined) {
+                const oldFocusedItem = this._focusedComponentItem;
+                this._focusedComponentItem = undefined;
+                oldFocusedItem.setBlurred(suppressEvents);
+                const oldFocusedParentItem = oldFocusedItem.parentItem;
+                if (newFocusedParentItem === oldFocusedParentItem) {
+                    newFocusedParentItem = undefined;
+                } else {
+                    oldFocusedParentItem.setFocusedValue(false);
+                }
+            }
+
+            if (item !== undefined) {
+                this._focusedComponentItem = item;
+                item.setFocused(suppressEvents);
+                if (newFocusedParentItem !== undefined) {
+                    newFocusedParentItem.setFocusedValue(true);
+                }
+            }
+        }
     }
 
     /** @internal */
@@ -945,8 +978,8 @@ export abstract class LayoutManager extends EventEmitter {
         contentItem.on('beforeItemDestroyed', this._maximisedItemBeforeDestroyedListener);
         contentItem.element.classList.add('lm_maximised');
         contentItem.element.insertAdjacentElement('afterend', this._maximisePlaceholder);
-        if (this._groundItem === null) {
-            throw new UnexpectedNullError('LMMXI19993');
+        if (this._groundItem === undefined) {
+            throw new UnexpectedUndefinedError('LMMXI19993');
         } else {
             this._groundItem.element.prepend(contentItem.element);
             const { width, height } = getElementWidthAndHeight(this._containerElement);
@@ -1020,7 +1053,7 @@ export abstract class LayoutManager extends EventEmitter {
 
     /** @internal */
     private cleanupBeforeMaximisedItemDestroyed(event: EventEmitter.BubblingEvent) {
-		if (this._maximisedItem !== null && this._maximisedItem === event.origin) {
+		if (this._maximisedItem !== null && this._maximisedItem === event.target) {
 			this._maximisedItem.off( 'beforeItemDestroyed', this._maximisedItemBeforeDestroyedListener);
 			this._maximisedItem = null;
 		}
@@ -1076,8 +1109,8 @@ export abstract class LayoutManager extends EventEmitter {
          * will used for every gap in the layout, e.g. splitters
          */
         const groundItem = this._groundItem;
-        if (groundItem === null) {
-            throw new UnexpectedNullError('LMCIAR44365');
+        if (groundItem === undefined) {
+            throw new UnexpectedUndefinedError('LMCIAR44365');
         } else {
             if (allContentItems.length === 1) {
                 // No root ContentItem (just Ground ContentItem)
@@ -1107,8 +1140,8 @@ export abstract class LayoutManager extends EventEmitter {
                         } else {
                             this._itemAreas.push(area);
                             const stackContentAreaDimensions = stack.contentAreaDimensions;
-                            if (stackContentAreaDimensions === null) {
-                                throw new UnexpectedNullError('LMCIASC45599');
+                            if (stackContentAreaDimensions === undefined) {
+                                throw new UnexpectedUndefinedError('LMCIASC45599');
                             } else {
                                 const highlightArea = stackContentAreaDimensions.header.highlightArea
                                 const surface = (highlightArea.x2 - highlightArea.x1) * (highlightArea.y2 - highlightArea.y1);
@@ -1136,8 +1169,8 @@ export abstract class LayoutManager extends EventEmitter {
      * @internal
      */
     private checkLoadedLayoutMaximiseItem() {
-        if (this._groundItem === null) {
-            throw new UnexpectedNullError('LMCLLMI43432');
+        if (this._groundItem === undefined) {
+            throw new UnexpectedUndefinedError('LMCLLMI43432');
         } else {
             const configMaximisedItems = this._groundItem.getConfigMaximisedItems();
 
@@ -1190,8 +1223,8 @@ export abstract class LayoutManager extends EventEmitter {
      * @internal
      */
     private getAllContentItems() {
-        if (this._groundItem === null) {
-            throw new UnexpectedNullError('LMGACI13130');
+        if (this._groundItem === undefined) {
+            throw new UnexpectedUndefinedError('LMGACI13130');
         } else {
             return this._groundItem.getAllContentItems();
         }
@@ -1259,8 +1292,8 @@ export abstract class LayoutManager extends EventEmitter {
      * @internal
      */
     private adjustColumnsResponsive() {
-        if (this._groundItem === null) {
-            throw new UnexpectedNullError('LMACR20883');
+        if (this._groundItem === undefined) {
+            throw new UnexpectedUndefinedError('LMACR20883');
         } else {
             this._firstLoad = false;
             // If there is no min width set, or not content items, do nothing.
@@ -1269,8 +1302,8 @@ export abstract class LayoutManager extends EventEmitter {
                 this._groundItem.contentItems.length > 0 &&
                 this._groundItem.contentItems[0].isRow)
             {
-                if (this._groundItem === null || this._width === null) {
-                    throw new UnexpectedNullError('LMACR77412');
+                if (this._groundItem === undefined || this._width === null) {
+                    throw new UnexpectedUndefinedError('LMACR77412');
                 } else {
                     // If there is only one column, do nothing.
                     const columnCount = this._groundItem.contentItems[0].contentItems.length;
@@ -1352,8 +1385,8 @@ export abstract class LayoutManager extends EventEmitter {
      * @internal
      */
     private getAllStacks() {
-        if (this._groundItem === null) {
-            throw new UnexpectedNullError('LMFASC52778');
+        if (this._groundItem === undefined) {
+            throw new UnexpectedUndefinedError('LMFASC52778');
         } else {
             const stacks: Stack[] = [];
             this.findAllStacksRecursive(stacks, this._groundItem);
@@ -1388,7 +1421,7 @@ export abstract class LayoutManager extends EventEmitter {
 export namespace LayoutManager {
     export type ComponentConstructor = new(container: ComponentContainer, state: JsonValue | undefined) => ComponentItem.Component;
     export type ComponentFactoryFunction = (container: ComponentContainer, state: JsonValue | undefined) => ComponentItem.Component;
-   export type GetComponentConstructorCallback = (this: void, config: ResolvedComponentItemConfig) => ComponentConstructor
+    export type GetComponentConstructorCallback = (this: void, config: ResolvedComponentItemConfig) => ComponentConstructor
     export type GetComponentEventHandler =
         (this: void, container: ComponentContainer, itemConfig: ResolvedComponentItemConfig) => ComponentItem.Component;
     export type ReleaseComponentEventHandler =
@@ -1399,6 +1432,18 @@ export namespace LayoutManager {
         layoutConfig: ResolvedLayoutConfig | undefined;
         isSubWindow: boolean;
         containerElement: HTMLElement | undefined;
+    }
+
+    export function createMaximisePlaceElement(document: Document): HTMLElement {
+        const element = document.createElement('div');
+        element.classList.add(DomConstants.ClassName.MaximisePlace);
+        return element;
+    }
+
+    export function createTabDropPlaceholderElement(document: Document): HTMLElement {
+        const element = document.createElement('div');
+        element.classList.add(DomConstants.ClassName.DropTabPlaceholder);
+        return element;
     }
 
     /** @public */

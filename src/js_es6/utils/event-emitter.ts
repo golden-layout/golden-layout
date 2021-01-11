@@ -172,7 +172,6 @@ export namespace EventEmitter {
     export interface EventParamsMap {
         "__all": UnknownParams;
         "activeContentItemChanged": UnknownParam;
-        "beforeItemDestroyed": BubblingEventParam;
         "close": NoParams;
         "closed": NoParams;
         "destroy": NoParams;
@@ -181,15 +180,12 @@ export namespace EventEmitter {
         "dragStop": DragStopParams;
         "hide": NoParams;
         "initialised": NoParams;
-        "itemCreated": BubblingEventParam;
-        "itemDestroyed": BubblingEventParam;
         "itemDropped": UnknownParam;
         "maximised": NoParams;
         "minimised": NoParams;
         "open": NoParams;
         "popIn": NoParams;
         "resize": NoParams;
-        "selectionChanged": UnknownParam;
         "show": NoParams;
         "shown": NoParams;
         "stateChanged": NoParams;
@@ -199,6 +195,11 @@ export namespace EventEmitter {
         "windowClosed": UnknownParam;
         "windowOpened": UnknownParam;
         "beforeComponentRelease": BeforeComponentReleaseParams;
+        "beforeItemDestroyed": BubblingEventParam;
+        "itemCreated": BubblingEventParam;
+        "itemDestroyed": BubblingEventParam;
+        "focus": BubblingEventParam;
+        "blur": BubblingEventParam;
         "stackHeaderClick": ClickBubblingEventParam;
         "stackHeaderTouchStart": TouchStartBubblingEventParam;
     }
@@ -219,9 +220,11 @@ export namespace EventEmitter {
         isPropagationStopped = false;
 
         get name(): string { return this._name; }
-        get origin(): EventEmitter { return this._origin; }
+        get target(): EventEmitter { return this._target; }
+        /** @deprecated Use {@link (EventEmitter:namespace).(BubblingEvent:class).target} instead */
+        get origin(): EventEmitter { return this._target; }
     
-        constructor(private readonly _name: string, private readonly _origin: EventEmitter) {
+        constructor(private readonly _name: string, private readonly _target: EventEmitter) {
         }
     
         stopPropagation(): void {
@@ -232,16 +235,16 @@ export namespace EventEmitter {
     export class ClickBubblingEvent extends BubblingEvent {
         get mouseEvent(): MouseEvent { return this._mouseEvent; }
 
-        constructor(name: string, origin: EventEmitter, private readonly _mouseEvent: MouseEvent) {
-            super(name, origin);
+        constructor(name: string, target: EventEmitter, private readonly _mouseEvent: MouseEvent) {
+            super(name, target);
         }
     }
 
     export class TouchStartBubblingEvent extends BubblingEvent {
         get touchEvent(): TouchEvent { return this._touchEvent; }
 
-        constructor(name: string, origin: EventEmitter, private readonly _touchEvent: TouchEvent) {
-            super(name, origin);
+        constructor(name: string, target: EventEmitter, private readonly _touchEvent: TouchEvent) {
+            super(name, target);
         }
     }
 

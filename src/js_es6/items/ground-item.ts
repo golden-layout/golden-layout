@@ -5,6 +5,7 @@ import { LayoutManager } from '../layout-manager';
 import { AreaLinkedRect, ItemType, JsonValue } from '../utils/types';
 import { createTemplateHtmlElement, getElementWidthAndHeight, setElementHeight, setElementWidth } from '../utils/utils';
 import { ComponentItem } from './component-item';
+import { ComponentParentableItem } from './component-parentable-item';
 import { ContentItem } from './content-item';
 import { RowOrColumn } from './row-or-column';
 
@@ -14,7 +15,7 @@ import { RowOrColumn } from './row-or-column';
  * There is only one instance of GroundItem and it is automatically created by the Layout Manager
  * @internal
  */
-export class GroundItem extends ContentItem {
+export class GroundItem extends ComponentParentableItem {
     private readonly _childElementContainer: HTMLElement;
     private readonly _containerElement: HTMLElement;
 

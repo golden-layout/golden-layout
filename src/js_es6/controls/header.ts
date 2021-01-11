@@ -127,7 +127,7 @@ export class Header extends EventEmitter {
         private _clickEvent: Header.ClickEvent | undefined,
         private _touchStartEvent: Header.TouchStartEvent | undefined,
         private _componentRemoveEvent: Header.ComponentRemoveEvent | undefined,
-        private _componentActivateEvent: Header.ComponentActivateEvent | undefined,
+        private _componentFocusEvent: Header.ComponentFocusEvent | undefined,
         private _componentDragStartEvent: Header.ComponentDragStartEvent | undefined,
         private _stateChangedEvent: Header.StateChangedEvent | undefined,
     ) {
@@ -186,7 +186,7 @@ export class Header extends EventEmitter {
         this._clickEvent = undefined;
         this._touchStartEvent = undefined;
         this._componentRemoveEvent = undefined;
-        this._componentActivateEvent = undefined;
+        this._componentFocusEvent = undefined;
         this._componentDragStartEvent = undefined;
 
         for (let i = 0; i < this._tabs.length; i++) {
@@ -212,7 +212,7 @@ export class Header extends EventEmitter {
         const tab = new Tab(this._layoutManager,
             componentItem,
             (item) => this.handleTabCloseEvent(item),
-            (item) => this.handleTabActivateEvent(item),
+            (item) => this.handleTabFocusEvent(item),
             (x, y, dragListener, item) => this.handleTabDragStartEvent(x, y, dragListener, item));
 
         if (this._tabs.length === 0) {
@@ -527,11 +527,11 @@ export class Header extends EventEmitter {
     }
 
     /** @internal */
-    private handleTabActivateEvent(componentItem: ComponentItem) {
-        if (this._componentActivateEvent === undefined) {
+    private handleTabFocusEvent(componentItem: ComponentItem) {
+        if (this._componentFocusEvent === undefined) {
             throw new UnexpectedUndefinedError('HHTAE22294');
         } else {
-            this._componentActivateEvent(componentItem);
+            this._componentFocusEvent(componentItem);
         }
     }
 
@@ -701,7 +701,7 @@ export namespace Header {
     /** @internal */
     export type ComponentRemoveEvent = (this: void, componentItem: ComponentItem) => void;
     /** @internal */
-    export type ComponentActivateEvent = (this: void, componentItem: ComponentItem) => void;
+    export type ComponentFocusEvent = (this: void, componentItem: ComponentItem) => void;
     /** @internal */
     export type ComponentDragStartEvent = (this: void, x: number, y: number, dragListener: DragListener, componentItem: ComponentItem) => void;
     /** @internal */

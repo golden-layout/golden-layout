@@ -22,17 +22,15 @@ export class ComponentContainer extends EventEmitter {
     /** @internal */
     private _height: number | null;
     /** @internal */
-    private _isHidden;
-    /** @internal */
     private _isClosable;
     /** @internal */
     private _initialState: JsonValue | undefined;
     /** @internal */
     private _state: JsonValue | undefined;
     /** @internal */
-    private _isShownWithZeroDimensions;
+    private _isHidden;
     /** @internal */
-    private readonly _contentElement;
+    private _isShownWithZeroDimensions;
     /** @internal */
     private _tab: Tab;
 
@@ -49,17 +47,24 @@ export class ComponentContainer extends EventEmitter {
     get title(): string { return this._parent.title; }
     get layoutManager(): LayoutManager { return this._layoutManager; }
     get isHidden(): boolean { return this._isHidden; }
+    get state(): JsonValue | undefined { return this._state; }
     /** Return the initial component state */
     get initialState(): JsonValue | undefined { return this._initialState; }
     /** The inner DOM element where the container's content is intended to live in */
-    get contentElement(): HTMLElement { return this._contentElement; }
+    get element(): HTMLElement { return this._element; }
+
+    // componentItemConfig property is only used by incomplete ReactHandler.
+    // When ReactHandler is refactored and working, hopefully it will not need this anymore.
+    get componentItemConfig(): ResolvedComponentItemConfig { return this._config; }
 
     /** @internal */
-    constructor(config: ResolvedComponentItemConfig,
+    constructor(private readonly _config: ResolvedComponentItemConfig,
         private readonly _parent: ComponentItem,
         private readonly _layoutManager: LayoutManager,
         private readonly _element: HTMLElement,
         private readonly _updateItemConfigEvent: ComponentContainer.UpdateItemConfigEventHandler,
+        private readonly _showEvent: ComponentContainer.ShowEventHandler,
+        private readonly _hideEvent: ComponentContainer.HideEventHandler,
     ) {
         super();
 
@@ -68,31 +73,24 @@ export class ComponentContainer extends EventEmitter {
         this._isHidden = false;
         this._isShownWithZeroDimensions = false;
 
-        this._componentType = config.componentType;
-        this._isClosable = config.isClosable;
+        this._componentType = _config.componentType;
+        this._isClosable = _config.isClosable;
 
-        const contentElement = this._element.querySelector('.lm_content') as HTMLElement;
-        if (contentElement === null) {
-            throw new UnexpectedNullError('CCC11195');
-        } else {
-            this._contentElement = contentElement;
-        }
-
-        if (ResolvedComponentItemConfig.isSerialisable(config)) {
+        if (ResolvedComponentItemConfig.isSerialisable(_config)) {
             this._isReact = false;
-            this._initialState = config.componentState;
+            this._initialState = _config.componentState;
             this._state = this._initialState;
         } else {
-            if (ResolvedComponentItemConfig.isReact(config)) {
+            if (ResolvedComponentItemConfig.isReact(_config)) {
                 this._isReact = true;
-                this._initialState = config.props as JsonValue;
+                this._initialState = _config.props as JsonValue;
                 this._state = this._initialState;
             } else {
                 throw new AssertError('ICGS25546');
             }
         }
 
-        this._component = this.layoutManager.getComponent(this, config);
+        this._component = this.layoutManager.getComponent(this, _config);
     }
 
     /** @internal */
@@ -102,40 +100,41 @@ export class ComponentContainer extends EventEmitter {
         this.emit('destroy');
     }
 
-    /** @deprecated use {@link (ComponentContainer:class).contentElement } */
+    /** @deprecated use {@link (ComponentContainer:class).element } */
     getElement(): HTMLElement {
-        return this._contentElement;
+        return this._element;
     }
 
     /**
-     * Hide the container. Notifies the containers content first
-     * and then hides the DOM node. If the container is already hidden
-     * this should have no effect
+     * Hides the container's component item (and hence, the container) if not already hidden.
+     * Emits hide event prior to hiding the container.
      */
     hide(): void {
+        this._hideEvent();
+    }
+
+    /** @internal */
+    checkEmitHide(): void {
         if (!this._isHidden) {
             this.emit('hide');
             this._isHidden = true;
             this._isShownWithZeroDimensions = false;
         }
-        this._element.style.display = 'none';
     }
 
     /**
-     * Shows a previously hidden container. Notifies the
-     * containers content first and then shows the DOM element.
-     * If the container is already visible this has no effect.
+     * Shows the container's component item (and hence, the container) if not visible.
+     * Emits show event prior to hiding the container.
      */
     show(): void {
-        const wasHidden = this._isHidden;
-        if (wasHidden) {
-            this._isHidden = false;
-            this.emit('show');
-        }
-        this._element.style.display = '';
+        this._showEvent();
+    }
 
-        // emit shown only if the container has a valid size
-        if (wasHidden) {
+    /** @internal */
+    checkEmitShow(): void {
+        // emit 'shown' only if the container has a valid size
+        if (this._isHidden) {
+            this._isHidden = false;
             if (this._height === 0 && this._width === 0) {
                 this._isShownWithZeroDimensions = true;
             } else {
@@ -299,13 +298,11 @@ export class ComponentContainer extends EventEmitter {
     setDragSize(width: number, height: number): void {
         setElementWidth(this._element, width);
         setElementHeight(this._element, height);
-        setElementWidth(this._contentElement, width);
-        setElementHeight(this._contentElement, height);
     }
 
     /**
-     * Set's the containers size. Called by the container's component.
-     * To set the size programmatically from within the container please
+     * Set's the containers size. Called by the container's component item.
+     * To set the size programmatically from within the component itself,
      * use the public setSize method
      * @param width - in px
      * @param height - in px
@@ -315,13 +312,8 @@ export class ComponentContainer extends EventEmitter {
         if (width !== this._width || height !== this._height) {
             this._width = width;
             this._height = height;
-            // Previously tried to set offsetWidth and offsetHeight if full jQuery was available
-            // There is no simple alternative for setting offsetWidth/offsetHeight
-            // See if just setting width and height suffices.  If not, needs more work
-            // $.zepto ? this._contentElement.width(width) : this._contentElement.outerWidth(width);
-            // $.zepto ? this._contentElement.height(height) : this._contentElement.outerHeight(height);
-            setElementWidth(this._contentElement, width);
-            setElementHeight(this._contentElement, height);
+            setElementWidth(this._element, width);
+            setElementHeight(this._element, height);
             this.emit('resize');
             if (this._isShownWithZeroDimensions && (this._height !== 0 || this._width !== 0)) {
                 this._isShownWithZeroDimensions = false;
@@ -342,6 +334,10 @@ export type ItemContainer = ComponentContainer;
 /** @public */
 export namespace ComponentContainer {
     export type StateRequestEventHandler = (this: void) => JsonValue | undefined;
+    /** @internal */
+    export type ShowEventHandler = (this: void) => void;
+    /** @internal */
+    export type HideEventHandler = (this: void) => void;
     /** @internal */
     export type UpdateItemConfigEventHandler = (itemConfig: ResolvedComponentItemConfig) => void;
 }

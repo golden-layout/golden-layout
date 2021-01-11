@@ -51,7 +51,7 @@ export class ReactComponentHandler {
      */
     private render(): void {
         // probably wrong
-        ReactDOM.render(this.getReactComponent(), this._container.contentElement);
+        ReactDOM.render(this.getReactComponent(), this._container.element);
         // ReactDOM.render(this._getReactComponent(), this._container.getElement()[0]);
     }
 
@@ -80,7 +80,7 @@ export class ReactComponentHandler {
      * Removes the component from the DOM and thus invokes React's unmount lifecycle
      */
     private destroy(): void {
-        ReactDOM.unmountComponentAtNode(this._container.contentElement);
+        ReactDOM.unmountComponentAtNode(this._container.element);
         this._container.on('open', this._containerOpenListener);
         this._container.off('destroy', this._containerDestroyListener);
     }

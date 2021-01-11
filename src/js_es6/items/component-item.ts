@@ -3,11 +3,11 @@ import { ComponentContainer } from '../container/component-container';
 import { Tab } from '../controls/tab';
 import { UnexpectedNullError } from '../errors/internal-error';
 import { LayoutManager } from '../layout-manager';
+import { DomConstants } from '../utils/dom-constants';
 import { ItemType, JsonValue } from '../utils/types';
-import { createTemplateHtmlElement, getElementWidthAndHeight } from '../utils/utils';
+import { getElementWidthAndHeight, setElementHeight, setElementWidth } from '../utils/utils';
+import { ComponentParentableItem } from './component-parentable-item';
 import { ContentItem } from './content-item';
-import { GroundItem } from './ground-item';
-import { Stack } from './stack';
 
 /** @public */
 export class ComponentItem extends ContentItem {
@@ -27,6 +27,8 @@ export class ComponentItem extends ContentItem {
     private _container: ComponentContainer;
     /** @internal */
     private _tab: Tab;
+    /** @internal */
+    private _focused = false;
 
     /** @internal @deprecated use {@link (ComponentItem:class).componentType} */
     get componentName(): JsonValue { return this._container.componentType; }
@@ -36,17 +38,19 @@ export class ComponentItem extends ContentItem {
     get initialWantMaximise(): boolean { return this._initialWantMaximise; }
     get component(): ComponentItem.Component { return this._container.component; }
     get container(): ComponentContainer { return this._container; }
+    get parentItem(): ComponentParentableItem { return this._parentItem; }
 
     get headerConfig(): ResolvedHeaderedItemConfig.Header | undefined { return this._headerConfig; }
     get title(): string { return this._title; }
     get tab(): Tab { return this._tab; }
+    get focused(): boolean { return this._focused; }
 
     /** @internal */
     constructor(layoutManager: LayoutManager,
         config: ResolvedComponentItemConfig,
-        stackOrGroundItem: Stack | GroundItem
+        private readonly _parentItem: ComponentParentableItem
     ) {
-        super(layoutManager, config, stackOrGroundItem, createTemplateHtmlElement(ComponentItem.templateHtml));
+        super(layoutManager, config, _parentItem, document.createElement('div'));
 
         this.isComponent = true;
 
@@ -62,8 +66,14 @@ export class ComponentItem extends ContentItem {
         this.applyUpdatableConfig(config);
 
         this._initialWantMaximise = config.maximised;
-        this._container = new ComponentContainer(config, this, layoutManager, this.element,
-            (itemConfig) => this.handleUpdateItemConfigEvent(itemConfig)
+
+        const containerElement = document.createElement('div');
+        containerElement.classList.add('lm_content');
+        this.element.appendChild(containerElement);
+        this._container = new ComponentContainer(config, this, layoutManager, containerElement,
+            (itemConfig) => this.handleUpdateItemConfigEvent(itemConfig),
+            () => this.show(),
+            () => this.hide(),
         );
     }
 
@@ -80,7 +90,7 @@ export class ComponentItem extends ContentItem {
 
     toConfig(): ResolvedComponentItemConfig {
         const stateRequestEvent = this._container.stateRequestEvent;
-        const state = stateRequestEvent === undefined ? this._container.getState() : stateRequestEvent();
+        const state = stateRequestEvent === undefined ? this._container.state : stateRequestEvent();
 
         let result: ResolvedComponentItemConfig;
         if (this._isReact) {
@@ -138,6 +148,8 @@ export class ComponentItem extends ContentItem {
     setDragSize(width: number, height: number): void {
         if (this.element.style.display !== 'none') {
             // Do not update size of hidden components to prevent unwanted reflows
+            setElementWidth(this.element, width);
+            setElementHeight(this.element, height);
             this._container.setDragSize(width, height);
         }
     }
@@ -178,14 +190,46 @@ export class ComponentItem extends ContentItem {
 
     /** @internal */
     hide(): void {
-        this._container.hide();
+        this._container.checkEmitHide();
         super.hide();
     }
 
     /** @internal */
     show(): void {
-        this._container.show();
+        this._container.checkEmitShow();
         super.show();
+    }
+
+    /**
+     * Focuses the item if it is not already focused
+     */
+    focus(suppressEvent = false): void {
+        this.layoutManager.setFocusedComponentItem(this, suppressEvent); 
+    }
+
+    /** @internal */
+    setBlurred(suppressEvent: boolean): void {
+        this._focused = false;
+        this.tab.element.classList.remove(DomConstants.ClassName.Focused);
+        if (!suppressEvent) {
+            this.emitBaseBubblingEvent('blur');
+        }
+    }
+
+    /**
+     * Blurs (defocuses) the item if it is focused
+     */
+    blur(suppressEvent = false): void {
+        this.layoutManager.setFocusedComponentItem(undefined, suppressEvent); 
+    }
+
+    /** @internal */
+    setFocused(suppressEvent: boolean): void {
+        this._focused = true;
+        this.tab.element.classList.add(DomConstants.ClassName.Focused);
+        if (!suppressEvent) {
+            this.emitBaseBubblingEvent('focus');
+        }
     }
 
     /** @internal */
@@ -214,10 +258,4 @@ export type Component = ComponentItem;
 /** @public */
 export namespace ComponentItem {
     export type Component = unknown;
-
-    /** @internal */
-    export const templateHtml =
-        '<div class="lm_item_container"> ' +
-        '  <div class="lm_content"></div>' +
-        '</div>';
 }

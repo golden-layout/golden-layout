@@ -23,7 +23,7 @@ export class TextComponent {
         this._inputElement.type = "text";
         this._inputElement.value = textValue;
         this._inputElement.style.display = "block";
-        container.contentElement.appendChild(this._inputElement);
+        container.element.appendChild(this._inputElement);
 
         container.stateRequestEvent = () => this.handleContainerStateRequestEvent();
     }

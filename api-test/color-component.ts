@@ -28,7 +28,7 @@ export class ColorComponent {
         this._paraElement.style.color = color;
         const title = this._container.title;
         this._paraElement.innerText = (title ?? "unknown") + " component";
-        this._container.contentElement.appendChild(this._paraElement);
+        this._container.element.appendChild(this._paraElement);
 
         this._inputElement = document.createElement('input');
         this._inputElement.type = "text";
@@ -36,7 +36,7 @@ export class ColorComponent {
         this._inputElement.style.display = "block";
 
         this._inputElement.addEventListener('input', this._inputChangeListener, { passive: true });
-        this._container.contentElement.appendChild(this._inputElement);
+        this._container.element.appendChild(this._inputElement);
 
         this._container.stateRequestEvent = () => this.handleContainerStateRequestEvent();
         this._container.addEventListener('beforeComponentRelease', this._beforeComponentReleaseEventListener);
@@ -58,8 +58,8 @@ export class ColorComponent {
 
     private handleBeforeComponentReleaseEvent(): void {
         this._inputElement.removeEventListener('change', this._inputChangeListener);
-        this._container.contentElement.removeChild(this._inputElement);
-        this._container.contentElement.removeChild(this._paraElement);
+        this._container.element.removeChild(this._inputElement);
+        this._container.element.removeChild(this._paraElement);
         this._container.removeEventListener('shown', this._shownEventListener);
         this._container.removeEventListener('beforeComponentRelease', this._beforeComponentReleaseEventListener);
     }

@@ -14,7 +14,7 @@ export class GoldenLayout extends LayoutManager {
     * @param container - A Dom HTML element. Defaults to body
     */
    constructor(container?: HTMLElement);
-   /** @deprecated specify layoutConfig in {@link (LayoutManager:class).loadLayout}*/
+   /** @deprecated specify layoutConfig in {@link (LayoutManager:class).loadLayout} */
    constructor(config: LayoutConfig, container?: HTMLElement);
    /** @internal */
    constructor(configOrOptionalContainer: LayoutConfig | HTMLElement | undefined, container?: HTMLElement) {

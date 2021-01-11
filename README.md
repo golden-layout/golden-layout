@@ -173,9 +173,9 @@ Specifies the root content item of the layout (not the Ground content item).
 1. `Stack.getActiveContentItem()` and `Stack.setActiveContentItem()` have been renamed to respective `Stpack.getActiveComponentItem()` and `Stack.setActiveComponentItem()`
 
 #### ComponentContainer
-1. `contentElement` (new property - replaces `getElement()`)\
+1. `containerElement` (new property - replaces `getElement()`)\
 Returns HTMLElement which hosts component
-1. Do not use `getElement()`. Use the new `contentElement` property instead
+1. Do not use `getElement()`. Use the new `containerElement` property instead
 1. `initialState` (new getter)\
 Gets the componentState of the `ComponentItemConfig` used to create the contained component.
 1. `stateRequestEvent` (new event)\

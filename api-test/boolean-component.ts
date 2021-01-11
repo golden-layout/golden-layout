@@ -10,7 +10,7 @@ export class BooleanComponent {
         this._inputElement.type = "checkbox";
         this._inputElement.checked = (state as boolean) ?? true;
         this._inputElement.style.display = "block";
-        container.contentElement.appendChild(this._inputElement);
+        container.element.appendChild(this._inputElement);
 
         container.stateRequestEvent = () => this.handleContainerStateRequestEvent();
     }

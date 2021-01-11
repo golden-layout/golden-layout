@@ -509,8 +509,6 @@ export interface LayoutConfig {
     /** @deprecated use {@link (LayoutConfig:interface).header} instead */
     labels?: LayoutConfig.Labels;
     header?: LayoutConfig.Header;
-    /** @deprecated to be replaced in future (see comments in LayoutConfig) */
-    maximisedItemId?: string | null,
 }
 
 /** Use to specify LayoutConfig with defaults or deserialise a LayoutConfig.

@@ -138,8 +138,8 @@ export class BrowserPopout extends EventEmitter {
                 throw new UnexpectedUndefinedError('BPPIR19998');
             } else {
                 const groundItem = this._layoutManager.groundItem;
-                if (groundItem === null) {
-                    throw new UnexpectedNullError('BPPIG34972');
+                if (groundItem === undefined) {
+                    throw new UnexpectedUndefinedError('BPPIG34972');
                 } else {
                     parentItem = groundItem.getItemsByPopInParentId(this._config.parentId)[0];
 

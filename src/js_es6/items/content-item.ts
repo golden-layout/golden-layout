@@ -7,6 +7,7 @@ import { getJQueryOffset } from '../utils/jquery-legacy'
 import { AreaLinkedRect, ItemType } from '../utils/types'
 import { getUniqueId, setElementDisplayVisibility } from '../utils/utils'
 import { ComponentItem } from './component-item'
+import { ComponentParentableItem } from './component-parentable-item'
 import { Stack } from './stack'
 
 /**
@@ -66,6 +67,10 @@ export abstract class ContentItem extends EventEmitter {
 
     static isComponentItem(item: ContentItem): item is ComponentItem {
         return item.isComponent;
+    }
+
+    static isComponentParentableItem(item: ContentItem): item is ComponentParentableItem {
+        return item.isStack || item.isGround;
     }
 
     /** @internal */
@@ -252,26 +257,6 @@ export abstract class ContentItem extends EventEmitter {
         const browserPopout = this.layoutManager.createPopoutFromContentItem(this, undefined, parentId, undefined);
         this.emitBaseBubblingEvent('stateChanged');
         return browserPopout;
-    }
-
-    /**
-     * Selects the item if it is not already selected
-     */
-    select(): void {
-        if (this.layoutManager.selectedItem !== this) {
-            this.layoutManager.selectItem(this, true);
-            this._element.classList.add('lm_selected');
-        }
-    }
-
-    /**
-     * De-selects the item if it is selected
-     */
-    deselect(): void {
-        if (this.layoutManager.selectedItem === this) {
-            this.layoutManager.clearSelectedItem();
-            this._element.classList.remove('lm_selected');
-        }
     }
 
     abstract toConfig(): ResolvedItemConfig;

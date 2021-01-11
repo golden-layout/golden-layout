@@ -50,7 +50,7 @@ export class Tab {
     constructor(private readonly _layoutManager: LayoutManager,
         private _componentItem: ComponentItem,
         private _closeEvent: Tab.CloseEvent | undefined,
-        private _activateEvent: Tab.ActivateEvent | undefined,
+        private _focusEvent: Tab.FocusEvent | undefined,
         private _dragStartEvent: Tab.DragStartEvent | undefined
     ) {
         this._element = document.createElement('div');
@@ -74,7 +74,7 @@ export class Tab {
         const reorderEnabled = _componentItem.reorderEnabled ?? this._layoutManager.layoutConfig.settings.reorderEnabled;
 
         if (reorderEnabled) {
-            this._dragListener = new DragListener(this._element);
+            this._dragListener = new DragListener(this._element, [this._titleElement]);
             this._dragListener.on('dragStart', this._dragStartListener);
             this._componentItem.on('destroy', this._contentItemDestroyListener);
         }
@@ -129,7 +129,7 @@ export class Tab {
      */
     destroy(): void {
         this._closeEvent = undefined;
-        this._activateEvent = undefined;
+        this._focusEvent = undefined;
         this._dragStartEvent = undefined;
         this._element.removeEventListener('click', this._tabClickListener);
         this._element.removeEventListener('touchstart', this._tabTouchStartListener);
@@ -187,7 +187,7 @@ export class Tab {
             // left mouse button
             if (event.button === 0) {
                 // event.stopPropagation();
-                this.notifyActivate();
+                this.notifyFocus();
 
                 // middle mouse button
             } else if (event.button === 1 && this._componentItem.isClosable) {
@@ -200,7 +200,7 @@ export class Tab {
     /** @internal */
     private onTabTouchStart(event: TouchEvent) {
         if (event.target === this._element) {
-            this.notifyActivate();
+            this.notifyFocus();
         }
     }
 
@@ -236,11 +236,11 @@ export class Tab {
     }
 
     /** @internal */
-    private notifyActivate() {
-        if (this._activateEvent === undefined) {
+    private notifyFocus() {
+        if (this._focusEvent === undefined) {
             throw new UnexpectedUndefinedError('TNA15007');
         } else {
-            this._activateEvent(this._componentItem);
+            this._focusEvent(this._componentItem);
         }
     }
 }
@@ -250,7 +250,7 @@ export namespace Tab {
     /** @internal */
     export type CloseEvent = (componentItem: ComponentItem) => void;
     /** @internal */
-    export type ActivateEvent = (componentItem: ComponentItem) => void;
+    export type FocusEvent = (componentItem: ComponentItem) => void;
     /** @internal */
     export type DragStartEvent = (x: number, y: number, dragListener: DragListener, componentItem: ComponentItem) => void;
 }

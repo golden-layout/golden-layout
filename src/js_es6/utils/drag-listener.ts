@@ -1,8 +1,10 @@
+import { DomConstants } from './dom-constants';
 import { EventEmitter } from './event-emitter';
 
 /** @internal */
 export class DragListener extends EventEmitter {
     private _timeout: ReturnType<typeof setTimeout> | undefined;
+    private _allowableTargets: HTMLElement[];
     private _oDocument: Document;
     private _eBody: HTMLElement;
     private _nDelay: number;
@@ -22,11 +24,12 @@ export class DragListener extends EventEmitter {
     private _touchMoveEventListener = (ev: TouchEvent) => this.onTouchMove(ev);
     private _touchEndEventListener = (ev: TouchEvent) => this.onTouchEnd(ev);
 
-    constructor(private _eElement: HTMLElement) {
+    constructor(private _eElement: HTMLElement, extraAllowableChildTargets: HTMLElement[]) {
         super();
 
         this._timeout = undefined;
 
+        this._allowableTargets = [_eElement, ...extraAllowableChildTargets];
         this._oDocument = document;
         this._eBody = document.body;
 
@@ -60,8 +63,8 @@ export class DragListener extends EventEmitter {
     destroy(): void {
         this._eElement.removeEventListener('mousedown', this._mouseDownEventListener);
         this._eElement.removeEventListener('touchstart', this._touchStartEventListener);
-        this._oDocument.removeEventListener('mouseup', this._mouseUpEventListener);
-        this._oDocument.removeEventListener('touchend', this._touchEndEventListener);
+        globalThis.removeEventListener('mouseup', this._mouseUpEventListener);
+        globalThis.removeEventListener('touchend', this._touchEndEventListener);
     }
 
     cancelDrag(): void {
@@ -76,9 +79,8 @@ export class DragListener extends EventEmitter {
     }
 
     private onMouseDown(oEvent: MouseEvent) {
-        // oEvent.preventDefault();
-
-        if (oEvent.button === 0) {
+        console.log((oEvent.target as HTMLElement).classList[0], (oEvent.currentTarget as HTMLElement).classList[0]);
+        if (this._allowableTargets.includes(oEvent.target as HTMLElement) && oEvent.button === 0) {
             const coordinates = this.getMouseCoordinates(oEvent);
             this.processMouseDownTouchStart(coordinates);
         }
@@ -87,9 +89,11 @@ export class DragListener extends EventEmitter {
     private onTouchStart(oEvent: TouchEvent) {
         // oEvent.preventDefault();
 
-        const coordinates = this.getTouchCoordinates(oEvent);
-        if (coordinates !== undefined) {
-            this.processMouseDownTouchStart(coordinates);
+        if (this._allowableTargets.includes(oEvent.target as HTMLElement)) {
+            const coordinates = this.getTouchCoordinates(oEvent);
+            if (coordinates !== undefined) {
+                this.processMouseDownTouchStart(coordinates);
+            }
         }
     }
 
@@ -97,18 +101,20 @@ export class DragListener extends EventEmitter {
         this._nOriginalX = coordinates.x;
         this._nOriginalY = coordinates.y;
 
-        this._oDocument.addEventListener('mousemove', this._mouseMoveEventListener, { passive: true });
-        this._oDocument.addEventListener('touchmove', this._touchMoveEventListener, { passive: true });
-        this._oDocument.addEventListener('mouseup', this._mouseUpEventListener, { passive: true });
-        this._oDocument.addEventListener('touchend', this._touchEndEventListener, { passive: true });
+        globalThis.addEventListener('mousemove', this._mouseMoveEventListener);
+        globalThis.addEventListener('touchmove', this._touchMoveEventListener, { passive: true });
+        globalThis.addEventListener('mouseup', this._mouseUpEventListener, { passive: true });
+        globalThis.addEventListener('touchend', this._touchEndEventListener, { passive: true });
         this._mouseTouchTracking = true;
 
         this._timeout = setTimeout(() => this.startDrag(), this._nDelay);
     }
 
     private onMouseMove(oEvent: MouseEvent) {
+        console.log('mouseMove');
         if (this._mouseTouchTracking) {
-            // oEvent.preventDefault();
+            oEvent.preventDefault();
+            console.log('mouseMoveTracking');
 
             const coordinates = this.getMouseCoordinates(oEvent);
             const dragEvent: EventEmitter.DragEvent = {
@@ -143,11 +149,13 @@ export class DragListener extends EventEmitter {
         this._nY = dragEvent.pageY - this._nOriginalY;
 
         if (this._dragging === false) {
+            console.log('dragging', this._nX.toString(), this._nY.toString() );
             if (
                 Math.abs(this._nX) > this._nDistance ||
                 Math.abs(this._nY) > this._nDistance
             ) {
                 this.startDrag();
+                console.log('startDrag');
             }
         }
 
@@ -192,19 +200,21 @@ export class DragListener extends EventEmitter {
         }
 
         if (this._mouseTouchTracking) {
-            this._oDocument.removeEventListener('mousemove', this._mouseMoveEventListener);
-            this._oDocument.removeEventListener('touchmove', this._touchMoveEventListener);
-            this._oDocument.removeEventListener('mouseup', this._mouseUpEventListener);
-            this._oDocument.removeEventListener('touchend', this._touchEndEventListener);
+            console.log('mouseMoveStop');
+            globalThis.removeEventListener('mousemove', this._mouseMoveEventListener);
+            globalThis.removeEventListener('touchmove', this._touchMoveEventListener);
+            globalThis.removeEventListener('mouseup', this._mouseUpEventListener);
+            globalThis.removeEventListener('touchend', this._touchEndEventListener);
             this._mouseTouchTracking = false;
         }
     
         if (this._dragging === true) {
-            this._eBody.classList.remove('lm_dragging');
-            this._eElement.classList.remove('lm_dragging');
+            this._eBody.classList.remove(DomConstants.ClassName.Dragging);
+            this._eElement.classList.remove(DomConstants.ClassName.Dragging);
             this._oDocument.querySelector('iframe')?.style.setProperty('pointer-events', '');
             this._dragging = false;
             this.emit('dragStop', dragEvent);
+            console.log('emit stopDrag');
         }
     }
 
@@ -213,11 +223,14 @@ export class DragListener extends EventEmitter {
             clearTimeout(this._timeout);
             this._timeout = undefined;
         }
+        console.log(this._eElement.classList[0]);
         this._dragging = true;
-        this._eBody.classList.add('lm_dragging');
-        this._eElement.classList.add('lm_dragging');
+        console.log('dragging=true');
+        this._eBody.classList.add(DomConstants.ClassName.Dragging);
+        this._eElement.classList.add(DomConstants.ClassName.Dragging);
         this._oDocument.querySelector('iframe')?.style.setProperty('pointer-events', 'none');
         this.emit('dragStart', this._nOriginalX, this._nOriginalY);
+        console.log('emit startDrag');
     }
 
     private getMouseCoordinates(event: MouseEvent) {

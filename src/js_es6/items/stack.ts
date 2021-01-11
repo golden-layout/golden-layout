@@ -1,14 +1,14 @@
 import { ComponentItemConfig, ItemConfig, SerialisableComponentConfig } from '../config/config';
 import { ResolvedComponentItemConfig, ResolvedHeaderedItemConfig, ResolvedItemConfig, ResolvedStackItemConfig } from '../config/resolved-config';
 import { Header } from '../controls/header';
-import { AssertError, UnexpectedNullError } from '../errors/internal-error';
+import { AssertError, UnexpectedNullError, UnexpectedUndefinedError } from '../errors/internal-error';
 import { LayoutManager } from '../layout-manager';
+import { DomConstants } from '../utils/dom-constants';
 import { DragListener } from '../utils/drag-listener';
 import { EventEmitter } from '../utils/event-emitter';
 import { getJQueryOffset } from '../utils/jquery-legacy';
 import { AreaLinkedRect, ItemType, JsonValue, Side, WidthAndHeight, WidthOrHeightPropertyName } from '../utils/types';
 import {
-    createTemplateHtmlElement,
     getElementHeight,
     getElementWidth,
     getElementWidthAndHeight,
@@ -16,10 +16,11 @@ import {
     setElementDisplayVisibility
 } from '../utils/utils';
 import { ComponentItem } from './component-item';
+import { ComponentParentableItem } from './component-parentable-item';
 import { ContentItem } from './content-item';
 
 /** @public */
-export class Stack extends ContentItem {
+export class Stack extends ComponentParentableItem {
     /** @internal */
     private readonly _headerConfig: ResolvedHeaderedItemConfig.Header | undefined;
     /** @internal */
@@ -31,11 +32,11 @@ export class Stack extends ContentItem {
     /** @internal */
     private _activeComponentItem: ComponentItem;
     /** @internal */
-    private _dropSegment: Stack.Segment | null;
+    private _dropSegment: Stack.Segment;
     /** @internal */
-    private _dropIndex: number | null;
+    private _dropIndex: number;
     /** @internal */
-    private _contentAreaDimensions: Stack.ContentAreaDimensions | null;
+    private _contentAreaDimensions: Stack.ContentAreaDimensions;
     /** @internal */
     private _headerSideChanged = false;
     /** @internal */
@@ -66,14 +67,14 @@ export class Stack extends ContentItem {
     /** @internal */
     get docker(): Stack.Docker { return this._docker; }
     /** @internal */
-    get contentAreaDimensions(): Stack.ContentAreaDimensions | null { return this._contentAreaDimensions; }
+    get contentAreaDimensions(): Stack.ContentAreaDimensions | undefined { return this._contentAreaDimensions; }
     /** @internal */
     get initialWantMaximise(): boolean { return this._initialWantMaximise; }
     get isMaximised(): boolean { return this._isMaximised; }
 
     /** @internal */
     constructor(layoutManager: LayoutManager, config: ResolvedStackItemConfig, private _stackParent: Stack.Parent) {
-        super(layoutManager, config, _stackParent, createTemplateHtmlElement(Stack.templateHtml));
+        super(layoutManager, config, _stackParent, Stack.createElement(document));
 
         this._headerConfig = config.header;
         const layoutHeaderConfig = layoutManager.layoutConfig.header;
@@ -126,15 +127,12 @@ export class Stack extends ContentItem {
             (ev) => this.handleHeaderClickEvent(ev),
             (ev) => this.handleHeaderTouchStartEvent(ev),
             (item) => this.handleHeaderComponentRemoveEvent(item),
-            (item) => this.handleHeaderComponentActivateEvent(item),
+            (item) => this.handleHeaderComponentFocusEvent(item),
             (x, y, dragListener, item) => this.handleHeaderComponentStartDragEvent(x, y, dragListener, item),
             () => this.handleStateChangedEvent(),
         );
 
         // this._dropZones = {};
-        this._dropSegment = null;
-        this._contentAreaDimensions = null;
-        this._dropIndex = null;
 
         this.isStack = true;
 
@@ -198,7 +196,7 @@ export class Stack extends ContentItem {
                     }
                 }
 
-                this.setActiveComponentItem(contentItems[this._initialActiveItemIndex] as ComponentItem);
+                this.setActiveComponentItem(contentItems[this._initialActiveItemIndex] as ComponentItem, false);
             }
         }
         
@@ -215,11 +213,11 @@ export class Stack extends ContentItem {
         if (!ContentItem.isComponentItem(item)) {
             throw new Error('Stack.setActiveContentItem: item is not a ComponentItem');
         } else {
-            this.setActiveComponentItem(item);
+            this.setActiveComponentItem(item, false);
         }
     }
 
-    setActiveComponentItem(componentItem: ComponentItem): void {
+    setActiveComponentItem(componentItem: ComponentItem, focus: boolean): void {
         if (this._activeComponentItem !== componentItem) {
             if (this.contentItems.indexOf(componentItem) === -1) {
                 throw new Error('componentItem is not a child of this stack');
@@ -235,6 +233,10 @@ export class Stack extends ContentItem {
                 this.emitBaseBubblingEvent('stateChanged');
             }
         }
+
+        if (this.focused || focus) {
+            componentItem.focus();
+        }
     }
 
     /** @deprecated Use {@link (Stack:class).getActiveComponentItem} */
@@ -249,6 +251,17 @@ export class Stack extends ContentItem {
 
     getActiveComponentItem(): ComponentItem {
         return this._activeComponentItem;
+    }
+
+    /** @internal */
+    setFocusedValue(value: boolean): void {
+        if (value) {
+            this._header.element.classList.add(DomConstants.ClassName.Focused);
+        } else {
+            this._header.element.classList.remove(DomConstants.ClassName.Focused);
+        }
+
+        super.setFocusedValue(value);
     }
 
     /** @internal */
@@ -309,7 +322,7 @@ export class Stack extends ContentItem {
         return this.addChild(contentItem, index);
     }
 
-    addChild(contentItem: ContentItem, index?: number): number {
+    addChild(contentItem: ContentItem, index?: number, focus = false): number {
         if(index !== undefined && index > this.contentItems.length){
             /* 
              * UGLY PATCH: PR #428, commit a4e84ec5 fixed a bug appearing on touchscreens during the drag of a panel. 
@@ -331,7 +344,7 @@ export class Stack extends ContentItem {
             index = super.addChild(contentItem, index);
             this._childElementContainer.appendChild(contentItem.element);
             this._header.createTab(contentItem, index);
-            this.setActiveComponentItem(contentItem);
+            this.setActiveComponentItem(contentItem, focus);
             this.updateSize();
             this._header.updateClosability();
             if (this._stackParent.isRow || this._stackParent.isColumn) {
@@ -344,14 +357,24 @@ export class Stack extends ContentItem {
     }
 
     removeChild(contentItem: ContentItem, keepChild: boolean): void {
-        const index = this.contentItems.indexOf(contentItem);
-        this._header.removeTab(contentItem);
+        const componentItem = contentItem as ComponentItem;
+        const index = this.contentItems.indexOf(componentItem);
+        this._header.removeTab(componentItem);
         const stackWillBeDeleted = this.contentItems.length === 1;
-        super.removeChild(contentItem, keepChild);
+        let removedWasFocused: boolean;
+        if (componentItem.focused) {
+            componentItem.blur();
+            removedWasFocused = true;
+        } else {
+            removedWasFocused = false;
+        }
+
+        super.removeChild(componentItem, keepChild);
+
         if (!stackWillBeDeleted) {
             // there must be at least 1 content item
-            if (this._activeComponentItem === contentItem) {
-                this.setActiveComponentItem(this.contentItems[Math.max(index - 1, 0)] as ComponentItem);
+            if (this._activeComponentItem === componentItem) {
+                this.setActiveComponentItem(this.contentItems[Math.max(index - 1, 0)] as ComponentItem, removedWasFocused);
             }
 
             this._header.updateClosability();
@@ -384,6 +407,9 @@ export class Stack extends ContentItem {
 
     /** @internal */
     destroy(): void {
+        if (this._activeComponentItem.focused) {
+            this._activeComponentItem.blur();
+        }
         super.destroy();
         this.off('resize', this._resizeListener);
         if (this._maximisedEnabled) {
@@ -444,8 +470,8 @@ export class Stack extends ContentItem {
          */
         if (this._dropSegment === Stack.Segment.Header) {
             this.resetHeaderDropZone();
-            if (this._dropIndex === null) {
-                throw new UnexpectedNullError('SODDI68990');
+            if (this._dropIndex === undefined) {
+                throw new UnexpectedUndefinedError('SODDI68990');
             } else {
                 this.addChild(contentItem, this._dropIndex);
                 return;
@@ -456,7 +482,7 @@ export class Stack extends ContentItem {
          * The stack is empty. Let's just add the element.
          */
         if (this._dropSegment === Stack.Segment.Body) {
-            this.addChild(contentItem, 0);
+            this.addChild(contentItem, 0, true);
             return;
         }
 
@@ -835,8 +861,8 @@ export class Stack extends ContentItem {
 
     /** @internal */
     private highlightBodyDropZone(segment: Stack.Segment): void {
-        if (this._contentAreaDimensions === null) {
-            throw new UnexpectedNullError('SHBDZC82265');
+        if (this._contentAreaDimensions === undefined) {
+            throw new UnexpectedUndefinedError('SHBDZC82265');
         } else {
             const highlightArea = this._contentAreaDimensions[segment].highlightArea;
             const dropTargetIndicator = this.layoutManager.dropTargetIndicator;
@@ -919,8 +945,8 @@ export class Stack extends ContentItem {
     }
 
     /** @internal */
-    private handleHeaderComponentActivateEvent(item: ComponentItem) {
-        this.setActiveComponentItem(item);
+    private handleHeaderComponentFocusEvent(item: ComponentItem) {
+        this.setActiveComponentItem(item, true);
     }
 
     /** @internal */
@@ -992,5 +1018,10 @@ export namespace Stack {
     }
 
     /** @internal */
-    export const templateHtml = '<div class="lm_item lm_stack"></div>';
+    export function createElement(document: Document): HTMLDivElement {
+        const element = document.createElement('div');
+        element.classList.add(DomConstants.ClassName.Item);
+        element.classList.add(DomConstants.ClassName.Stack);
+        return element;
+    } 
 }
