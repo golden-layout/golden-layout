@@ -6,7 +6,10 @@ export class TextComponent {
 
     private _inputElement: HTMLInputElement;
 
-    constructor(container: ComponentContainer, state: JsonValue | undefined) {
+    private _containerClickListener = () => this.handleClickFocusEvent();
+    private _containerFocusinListener = () => this.handleClickFocusEvent();
+
+    constructor(private _container: ComponentContainer, state: JsonValue | undefined) {
         let textValue: string;
         if (state === undefined) {
             textValue = TextComponent.undefinedTextValue;
@@ -23,9 +26,12 @@ export class TextComponent {
         this._inputElement.type = "text";
         this._inputElement.value = textValue;
         this._inputElement.style.display = "block";
-        container.element.appendChild(this._inputElement);
+        this._container.element.appendChild(this._inputElement);
 
-        container.stateRequestEvent = () => this.handleContainerStateRequestEvent();
+        this._container.stateRequestEvent = () => this.handleContainerStateRequestEvent();
+
+        this._container.element.addEventListener('click', this._containerClickListener);
+        this._container.element.addEventListener('focusin', this._containerFocusinListener);
     }
 
     handleContainerStateRequestEvent(): TextComponent.State | undefined {
@@ -37,6 +43,10 @@ export class TextComponent {
                 text
             }
         }
+    }
+
+    private handleClickFocusEvent(): void {
+        this._container.focus();
     }
 }
 

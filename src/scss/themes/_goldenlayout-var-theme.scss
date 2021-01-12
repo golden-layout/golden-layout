@@ -17,6 +17,8 @@ $selectedHeaderBkgdColor: var(--color-layout-selected-header-bkgd, #452500); // 
 $transitionIndicatorBorderForeColor: var(--color-layout-transition-indicator-border-fore, #555555); // Appears 1 time
 $dropDownArrowForeColor: var(--color-layout-drop-down-arrow-fore, #ffffff); // Appears 2 time
 
+$focusedTabBkgdColor: var(--color-layout-focused-tab-bkgd, #354be3); // Appears 1 time
+
 // ".lm_dragging" is applied to BODY tag during Drag and is also directly applied to the root of the object being dragged
 
 // Entire GoldenLayout Container, if a background is set, it is visible as color of "pane header" and "splitters" (if these latest has opacity very low)
@@ -111,6 +113,10 @@ $dropDownArrowForeColor: var(--color-layout-drop-down-arrow-fore, #ffffff); // A
 
             .lm_close_tab {
                 opacity: 1;
+            }
+
+            &.lm_focused {
+                background-color: $focusedTabBkgdColor;
             }
         }
     }

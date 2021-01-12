@@ -1,29 +1,9 @@
-import { UnexpectedNullError } from '../errors/internal-error';
 import { WidthAndHeight } from './types';
 
 /** @internal */
 export function getQueryStringParam(key: string): string | null {
     const matches = location.hash.match(new RegExp(key + '=([^&]*)'));
     return matches ? matches[1] : null;
-}
-
-/** @deprecated
- * Caution! Try not to use this function.  Converting text to HTML can have security implications
- * While the templateText is not user generated and should be safe, some security reviews may reject
- * applications which use this technique regardless
- * https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML
- * Try creating fragments using javascript without HTML text
- * @internal
- */
-export function createTemplateHtmlElement(templateText: string): HTMLElement {
-    const template = document.createElement('template')
-    template.insertAdjacentHTML('afterbegin', templateText);
-    const element = template.firstElementChild as HTMLElement;
-    if (element === null) {
-        throw new UnexpectedNullError('UCTHE43328', templateText);
-    } else {
-        return element;
-    }
 }
 
 /** @internal */

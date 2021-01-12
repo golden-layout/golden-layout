@@ -41,7 +41,8 @@ export class BrowserPopout extends EventEmitter {
 // @public (undocumented)
 export class ComponentContainer extends EventEmitter {
     // @internal
-    constructor(_config: ResolvedComponentItemConfig, _parent: ComponentItem, _layoutManager: LayoutManager, _element: HTMLElement, _updateItemConfigEvent: ComponentContainer.UpdateItemConfigEventHandler, _showEvent: ComponentContainer.ShowEventHandler, _hideEvent: ComponentContainer.HideEventHandler);
+    constructor(_config: ResolvedComponentItemConfig, _parent: ComponentItem, _layoutManager: LayoutManager, _element: HTMLElement, _updateItemConfigEvent: ComponentContainer.UpdateItemConfigEventHandler, _showEvent: ComponentContainer.ShowEventHandler, _hideEvent: ComponentContainer.HideEventHandler, _focusEvent: ComponentContainer.FocusEventHandler, _blurEvent: ComponentContainer.BlurEventHandler);
+    blur(suppressEvent?: boolean): void;
     // @internal (undocumented)
     checkEmitHide(): void;
     // @internal (undocumented)
@@ -60,6 +61,7 @@ export class ComponentContainer extends EventEmitter {
     get element(): HTMLElement;
     // @deprecated
     extendState(state: Record<string, unknown>): void;
+    focus(suppressEvent?: boolean): void;
     // @deprecated (undocumented)
     getElement(): HTMLElement;
     // @deprecated
@@ -100,6 +102,10 @@ export class ComponentContainer extends EventEmitter {
 
 // @public (undocumented)
 export namespace ComponentContainer {
+    // @internal (undocumented)
+    export type BlurEventHandler = (this: void, suppressEvent: boolean) => void;
+    // @internal (undocumented)
+    export type FocusEventHandler = (this: void, suppressEvent: boolean) => void;
     // @internal (undocumented)
     export type HideEventHandler = (this: void) => void;
     // @internal (undocumented)
@@ -483,6 +489,8 @@ export class Header extends EventEmitter {
     constructor(_layoutManager: LayoutManager, _parent: Stack, settings: Header.Settings, _configClosable: boolean, closeEvent: Header.CloseEvent, _dockEvent: Header.DockEvent | undefined, _popoutEvent: Header.PopoutEvent | undefined, _maximiseToggleEvent: Header.MaximiseToggleEvent | undefined, _clickEvent: Header.ClickEvent | undefined, _touchStartEvent: Header.TouchStartEvent | undefined, _componentRemoveEvent: Header.ComponentRemoveEvent | undefined, _componentFocusEvent: Header.ComponentFocusEvent | undefined, _componentDragStartEvent: Header.ComponentDragStartEvent | undefined, _stateChangedEvent: Header.StateChangedEvent | undefined);
     // @deprecated
     get activeContentItem(): ContentItem | null;
+    // @internal (undocumented)
+    applyFocusedValue(value: boolean): void;
     // @deprecated (undocumented)
     get controlsContainer(): HTMLElement;
     // (undocumented)
@@ -1471,7 +1479,7 @@ export class RowOrColumn extends ContentItem {
 // @public (undocumented)
 export namespace RowOrColumn {
     // @internal (undocumented)
-    export function createTemplateHtml(isColumn: boolean): string;
+    export function createElement(document: Document, isColumn: boolean): HTMLDivElement;
     // @internal (undocumented)
     export function getElementDimensionSize(element: HTMLElement, dimension: WidthOrHeightPropertyName): number;
     // @internal (undocumented)
@@ -1688,7 +1696,11 @@ export class Tab {
     get isActive(): boolean;
     setActive(isActive: boolean): void;
     // @internal (undocumented)
+    setBlurred(): void;
+    // @internal (undocumented)
     setComponentItem(value: ComponentItem): void;
+    // @internal (undocumented)
+    setFocused(): void;
     setTitle(title: string): void;
     // (undocumented)
     get titleElement(): HTMLElement;

@@ -1,8 +1,6 @@
+import { DomConstants } from '../utils/dom-constants';
 import { AreaLinkedRect } from '../utils/types';
-import { createTemplateHtmlElement, numberToPixels, setElementDisplayVisibility } from '../utils/utils';
-
-/** @internal */
-const _template = '<div class="lm_dropTargetIndicator"><div class="lm_inner"></div></div>'
+import { numberToPixels, setElementDisplayVisibility } from '../utils/utils';
 
 /** @internal */
 export class DropTargetIndicator {
@@ -10,7 +8,12 @@ export class DropTargetIndicator {
 
     constructor() {
         // Maybe use container instead of Document Body?
-        this._element = createTemplateHtmlElement(_template);
+        this._element = document.createElement('div');
+        this._element.classList.add(DomConstants.ClassName.DropTargetIndicator);
+        const innerElement = document.createElement('div');
+        innerElement.classList.add(DomConstants.ClassName.Inner);
+        this._element.appendChild(innerElement);
+
         document.body.appendChild(this._element);
     }
 

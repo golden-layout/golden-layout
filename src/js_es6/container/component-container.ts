@@ -65,6 +65,8 @@ export class ComponentContainer extends EventEmitter {
         private readonly _updateItemConfigEvent: ComponentContainer.UpdateItemConfigEventHandler,
         private readonly _showEvent: ComponentContainer.ShowEventHandler,
         private readonly _hideEvent: ComponentContainer.HideEventHandler,
+        private readonly _focusEvent: ComponentContainer.FocusEventHandler,
+        private readonly _blurEvent: ComponentContainer.BlurEventHandler,
     ) {
         super();
 
@@ -128,6 +130,20 @@ export class ComponentContainer extends EventEmitter {
      */
     show(): void {
         this._showEvent();
+    }
+
+    /**
+     * Focus this component in Layout.
+     */
+    focus(suppressEvent = false): void {
+        this._focusEvent(suppressEvent);
+    }
+
+    /**
+     * Remove focus from this component in Layout.
+     */
+    blur(suppressEvent = false): void {
+        this._blurEvent(suppressEvent);
     }
 
     /** @internal */
@@ -338,6 +354,10 @@ export namespace ComponentContainer {
     export type ShowEventHandler = (this: void) => void;
     /** @internal */
     export type HideEventHandler = (this: void) => void;
+    /** @internal */
+    export type FocusEventHandler = (this: void, suppressEvent: boolean) => void;
+    /** @internal */
+    export type BlurEventHandler = (this: void, suppressEvent: boolean) => void;
     /** @internal */
     export type UpdateItemConfigEventHandler = (itemConfig: ResolvedComponentItemConfig) => void;
 }

@@ -7,6 +7,8 @@ export class ColorComponent {
     private _paraElement: HTMLParagraphElement;
     private _inputElement: HTMLInputElement;
 
+    private _containerClickListener = () => this.handleClickFocusEvent();
+    private _containerFocusinListener = () => this.handleClickFocusEvent();
     private _beforeComponentReleaseEventListener = () => this.handleBeforeComponentReleaseEvent()
     private _inputChangeListener = () => this.handleInputChangeEvent();
     private _shownEventListener = () => this.handleShownEvent();
@@ -41,6 +43,9 @@ export class ColorComponent {
         this._container.stateRequestEvent = () => this.handleContainerStateRequestEvent();
         this._container.addEventListener('beforeComponentRelease', this._beforeComponentReleaseEventListener);
         this._container.addEventListener('shown', this._shownEventListener);
+
+        this._container.element.addEventListener('click', this._containerClickListener);
+        this._container.element.addEventListener('focusin', this._containerFocusinListener);
     }
 
     private handleInputChangeEvent() {
@@ -62,6 +67,8 @@ export class ColorComponent {
         this._container.element.removeChild(this._paraElement);
         this._container.removeEventListener('shown', this._shownEventListener);
         this._container.removeEventListener('beforeComponentRelease', this._beforeComponentReleaseEventListener);
+        this._container.element.removeEventListener('click', this._containerClickListener);
+        this._container.element.removeEventListener('focusin', this._containerFocusinListener);
     }
 
     private handleShownEvent(): void {
@@ -69,5 +76,9 @@ export class ColorComponent {
         setTimeout(() => { 
             this._paraElement.style.backgroundColor = ''
         }, 1000);
+    }
+
+    private handleClickFocusEvent(): void {
+        this._container.focus();
     }
 }

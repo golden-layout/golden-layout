@@ -1,7 +1,8 @@
 import { LayoutConfig } from './config/config';
 import { ResolvedLayoutConfig, ResolvedPopoutLayoutConfig } from './config/resolved-config';
 import { LayoutManager } from './layout-manager';
-import { createTemplateHtmlElement, getQueryStringParam } from './utils/utils';
+import { DomConstants } from './utils/dom-constants';
+import { getQueryStringParam } from './utils/utils';
 
 /** @public */
 export class GoldenLayout extends LayoutManager {
@@ -97,12 +98,17 @@ export class GoldenLayout extends LayoutManager {
      * @internal
      */
     private adjustToWindowMode() {
-        const popInButton = createTemplateHtmlElement('<div class="lm_popin" title="' + this.layoutConfig.header.dock + '">' +
-            '<div class="lm_icon"></div>' +
-            '<div class="lm_bg"></div>' +
-            '</div>');
+        const popInButtonElement = document.createElement('div');
+        popInButtonElement.classList.add(DomConstants.ClassName.Popin);
+        popInButtonElement.setAttribute('title', this.layoutConfig.header.dock);
+        const iconElement = document.createElement('div');
+        iconElement.classList.add(DomConstants.ClassName.Icon);
+        const bgElement = document.createElement('div');
+        bgElement.classList.add(DomConstants.ClassName.Bg);
+        popInButtonElement.appendChild(iconElement);
+        popInButtonElement.appendChild(bgElement);
 
-        popInButton.click = () => this.emit('popIn');
+        popInButtonElement.click = () => this.emit('popIn');
 
         const headElement = document.head;
 
@@ -123,7 +129,7 @@ export class GoldenLayout extends LayoutManager {
         const bodyElement = document.body;
         bodyElement.innerHTML = '';
         bodyElement.style.visibility = 'visible';
-        bodyElement.appendChild(popInButton);
+        bodyElement.appendChild(popInButtonElement);
 
         /*
         * This seems a bit pointless, but actually causes a reflow/re-evaluation getting around

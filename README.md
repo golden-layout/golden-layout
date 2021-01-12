@@ -161,6 +161,9 @@ Sets the size of the GoldenLayout instance in pixels. Replaces the existing `upd
 1. `rootItem` (new property)
 Specifies the root content item of the layout (not the Ground content item).
 1. Do not use `root`. This has been replaced with the internal property `groundItem`. You probably want to use the new `rootItem` instead.
+1. `setFocusedComponentItem()` will either focus the specified component item or, (if item is undefined), remove existing focus from a component item. `focus` or `blur` events will be emitted as appropriate unless the `suppressEvent` parameter is set to true.
+1. `focusComponent()` an alternative to `setFocusedComponentItem()` which only focuses the specified component.
+1. `clearComponentFocus()` which removes any existing component item focus.
 
 #### Content Items
 1. `AbstractContentItem` has been renamed to `ContentItem`
@@ -171,11 +174,14 @@ Specifies the root content item of the layout (not the Ground content item).
 1. `Component` has been renamed to `ComponentItem`.  "Component" now refers to the external component hosted inside GoldenLayout
 1. `Root` has been renamed to `GroundItem` and has been marked as internal only. Applications should never access GroundItem.  Note that the layout's root ContentItem is GroundItem's only child.  You can access this root ContentItem with `LayoutManager.rootItem`.
 1. `Stack.getActiveContentItem()` and `Stack.setActiveContentItem()` have been renamed to respective `Stpack.getActiveComponentItem()` and `Stack.setActiveComponentItem()`
+1. `ContentItem.select()` and `ContentItem.deselect()` have been removed.  Use the new `ComponentItem.focus()` and `ComponentItem.blur()` instead.
+1. `ComponentItem.focus()` (new function) will focus the specified ComponentItem. It will also remove focus from another component item which previously had focus.  Only one component item can have focus at any time. If layout focus has changed, a `focus` event will be emitted (unless suppressEvent parameter is set to true).
+1. `ComponentItem.blur()` (new function) will remove focus from the specified ComponentItem. After this is called, no component item in the layout will have focus.  If the component lost focus, a `blur` event will be emitted (unless suppressEvent parameter is set to true).
 
 #### ComponentContainer
-1. `containerElement` (new property - replaces `getElement()`)\
+1. `element` (new property - replaces `getElement()`)\
 Returns HTMLElement which hosts component
-1. Do not use `getElement()`. Use the new `containerElement` property instead
+1. Do not use `getElement()`. Use the new `element` property instead
 1. `initialState` (new getter)\
 Gets the componentState of the `ComponentItemConfig` used to create the contained component.
 1. `stateRequestEvent` (new event)\
@@ -203,13 +209,17 @@ Note that the allocation of API elements to either public or internal has not be
 
 ### Events
 1. All DOM events are now propagated so that they can be handled by parents or globally.
-1. preventDefault() is never called and .addEventListener() is always called with passive: true.
+1. preventDefault() is only called by MouseMove listener used in DragListener. All other event listeners are added with passive: true.
 1. Bubbling Events are now emitted with the parameter EventEmitter.BubblingEvent (or descendant)
 1. New EventEmitter events:
     * beforeComponentRelease
     * stackHeaderClick - Bubbling event. Fired when stack header is clicked - but not tab.
     * stackHeaderTouchStart - Bubbling event. Fired when stack header is touched - but not tab.
+    * focus - Bubbling event. Fired when a component gets focus.
+    * blur - Bubbling event. Fired when a component loses focus.
 
+### Other
+1. `undefined` is used instead of `null` for new properties, events etc.  Some internals have also been switched to use `undefined` instead of `null`. Existing properties using `null` mostly have been left as is however it is possible that some of these internal changes have affected external properties/events/methods.
 
 ### Popout and docking
 Work is still underway in debugging Popout and docking. Do not migrate your application if it uses this feature.

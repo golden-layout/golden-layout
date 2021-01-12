@@ -976,7 +976,7 @@ export abstract class LayoutManager extends EventEmitter {
         }
         this._maximisedItem = contentItem;
         contentItem.on('beforeItemDestroyed', this._maximisedItemBeforeDestroyedListener);
-        contentItem.element.classList.add('lm_maximised');
+        contentItem.element.classList.add(DomConstants.ClassName.Maximised);
         contentItem.element.insertAdjacentElement('afterend', this._maximisePlaceholder);
         if (this._groundItem === undefined) {
             throw new UnexpectedUndefinedError('LMMXI19993');
@@ -996,7 +996,7 @@ export abstract class LayoutManager extends EventEmitter {
         if (contentItem.parent === null) {
             throw new UnexpectedNullError('LMMI13668');
         } else {
-            contentItem.element.classList.remove('lm_maximised');
+            contentItem.element.classList.remove(DomConstants.ClassName.Maximised);
             this._maximisePlaceholder.insertAdjacentElement('afterend', contentItem.element);
             this._maximisePlaceholder.remove();
             contentItem.parent.updateSize();

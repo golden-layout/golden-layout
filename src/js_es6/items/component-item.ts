@@ -68,12 +68,14 @@ export class ComponentItem extends ContentItem {
         this._initialWantMaximise = config.maximised;
 
         const containerElement = document.createElement('div');
-        containerElement.classList.add('lm_content');
+        containerElement.classList.add(DomConstants.ClassName.Content);
         this.element.appendChild(containerElement);
         this._container = new ComponentContainer(config, this, layoutManager, containerElement,
             (itemConfig) => this.handleUpdateItemConfigEvent(itemConfig),
             () => this.show(),
             () => this.hide(),
+            (suppressEvent) => this.focus(suppressEvent),
+            (suppressEvent) => this.blur(suppressEvent),
         );
     }
 
@@ -208,11 +210,11 @@ export class ComponentItem extends ContentItem {
     }
 
     /** @internal */
-    setBlurred(suppressEvent: boolean): void {
-        this._focused = false;
-        this.tab.element.classList.remove(DomConstants.ClassName.Focused);
+    setFocused(suppressEvent: boolean): void {
+        this._focused = true;
+        this.tab.setFocused();
         if (!suppressEvent) {
-            this.emitBaseBubblingEvent('blur');
+            this.emitBaseBubblingEvent('focus');
         }
     }
 
@@ -220,15 +222,17 @@ export class ComponentItem extends ContentItem {
      * Blurs (defocuses) the item if it is focused
      */
     blur(suppressEvent = false): void {
-        this.layoutManager.setFocusedComponentItem(undefined, suppressEvent); 
+        if (this._focused) {
+            this.layoutManager.setFocusedComponentItem(undefined, suppressEvent);
+        }
     }
 
     /** @internal */
-    setFocused(suppressEvent: boolean): void {
-        this._focused = true;
-        this.tab.element.classList.add(DomConstants.ClassName.Focused);
+    setBlurred(suppressEvent: boolean): void {
+        this._focused = false;
+        this.tab.setBlurred();
         if (!suppressEvent) {
-            this.emitBaseBubblingEvent('focus');
+            this.emitBaseBubblingEvent('blur');
         }
     }
 

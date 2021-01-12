@@ -3,9 +3,9 @@ import { ResolvedRowOrColumnItemConfig, ResolvedStackItemConfig } from '../confi
 import { Splitter } from '../controls/splitter'
 import { AssertError, UnexpectedNullError } from '../errors/internal-error'
 import { LayoutManager } from '../layout-manager'
+import { DomConstants } from '../utils/dom-constants'
 import { ItemType, JsonValue, Side, WidthOrHeightPropertyName } from '../utils/types'
 import {
-    createTemplateHtmlElement,
     getElementHeight,
     getElementWidth,
     getElementWidthAndHeight,
@@ -46,7 +46,7 @@ export class RowOrColumn extends ContentItem {
     constructor(isColumn: boolean, layoutManager: LayoutManager, config: ResolvedRowOrColumnItemConfig,
         private _rowOrColumnParent: ContentItem
     ) {
-        super(layoutManager, config, _rowOrColumnParent, createTemplateHtmlElement(RowOrColumn.createTemplateHtml(isColumn)));
+        super(layoutManager, config, _rowOrColumnParent, RowOrColumn.createElement(document, isColumn));
 
         this.isRow = !isColumn;
         this.isColumn = isColumn;
@@ -370,7 +370,7 @@ export class RowOrColumn extends ContentItem {
                 RowOrColumn.setElementDimensionSize(contentItem.childElementContainer, this._dimension, 0);
             }
         }
-        contentItem.element.classList.toggle('lm_docked', contentItem.docker.docked);
+        contentItem.element.classList.toggle(DomConstants.ClassName.Docked, contentItem.docker.docked);
         this.updateSize();
         this.emitBaseBubblingEvent('stateChanged');
         this.validateDocking();
@@ -860,7 +860,14 @@ export namespace RowOrColumn {
     }
 
     /** @internal */
-    export function createTemplateHtml(isColumn: boolean): string {
-        return '<div class="lm_item lm_' + (isColumn ? 'column' : 'row') + '"></div>'
+    export function createElement(document: Document, isColumn: boolean): HTMLDivElement {
+        const element = document.createElement('div');
+        element.classList.add(DomConstants.ClassName.Item);
+        if (isColumn) {
+            element.classList.add(DomConstants.ClassName.Column);
+        } else {
+            element.classList.add(DomConstants.ClassName.Row);
+        }
+        return element;
     }
 }

@@ -1,5 +1,5 @@
+import { DomConstants } from '../utils/dom-constants';
 import { Rect } from '../utils/types';
-import { createTemplateHtmlElement } from '../utils/utils';
 
 /** @internal */
 export class TransitionIndicator {
@@ -10,7 +10,8 @@ export class TransitionIndicator {
     private _animationStartTime: number | null;
 
     constructor() {
-        this._element = createTemplateHtmlElement('<div class="lm_transition_indicator"></div>');
+        this._element = document.createElement('div');
+        this._element.classList.add(DomConstants.ClassName.TransitionIndicator);
         document.body.appendChild(this._element);
 
         this._toElement = null;

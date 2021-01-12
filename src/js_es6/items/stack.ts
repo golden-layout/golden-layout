@@ -137,7 +137,7 @@ export class Stack extends ComponentParentableItem {
         this.isStack = true;
 
         this._childElementContainer = document.createElement('section');
-        this._childElementContainer.classList.add('lm_items');
+        this._childElementContainer.classList.add(DomConstants.ClassName.Items);
 
         this.on('resize', this._resizeListener);
         if (this._maximisedEnabled) {
@@ -255,12 +255,7 @@ export class Stack extends ComponentParentableItem {
 
     /** @internal */
     setFocusedValue(value: boolean): void {
-        if (value) {
-            this._header.element.classList.add(DomConstants.ClassName.Focused);
-        } else {
-            this._header.element.classList.remove(DomConstants.ClassName.Focused);
-        }
-
+        this._header.applyFocusedValue(value);
         super.setFocusedValue(value);
     }
 
@@ -361,12 +356,8 @@ export class Stack extends ComponentParentableItem {
         const index = this.contentItems.indexOf(componentItem);
         this._header.removeTab(componentItem);
         const stackWillBeDeleted = this.contentItems.length === 1;
-        let removedWasFocused: boolean;
         if (componentItem.focused) {
             componentItem.blur();
-            removedWasFocused = true;
-        } else {
-            removedWasFocused = false;
         }
 
         super.removeChild(componentItem, keepChild);
@@ -374,7 +365,7 @@ export class Stack extends ComponentParentableItem {
         if (!stackWillBeDeleted) {
             // there must be at least 1 content item
             if (this._activeComponentItem === componentItem) {
-                this.setActiveComponentItem(this.contentItems[Math.max(index - 1, 0)] as ComponentItem, removedWasFocused);
+                this.setActiveComponentItem(this.contentItems[Math.max(index - 1, 0)] as ComponentItem, false);
             }
 
             this._header.updateClosability();
@@ -849,7 +840,7 @@ export class Stack extends ComponentParentableItem {
     /** @internal */
     private setupHeaderPosition() {
         setElementDisplayVisibility(this._header.element, this._header.show);
-        this.element.classList.remove('lm_left', 'lm_right', 'lm_bottom');
+        this.element.classList.remove(DomConstants.ClassName.Left, DomConstants.ClassName.Right, DomConstants.ClassName.Bottom);
         if (this._header.leftRightSided) {
             this.element.classList.add('lm_' + this._header.side);
         }

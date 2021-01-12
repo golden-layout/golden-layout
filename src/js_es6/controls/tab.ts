@@ -1,6 +1,7 @@
 import { UnexpectedUndefinedError } from '../errors/internal-error';
 import { ComponentItem } from '../items/component-item';
 import { LayoutManager } from '../layout-manager';
+import { DomConstants } from '../utils/dom-constants';
 import { DragListener } from '../utils/drag-listener';
 import { stripTags } from '../utils/utils';
 
@@ -54,11 +55,11 @@ export class Tab {
         private _dragStartEvent: Tab.DragStartEvent | undefined
     ) {
         this._element = document.createElement('div');
-        this._element.classList.add('lm_tab');
+        this._element.classList.add(DomConstants.ClassName.Tab);
         this._titleElement = document.createElement('span'); 
-        this._titleElement.classList.add('lm_title');
+        this._titleElement.classList.add(DomConstants.ClassName.Title);
         this._closeElement = document.createElement('div'); 
-        this._closeElement.classList.add('lm_close_tab');
+        this._closeElement.classList.add(DomConstants.ClassName.CloseTab);
         this._element.appendChild(this._titleElement);
         this._element.appendChild(this._closeElement);
 
@@ -117,9 +118,9 @@ export class Tab {
         this._isActive = isActive;
 
         if (isActive) {
-            this._element.classList.add('lm_active');
+            this._element.classList.add(DomConstants.ClassName.Active);
         } else {
-            this._element.classList.remove('lm_active');
+            this._element.classList.remove(DomConstants.ClassName.Active);
         }
     }
 
@@ -148,6 +149,18 @@ export class Tab {
     /** @internal */
     setComponentItem(value: ComponentItem): void {
         this._componentItem = value;
+    }
+
+    /** @internal */
+    setBlurred(): void {
+        this._element.classList.remove(DomConstants.ClassName.Focused);
+        this._titleElement.classList.remove(DomConstants.ClassName.Focused);
+    }
+
+    /** @internal */
+    setFocused(): void {
+        this._element.classList.add(DomConstants.ClassName.Focused);
+        this._titleElement.classList.add(DomConstants.ClassName.Focused);
     }
 
     /**

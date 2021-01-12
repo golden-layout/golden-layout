@@ -2,8 +2,9 @@ import { ComponentItemConfig, ItemConfig, RowOrColumnItemConfig, SerialisableCom
 import { ResolvedComponentItemConfig, ResolvedGroundItemConfig, ResolvedHeaderedItemConfig, ResolvedItemConfig, ResolvedRootItemConfig, ResolvedStackItemConfig } from '../config/resolved-config';
 import { AssertError, UnexpectedNullError, UnexpectedUndefinedError } from '../errors/internal-error';
 import { LayoutManager } from '../layout-manager';
+import { DomConstants } from '../utils/dom-constants';
 import { AreaLinkedRect, ItemType, JsonValue } from '../utils/types';
-import { createTemplateHtmlElement, getElementWidthAndHeight, setElementHeight, setElementWidth } from '../utils/utils';
+import { getElementWidthAndHeight, setElementHeight, setElementWidth } from '../utils/utils';
 import { ComponentItem } from './component-item';
 import { ComponentParentableItem } from './component-parentable-item';
 import { ContentItem } from './content-item';
@@ -21,7 +22,7 @@ export class GroundItem extends ComponentParentableItem {
 
     constructor(layoutManager: LayoutManager, rootItemConfig: ResolvedRootItemConfig | undefined, containerElement: HTMLElement) {
       
-        super(layoutManager, ResolvedGroundItemConfig.create(rootItemConfig), null, createTemplateHtmlElement(GroundItem.templateHtml));
+        super(layoutManager, ResolvedGroundItemConfig.create(rootItemConfig), null, GroundItem.createElement(document));
 
         this.isGround = true;
         this._childElementContainer = this.element;
@@ -410,6 +411,12 @@ export namespace GroundItem {
             x1: 'x2',
         };
     }
-
-    export const templateHtml = '<div class="lm_goldenlayout lm_item lm_root"></div>';
+    
+    export function createElement(document: Document): HTMLDivElement {
+        const element = document.createElement('div');
+        element.classList.add(DomConstants.ClassName.GoldenLayout);
+        element.classList.add(DomConstants.ClassName.Item);
+        element.classList.add(DomConstants.ClassName.Root);
+        return element;
+    }
 }

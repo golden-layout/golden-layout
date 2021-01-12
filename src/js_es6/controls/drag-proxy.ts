@@ -3,28 +3,16 @@ import { ComponentItem } from '../items/component-item';
 import { ContentItem } from '../items/content-item';
 import { Stack } from '../items/stack';
 import { LayoutManager } from '../layout-manager';
+import { DomConstants } from '../utils/dom-constants';
 import { DragListener } from '../utils/drag-listener';
 import { EventEmitter } from '../utils/event-emitter';
 import { getJQueryOffset } from '../utils/jquery-legacy';
 import { Side } from '../utils/types';
 import {
-    createTemplateHtmlElement,
     getElementWidthAndHeight,
     numberToPixels,
     stripTags
 } from '../utils/utils';
-
-/** @internal */
-const _template = '<div class="lm_dragProxy">' +
-    '<div class="lm_header">' +
-    '<ul class="lm_tabs">' +
-    '<li class="lm_tab lm_active"><i class="lm_left"></i>' +
-    '<span class="lm_title"></span>' +
-    '<i class="lm_right"></i></li>' +
-    '</ul>' +
-    '</div>' +
-    '<div class="lm_content"></div>' +
-    '</div>';
 
 /**
  * This class creates a temporary container
@@ -41,10 +29,10 @@ export class DragProxy extends EventEmitter {
     private _maxY: number;
     private _width: number;
     private _height: number;
-    private _contentItemParent: Stack;
     private _sided: boolean;
     private _element: HTMLElement;
     private _proxyContainerElement: HTMLElement;
+    private _componentItemFocused: boolean;
 
     get element(): HTMLElement { return this._element; }
 
@@ -56,7 +44,7 @@ export class DragProxy extends EventEmitter {
     constructor(x: number, y: number,
         private readonly _dragListener: DragListener,
         private readonly _layoutManager: LayoutManager,
-        private readonly _contentItem: ComponentItem,
+        private readonly _componentItem: ComponentItem,
         private readonly _originalParent: ContentItem) {
 
         super();
@@ -67,69 +55,66 @@ export class DragProxy extends EventEmitter {
         this._dragListener.on('drag', (offsetX, offsetY, event) => this.onDrag(offsetX, offsetY, event));
         this._dragListener.on('dragStop', () => this.onDrop());
 
-        this._element = createTemplateHtmlElement(_template);
+        this._element = document.createElement('div');
+        this._element.classList.add(DomConstants.ClassName.DragProxy);
+        const headerElement = document.createElement('div');
+        headerElement.classList.add(DomConstants.ClassName.Header);
+        const tabsElement = document.createElement('div');
+        tabsElement.classList.add(DomConstants.ClassName.Tabs);
+        const tabElement = document.createElement('div');
+        tabElement.classList.add(DomConstants.ClassName.Tab);
+        const titleElement = document.createElement('span');
+        titleElement.classList.add(DomConstants.ClassName.Title);
+        tabElement.appendChild(titleElement);
+        tabsElement.appendChild(tabElement);
+        headerElement.appendChild(tabsElement);
+
+        this._proxyContainerElement = document.createElement('div');
+        this._proxyContainerElement.classList.add(DomConstants.ClassName.Content);
+
+        this._element.appendChild(headerElement);
+        this._element.appendChild(this._proxyContainerElement);
+
         if (this._originalParent instanceof Stack && this._originalParent.headerShow) {
             this._sided = this._originalParent.headerLeftRightSided;
             this._element.classList.add('lm_' + this._originalParent.headerSide);
             if ([Side.right, Side.bottom].indexOf(this._originalParent.headerSide) >= 0) {
-                const contentElement = this._element.querySelector('.lm_content');
-                if (contentElement === null) {
-                    throw new UnexpectedNullError('DPCCE88824');
-                } else {
-                    const headerElement = this._element.querySelector('.lm_header');
-                    if (headerElement === null) {
-                        throw new UnexpectedNullError('DPCHE90025');
-                    } else {
-                        contentElement.insertAdjacentElement('afterend', headerElement);
-                    }
-                }
+                this._proxyContainerElement.insertAdjacentElement('afterend', headerElement);
             }
         }
         this._element.style.left = numberToPixels(x);
         this._element.style.top = numberToPixels(y);
-        const tabElement = this._element.querySelector('.lm_tab');
-        if (tabElement === null) {
-            throw new UnexpectedNullError('DPCTE33245');
+        tabElement.setAttribute('title', stripTags(this._componentItem.title));
+        titleElement.insertAdjacentText('afterbegin', this._componentItem.title);
+        this._proxyContainerElement.appendChild(this._componentItem.element);
+
+        if (this._componentItem.parent === null) {
+            // Note that _contentItem will have dummy GroundItem as parent if initiated by a external drag source
+            throw new UnexpectedNullError('DPC10097');
         } else {
-            tabElement.setAttribute('title', stripTags(this._contentItem.title));
-            const titleElement = this._element.querySelector('.lm_title');
-            if (titleElement === null) {
-                throw new UnexpectedNullError('DPCTI98826');
-            } else {
-                titleElement.insertAdjacentText('afterbegin', this._contentItem.title);
-                const proxyContainerElement = this._element.querySelector('.lm_content') as HTMLElement;
-                if (proxyContainerElement === null) {
-                    throw new UnexpectedNullError('DPCCC98826');
-                } else {
-                    this._proxyContainerElement = proxyContainerElement;
-                    this._proxyContainerElement.appendChild(this._contentItem.element);
-
-                    if (this._contentItem.parent === null) {
-                        // Note that _contentItem will have dummy GroundContentItem as parent if initiated by a external drag source
-                        throw new UnexpectedNullError('DPC10097');
-                    } else {
-                        this._contentItem.parent.removeChild(this._contentItem, true);
-
-                        this._layoutManager.calculateItemAreas();
-                        this.setDimensions();
-
-                        document.body.appendChild(this._element);
-
-                        const offset = getJQueryOffset(this._layoutManager.container);
-
-                        this._minX = offset.left;
-                        this._minY = offset.top;
-                        const { width: containerWidth, height: containerHeight } = getElementWidthAndHeight(this._layoutManager.container);
-                        this._maxX = containerWidth + this._minX;
-                        this._maxY = containerHeight + this._minY;
-                        const { width: elementWidth, height: elementHeight } = getElementWidthAndHeight(this._element);
-                        this._width = elementWidth;
-                        this._height = elementHeight;
-
-                        this.setDropPosition(x, y);
-                    }
-                }
+            this._componentItemFocused = this._componentItem.focused;
+            if (this._componentItemFocused) {
+                this._componentItem.blur();
             }
+            this._componentItem.parent.removeChild(this._componentItem, true);
+
+            this._layoutManager.calculateItemAreas();
+            this.setDimensions();
+
+            document.body.appendChild(this._element);
+
+            const offset = getJQueryOffset(this._layoutManager.container);
+
+            this._minX = offset.left;
+            this._minY = offset.top;
+            const { width: containerWidth, height: containerHeight } = getElementWidthAndHeight(this._layoutManager.container);
+            this._maxX = containerWidth + this._minX;
+            this._maxY = containerHeight + this._minY;
+            const { width: elementWidth, height: elementHeight } = getElementWidthAndHeight(this._element);
+            this._width = elementWidth;
+            this._height = elementHeight;
+
+            this.setDropPosition(x, y);
         }
     }
 
@@ -181,8 +166,6 @@ export class DragProxy extends EventEmitter {
      * @internal
      */
     private onDrop(): void {
-        this._contentItem.setParent(this._contentItemParent);
-
         const dropTargetIndicator = this._layoutManager.dropTargetIndicator;
         if (dropTargetIndicator === null) {
             throw new UnexpectedNullError('DPOD30011');
@@ -193,15 +176,19 @@ export class DragProxy extends EventEmitter {
         /*
          * Valid drop area found
          */
+        let droppedComponentItem: ComponentItem | undefined;
         if (this._area !== null) {
-            this._area.contentItem.onDrop(this._contentItem, this._area);
+            droppedComponentItem = this._componentItem;
+            this._area.contentItem.onDrop(droppedComponentItem, this._area);
 
             /**
              * No valid drop area available at present, but one has been found before.
              * Use it
              */
         } else if (this._lastValidArea !== null) {
-            this._lastValidArea.contentItem.onDrop(this._contentItem, this._lastValidArea);
+            droppedComponentItem = this._componentItem;
+            const newParentContentItem = this._lastValidArea.contentItem;
+            newParentContentItem.onDrop(droppedComponentItem, this._lastValidArea);
 
             /**
              * No valid drop area found during the duration of the drag. Return
@@ -209,7 +196,8 @@ export class DragProxy extends EventEmitter {
              * (Which is not the case if the drag had been initiated by createDragSource)
              */
         } else if (this._originalParent) {
-            this._originalParent.addChild(this._contentItem);
+            droppedComponentItem = this._componentItem;
+            this._originalParent.addChild(droppedComponentItem);
 
             /**
              * The drag didn't ultimately end up with adding the content item to
@@ -217,12 +205,16 @@ export class DragProxy extends EventEmitter {
              * content item.
              */
         } else {
-            this._contentItem.destroy(); // contentItem children are now destroyed as well
+            this._componentItem.destroy(); // contentItem children are now destroyed as well
         }
 
         this._element.remove();
 
-        this._layoutManager.emit('itemDropped', this._contentItem);
+        this._layoutManager.emit('itemDropped', this._componentItem);
+
+        if (this._componentItemFocused && droppedComponentItem !== undefined) {
+            droppedComponentItem.focus();
+        }
     }
 
     /**
@@ -246,8 +238,8 @@ export class DragProxy extends EventEmitter {
                 height -= (!this._sided ? headerHeight : 0);
                 this._proxyContainerElement.style.width = numberToPixels(width);
                 this._proxyContainerElement.style.height = numberToPixels(height);
-                this._contentItem.setDragSize(width, height);
-                this._contentItem.show();
+                this._componentItem.setDragSize(width, height);
+                this._componentItem.show();
             }
         }
     }

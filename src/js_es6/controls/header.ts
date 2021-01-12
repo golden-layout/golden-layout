@@ -3,6 +3,7 @@ import { ComponentItem } from '../items/component-item';
 import { ContentItem } from '../items/content-item';
 import { Stack } from '../items/stack';
 import { LayoutManager } from '../layout-manager';
+import { DomConstants } from '../utils/dom-constants';
 import { DragListener } from '../utils/drag-listener';
 import { EventEmitter } from '../utils/event-emitter';
 import { Side } from '../utils/types';
@@ -150,15 +151,14 @@ export class Header extends EventEmitter {
 
         this._canRemoveComponent = this._configClosable;
 
-        // this._element = createTemplateHtmlElement(_template);
         this._element = document.createElement('section');
-        this._element.classList.add('lm_header');
+        this._element.classList.add(DomConstants.ClassName.Header);
         this._tabsContainerElement = document.createElement('section');
-        this._tabsContainerElement.classList.add('lm_tabs');
+        this._tabsContainerElement.classList.add(DomConstants.ClassName.Tabs);
         this._controlsContainerElement = document.createElement('section');
-        this._controlsContainerElement.classList.add('lm_controls');
+        this._controlsContainerElement.classList.add(DomConstants.ClassName.Controls);
         this._tabDropdownContainerElement = document.createElement('section');
-        this._tabDropdownContainerElement.classList.add('lm_tabdropdown_list');
+        this._tabDropdownContainerElement.classList.add(DomConstants.ClassName.TabDropdownList);
         this._tabDropdownContainerElement.style.display = 'none';
         this._element.appendChild(this._tabsContainerElement);
         this._element.appendChild(this._controlsContainerElement);
@@ -373,6 +373,15 @@ export class Header extends EventEmitter {
     }
 
     /** @internal */
+    applyFocusedValue(value: boolean): void {
+        if (value) {
+            this._element.classList.add(DomConstants.ClassName.Focused);
+        } else {
+            this._element.classList.remove(DomConstants.ClassName.Focused);
+        }
+    }
+
+    /** @internal */
     processMaximised(): void {
         if (this._maximiseButton === undefined) {
             throw new UnexpectedUndefinedError('HPMAX16997');
@@ -556,32 +565,36 @@ export class Header extends EventEmitter {
         /**
          * Dropdown to show additional tabs.
          */
-        this._tabDropdownButton = new HeaderButton(this, this._tabDropdownLabel, 'lm_tabdropdown', () => this.showAdditionalTabsDropdown());
+        this._tabDropdownButton = new HeaderButton(this, this._tabDropdownLabel, DomConstants.ClassName.TabDropdown,
+            () => this.showAdditionalTabsDropdown()
+        );
         setElementDisplayVisibility(this._tabDropdownButton.element, false);
 
         if (this._dockEnabled) {
-            this._dockButton = new HeaderButton(this, this._dockLabel, 'lm_dock', () => this.handleButtonDockEvent());
+            this._dockButton = new HeaderButton(this, this._dockLabel, DomConstants.ClassName.Dock, () => this.handleButtonDockEvent());
         }
 
         /**
          * Popout control to launch component in new window.
          */
         if (this._popoutEnabled) {
-            new HeaderButton(this, this._popoutLabel, 'lm_popout', () => this.handleButtonPopoutEvent());
+            new HeaderButton(this, this._popoutLabel, DomConstants.ClassName.Popout, () => this.handleButtonPopoutEvent());
         }
 
         /**
          * Maximise control - set the component to the full size of the layout
          */
         if (this._maximiseEnabled) {
-            this._maximiseButton = new HeaderButton(this, this._maximiseLabel, 'lm_maximise', (ev) => this.handleButtonMaximiseToggleEvent(ev));
+            this._maximiseButton = new HeaderButton(this, this._maximiseLabel, DomConstants.ClassName.Maximise,
+                (ev) => this.handleButtonMaximiseToggleEvent(ev)
+            );
         }
 
         /**
          * Close button
          */
         if (this._configClosable) {
-            this._closeButton = new HeaderButton(this, this._closeLabel, 'lm_close', () => closeEvent());
+            this._closeButton = new HeaderButton(this, this._closeLabel, DomConstants.ClassName.Close, () => closeEvent());
         }
     }
 
