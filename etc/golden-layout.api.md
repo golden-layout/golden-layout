@@ -1182,7 +1182,7 @@ export interface ResolvedItemConfig {
 
 // @public (undocumented)
 export namespace ResolvedItemConfig {
-    const // @internal (undocumented)
+    const // (undocumented)
     defaults: ResolvedItemConfig;
     export function createCopy(original: ResolvedItemConfig, content?: ResolvedItemConfig[]): ResolvedItemConfig;
     // (undocumented)
@@ -1240,7 +1240,7 @@ export namespace ResolvedLayoutConfig {
     export namespace Dimensions {
         // (undocumented)
         export function createCopy(original: Dimensions): Dimensions;
-        const // @internal (undocumented)
+        const // (undocumented)
         defaults: ResolvedLayoutConfig.Dimensions;
     }
     // (undocumented)
@@ -1264,7 +1264,7 @@ export namespace ResolvedLayoutConfig {
     export namespace Header {
         // (undocumented)
         export function createCopy(original: Header): Header;
-        const // @internal (undocumented)
+        const // (undocumented)
         defaults: ResolvedLayoutConfig.Header;
     }
     // (undocumented)
@@ -1293,7 +1293,7 @@ export namespace ResolvedLayoutConfig {
     }
     // (undocumented)
     export namespace Settings {
-        const // @internal (undocumented)
+        const // (undocumented)
         defaults: ResolvedLayoutConfig.Settings;
         // (undocumented)
         export function createCopy(original: Settings): Settings;
@@ -1330,7 +1330,7 @@ export namespace ResolvedPopoutLayoutConfig {
     export namespace Window {
         // (undocumented)
         export function createCopy(original: Window): Window;
-        const // @internal (undocumented)
+        const // (undocumented)
         defaults: ResolvedPopoutLayoutConfig.Window;
     }
 }

@@ -19,7 +19,6 @@ export interface ResolvedItemConfig {
 
 /** @public */
 export namespace ResolvedItemConfig {
-    /** @internal */
     export const defaults: ResolvedItemConfig = {
         type: ItemType.ground, // not really default but need something
         content: [],
@@ -493,7 +492,6 @@ export namespace ResolvedLayoutConfig {
     }
 
     export namespace Settings {
-        /** @internal */
         export const defaults: ResolvedLayoutConfig.Settings = {
             constrainDragToContainer: true,
             reorderEnabled: true,
@@ -545,10 +543,9 @@ export namespace ResolvedLayoutConfig {
             }
         }
 
-        /** @internal */
         export const defaults: ResolvedLayoutConfig.Dimensions = {
             borderWidth: 5,
-            borderGrabWidth: 15,
+            borderGrabWidth: 5,
             minItemHeight: 10,
             minItemWidth: 10,
             headerHeight: 20,
@@ -580,7 +577,6 @@ export namespace ResolvedLayoutConfig {
             }
         }
 
-        /** @internal */
         export const defaults: ResolvedLayoutConfig.Header = {
             show: Side.top,
             popout: 'open in new window',
@@ -677,7 +673,6 @@ export namespace ResolvedPopoutLayoutConfig {
             }
         }
 
-        /** @internal */
         export const defaults: ResolvedPopoutLayoutConfig.Window = {
             width: null,
             height: null,
