@@ -6,45 +6,112 @@
 
 <!-- ![Screenshot](https://cloud.githubusercontent.com/assets/512416/4584449/e6c154a0-4ffa-11e4-81a8-a7e5f8689dc5.PNG) -->
 
-Please note that this project is currently undergoing a larger maintenance and refactoring, we're targeting a 2.0 release somewhere in H1 2020.
+## Will this code base become release 2 of Golden Layout or a new product?.
+
+There has been some discussion in the Golden Layout repository issues as to whether this code base will merged back into the main Golden Layout repository and become version 2.  I (pbklink) have so far not commented on this as I was focusing on the getting this code base ready for its first release.
+
+That is now done! I need to publish it to NPM in the next week. So I now need to decide whether to publish under the Golden Layout organisation or create a new product/organisation.
+
+### IMPORTANT NOTE
+
+Golden Layout is a great product and many people have put a lot of effort into it. My opinions below should in no way be construed as criticism.  If it feels like that to anyone, then I extend my apologies and assure it was not intended that way.
+
+### The port
+
+The company I work for, needed a browser based layout manager for one of its products.  Golden Layout seemed ideal.  We used release 1.5.9 and this product is now in production.  While it generally works, the layout manager has some issues which impact our customers.  Like everyone else, we were waiting for the pending version 2.0 of Golden Layout.
+
+In September last year, we decided to rewrite the Golden Layout library ourselves as a TypeScript port.  I was tasked with this.  Obviously our aim with this port was make the ported library suitable for our product.
+
+Initially, I converted all the existing code, however I only debugged features that we require for our product.  I also did some refactoring to clean up the code base.
+
+Our product does not (currently) use the following features so these have not been tested:
+
+1. Popouts (A rough guess is that there is 1 to 2 weeks of work to get this working)
+1. Touch support (Needs a bit of thinking to get this right)
+1. Much of the API
+
+It only targets the latest releases of the main browsers; currently only desktop but maybe tablets in the future.  The TypeScript port has been engineered accordingly.
+
+### Community
+
+While we could maintain this code completely in-house, it would be great if there is a community based around it.  The question is how would the community work so that it both meets our needs and the community's needs.
+
+### Reliability
+
+Our major need is **reliability**.  Our customers expect a rock solid product.
+
+From working on the code base, I think the reason why Golden Layout has not shipped a release since 2017, is because it accepted new feature Pull Requests which impacted the stability of the library.  It takes a lot of work (and time) to understand the Golden Layout code base.  This applies both to the developers submitting the PR and maintainers reviewing them.  Reviewing changes for design correctness would be especially hard and maintainers would also need good design skills.
+
+I believe that the key to reliability is having skilled maintainers who can prioritise issues and steer PRs through to the code base.
+
+### Maintainers
+
+Maintainers with these skills most likely have demanding and well paid jobs.  Probably the only way the organisation can attract them is as users of the library.  But then, how do you ensure that the maintainer will contribute to the community and not just look after their own interest in the code base?
+
+I think the following 3 expectations need to exist around maintainers:
+1. They agree to work in line with the community vision for the product.
+1. They need to actively participate in the community.
+1. The community guidelines should make it as easy as possible for maintainers to carry out their tasks (as they probably have limited time).
+
+Maintainers will ultimately be the implementers of the community vision and determine how this vision evolves.  In return, it is reasonable for the community to expect participation so that the community is also involved in this interpretation and vision.
+
+On the other hand, the community needs to understand that the maintainers are probably busy people and the time they have to participate may be limited.
+
+### Getting Feature Requests and Pull Requests actioned
+
+There will probably be lots of suggestions for feature requests and also pull requests.  The work to implement feature requests or review pull requests for integrity, can take time a significant amount of time for a maintainer.  If the maintainer thinks it is a good idea (especially for their application), then it there is a good chance the request will be acted upon.
+
+However if none of the maintainers are interested in that request, then it probably will be ignored.  It needs to be remembered that reliability is paramount.  A feature (or fixing a corner case) either needs to be properly implemented or not at all.
+
+There has been suggestions of using donations to support the library (and motivating maintainers I assume).  However I believe there will be a big discrepancy between what users are prepared to donate and what will motivate maintainers.
+
+A possible solution is allowing maintainers to enter agreements with users or corporations to either provide support for the library or to implement features or review PRs.  These agreements would probably be struck at commercial rates.  The agreements however could not make maintainers override community processes or be binding on the community in any way.  That is, the maintainer would still need to process any feature implementation or PR review in the same way as any other feature/PR was handled.  Any such agreements would need to be publicly declared for transparency.
+
+By providing commercial arrangements, it may make the library more attractive to companies who need products with support offerings.  It will also allow users to get features/fixes implemented which would otherwise not be implemented.
+
+### My Vision
+
+* Reliability is the highest priority.
+* Only latest releases of major browsers are targeted.
+* Releases and incorporation of PRs will be done in a planned fashion to ensure reliability can be maintained and application developers can upgrade their applications to new releases in a controlled fashion.
+* Major releases can have breaking changes.  While these will be documented, it will probably be as dot points.  Examination of source code may be necessary for application developers.
+* Developers should discuss PRs with maintainers before submitting.  This will reduce the reviewing effort as PRs will be developed in line with maintainers expections.
+* PRs must use the same coding style.  (This may be a bit tough as the style is quite verbose - however I thing consistency is important for readability)
+* PRs with new feature releases must include updates to testing app(s) and documentation.  In addition, the code base needs to be satisfactorily refactored so that the code implementing the feature is properly integrated.
+* Submitters of PRs are expected to thorougly test their changes before submitting.
+* All maintainers need to be actively involved in community.
+* Features, fixes and PRs will be not be actioned if no maintainer is interested in addressing.
+* Maintainers can enter into paid agreements with users to implement features, fixes or review pull requests.  Agreements need to be declared and cannot override community processes and not in any way be binding on the community.
+
+### Golden Layout or new organisation?
+
+So do I continue with Golden Layout or create a new organisation?
+
+I have discussed this with one of the maintainers (martin31821).  He is supportive of the Golden Layout community adopting a policy based around the above vision.
+
+What are other peoples' opinions?
+
+Please use the '[TypeScript port: Golden Layout version 2 or new product?](https://github.com/golden-layout/golden-layout/issues/606)' issue to further discuss this.
+
+---
 
 ## Features
 
-* Full touch support
-* Native popup windows
+* ~~Full touch support~~
+* ~~Native popup windows~~
 * Completely themeable
 * Comprehensive API
 * Powerful persistence
-* Works in IE8+, Firefox, Chrome
+* Works in ~~IE8+,~~ Firefox, Chrome
 * Reponsive design
 
 
 ## Installation / Usage
 
-**IMPORTANT: This section refers to the unreleased 2.0 version of golden-layout, so keep this in mind and use the v1.5.9 tag for current works.**
-
-golden-layout is shipped via npm, so to use it, run `npm i -S golden-layout`. 
+~~golden-layout is shipped via npm, so to use it, run `npm i -S golden-layout`. 
 If you are using webpack or another module bundler, you may wish to install it as dev-dep instead. 
 We are shipping an UMD version, an ES5 + ES-Module version and an ES2015+ES-Module version of the library within the package.
-Modern bundlers such as webpack should pick up the ES2015 version and transpile the code according to your applications configuration.
-
-## Demo App
-
-We have a demo application embedded within this repository, to run it, run:
-
-```sh
-git clone github.com/golden-layout/golden-layout
-cd golden-layout
-npm ci # (or npm i, if you use an old npm version)
-npm run start-jquery
-# the app is served at localhost:3000 and uses hot-reload, so you can hack right away within the library and the application.
-```
-
-## Development
-
-Internally, we are using webpack and babel to have a build process. 
-To get started, follow the steps described in demo-app. 
-You can get a complete build by running `npm run build`, which will compile all versions of the app into the `dist` folder.
+Modern bundlers such as webpack should pick up the ES2015 version and transpile the code according to your applications configuration.~~
 
 ## Version 2 Information
 Version 2 has been re-written in TypeScript. A general code cleanup has been carried out as part of this re-write.  
