@@ -63,7 +63,7 @@ There will probably be lots of suggestions for feature requests and also pull re
 
 However if none of the maintainers are interested in that request, then it probably will be ignored.  It needs to be remembered that reliability is paramount.  A feature (or fixing a corner case) either needs to be properly implemented or not at all.
 
-There has been suggestions of using donations to support the library (and motivating maintainers I assume).  However I believe there will be a big discrepancy between what users are prepared to donate and what will motivate maintainers.
+There have been suggestions of using donations to support the library (and motivating maintainers I assume).  However I believe there will be a big discrepancy between what users are prepared to donate and what will motivate maintainers.
 
 A possible solution is allowing maintainers to enter agreements with users or corporations to either provide support for the library or to implement features or review PRs.  These agreements would probably be struck at commercial rates.  The agreements however could not make maintainers override community processes or be binding on the community in any way.  That is, the maintainer would still need to process any feature implementation or PR review in the same way as any other feature/PR was handled.  Any such agreements would need to be publicly declared for transparency.
 
