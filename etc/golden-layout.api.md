@@ -50,8 +50,6 @@ export class ComponentContainer extends EventEmitter {
     close(): void;
     // (undocumented)
     get component(): ComponentItem.Component;
-    // (undocumented)
-    get componentItemConfig(): ResolvedComponentItemConfig;
     // @internal @deprecated (undocumented)
     get componentName(): JsonValue;
     // (undocumented)
