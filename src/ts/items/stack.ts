@@ -254,6 +254,11 @@ export class Stack extends ComponentParentableItem {
     }
 
     /** @internal */
+    focusActiveContentItem(): void {
+        this._activeComponentItem.focus();
+    }
+
+    /** @internal */
     setFocusedValue(value: boolean): void {
         this._header.applyFocusedValue(value);
         super.setFocusedValue(value);
@@ -387,9 +392,9 @@ export class Stack extends ComponentParentableItem {
             this.dock(false);
         }
         if (this._isMaximised === true) {
-            this.layoutManager.minimiseItem(this);
+            this.layoutManager.minimiseStack(this);
         } else {
-            this.layoutManager.maximiseItem(this);
+            this.layoutManager.maximiseStack(this);
         }
 
         this._isMaximised = !this._isMaximised;

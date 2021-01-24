@@ -894,13 +894,13 @@ export abstract class LayoutManager extends EventEmitter {
     loadComponentAsRoot(itemConfig: ComponentItemConfig): void;
     loadLayout(layoutConfig: LayoutConfig): void;
     // @internal (undocumented)
-    protected get maximisedItem(): ContentItem | null;
+    protected get maximisedStack(): Stack | undefined;
     // @internal (undocumented)
-    maximiseItem(contentItem: ContentItem): void;
+    maximiseStack(stack: Stack): void;
     // @deprecated
     minifyConfig(config: ResolvedLayoutConfig): ResolvedLayoutConfig;
     // @internal (undocumented)
-    minimiseItem(contentItem: ContentItem): void;
+    minimiseStack(stack: Stack): void;
     newComponent(componentTypeName: string, componentState?: JsonValue, index?: number): ComponentItem;
     newItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig, index?: number): ContentItem;
     // (undocumented)
@@ -1493,6 +1493,8 @@ export class Stack extends ComponentParentableItem {
     get dockEnabled(): boolean;
     // @internal (undocumented)
     get docker(): Stack.Docker;
+    // @internal (undocumented)
+    focusActiveContentItem(): void;
     // (undocumented)
     getActiveComponentItem(): ComponentItem;
     // @deprecated (undocumented)

@@ -71,7 +71,7 @@ export abstract class LayoutManager extends EventEmitter {
     /** @internal */
     private _itemAreas: ContentItem.Area[] = [];
     /** @internal */
-    private _maximisedItem: ContentItem | null = null;
+    private _maximisedStack: Stack | undefined;
     /** @internal */
     private _maximisePlaceholder = LayoutManager.createMaximisePlaceElement(document);
     /** @internal */
@@ -99,10 +99,10 @@ export abstract class LayoutManager extends EventEmitter {
     /** @internal */
     private _windowUnloadListener = () => this.onUnload();
     /** @internal */
-    private _maximisedItemBeforeDestroyedListener = (ev: EventEmitter.BubblingEvent) => this.cleanupBeforeMaximisedItemDestroyed(ev);
+    private _maximisedStackBeforeDestroyedListener = (ev: EventEmitter.BubblingEvent) => this.cleanupBeforeMaximisedStackDestroyed(ev);
 
     /** @internal */
-    protected get maximisedItem(): ContentItem | null { return this._maximisedItem; }
+    protected get maximisedStack(): Stack | undefined { return this._maximisedStack; }
 
     readonly isSubWindow: boolean;
     layoutConfig: ResolvedLayoutConfig;
@@ -616,11 +616,11 @@ export abstract class LayoutManager extends EventEmitter {
             } else {
                 this._groundItem.setSize(this._width, this._height);
 
-                if (this._maximisedItem) {
+                if (this._maximisedStack) {
                     const { width, height } = getElementWidthAndHeight(this._containerElement);
-                    setElementWidth(this._maximisedItem.element, width);
-                    setElementHeight(this._maximisedItem.element, height);
-                    this._maximisedItem.updateSize();
+                    setElementWidth(this._maximisedStack.element, width);
+                    setElementHeight(this._maximisedStack.element, height);
+                    this._maximisedStack.updateSize();
                 }
 
                 this.adjustColumnsResponsive();
@@ -950,39 +950,40 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /** @internal */
-    maximiseItem(contentItem: ContentItem): void {
-        if (this._maximisedItem !== null) {
-            this.minimiseItem(this._maximisedItem);
+    maximiseStack(stack: Stack): void {
+        if (this._maximisedStack !== undefined) {
+            this.minimiseStack(this._maximisedStack);
         }
-        this._maximisedItem = contentItem;
-        contentItem.on('beforeItemDestroyed', this._maximisedItemBeforeDestroyedListener);
-        contentItem.element.classList.add(DomConstants.ClassName.Maximised);
-        contentItem.element.insertAdjacentElement('afterend', this._maximisePlaceholder);
+        this._maximisedStack = stack;
+        stack.on('beforeItemDestroyed', this._maximisedStackBeforeDestroyedListener);
+        stack.element.classList.add(DomConstants.ClassName.Maximised);
+        stack.element.insertAdjacentElement('afterend', this._maximisePlaceholder);
         if (this._groundItem === undefined) {
             throw new UnexpectedUndefinedError('LMMXI19993');
         } else {
-            this._groundItem.element.prepend(contentItem.element);
+            this._groundItem.element.prepend(stack.element);
             const { width, height } = getElementWidthAndHeight(this._containerElement);
-            setElementWidth(contentItem.element, width);
-            setElementHeight(contentItem.element, height);
-            contentItem.updateSize();
-            this._maximisedItem.emit('maximised');
+            setElementWidth(stack.element, width);
+            setElementHeight(stack.element, height);
+            stack.updateSize();
+            stack.focusActiveContentItem();
+            this._maximisedStack.emit('maximised');
             this.emit('stateChanged');
         }
     }
 
     /** @internal */
-    minimiseItem(contentItem: ContentItem): void {
-        if (contentItem.parent === null) {
+    minimiseStack(stack: Stack): void {
+        if (stack.parent === null) {
             throw new UnexpectedNullError('LMMI13668');
         } else {
-            contentItem.element.classList.remove(DomConstants.ClassName.Maximised);
-            this._maximisePlaceholder.insertAdjacentElement('afterend', contentItem.element);
+            stack.element.classList.remove(DomConstants.ClassName.Maximised);
+            this._maximisePlaceholder.insertAdjacentElement('afterend', stack.element);
             this._maximisePlaceholder.remove();
-            contentItem.parent.updateSize();
-            this._maximisedItem = null;
-            contentItem.off('beforeItemDestroyed', this._maximisedItemBeforeDestroyedListener);
-            contentItem.emit('minimised');
+            stack.parent.updateSize();
+            this._maximisedStack = undefined;
+            stack.off('beforeItemDestroyed', this._maximisedStackBeforeDestroyedListener);
+            stack.emit('minimised');
             this.emit('stateChanged');
         }
     }
@@ -1032,10 +1033,10 @@ export abstract class LayoutManager extends EventEmitter {
     // }
 
     /** @internal */
-    private cleanupBeforeMaximisedItemDestroyed(event: EventEmitter.BubblingEvent) {
-		if (this._maximisedItem !== null && this._maximisedItem === event.target) {
-			this._maximisedItem.off( 'beforeItemDestroyed', this._maximisedItemBeforeDestroyedListener);
-			this._maximisedItem = null;
+    private cleanupBeforeMaximisedStackDestroyed(event: EventEmitter.BubblingEvent) {
+		if (this._maximisedStack !== null && this._maximisedStack === event.target) {
+			this._maximisedStack.off('beforeItemDestroyed', this._maximisedStackBeforeDestroyedListener);
+			this._maximisedStack = undefined;
 		}
     }
     
