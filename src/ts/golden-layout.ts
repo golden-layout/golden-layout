@@ -183,19 +183,6 @@ export namespace GoldenLayout {
             }
         }
 
-        // var nextNode = (node: Config) => {
-        //     for (var key in node) {
-        //         if (key !== 'props' && typeof node[key] === 'object') {
-        //             nextNode(node[key] as Config);
-        //         } else if (key === 'type' && this.isReactConfig(node)) {
-        //             node.type = 'component';
-        //             node.componentName = REACT_COMPONENT_ID;
-        //         }
-        //     }
-        // }
-
-        // nextNode(config);
-
         return {
             layoutConfig: config,
             isSubWindow,

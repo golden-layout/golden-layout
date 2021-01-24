@@ -67,7 +67,7 @@ export namespace JsonValue {
 }
 
 /** @public */
-export type ItemType = 'ground' | 'row' | 'column' | 'stack' | 'component' | 'react-component';
+export type ItemType = 'ground' | 'row' | 'column' | 'stack' | 'component';
 
 /** @public */
 export namespace ItemType {
@@ -75,8 +75,7 @@ export namespace ItemType {
     export const row = 'row';
     export const column = 'column';
     export const stack = 'stack';
-    export const serialisableComponent = 'component';
-    export const reactComponent = 'react-component';
+    export const component = 'component';
 }
 
 /** @public */

@@ -1,4 +1,4 @@
-import { ComponentItemConfig, ItemConfig, RowOrColumnItemConfig, SerialisableComponentConfig, StackItemConfig } from '../config/config'
+import { ComponentItemConfig, ItemConfig, RowOrColumnItemConfig, StackItemConfig } from '../config/config'
 import { ResolvedRowOrColumnItemConfig, ResolvedStackItemConfig } from '../config/resolved-config'
 import { Splitter } from '../controls/splitter'
 import { AssertError, UnexpectedNullError } from '../errors/internal-error'
@@ -70,8 +70,8 @@ export class RowOrColumn extends ContentItem {
         }
     }
 
-    newSerialisableComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): ComponentItem {
-        const itemConfig: SerialisableComponentConfig = {
+    newComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): ComponentItem {
+        const itemConfig: ComponentItemConfig = {
             type: 'component',
             componentType,
             componentState,
@@ -79,8 +79,8 @@ export class RowOrColumn extends ContentItem {
         return this.newItem(itemConfig, index) as ComponentItem;
     }
 
-    addSerialisableComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): number {
-        const itemConfig: SerialisableComponentConfig = {
+    addComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): number {
+        const itemConfig: ComponentItemConfig = {
             type: 'component',
             componentType,
             componentState,

@@ -7,17 +7,15 @@ import {
     ResolvedItemConfig,
     ResolvedLayoutConfig,
     ResolvedPopoutLayoutConfig,
-    ResolvedReactComponentConfig,
     ResolvedRootItemConfig,
     ResolvedRowOrColumnItemConfig,
-    ResolvedSerialisableComponentConfig,
     ResolvedStackItemConfig
 } from "./resolved-config";
 
 /** @public */
 export interface ItemConfig {
     /**
-     * The type of the item. Possible values are 'row', 'column', 'stack', 'component' and 'react-component'.
+     * The type of the item. Possible values are 'row', 'column', 'stack', 'component'.
      */
     type: ItemType;
 
@@ -82,11 +80,8 @@ export namespace ItemConfig {
             case ItemType.stack:
                 return StackItemConfig.resolve(itemConfig as StackItemConfig);
 
-            case ItemType.serialisableComponent:
-                return SerialisableComponentConfig.resolve(itemConfig as SerialisableComponentConfig);
-
-            case ItemType.reactComponent:
-                return ReactComponentConfig.resolve(itemConfig as ReactComponentConfig);
+            case ItemType.component:
+                return ComponentItemConfig.resolve(itemConfig as ComponentItemConfig);
 
             default:
                 throw new UnreachableCaseError('UCUICR55499', itemConfig.type);
@@ -135,14 +130,8 @@ export namespace ItemConfig {
     export function isStack(config: ItemConfig): config is ItemConfig {
         return config.type === ItemType.stack;
     }
-    export function isComponent(config: ItemConfig): config is SerialisableComponentConfig | ReactComponentConfig {
-        return isSerialisableComponent(config) || isReactComponent(config);
-    }
-    export function isSerialisableComponent(config: ItemConfig): config is SerialisableComponentConfig {
-        return config.type === ItemType.serialisableComponent;
-    }
-    export function isReactComponent(config: ItemConfig): config is ReactComponentConfig {
-        return config.type === ItemType.reactComponent;
+    export function isComponent(config: ItemConfig): config is ComponentItemConfig {
+        return config.type === ItemType.component;
     }
 }
 
@@ -273,6 +262,7 @@ export namespace StackItemConfig {
 
 /** @public */
 export interface ComponentItemConfig extends HeaderedItemConfig {
+    type: 'component';
     readonly content?: [];
     /**
      * The type of the component.
@@ -288,6 +278,12 @@ export interface ComponentItemConfig extends HeaderedItemConfig {
      * * {@link (LayoutManager:class).registerComponentFactoryFunction}
      */
     componentType: JsonValue;
+    /**
+     * The state information with which a component will be initialised with.
+     * Will be passed to the component constructor function and will be the value returned by
+     * container.initialState.
+     */
+    componentState?: JsonValue;
 
     /**
      * Default: true
@@ -297,36 +293,13 @@ export interface ComponentItemConfig extends HeaderedItemConfig {
 
 /** @public */
 export namespace ComponentItemConfig {
-    export function componentTypeToTitle(componentType: JsonValue): string {
-        const componentTypeType = typeof componentType;
-        switch (componentTypeType) {
-            case 'string': return componentType as string;
-            case 'number': return (componentType as number).toString();
-            case 'boolean': return (componentType as boolean).toString();
-            default: return '';
-        }
-    }
-}
-
-/** @public */
-export interface SerialisableComponentConfig extends ComponentItemConfig {
-    type: 'component';
-    /**
-     * A serialisable object. Will be passed to the component constructor function and will be the value returned by
-     * container.getState().
-     */
-    componentState?: JsonValue;
-}
-
-/** @public */
-export namespace SerialisableComponentConfig {
-    export function resolve(itemConfig: SerialisableComponentConfig): ResolvedSerialisableComponentConfig {
+    export function resolve(itemConfig: ComponentItemConfig): ResolvedComponentItemConfig {
         let componentType: JsonValue | undefined = itemConfig.componentType;
         if (componentType === undefined) {
             componentType = itemConfig.componentName;
         }
         if (componentType === undefined) {
-            throw new Error('SerialisableComponentConfig.componentType is undefined');
+            throw new Error('ComponentItemConfig.componentType is undefined');
         } else {
             const { id, maximised } = HeaderedItemConfig.resolveIdAndMaximised(itemConfig);
             let title: string;
@@ -335,7 +308,7 @@ export namespace SerialisableComponentConfig {
             } else {
                 title = itemConfig.title;
             }
-            const result: ResolvedSerialisableComponentConfig = {
+            const result: ResolvedComponentItemConfig = {
                 type: itemConfig.type,
                 content: [],
                 width: itemConfig.width ?? ResolvedItemConfig.defaults.width,
@@ -354,49 +327,14 @@ export namespace SerialisableComponentConfig {
             return result;
         }
     }
-}
 
-/** @public */
-export interface ReactComponentConfig extends ComponentItemConfig {
-    type: 'react-component';
-    component?: string;
-    /**
-     * Properties that will be passed to the component and accessible using this.props.
-     */
-    props?: JsonValue;
-}
-
-/** @public */
-export namespace ReactComponentConfig {
-    export function resolve(itemConfig: ReactComponentConfig): ResolvedReactComponentConfig {
-        if (itemConfig.component === undefined) {
-            throw new Error('ReactComponentConfig.component is undefined');
-        } else {
-            const { id, maximised } = HeaderedItemConfig.resolveIdAndMaximised(itemConfig);
-            let title: string;
-            if (itemConfig.title === undefined) {
-                title = '';
-            } else {
-                title = itemConfig.title;
-            }
-            const result: ResolvedReactComponentConfig = {
-                type: ItemType.reactComponent,
-                content: [],
-                width: itemConfig.width ?? ResolvedItemConfig.defaults.width,
-                minWidth: itemConfig.minWidth ?? ResolvedItemConfig.defaults.minWidth,
-                height: itemConfig.height ?? ResolvedItemConfig.defaults.height,
-                minHeight: itemConfig.minHeight ?? ResolvedItemConfig.defaults.minHeight,
-                id,
-                maximised,
-                isClosable: itemConfig.isClosable ?? ResolvedItemConfig.defaults.isClosable,
-                reorderEnabled: itemConfig.reorderEnabled ?? ResolvedComponentItemConfig.defaultReorderEnabled,
-                title,
-                header: HeaderedItemConfig.Header.resolve(itemConfig.header, itemConfig.hasHeaders),
-                componentType: ResolvedReactComponentConfig.REACT_COMPONENT_ID,
-                component: itemConfig.component,
-                props: itemConfig.props,
-            };
-            return result;
+    export function componentTypeToTitle(componentType: JsonValue): string {
+        const componentTypeType = typeof componentType;
+        switch (componentTypeType) {
+            case 'string': return componentType as string;
+            case 'number': return (componentType as number).toString();
+            case 'boolean': return (componentType as boolean).toString();
+            default: return '';
         }
     }
 }
@@ -417,8 +355,7 @@ export namespace RowOrColumnItemConfig {
             case ItemType.row:
             case ItemType.column:
             case ItemType.stack:
-            case ItemType.reactComponent:
-            case ItemType.serialisableComponent:
+            case ItemType.component:
                 return true;
             case ItemType.ground:
                 return false;
@@ -474,8 +411,7 @@ export namespace RootItemConfig {
             case ItemType.row:
             case ItemType.column:
             case ItemType.stack:
-            case ItemType.reactComponent:
-            case ItemType.serialisableComponent:
+            case ItemType.component:
                 return true;
             case ItemType.ground:
                 return false;

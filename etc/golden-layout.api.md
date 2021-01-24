@@ -183,16 +183,21 @@ export namespace ComponentItem {
 export interface ComponentItemConfig extends HeaderedItemConfig {
     // @deprecated
     componentName?: string;
+    componentState?: JsonValue;
     componentType: JsonValue;
     // (undocumented)
     readonly content?: [];
     reorderEnabled?: boolean;
+    // (undocumented)
+    type: 'component';
 }
 
 // @public (undocumented)
 export namespace ComponentItemConfig {
     // (undocumented)
     export function componentTypeToTitle(componentType: JsonValue): string;
+    // (undocumented)
+    export function resolve(itemConfig: ComponentItemConfig): ResolvedComponentItemConfig;
 }
 
 // @public @deprecated (undocumented)
@@ -676,15 +681,11 @@ export namespace ItemConfig {
     // (undocumented)
     export function isColumn(config: ItemConfig): config is ItemConfig;
     // (undocumented)
-    export function isComponent(config: ItemConfig): config is SerialisableComponentConfig | ReactComponentConfig;
+    export function isComponent(config: ItemConfig): config is ComponentItemConfig;
     // (undocumented)
     export function isGround(config: ItemConfig): config is ItemConfig;
     // (undocumented)
-    export function isReactComponent(config: ItemConfig): config is ReactComponentConfig;
-    // (undocumented)
     export function isRow(config: ItemConfig): config is ItemConfig;
-    // (undocumented)
-    export function isSerialisableComponent(config: ItemConfig): config is SerialisableComponentConfig;
     // (undocumented)
     export function isStack(config: ItemConfig): config is ItemConfig;
     // (undocumented)
@@ -696,7 +697,7 @@ export namespace ItemConfig {
 }
 
 // @public (undocumented)
-export type ItemType = 'ground' | 'row' | 'column' | 'stack' | 'component' | 'react-component';
+export type ItemType = 'ground' | 'row' | 'column' | 'stack' | 'component';
 
 // @public (undocumented)
 export namespace ItemType {
@@ -709,9 +710,7 @@ export namespace ItemType {
     const // (undocumented)
     stack = "stack";
     const // (undocumented)
-    serialisableComponent = "component";
-    const // (undocumented)
-    reactComponent = "react-component";
+    component = "component";
 }
 
 // @public (undocumented)
@@ -840,8 +839,8 @@ export namespace LayoutConfig {
 export abstract class LayoutManager extends EventEmitter {
     // @internal
     constructor(parameters: LayoutManager.ConstructorParameters);
+    addComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): number;
     addItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig, index?: number): number;
-    addSerialisableComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): number;
     // @internal (undocumented)
     calculateItemAreas(): void;
     clearComponentFocus(suppressEvent?: boolean): void;
@@ -904,8 +903,8 @@ export abstract class LayoutManager extends EventEmitter {
     minifyConfig(config: ResolvedLayoutConfig): ResolvedLayoutConfig;
     // @internal (undocumented)
     minimiseItem(contentItem: ContentItem): void;
+    newComponent(componentTypeName: string, componentState?: JsonValue, index?: number): ComponentItem;
     newItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig, index?: number): ContentItem;
-    newSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): ComponentItem;
     // (undocumented)
     get openPopouts(): BrowserPopout[];
     // @deprecated
@@ -1040,21 +1039,6 @@ export namespace PopoutLayoutConfig {
     }
 }
 
-// @public (undocumented)
-export interface ReactComponentConfig extends ComponentItemConfig {
-    // (undocumented)
-    component?: string;
-    props?: JsonValue;
-    // (undocumented)
-    type: 'react-component';
-}
-
-// @public (undocumented)
-export namespace ReactComponentConfig {
-    // (undocumented)
-    export function resolve(itemConfig: ReactComponentConfig): ResolvedReactComponentConfig;
-}
-
 // Warning: (ae-internal-missing-underscore) The name "Rect" should be prefixed with an underscore because the declaration is marked as @internal
 //
 // @internal (undocumented)
@@ -1071,6 +1055,8 @@ export interface Rect {
 
 // @public (undocumented)
 export interface ResolvedComponentItemConfig extends ResolvedHeaderedItemConfig {
+    // (undocumented)
+    readonly componentState?: JsonValue;
     readonly componentType: JsonValue;
     // (undocumented)
     readonly content: [];
@@ -1078,6 +1064,8 @@ export interface ResolvedComponentItemConfig extends ResolvedHeaderedItemConfig 
     readonly reorderEnabled: boolean;
     // (undocumented)
     readonly title: string;
+    // (undocumented)
+    readonly type: 'component';
 }
 
 // @public (undocumented)
@@ -1087,9 +1075,9 @@ export namespace ResolvedComponentItemConfig {
     // (undocumented)
     export function copyComponentType(componentType: JsonValue): JsonValue;
     // (undocumented)
-    export function isReact(config: ResolvedComponentItemConfig): config is ResolvedReactComponentConfig;
+    export function createCopy(original: ResolvedComponentItemConfig): ResolvedComponentItemConfig;
     // (undocumented)
-    export function isSerialisable(config: ResolvedComponentItemConfig): config is ResolvedSerialisableComponentConfig;
+    export function createDefault(): ResolvedComponentItemConfig;
     // @internal (undocumented)
     export function resolveComponentTypeName(itemConfig: ResolvedComponentItemConfig): string | undefined;
 }
@@ -1335,26 +1323,6 @@ export namespace ResolvedPopoutLayoutConfig {
     }
 }
 
-// @public (undocumented)
-export interface ResolvedReactComponentConfig extends ResolvedComponentItemConfig {
-    // (undocumented)
-    readonly component: string;
-    // (undocumented)
-    readonly props?: unknown;
-    // (undocumented)
-    readonly type: 'react-component';
-}
-
-// @public (undocumented)
-export namespace ResolvedReactComponentConfig {
-    const // (undocumented)
-    REACT_COMPONENT_ID = "lm-react-component";
-    // (undocumented)
-    export function createCopy(original: ResolvedReactComponentConfig): ResolvedReactComponentConfig;
-    // (undocumented)
-    export function createDefault(): ResolvedReactComponentConfig;
-}
-
 // @public
 export type ResolvedRootItemConfig = ResolvedRowOrColumnItemConfig | ResolvedStackItemConfig | ResolvedComponentItemConfig;
 
@@ -1385,22 +1353,6 @@ export namespace ResolvedRowOrColumnItemConfig {
     export function createDefault(type: 'row' | 'column'): ResolvedRowOrColumnItemConfig;
     // (undocumented)
     export function isChildItemConfig(itemConfig: ResolvedItemConfig): itemConfig is ChildItemConfig;
-}
-
-// @public (undocumented)
-export interface ResolvedSerialisableComponentConfig extends ResolvedComponentItemConfig {
-    // (undocumented)
-    readonly componentState?: JsonValue;
-    // (undocumented)
-    readonly type: 'component';
-}
-
-// @public (undocumented)
-export namespace ResolvedSerialisableComponentConfig {
-    // (undocumented)
-    export function createCopy(original: ResolvedSerialisableComponentConfig): ResolvedSerialisableComponentConfig;
-    // (undocumented)
-    export function createDefault(): ResolvedSerialisableComponentConfig;
 }
 
 // @public (undocumented)
@@ -1455,16 +1407,16 @@ export class RowOrColumn extends ContentItem {
     constructor(isColumn: boolean, layoutManager: LayoutManager, config: ResolvedRowOrColumnItemConfig, _rowOrColumnParent: ContentItem);
     addChild(contentItem: ContentItem, index?: number, suspendResize?: boolean): number;
     // (undocumented)
-    addItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig, index?: number): number;
+    addComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): number;
     // (undocumented)
-    addSerialisableComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): number;
+    addItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig, index?: number): number;
     dock(contentItem: Stack, mode?: boolean, collapsed?: boolean): void;
     // @internal
     init(): void;
     // (undocumented)
-    newItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig, index?: number): ContentItem;
+    newComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): ComponentItem;
     // (undocumented)
-    newSerialisableComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): ComponentItem;
+    newItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig, index?: number): ContentItem;
     removeChild(contentItem: ContentItem, keepChild: boolean): void;
     replaceChild(oldChild: ContentItem, newChild: ContentItem): void;
     // @internal (undocumented)
@@ -1507,19 +1459,6 @@ export namespace RowOrColumnItemConfig {
 }
 
 // @public (undocumented)
-export interface SerialisableComponentConfig extends ComponentItemConfig {
-    componentState?: JsonValue;
-    // (undocumented)
-    type: 'component';
-}
-
-// @public (undocumented)
-export namespace SerialisableComponentConfig {
-    // (undocumented)
-    export function resolve(itemConfig: SerialisableComponentConfig): ResolvedSerialisableComponentConfig;
-}
-
-// @public (undocumented)
 export type Side = 'top' | 'left' | 'right' | 'bottom';
 
 // @public (undocumented)
@@ -1541,9 +1480,9 @@ export class Stack extends ComponentParentableItem {
     // (undocumented)
     addChild(contentItem: ContentItem, index?: number, focus?: boolean): number;
     // (undocumented)
-    addItem(itemConfig: ComponentItemConfig, index?: number): number;
+    addComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): number;
     // (undocumented)
-    addSerialisableComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): number;
+    addItem(itemConfig: ComponentItemConfig, index?: number): number;
     // (undocumented)
     get childElementContainer(): HTMLElement;
     // @internal (undocumented)
@@ -1577,9 +1516,9 @@ export class Stack extends ComponentParentableItem {
     // (undocumented)
     get isMaximised(): boolean;
     // (undocumented)
-    newItem(itemConfig: ComponentItemConfig, index?: number): ContentItem;
+    newComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): ComponentItem;
     // (undocumented)
-    newSerialisableComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): ComponentItem;
+    newItem(itemConfig: ComponentItemConfig, index?: number): ContentItem;
     // @internal
     onDrop(contentItem: ContentItem, area: ContentItem.Area): void;
     // @internal

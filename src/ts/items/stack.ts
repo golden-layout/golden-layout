@@ -1,4 +1,4 @@
-import { ComponentItemConfig, ItemConfig, SerialisableComponentConfig } from '../config/config';
+import { ComponentItemConfig, ItemConfig } from '../config/config';
 import { ResolvedComponentItemConfig, ResolvedHeaderedItemConfig, ResolvedItemConfig, ResolvedStackItemConfig } from '../config/resolved-config';
 import { Header } from '../controls/header';
 import { AssertError, UnexpectedNullError, UnexpectedUndefinedError } from '../errors/internal-error';
@@ -288,8 +288,8 @@ export class Stack extends ComponentParentableItem {
         this._header.setRowColumnClosable(value);
     }
 
-    newSerialisableComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): ComponentItem {
-        const itemConfig: SerialisableComponentConfig = {
+    newComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): ComponentItem {
+        const itemConfig: ComponentItemConfig = {
             type: 'component',
             componentType,
             componentState,
@@ -297,8 +297,8 @@ export class Stack extends ComponentParentableItem {
         return this.newItem(itemConfig, index) as ComponentItem;
     }
 
-    addSerialisableComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): number {
-        const itemConfig: SerialisableComponentConfig = {
+    addComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): number {
+        const itemConfig: ComponentItemConfig = {
             type: 'component',
             componentType,
             componentState,

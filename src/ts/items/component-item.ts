@@ -1,4 +1,4 @@
-import { ResolvedComponentItemConfig, ResolvedHeaderedItemConfig, ResolvedReactComponentConfig, ResolvedSerialisableComponentConfig } from '../config/resolved-config';
+import { ResolvedComponentItemConfig, ResolvedHeaderedItemConfig } from '../config/resolved-config';
 import { ComponentContainer } from '../container/component-container';
 import { Tab } from '../controls/tab';
 import { UnexpectedNullError } from '../errors/internal-error';
@@ -12,13 +12,9 @@ import { ContentItem } from './content-item';
 /** @public */
 export class ComponentItem extends ContentItem {
     /** @internal */
-    private readonly _isReact: boolean;
-    /** @internal */
     private _reorderEnabled: boolean;
     /** @internal */
     private _headerConfig: ResolvedHeaderedItemConfig.Header | undefined;
-    /** @internal */
-    private _reactComponent: string;
     /** @internal */
     private _title: string;
     /** @internal */
@@ -54,13 +50,6 @@ export class ComponentItem extends ContentItem {
 
         this.isComponent = true;
 
-        if (ResolvedComponentItemConfig.isReact(config)) {
-            this._isReact = true;
-            this._reactComponent = config.component;
-        } else {
-            this._isReact = false;
-        }
-
         this._reorderEnabled = config.reorderEnabled;
 
         this.applyUpdatableConfig(config);
@@ -94,44 +83,21 @@ export class ComponentItem extends ContentItem {
         const stateRequestEvent = this._container.stateRequestEvent;
         const state = stateRequestEvent === undefined ? this._container.state : stateRequestEvent();
 
-        let result: ResolvedComponentItemConfig;
-        if (this._isReact) {
-            const reactResult: ResolvedReactComponentConfig = {
-                type: ItemType.reactComponent,
-                content: [],
-                width: this.width,
-                minWidth: this.minWidth,
-                height: this.height,
-                minHeight: this.minHeight,
-                id: this.id,
-                maximised: false,
-                isClosable: this.isClosable,
-                reorderEnabled: this._reorderEnabled,
-                title: this._title,
-                header: ResolvedHeaderedItemConfig.Header.createCopy(this._headerConfig),
-                componentType: ResolvedComponentItemConfig.copyComponentType(this.componentType),
-                component: this._reactComponent,
-                props: state,
-            }
-            result = reactResult;
-        } else {
-            const serialisableResult: ResolvedSerialisableComponentConfig = {
-                type: ItemType.serialisableComponent,
-                content: [],
-                width: this.width,
-                minWidth: this.minWidth,
-                height: this.height,
-                minHeight: this.minHeight,
-                id: this.id,
-                maximised: false,
-                isClosable: this.isClosable,
-                reorderEnabled: this._reorderEnabled,
-                title: this._title,
-                header: ResolvedHeaderedItemConfig.Header.createCopy(this._headerConfig),
-                componentType: ResolvedComponentItemConfig.copyComponentType(this.componentType),
-                componentState: state,
-            }
-            result = serialisableResult;
+        const result: ResolvedComponentItemConfig = {
+            type: ItemType.component,
+            content: [],
+            width: this.width,
+            minWidth: this.minWidth,
+            height: this.height,
+            minHeight: this.minHeight,
+            id: this.id,
+            maximised: false,
+            isClosable: this.isClosable,
+            reorderEnabled: this._reorderEnabled,
+            title: this._title,
+            header: ResolvedHeaderedItemConfig.Header.createCopy(this._headerConfig),
+            componentType: ResolvedComponentItemConfig.copyComponentType(this.componentType),
+            componentState: state,
         }
 
         return result;
@@ -238,11 +204,6 @@ export class ComponentItem extends ContentItem {
 
     /** @internal */
     private handleUpdateItemConfigEvent(itemConfig: ResolvedComponentItemConfig) {
-        // Called if component is replaced. Update properties accordingly
-        if (ResolvedComponentItemConfig.isReact(itemConfig)) {
-            this._reactComponent = itemConfig.component;
-        }
-
         this.applyUpdatableConfig(itemConfig);
     }
 

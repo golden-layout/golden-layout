@@ -1,4 +1,4 @@
-import { ComponentItemConfig, ItemConfig, RowOrColumnItemConfig, SerialisableComponentConfig, StackItemConfig } from '../config/config';
+import { ComponentItemConfig, ItemConfig, RowOrColumnItemConfig, StackItemConfig } from '../config/config';
 import { ResolvedComponentItemConfig, ResolvedGroundItemConfig, ResolvedHeaderedItemConfig, ResolvedItemConfig, ResolvedRootItemConfig, ResolvedStackItemConfig } from '../config/resolved-config';
 import { AssertError, UnexpectedNullError, UnexpectedUndefinedError } from '../errors/internal-error';
 import { LayoutManager } from '../layout-manager';
@@ -58,8 +58,8 @@ export class GroundItem extends ComponentParentableItem {
         }
     }
 
-    newSerialisableComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): ComponentItem {
-        const itemConfig: SerialisableComponentConfig = {
+    newComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): ComponentItem {
+        const itemConfig: ComponentItemConfig = {
             type: 'component',
             componentType,
             componentState,
@@ -68,11 +68,11 @@ export class GroundItem extends ComponentParentableItem {
     }
 
     /**
-     * Adds a Serialisable Component child to root ContentItem.
-     * Internal only.  To load a add with API, use {@link (LayoutManager:class).addSerialisableComponent}
+     * Adds a Component child to root ContentItem.
+     * Internal only.  To load a add with API, use {@link (LayoutManager:class).addComponent}
      */
-    addSerialisableComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): number {
-        const itemConfig: SerialisableComponentConfig = {
+    addComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): number {
+        const itemConfig: ComponentItemConfig = {
             type: 'component',
             componentType,
             componentState,

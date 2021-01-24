@@ -1,4 +1,4 @@
-import { ComponentItemConfig, ItemConfig, ReactComponentConfig, SerialisableComponentConfig } from '../config/config';
+import { ComponentItemConfig, ItemConfig } from '../config/config';
 import { ResolvedComponentItemConfig } from '../config/resolved-config';
 import { Tab } from '../controls/tab';
 import { AssertError, UnexpectedNullError } from '../errors/internal-error';
@@ -11,8 +11,6 @@ import { deepExtend, setElementHeight, setElementWidth } from '../utils/utils';
 
 /** @public */
 export class ComponentContainer extends EventEmitter {
-    /** @internal */
-    private readonly _isReact: boolean;
     /** @internal */
     private _componentType: JsonValue;
     /** @internal */
@@ -53,10 +51,6 @@ export class ComponentContainer extends EventEmitter {
     /** The inner DOM element where the container's content is intended to live in */
     get element(): HTMLElement { return this._element; }
 
-    // componentItemConfig property is only used by incomplete ReactHandler.
-    // When ReactHandler is refactored and working, hopefully it will not need this anymore.
-    get componentItemConfig(): ResolvedComponentItemConfig { return this._config; }
-
     /** @internal */
     constructor(private readonly _config: ResolvedComponentItemConfig,
         private readonly _parent: ComponentItem,
@@ -77,20 +71,8 @@ export class ComponentContainer extends EventEmitter {
 
         this._componentType = _config.componentType;
         this._isClosable = _config.isClosable;
-
-        if (ResolvedComponentItemConfig.isSerialisable(_config)) {
-            this._isReact = false;
-            this._initialState = _config.componentState;
-            this._state = this._initialState;
-        } else {
-            if (ResolvedComponentItemConfig.isReact(_config)) {
-                this._isReact = true;
-                this._initialState = _config.props as JsonValue;
-                this._state = this._initialState;
-            } else {
-                throw new AssertError('ICGS25546');
-            }
-        }
+        this._initialState = _config.componentState;
+        this._state = this._initialState;
 
         this._component = this.layoutManager.getComponent(this, _config);
     }
@@ -237,37 +219,19 @@ export class ComponentContainer extends EventEmitter {
     replaceComponent(itemConfig: ComponentItemConfig): void {
         this.releaseComponent();
 
-        let resolvedItemConfig: ResolvedComponentItemConfig;
-        if (ItemConfig.isSerialisableComponent(itemConfig)) {
-            if (this._isReact) {
-                throw new Error('Cannot replace React component with Serialisable component')
-            } else {
-                const config = SerialisableComponentConfig.resolve(itemConfig);
-                this._initialState = config.componentState;
-                this._state = this._initialState;
-                resolvedItemConfig = config;
-            }
+        if (!ItemConfig.isComponent(itemConfig)) {
+            throw new Error('ReplaceComponent not passed a component ItemConfig')
         } else {
-            if (ItemConfig.isReactComponent(itemConfig)) {
-                if (!this._isReact) {
-                    throw new Error('Cannot replace Serialisable component with React component')
-                } else {
-                    const config = ReactComponentConfig.resolve(itemConfig);
-                    this._initialState = config.props as JsonValue;
-                    this._state = this._initialState;
-                    resolvedItemConfig = config;
-                }
-            } else {
-                throw new Error('ReplaceComponent not passed a component ItemConfig')
-            }
+            const config = ComponentItemConfig.resolve(itemConfig);
+            this._initialState = config.componentState;
+            this._state = this._initialState;
+            this._componentType = config.componentType;
+
+            this._updateItemConfigEvent(config);
+
+            this._component = this.layoutManager.getComponent(this, config);
+            this.emit('stateChanged');
         }
-
-        this._componentType = resolvedItemConfig.componentType;
-
-        this._updateItemConfigEvent(resolvedItemConfig);
-
-        this._component = this.layoutManager.getComponent(this, resolvedItemConfig);
-        this.emit('stateChanged');
     }
 
     /**

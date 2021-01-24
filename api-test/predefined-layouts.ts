@@ -1,4 +1,4 @@
-import { ItemType, LayoutConfig, SerialisableComponentConfig } from '../dist/golden-layout';
+import { ComponentItemConfig, ItemType, LayoutConfig } from '../dist/golden-layout';
 import { BooleanComponent } from './boolean-component';
 import { ColorComponent } from './color-component';
 import { TextComponent } from './text-component';
@@ -22,14 +22,14 @@ const miniRowConfig: LayoutConfig = {
                 componentType: ColorComponent.typeName,
                 width: 30,
                 componentState: 'gold',
-            } as SerialisableComponentConfig,
+            } as ComponentItemConfig,
             {
                 title: "Layout",
                 header: { show: "top", popout: false },
                 type: "component",
                 componentType: ColorComponent.typeName,
                 componentState: undefined,
-            } as SerialisableComponentConfig,
+            } as ComponentItemConfig,
         ],
     },
 };
@@ -53,14 +53,14 @@ const miniStackConfig: LayoutConfig = {
                 componentType: ColorComponent.typeName,
                 width: 30,
                 componentState: 'white',
-            } as SerialisableComponentConfig,
+            } as ComponentItemConfig,
             {
                 title: "Layout",
                 header: { show: "top", popout: false },
                 type: "component",
                 componentType: ColorComponent.typeName,
                 componentState: 'green',
-            } as SerialisableComponentConfig,
+            } as ComponentItemConfig,
         ],
     }
 };
@@ -72,12 +72,12 @@ const miniStackLayout: Layout = {
 
 const componentConfig: LayoutConfig = {
     root: {
-        type: ItemType.serialisableComponent,
+        type: ItemType.component,
         title: "Layout",
         header: { show: "top", popout: false },
         componentType: ColorComponent.typeName,
         componentState: 'green',
-    } as SerialisableComponentConfig,
+    } as ComponentItemConfig,
 };
 
 const component: Layout = {
@@ -112,7 +112,7 @@ const standardConfig: LayoutConfig = {
                                 componentState: {
                                     bg: "golden_layout_spiral.png",
                                 },
-                            } as SerialisableComponentConfig,
+                            } as ComponentItemConfig,
                             {
                                 title: "Layout",
                                 header: {
@@ -124,7 +124,7 @@ const standardConfig: LayoutConfig = {
                                 componentState: {
                                     bg: "golden_layout_text.png",
                                 },
-                            } as SerialisableComponentConfig,
+                            } as ComponentItemConfig,
                         ],
                     },
                     {
@@ -137,7 +137,7 @@ const standardConfig: LayoutConfig = {
                                 componentState: {
                                     companyName: "Stock X",
                                 },
-                            } as SerialisableComponentConfig,
+                            } as ComponentItemConfig,
                             {
                                 type: "component",
                                 title: "LexCorp plc.",
@@ -145,7 +145,7 @@ const standardConfig: LayoutConfig = {
                                 componentState: {
                                     companyName: "Stock Y",
                                 },
-                            } as SerialisableComponentConfig,
+                            } as ComponentItemConfig,
                             {
                                 type: "component",
                                 title: "Springshield plc.",
@@ -153,7 +153,7 @@ const standardConfig: LayoutConfig = {
                                 componentState: {
                                     companyName: "Stock Z",
                                 },
-                            } as SerialisableComponentConfig,
+                            } as ComponentItemConfig,
                         ],
                     },
                 ],
@@ -174,7 +174,7 @@ const standardConfig: LayoutConfig = {
                                 componentState: {
                                     companyName: "Stock X",
                                 },
-                            } as SerialisableComponentConfig,
+                            } as ComponentItemConfig,
                             {
                                 type: "component",
                                 title: "comp 2",
@@ -182,7 +182,7 @@ const standardConfig: LayoutConfig = {
                                 componentState: {
                                     companyName: "Stock Y",
                                 },
-                            } as SerialisableComponentConfig,
+                            } as ComponentItemConfig,
                             {
                                 type: "component",
                                 title: "comp 3",
@@ -190,7 +190,7 @@ const standardConfig: LayoutConfig = {
                                 componentState: {
                                     companyName: "Stock Z",
                                 },
-                            } as SerialisableComponentConfig,
+                            } as ComponentItemConfig,
                         ],
                     },
                 ],
@@ -234,7 +234,7 @@ const responsiveConfig: LayoutConfig = {
                                 componentState: {
                                     bg: "golden_layout_spiral.png",
                                 },
-                            } as SerialisableComponentConfig,
+                            } as ComponentItemConfig,
                         ],
                     },
                     {
@@ -247,7 +247,7 @@ const responsiveConfig: LayoutConfig = {
                                 componentState: {
                                     companyName: "Stock X",
                                 },
-                            } as SerialisableComponentConfig,
+                            } as ComponentItemConfig,
                             {
                                 type: "component",
                                 title: "LexCorp plc.",
@@ -255,7 +255,7 @@ const responsiveConfig: LayoutConfig = {
                                 componentState: {
                                     companyName: "Stock Y",
                                 },
-                            } as SerialisableComponentConfig,
+                            } as ComponentItemConfig,
                             {
                                 type: "component",
                                 title: "Springshield plc.",
@@ -263,7 +263,7 @@ const responsiveConfig: LayoutConfig = {
                                 componentState: {
                                     companyName: "Stock Z",
                                 },
-                            } as SerialisableComponentConfig,
+                            } as ComponentItemConfig,
                         ],
                     },
                 ],
@@ -274,7 +274,7 @@ const responsiveConfig: LayoutConfig = {
                 type: "component",
                 componentType: ColorComponent.typeName,
                 componentState: { bg: "golden_layout_text.png" },
-            } as SerialisableComponentConfig,
+            } as ComponentItemConfig,
             {
                 width: 20,
                 type: "component",
@@ -298,7 +298,7 @@ const responsiveConfig: LayoutConfig = {
                         '<input id="name" type="text"></input>',
                     ],
                 },
-            } as SerialisableComponentConfig,
+            } as ComponentItemConfig,
             {
                 width: 20,
                 type: "column",
@@ -355,7 +355,7 @@ const tabDropdownConfig: LayoutConfig = {
                                 componentState: {
                                     text: 'hello',
                                 },
-                            } as SerialisableComponentConfig,
+                            } as ComponentItemConfig,
                         ],
                     },
                     {
@@ -368,7 +368,7 @@ const tabDropdownConfig: LayoutConfig = {
                                 componentState: {
                                     companyName: "Stock X",
                                 },
-                            } as SerialisableComponentConfig,
+                            } as ComponentItemConfig,
                             {
                                 type: "component",
                                 title: "LexCorp plc.",
@@ -376,7 +376,7 @@ const tabDropdownConfig: LayoutConfig = {
                                 componentState: {
                                     companyName: "Stock Y",
                                 },
-                            } as SerialisableComponentConfig,
+                            } as ComponentItemConfig,
                             {
                                 type: "component",
                                 title: "Springshield plc.",
@@ -384,7 +384,7 @@ const tabDropdownConfig: LayoutConfig = {
                                 componentState: {
                                     companyName: "Stock Z",
                                 },
-                            } as SerialisableComponentConfig,
+                            } as ComponentItemConfig,
                         ],
                     },
                 ],
@@ -435,7 +435,7 @@ const tabDropdownConfig: LayoutConfig = {
                         componentState: {
                             bg: "golden_layout_spiral.png",
                         },
-                    } as SerialisableComponentConfig,
+                    } as ComponentItemConfig,
                     {
                         type: "component",
                         title: "Profile",
@@ -449,7 +449,7 @@ const tabDropdownConfig: LayoutConfig = {
                 type: "component",
                 componentType: BooleanComponent.typeName,
                 componentState: true,
-            } as SerialisableComponentConfig,
+            } as ComponentItemConfig,
         ],
     },
 };

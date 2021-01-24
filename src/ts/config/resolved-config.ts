@@ -42,11 +42,8 @@ export namespace ResolvedItemConfig {
             case ItemType.stack:
                 return ResolvedStackItemConfig.createCopy(original as ResolvedStackItemConfig, content as ResolvedComponentItemConfig[]);
 
-            case ItemType.serialisableComponent:
-                return ResolvedSerialisableComponentConfig.createCopy(original as ResolvedSerialisableComponentConfig);
-
-            case ItemType.reactComponent:
-                return ResolvedReactComponentConfig.createCopy(original as ResolvedReactComponentConfig);
+            case ItemType.component:
+                return ResolvedComponentItemConfig.createCopy(original as ResolvedComponentItemConfig);
 
             default:
                 throw new UnreachableCaseError('CICC91354', original.type, 'Invalid Config Item type specified');
@@ -64,11 +61,8 @@ export namespace ResolvedItemConfig {
             case ItemType.stack:
                 return ResolvedStackItemConfig.createDefault();
 
-            case ItemType.serialisableComponent:
-                return ResolvedSerialisableComponentConfig.createDefault();
-
-            case ItemType.reactComponent:
-                return ResolvedReactComponentConfig.createDefault();
+            case ItemType.component:
+                return ResolvedComponentItemConfig.createDefault();
 
             default:
                 throw new UnreachableCaseError('CICCDD91563', type, 'Invalid Config Item type specified');
@@ -76,7 +70,7 @@ export namespace ResolvedItemConfig {
     }
 
     export function isComponentItem(itemConfig: ResolvedItemConfig): itemConfig is ResolvedComponentItemConfig {
-        return itemConfig.type === ItemType.serialisableComponent || itemConfig.type === ItemType.reactComponent;
+        return itemConfig.type === ItemType.component;
     }
 
     export function isStackItem(itemConfig: ResolvedItemConfig): itemConfig is ResolvedStackItemConfig {
@@ -187,6 +181,8 @@ export namespace ResolvedStackItemConfig {
 
 /** @public */
 export interface ResolvedComponentItemConfig extends ResolvedHeaderedItemConfig {
+    // see ComponentItemConfig for comments
+    readonly type: 'component';
     readonly content: [];
     readonly title: string;
     readonly reorderEnabled: boolean; // Takes precedence over LayoutConfig.reorderEnabled.
@@ -194,53 +190,25 @@ export interface ResolvedComponentItemConfig extends ResolvedHeaderedItemConfig 
      * The name of the component as specified in layout.registerComponent. Mandatory if type is 'component'.
      */
     readonly componentType: JsonValue;
+    readonly componentState?: JsonValue;
 }
 
 /** @public */
 export namespace ResolvedComponentItemConfig {
     export const defaultReorderEnabled = true;
 
-    export function isReact(config: ResolvedComponentItemConfig): config is ResolvedReactComponentConfig {
-        return config.type === ItemType.reactComponent;
-    }
-    export function isSerialisable(config: ResolvedComponentItemConfig): config is ResolvedSerialisableComponentConfig {
-        return config.type === ItemType.serialisableComponent;
-    }
-
     /** @internal */
     export function resolveComponentTypeName(itemConfig: ResolvedComponentItemConfig): string | undefined {
-        if (isSerialisable(itemConfig)) {
-            const componentType = itemConfig.componentType;
-            if (typeof componentType === 'string') {
-                return componentType;
-            } else {
-                return undefined;
-            }
+        const componentType = itemConfig.componentType;
+        if (typeof componentType === 'string') {
+            return componentType;
         } else {
-            if (isReact(itemConfig)) {
-                return itemConfig.component; // This looks wrong.  Hopefully React logic can be updated to improve this
-            } else {
-                throw new AssertError('COCRCN60054');
-            }
+            return undefined;
         }
     }
 
-    export function copyComponentType(componentType: JsonValue): JsonValue {
-        return deepExtendValue({}, componentType) as JsonValue
-    }
-}
-
-/** @public */
-export interface ResolvedSerialisableComponentConfig extends ResolvedComponentItemConfig {
-    // see SerialisableComponentConfig for comments
-    readonly type: 'component';
-    readonly componentState?: JsonValue;
-}
-
-/** @public */
-export namespace ResolvedSerialisableComponentConfig {
-    export function createCopy(original: ResolvedSerialisableComponentConfig): ResolvedSerialisableComponentConfig {
-        const result: ResolvedSerialisableComponentConfig = {
+    export function createCopy(original: ResolvedComponentItemConfig): ResolvedComponentItemConfig {
+        const result: ResolvedComponentItemConfig = {
             type: original.type,
             content: [],
             width: original.width,
@@ -259,9 +227,9 @@ export namespace ResolvedSerialisableComponentConfig {
         return result;
     }
 
-    export function createDefault(): ResolvedSerialisableComponentConfig {
-        const result: ResolvedSerialisableComponentConfig = {
-            type: ItemType.serialisableComponent,
+    export function createDefault(): ResolvedComponentItemConfig {
+        const result: ResolvedComponentItemConfig = {
+            type: ItemType.component,
             content: [],
             width: ResolvedItemConfig.defaults.width,
             minWidth: ResolvedItemConfig.defaults.minWidth,
@@ -278,60 +246,9 @@ export namespace ResolvedSerialisableComponentConfig {
         }
         return result;
     }
-}
 
-/** @public */
-export interface ResolvedReactComponentConfig extends ResolvedComponentItemConfig {
-    // see ReactComponentConfig for comments
-    readonly type: 'react-component';
-    readonly component: string;
-    readonly props?: unknown;
-}
-
-/** @public */
-export namespace ResolvedReactComponentConfig {
-    export const REACT_COMPONENT_ID = 'lm-react-component'
-
-    export function createCopy(original: ResolvedReactComponentConfig): ResolvedReactComponentConfig {
-        const result: ResolvedReactComponentConfig = {
-            type: original.type,
-            content: [],
-            width: original.width,
-            minWidth: original.minWidth,
-            height: original.height,
-            minHeight: original.minHeight,
-            id: original.id,
-            maximised: original.maximised,
-            isClosable: original.isClosable,
-            reorderEnabled: original.reorderEnabled,
-            title: original.title,
-            header: ResolvedHeaderedItemConfig.Header.createCopy(original.header),
-            componentType: REACT_COMPONENT_ID,
-            component: original.component,
-            props: deepExtendValue(undefined, original.props) as JsonValue,
-        }
-        return result;
-    }
-
-    export function createDefault(): ResolvedReactComponentConfig {
-        const result: ResolvedReactComponentConfig = {
-            type: ItemType.reactComponent,
-            content: [],
-            width: ResolvedItemConfig.defaults.width,
-            minWidth: ResolvedItemConfig.defaults.minWidth,
-            height: ResolvedItemConfig.defaults.height,
-            minHeight: ResolvedItemConfig.defaults.minHeight,
-            id: ResolvedItemConfig.defaults.id,
-            maximised: ResolvedHeaderedItemConfig.defaultMaximised,
-            isClosable: ResolvedItemConfig.defaults.isClosable,
-            reorderEnabled: ResolvedComponentItemConfig.defaultReorderEnabled,
-            title: '',
-            header: undefined,
-            componentType: '',
-            component: '',
-            props: undefined,
-        }
-        return result;
+    export function copyComponentType(componentType: JsonValue): JsonValue {
+        return deepExtendValue({}, componentType) as JsonValue
     }
 }
 
@@ -355,8 +272,7 @@ export namespace ResolvedRowOrColumnItemConfig {
             case ItemType.row:
             case ItemType.column:
             case ItemType.stack:
-            case ItemType.reactComponent:
-            case ItemType.serialisableComponent:
+            case ItemType.component:
                 return true;
             case ItemType.ground:
                 return false;
@@ -423,8 +339,7 @@ export namespace ResolvedRootItemConfig {
             case ItemType.row:
             case ItemType.column:
             case ItemType.stack:
-            case ItemType.reactComponent:
-            case ItemType.serialisableComponent:
+            case ItemType.component:
                 return true;
             case ItemType.ground:
                 return false;

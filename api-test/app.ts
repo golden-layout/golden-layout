@@ -1,4 +1,4 @@
-import { ComponentItemConfig, ContentItem, EventEmitter, GoldenLayout, LayoutConfig, ResolvedLayoutConfig, SerialisableComponentConfig, Stack } from "../dist/golden-layout";
+import { ComponentItemConfig, ContentItem, EventEmitter, GoldenLayout, LayoutConfig, ResolvedLayoutConfig, Stack } from "../dist/golden-layout";
 import { BooleanComponent } from './boolean-component';
 import { ColorComponent } from './color-component';
 import { Layout, prefinedLayouts } from './predefined-layouts';
@@ -214,7 +214,7 @@ export class App {
 
     private handleAddComponentButtonClick() {
         const componentType = this._registeredComponentTypesForAddSelect.value;
-        const itemConfig: SerialisableComponentConfig = {
+        const itemConfig: ComponentItemConfig = {
             componentType,
             type: 'component',
         }
@@ -233,7 +233,7 @@ export class App {
     }
 
     private handleLoadComponentAsRootButtonClick() {
-        const itemConfig: SerialisableComponentConfig = {
+        const itemConfig: ComponentItemConfig = {
             type: 'component',
             componentType: ColorComponent.typeName,
             componentState: 'yellow',
@@ -247,7 +247,7 @@ export class App {
 
     private handleReplaceComponentButtonClick() {
         const componentType = this._registeredComponentTypesForReplaceSelect.value;
-        const itemConfig: SerialisableComponentConfig = {
+        const itemConfig: ComponentItemConfig = {
             componentType,
             type: 'component',
         }

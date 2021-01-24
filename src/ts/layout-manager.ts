@@ -1,4 +1,4 @@
-import { ComponentItemConfig, LayoutConfig, RowOrColumnItemConfig, SerialisableComponentConfig, StackItemConfig } from './config/config';
+import { ComponentItemConfig, LayoutConfig, RowOrColumnItemConfig, StackItemConfig } from './config/config';
 import {
     ResolvedComponentItemConfig,
     ResolvedItemConfig,
@@ -356,69 +356,55 @@ export abstract class LayoutManager extends EventEmitter {
 
     /** @internal */
     getComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentItem.Component {
+        let instantiator: LayoutManager.ComponentInstantiator | undefined;
+
+        const typeName = ResolvedComponentItemConfig.resolveComponentTypeName(itemConfig);
+        if (typeName !== undefined) {
+            instantiator = this._componentTypes[typeName];
+        }
+        if (instantiator === undefined) {
+            if (this._getComponentConstructorFtn !== undefined) {
+                instantiator = {
+                    constructor: this._getComponentConstructorFtn(itemConfig),
+                    factoryFunction: undefined,
+                }
+            }
+        }
+
         let component: ComponentItem.Component;
-        if (ResolvedComponentItemConfig.isSerialisable(itemConfig)) {
-            let instantiator: LayoutManager.ComponentInstantiator | undefined;
-
-            const typeName = ResolvedComponentItemConfig.resolveComponentTypeName(itemConfig);
-            if (typeName !== undefined) {
-                instantiator = this._componentTypes[typeName];
-            }
-            if (instantiator === undefined) {
-                if (this._getComponentConstructorFtn !== undefined) {
-                    instantiator = {
-                        constructor: this._getComponentConstructorFtn(itemConfig),
-                        factoryFunction: undefined,
-                    }
-                }
-            }
-
-            if (instantiator !== undefined) {
-                // handle case where component is obtained by name or component constructor callback
-                let componentState: JsonValue | undefined;
-                if (itemConfig.componentState === undefined) {
-                    componentState = undefined;
-                } else {
-                    // make copy
-                    componentState = deepExtendValue({}, itemConfig.componentState) as JsonValue;
-                }
-
-                // This next (commented out) if statement is a bad hack. Looks like someone wanted the component name passed
-                // to the component's constructor.  The application really should have put this into the state itself.
-                // If an application needs this information in the constructor, it should now use the getComponentEvent.
-                // if (typeof componentState === 'object' && componentState !== null) {
-                //     (componentState as Record<string, unknown>).componentName = itemConfig.componentName;
-                // }
-
-                const componentConstructor = instantiator.constructor;
-                if (componentConstructor !== undefined) {
-                    component = new componentConstructor(container, componentState);
-                } else {
-                    const factoryFunction = instantiator.factoryFunction;
-                    if (factoryFunction !== undefined) {
-                        component = factoryFunction(container, componentState);
-                    } else {
-                        throw new AssertError('LMGC10008');
-                    }
-                }
+        if (instantiator !== undefined) {
+            // handle case where component is obtained by name or component constructor callback
+            let componentState: JsonValue | undefined;
+            if (itemConfig.componentState === undefined) {
+                componentState = undefined;
             } else {
-                if (this.getComponentEvent !== undefined) {
-                    component = this.getComponentEvent(container, itemConfig);
+                // make copy
+                componentState = deepExtendValue({}, itemConfig.componentState) as JsonValue;
+            }
+
+            // This next (commented out) if statement is a bad hack. Looks like someone wanted the component name passed
+            // to the component's constructor.  The application really should have put this into the state itself.
+            // If an application needs this information in the constructor, it should now use the getComponentEvent.
+            // if (typeof componentState === 'object' && componentState !== null) {
+            //     (componentState as Record<string, unknown>).componentName = itemConfig.componentName;
+            // }
+
+            const componentConstructor = instantiator.constructor;
+            if (componentConstructor !== undefined) {
+                component = new componentConstructor(container, componentState);
+            } else {
+                const factoryFunction = instantiator.factoryFunction;
+                if (factoryFunction !== undefined) {
+                    component = factoryFunction(container, componentState);
                 } else {
-                    throw new Error();
+                    throw new AssertError('LMGC10008');
                 }
             }
         } else {
-            if (ResolvedComponentItemConfig.isReact(itemConfig)) {
-                // uncomment lines below and remove not implemented exception when react-component-handler ready
-                // componentInstantiator = {
-                //     constructor: ReactComponentHandler,
-                //     factoryFunction: undefined,
-                // };
-                // componentState = this._componentConfig.props as JsonValue;
-                throw new Error('React not implemented yet'); 
+            if (this.getComponentEvent !== undefined) {
+                component = this.getComponentEvent(container, itemConfig);
             } else {
-                throw new Error(`Component.constructor: unsupported Config type: ${itemConfig.type}`);
+                throw new Error();
             }
         }
 
@@ -563,32 +549,32 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /**
-     * Adds a new child Serialisable ComponentItem under the root ContentItem.  If a root does not exist,
+     * Adds a new child ComponentItem under the root ContentItem.  If a root does not exist,
      * then a Stack will first be created as root and the component created under this root Stack.
      * @param componentTypeName - Name of component type to be created.
      * @param state - Optional initial state to be assigned to component
      * @returns New ComponentItem created.
      */
-    newSerialisableComponent(componentTypeName: string, componentState?: JsonValue, index?: number): ComponentItem {
+    newComponent(componentTypeName: string, componentState?: JsonValue, index?: number): ComponentItem {
         if (this._groundItem === undefined) {
             throw new Error('Cannot add component before init');
         } else {
-            return this._groundItem.newSerialisableComponent(componentTypeName, componentState, index);
+            return this._groundItem.newComponent(componentTypeName, componentState, index);
         }
     }
 
     /**
-     * Adds a new child Serialisable ComponentItem under the root ContentItem.  If a root does not exist,
+     * Adds a new child ComponentItem under the root ContentItem.  If a root does not exist,
      * then create root ContentItem instead.
      * @param componentType - Type of component to be created.
      * @param state - Optional initial state to be assigned to component
      * @returns -1 if added as root otherwise index in root ContentItem's content
      */
-    addSerialisableComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): number {
+    addComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): number {
         if (this._groundItem === undefined) {
             throw new Error('Cannot add component before init');
         } else {
-            const itemConfig: SerialisableComponentConfig = {
+            const itemConfig: ComponentItemConfig = {
                 type: 'component',
                 componentType,
                 componentState,
@@ -678,11 +664,6 @@ export abstract class LayoutManager extends EventEmitter {
         if (typeof config.type !== 'string') {
             throw new ConfigurationError('Missing parameter \'type\'', JSON.stringify(config));
         }
-
-        // if (this.isReactConfig(config)) {
-        //     config.type = 'component';
-        //     config.componentName = REACT_COMPONENT_ID;
-        // }
 
         /**
          * We add an additional stack around every component that's not within a stack anyways.
@@ -961,8 +942,7 @@ export abstract class LayoutManager extends EventEmitter {
             case ItemType.row: return new RowOrColumn(false, this, config as ResolvedRowOrColumnItemConfig, parent);
             case ItemType.column: return new RowOrColumn(true, this, config as ResolvedRowOrColumnItemConfig, parent);
             case ItemType.stack: return new Stack(this, config as ResolvedStackItemConfig, parent as Stack.Parent);
-            case ItemType.serialisableComponent:
-            case ItemType.reactComponent:
+            case ItemType.component:
                 return new ComponentItem(this, config as ResolvedComponentItemConfig, parent as Stack);
             default:
                 throw new UnreachableCaseError('CCC913564', config.type, 'Invalid Config Item type specified');
