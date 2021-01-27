@@ -46,7 +46,6 @@
     "doc:typeddocfull": "npx del-cli doc/full && typedoc --options ./typedoc.full.json",
     "doc:typeddocstrip": "npx del-cli doc/strip && typedoc --options ./typedoc.stripInternal.json",
     "build:apitest:ts": "npx tsc -p api-test/tsconfig.json",
-    "dist:apitest:indexhtml": "npx copyfiles -f api-test/index.html api-test/dist",
     "build:apitest": "webpack --mode development --config ./api-test/webpack.config.js",
     "start:apitest": "webpack serve --mode development --watch --config ./api-test/webpack.config.js"
   },
