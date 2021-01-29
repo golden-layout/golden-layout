@@ -837,7 +837,8 @@ export namespace LayoutConfig {
 export abstract class LayoutManager extends EventEmitter {
     // @internal
     constructor(parameters: LayoutManager.ConstructorParameters);
-    addComponent(componentType: JsonValue, componentState?: JsonValue, locationSelectors?: readonly LayoutManager.LocationSelector[]): LayoutManager.Location | undefined;
+    addComponent(componentType: JsonValue, componentState?: JsonValue): LayoutManager.Location;
+    addComponentAtLocation(componentType: JsonValue, componentState?: JsonValue, locationSelectors?: readonly LayoutManager.LocationSelector[]): LayoutManager.Location | undefined;
     addItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig, index?: number): number;
     // @internal (undocumented)
     calculateItemAreas(): void;
@@ -899,7 +900,8 @@ export abstract class LayoutManager extends EventEmitter {
     get maximisedStack(): Stack | undefined;
     // @deprecated
     minifyConfig(config: ResolvedLayoutConfig): ResolvedLayoutConfig;
-    newComponent(componentType: JsonValue, componentState?: JsonValue, locationSelectors?: LayoutManager.LocationSelector[]): ComponentItem | undefined;
+    newComponent(componentType: JsonValue, componentState?: JsonValue): ComponentItem;
+    newComponentAtLocation(componentType: JsonValue, componentState?: JsonValue, locationSelectors?: LayoutManager.LocationSelector[]): ComponentItem | undefined;
     newItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig, index?: number): ContentItem;
     // (undocumented)
     get openPopouts(): BrowserPopout[];
@@ -1001,7 +1003,7 @@ export namespace LayoutManager {
     }
     // (undocumented)
     export type ReleaseComponentEventHandler = (this: void, container: ComponentContainer, component: ComponentItem.Component) => void;
-    const defaultLocationSelectors: LocationSelector[];
+    const defaultLocationSelectors: readonly LocationSelector[];
 }
 
 // Warning: (ae-internal-missing-underscore) The name "LeftAndTop" should be prefixed with an underscore because the declaration is marked as @internal

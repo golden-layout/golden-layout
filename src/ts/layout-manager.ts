@@ -548,22 +548,37 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /**
-     * Adds a new child ComponentItem under the root ContentItem.  If a root does not exist,
-     * then a Stack will first be created as root and the component created under this root Stack.
+     * Adds a new ComponentItem.  Will use default location selectors to ensure a location is found and
+     * component is successfully added
      * @param componentTypeName - Name of component type to be created.
      * @param state - Optional initial state to be assigned to component
-     * @param locationSelectors - Array of location selectors used to find determine location in layout where component
-     * will be added. First location in array which is valid will be used. If undefined,
-     * {@link (LayoutManager:namespace).defaultLocationSelectors} will be used
      * @returns New ComponentItem created.
      */
-    newComponent(componentType: JsonValue, componentState?: JsonValue,
+    newComponent(componentType: JsonValue, componentState?: JsonValue): ComponentItem {
+        const componentItem = this.newComponentAtLocation(componentType, componentState);
+        if (componentItem === undefined) {
+            throw new AssertError('LMNC65588');
+        } else {
+            return componentItem;
+        }
+    }
+
+    /**
+     * Adds a ComponentItem at the first valid selector location.
+     * @param componentTypeName - Name of component type to be created.
+     * @param state - Optional initial state to be assigned to component
+     * @param locationSelectors - Array of location selectors used to find location in layout where component
+     * will be added. First location in array which is valid will be used. If locationSelectors is undefined,
+     * {@link (LayoutManager:namespace).defaultLocationSelectors} will be used
+     * @returns New ComponentItem created or undefined if no valid location selector was in array.
+     */
+    newComponentAtLocation(componentType: JsonValue, componentState?: JsonValue,
         locationSelectors?: LayoutManager.LocationSelector[]
     ): ComponentItem | undefined{
         if (this._groundItem === undefined) {
             throw new Error('Cannot add component before init');
         } else {
-            const location = this.addComponent(componentType, componentState, locationSelectors);
+            const location = this.addComponentAtLocation(componentType, componentState, locationSelectors);
             if (location === undefined) {
                 return undefined;
             } else {
@@ -578,16 +593,31 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /**
-     * Adds a new child ComponentItem under the root ContentItem.  If a root does not exist,
-     * then create root ContentItem instead.
+     * Adds a new ComponentItem.  Will use default location selectors to ensure a location is found and
+     * component is successfully added
+     * @param componentType - Type of component to be created.
+     * @param state - Optional initial state to be assigned to component
+     * @returns Location of new ComponentItem created.
+     */
+    addComponent(componentType: JsonValue, componentState?: JsonValue): LayoutManager.Location {
+        const location = this.addComponentAtLocation(componentType, componentState);
+        if (location === undefined) {
+            throw new AssertError('LMAC99943');
+        } else {
+            return location;
+        }
+    }
+
+    /**
+     * Adds a ComponentItem at the first valid selector location.
      * @param componentType - Type of component to be created.
      * @param state - Optional initial state to be assigned to component
      * @param locationSelectors - Array of location selectors used to find determine location in layout where component
      * will be added. First location in array which is valid will be used. If undefined,
-     * {@link (LayoutManager:namespace).defaultLocationSelectors} will be used
-     * @returns location at which component was added or undefined if
+     * {@link (LayoutManager:namespace).defaultLocationSelectors} will be used.
+     * @returns Location of new ComponentItem created or undefined if no valid location selector was in array.
      */
-    addComponent(componentType: JsonValue, componentState?: JsonValue,
+    addComponentAtLocation(componentType: JsonValue, componentState?: JsonValue,
         locationSelectors?: readonly LayoutManager.LocationSelector[]
     ): LayoutManager.Location | undefined {
         if (this._groundItem === undefined) {
@@ -598,27 +628,27 @@ export abstract class LayoutManager extends EventEmitter {
                 locationSelectors = LayoutManager.defaultLocationSelectors;
             }
 
-            const parentLocation = this.findFirstLocation(locationSelectors);
-            if (parentLocation === undefined) {
+            const location = this.findFirstLocation(locationSelectors);
+            if (location === undefined) {
                 return undefined;
             } else {
-                const parentItem = parentLocation.parentItem;
+                const parentItem = location.parentItem;
                 let addIdx: number;
                 switch (parentItem.type) {
                     case ItemType.ground: {
                         const groundItem = parentItem as GroundItem;
-                        addIdx = groundItem.addComponent(componentType, componentState, parentLocation.index);
+                        addIdx = groundItem.addComponent(componentType, componentState, location.index);
                         break;
                     }
                     case ItemType.row:
                     case ItemType.column: {
                         const rowOrColumn = parentItem as RowOrColumn;
-                        addIdx = rowOrColumn.addComponent(componentType, componentState, parentLocation.index);
+                        addIdx = rowOrColumn.addComponent(componentType, componentState, location.index);
                         break;
                     }
                     case ItemType.stack: {
                         const stack = parentItem as Stack;
-                        addIdx = stack.addComponent(componentType, componentState, parentLocation.index);
+                        addIdx = stack.addComponent(componentType, componentState, location.index);
                         break;
                     }
                     case ItemType.component: {
@@ -628,9 +658,9 @@ export abstract class LayoutManager extends EventEmitter {
                         throw new UnreachableCaseError('LMACU98881733', parentItem.type);
                 }
 
-                parentLocation.index = addIdx;
+                location.index = addIdx;
 
-                return parentLocation;
+                return location;
             }
         }
     }
@@ -1725,7 +1755,7 @@ export namespace LayoutManager {
      * Default LocationSelectors array used if none is specified.  Will always find a location.
      * @public
      */
-    export const defaultLocationSelectors: LocationSelector[] = [
+    export const defaultLocationSelectors: readonly LocationSelector[] = [
         { typeId: LocationSelector.TypeId.FocusedStack, index: undefined },
         { typeId: LocationSelector.TypeId.FirstStack, index: undefined },
         { typeId: LocationSelector.TypeId.FirstRowOrColumn, index: undefined },
