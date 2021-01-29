@@ -675,12 +675,17 @@ export abstract class LayoutManager extends EventEmitter {
             if (location === undefined) {
                 return undefined;
             } else {
-                const parentItem = location.parentItem;
+                let parentItem = location.parentItem;
                 let addIdx: number;
                 switch (parentItem.type) {
                     case ItemType.ground: {
                         const groundItem = parentItem as GroundItem;
                         addIdx = groundItem.addItem(itemConfig, location.index);
+                        if (addIdx >= 0) {
+                            parentItem = this._groundItem.contentItems[0]; // was added to rootItem
+                        } else {
+                            addIdx = 0; // was added as rootItem (which is the first and only ContentItem in GroundItem)
+                        }
                         break;
                     }
                     case ItemType.row:
@@ -705,6 +710,16 @@ export abstract class LayoutManager extends EventEmitter {
                         throw new UnreachableCaseError('LMAIALU98881733', parentItem.type);
                 }
 
+                if (ItemConfig.isComponent(itemConfig)) {
+                    // see if stack was inserted
+                    const item = parentItem.contentItems[addIdx];
+                    if (ContentItem.isStack(item)) {
+                        parentItem = item;
+                        addIdx = 0;
+                    }
+                }
+
+                location.parentItem = parentItem;
                 location.index = addIdx;
 
                 return location;
