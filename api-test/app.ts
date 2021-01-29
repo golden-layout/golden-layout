@@ -214,11 +214,7 @@ export class App {
 
     private handleAddComponentButtonClick() {
         const componentType = this._registeredComponentTypesForAddSelect.value;
-        const itemConfig: ComponentItemConfig = {
-            componentType,
-            type: 'component',
-        }
-        this._goldenLayout.addItem(itemConfig, 0);
+        this._goldenLayout.addComponent(componentType);
     }
 
     private handleLoadLayoutButtonClick() {

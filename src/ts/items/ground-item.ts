@@ -111,6 +111,8 @@ export class GroundItem extends ComponentParentableItem {
     addItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig, 
         index?: number
     ): number {
+        this.layoutManager.checkMinimiseMaximisedStack();
+
         const resolvedItemConfig = ItemConfig.resolve(itemConfig);
         let parent: ContentItem;
         if (this.contentItems.length > 0) {

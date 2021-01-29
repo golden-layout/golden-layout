@@ -101,9 +101,6 @@ export abstract class LayoutManager extends EventEmitter {
     /** @internal */
     private _maximisedStackBeforeDestroyedListener = (ev: EventEmitter.BubblingEvent) => this.cleanupBeforeMaximisedStackDestroyed(ev);
 
-    /** @internal */
-    protected get maximisedStack(): Stack | undefined { return this._maximisedStack; }
-
     readonly isSubWindow: boolean;
     layoutConfig: ResolvedLayoutConfig;
 
@@ -149,6 +146,8 @@ export abstract class LayoutManager extends EventEmitter {
     get focusedComponentItem(): ComponentItem | undefined { return this._focusedComponentItem; }
     /** @internal */
     get tabDropPlaceholder(): HTMLElement { return this._tabDropPlaceholder; }
+    get maximisedStack(): Stack | undefined { return this._maximisedStack; }
+
 
     /**
     * @param container - A Dom HTML element. Defaults to body
@@ -553,13 +552,28 @@ export abstract class LayoutManager extends EventEmitter {
      * then a Stack will first be created as root and the component created under this root Stack.
      * @param componentTypeName - Name of component type to be created.
      * @param state - Optional initial state to be assigned to component
+     * @param locationSelectors - Array of location selectors used to find determine location in layout where component
+     * will be added. First location in array which is valid will be used. If undefined,
+     * {@link (LayoutManager:namespace).defaultLocationSelectors} will be used
      * @returns New ComponentItem created.
      */
-    newComponent(componentTypeName: string, componentState?: JsonValue, index?: number): ComponentItem {
+    newComponent(componentType: JsonValue, componentState?: JsonValue,
+        locationSelectors?: LayoutManager.LocationSelector[]
+    ): ComponentItem | undefined{
         if (this._groundItem === undefined) {
             throw new Error('Cannot add component before init');
         } else {
-            return this._groundItem.newComponent(componentTypeName, componentState, index);
+            const location = this.addComponent(componentType, componentState, locationSelectors);
+            if (location === undefined) {
+                return undefined;
+            } else {
+                const createdItem = location.parentItem.contentItems[location.index];
+                if (!ContentItem.isComponentItem(createdItem)) {
+                    throw new AssertError('LMNC992877533');
+                } else {
+                    return createdItem;
+                }
+            }
         }
     }
 
@@ -568,18 +582,56 @@ export abstract class LayoutManager extends EventEmitter {
      * then create root ContentItem instead.
      * @param componentType - Type of component to be created.
      * @param state - Optional initial state to be assigned to component
-     * @returns -1 if added as root otherwise index in root ContentItem's content
+     * @param locationSelectors - Array of location selectors used to find determine location in layout where component
+     * will be added. First location in array which is valid will be used. If undefined,
+     * {@link (LayoutManager:namespace).defaultLocationSelectors} will be used
+     * @returns location at which component was added or undefined if
      */
-    addComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): number {
+    addComponent(componentType: JsonValue, componentState?: JsonValue,
+        locationSelectors?: readonly LayoutManager.LocationSelector[]
+    ): LayoutManager.Location | undefined {
         if (this._groundItem === undefined) {
             throw new Error('Cannot add component before init');
         } else {
-            const itemConfig: ComponentItemConfig = {
-                type: 'component',
-                componentType,
-                componentState,
-            };
-            return this.addItem(itemConfig, index);
+            if (locationSelectors === undefined) {
+                // defaultLocationSelectors should always find a location
+                locationSelectors = LayoutManager.defaultLocationSelectors;
+            }
+
+            const parentLocation = this.findFirstLocation(locationSelectors);
+            if (parentLocation === undefined) {
+                return undefined;
+            } else {
+                const parentItem = parentLocation.parentItem;
+                let addIdx: number;
+                switch (parentItem.type) {
+                    case ItemType.ground: {
+                        const groundItem = parentItem as GroundItem;
+                        addIdx = groundItem.addComponent(componentType, componentState, parentLocation.index);
+                        break;
+                    }
+                    case ItemType.row:
+                    case ItemType.column: {
+                        const rowOrColumn = parentItem as RowOrColumn;
+                        addIdx = rowOrColumn.addComponent(componentType, componentState, parentLocation.index);
+                        break;
+                    }
+                    case ItemType.stack: {
+                        const stack = parentItem as Stack;
+                        addIdx = stack.addComponent(componentType, componentState, parentLocation.index);
+                        break;
+                    }
+                    case ItemType.component: {
+                        throw new AssertError('LMACC87444602');
+                    }
+                    default:
+                        throw new UnreachableCaseError('LMACU98881733', parentItem.type);
+                }
+
+                parentLocation.index = addIdx;
+
+                return parentLocation;
+            }
         }
     }
 
@@ -949,42 +1001,30 @@ export abstract class LayoutManager extends EventEmitter {
         }
     }
 
-    /** @internal */
-    maximiseStack(stack: Stack): void {
-        if (this._maximisedStack !== undefined) {
-            this.minimiseStack(this._maximisedStack);
-        }
-        this._maximisedStack = stack;
-        stack.on('beforeItemDestroyed', this._maximisedStackBeforeDestroyedListener);
-        stack.element.classList.add(DomConstants.ClassName.Maximised);
-        stack.element.insertAdjacentElement('afterend', this._maximisePlaceholder);
-        if (this._groundItem === undefined) {
-            throw new UnexpectedUndefinedError('LMMXI19993');
+    /** 
+     * This should only be called from stack component.
+     * Stack will look after docking processing associated with maximise/minimise
+     * @internal
+     **/
+    setMaximisedStack(stack: Stack | undefined): void {
+        if (stack === undefined) {
+            if (this._maximisedStack !== undefined) {
+                this.processMinimiseMaximisedStack();
+            }
         } else {
-            this._groundItem.element.prepend(stack.element);
-            const { width, height } = getElementWidthAndHeight(this._containerElement);
-            setElementWidth(stack.element, width);
-            setElementHeight(stack.element, height);
-            stack.updateSize();
-            stack.focusActiveContentItem();
-            this._maximisedStack.emit('maximised');
-            this.emit('stateChanged');
+            if (stack !== this._maximisedStack) {
+                if (this._maximisedStack !== undefined) {
+                    this.processMinimiseMaximisedStack();
+                }
+
+                this.processMaximiseStack(stack);
+            }
         }
     }
 
-    /** @internal */
-    minimiseStack(stack: Stack): void {
-        if (stack.parent === null) {
-            throw new UnexpectedNullError('LMMI13668');
-        } else {
-            stack.element.classList.remove(DomConstants.ClassName.Maximised);
-            this._maximisePlaceholder.insertAdjacentElement('afterend', stack.element);
-            this._maximisePlaceholder.remove();
-            stack.parent.updateSize();
-            this._maximisedStack = undefined;
-            stack.off('beforeItemDestroyed', this._maximisedStackBeforeDestroyedListener);
-            stack.emit('minimised');
-            this.emit('stateChanged');
+    checkMinimiseMaximisedStack(): void {
+        if (this._maximisedStack !== undefined) {
+            this._maximisedStack.minimise();
         }
     }
 
@@ -1168,8 +1208,49 @@ export abstract class LayoutManager extends EventEmitter {
                 if (!ContentItem.isStack(item)) {
                     throw new AssertError('LMCLLMI19993');
                 } else {
-                    item.toggleMaximise();
+                    item.maximise();
                 }
+            }
+        }
+    }
+
+    /** @internal */
+    private processMaximiseStack(stack: Stack): void {
+        this._maximisedStack = stack;
+        stack.on('beforeItemDestroyed', this._maximisedStackBeforeDestroyedListener);
+        stack.element.classList.add(DomConstants.ClassName.Maximised);
+        stack.element.insertAdjacentElement('afterend', this._maximisePlaceholder);
+        if (this._groundItem === undefined) {
+            throw new UnexpectedUndefinedError('LMMXI19993');
+        } else {
+            this._groundItem.element.prepend(stack.element);
+            const { width, height } = getElementWidthAndHeight(this._containerElement);
+            setElementWidth(stack.element, width);
+            setElementHeight(stack.element, height);
+            stack.updateSize();
+            stack.focusActiveContentItem();
+            this._maximisedStack.emit('maximised');
+            this.emit('stateChanged');
+        }
+    }
+
+    /** @internal */
+    private processMinimiseMaximisedStack(): void {
+        if (this._maximisedStack === undefined) {
+            throw new AssertError('LMMMS74422');
+        } else {
+            const stack = this._maximisedStack;
+            if (stack.parent === null) {
+                throw new UnexpectedNullError('LMMI13668');
+            } else {
+                stack.element.classList.remove(DomConstants.ClassName.Maximised);
+                this._maximisePlaceholder.insertAdjacentElement('afterend', stack.element);
+                this._maximisePlaceholder.remove();
+                stack.parent.updateSize();
+                this._maximisedStack = undefined;
+                stack.off('beforeItemDestroyed', this._maximisedStackBeforeDestroyedListener);
+                stack.emit('minimised');
+                this.emit('stateChanged');
             }
         }
     }
@@ -1376,6 +1457,39 @@ export abstract class LayoutManager extends EventEmitter {
         }
     }
 
+    private findFirstContentItemType(type: ItemType): ContentItem | undefined {
+        if (this._groundItem === undefined) {
+            throw new UnexpectedUndefinedError('LMFFCIT82446');
+        } else {
+            return this.findFirstContentItemTypeRecursive(type, this._groundItem);
+        }
+    }
+
+    private findFirstContentItemTypeRecursive(type: ItemType, node: ContentItem): ContentItem | undefined {
+        const contentItems = node.contentItems;
+        const contentItemCount = contentItems.length;
+        if (contentItemCount === 0) {
+            return undefined;
+        } else {
+            for (let i = 0; i < contentItemCount; i++) {
+                const contentItem = contentItems[0];
+                if (contentItem.type === type) {
+                    return contentItem;
+                }
+            }
+
+            for (let i = 0; i < contentItemCount; i++) {
+                const contentItem = contentItems[0];
+                const foundContentItem = this.findFirstContentItemTypeRecursive(type, contentItem);
+                if (foundContentItem !== undefined) {
+                    return foundContentItem;
+                }
+            }
+
+            return undefined;
+        }
+    }
+
     /**
      * Finds all the stack containers.
      *
@@ -1393,6 +1507,137 @@ export abstract class LayoutManager extends EventEmitter {
                 if (!item.isComponent) {
                     this.findAllStacksRecursive(stacks, item);
                 }
+            }
+        }
+    }
+
+    private findFirstLocation(selectors: readonly LayoutManager.LocationSelector[]): LayoutManager.Location | undefined {
+        const count = selectors.length;
+        for (let i = 0; i < count; i++) {
+            const selector = selectors[i];
+            const location = this.findLocation(selector);
+            if (location !== undefined) {
+                return location;
+            }
+        }
+        return undefined;
+    }
+
+    private findLocation(selector: LayoutManager.LocationSelector): LayoutManager.Location | undefined {
+        const selectorIndex = selector.index;
+        switch (selector.typeId) {
+            case LayoutManager.LocationSelector.TypeId.FocusedItem: {
+                if (this._focusedComponentItem === undefined) {
+                    return undefined
+                } else {
+                    const parentItem = this._focusedComponentItem.parentItem;
+                    const parentContentItems = parentItem.contentItems;
+                    const parentContentItemCount = parentContentItems.length;
+                    if (selectorIndex === undefined) {
+                        return { parentItem, index: parentContentItemCount };
+                    } else {
+                        const focusedIndex = parentContentItems.indexOf(this._focusedComponentItem);
+                        const index = focusedIndex + selectorIndex;
+                        if (index < 0 || index > parentContentItemCount) {
+                            return undefined;
+                        } else {
+                            return { parentItem, index };
+                        }
+                    }
+                }
+            }
+            case LayoutManager.LocationSelector.TypeId.FocusedStack: {
+                if (this._focusedComponentItem === undefined) {
+                    return undefined
+                } else {
+                    const parentItem = this._focusedComponentItem.parentItem;
+                    return this.tryCreateLocationFromParentItem(parentItem, selectorIndex);
+                }
+            }
+            case LayoutManager.LocationSelector.TypeId.FirstStack: {
+                const parentItem = this.findFirstContentItemType(ItemType.stack);
+                if (parentItem === undefined) {
+                    return undefined;
+                } else {
+                    return this.tryCreateLocationFromParentItem(parentItem, selectorIndex);
+                }
+            }
+            case LayoutManager.LocationSelector.TypeId.FirstRowOrColumn: {
+                let parentItem = this.findFirstContentItemType(ItemType.row);
+                if (parentItem !== undefined) {
+                    return this.tryCreateLocationFromParentItem(parentItem, selectorIndex);
+                } else {
+                    parentItem = this.findFirstContentItemType(ItemType.column);
+                    if (parentItem !== undefined) {
+                        return this.tryCreateLocationFromParentItem(parentItem, selectorIndex);
+                    } else {
+                        return undefined;
+                    }
+                }
+            }
+            case LayoutManager.LocationSelector.TypeId.FirstRow: {
+                const parentItem = this.findFirstContentItemType(ItemType.row);
+                if (parentItem === undefined) {
+                    return undefined;
+                } else {
+                    return this.tryCreateLocationFromParentItem(parentItem, selectorIndex);
+                }
+            }
+            case LayoutManager.LocationSelector.TypeId.FirstColumn: {
+                const parentItem = this.findFirstContentItemType(ItemType.column);
+                if (parentItem === undefined) {
+                    return undefined;
+                } else {
+                    return this.tryCreateLocationFromParentItem(parentItem, selectorIndex);
+                }
+            }
+            case LayoutManager.LocationSelector.TypeId.Empty: {
+                if (this._groundItem === undefined) {
+                    throw new UnexpectedUndefinedError('LMFLRIF18244');
+                } else {
+                    if (this.rootItem !== undefined) {
+                        return undefined;
+                    } else {
+                        if (selectorIndex === undefined || selectorIndex === 0)
+                            return { parentItem: this._groundItem, index: 0 };
+                        else {
+                            return undefined;
+                        }
+                    }
+                }
+            }
+            case LayoutManager.LocationSelector.TypeId.Root: {
+                if (this._groundItem === undefined) {
+                    throw new UnexpectedUndefinedError('LMFLF18244');
+                } else {
+                    const groundContentItems = this._groundItem.contentItems;
+                    if (groundContentItems.length === 0) {
+                        if (selectorIndex === undefined || selectorIndex === 0)
+                            return { parentItem: this._groundItem, index: 0 };
+                        else {
+                            return undefined;
+                        }
+                    } else {
+                        const parentItem = groundContentItems[0];
+                        return this.tryCreateLocationFromParentItem(parentItem, selectorIndex);
+                    }
+                }
+            }
+        }
+    }
+
+    private tryCreateLocationFromParentItem(parentItem: ContentItem,
+        selectorIndex: number | undefined
+    ): LayoutManager.Location | undefined {
+        const parentContentItems = parentItem.contentItems;
+        const parentContentItemCount = parentContentItems.length;
+        if (selectorIndex === undefined) {
+            return { parentItem, index: parentContentItemCount };
+        } else {
+            if (selectorIndex < 0 || selectorIndex > parentContentItemCount) {
+                return undefined;
+            } else {
+                return { parentItem, index: selectorIndex };
             }
         }
     }
@@ -1432,4 +1677,58 @@ export namespace LayoutManager {
         constructor: ComponentConstructor | undefined;
         factoryFunction: ComponentFactoryFunction | undefined;
     }
+
+    /** 
+     * Specifies a location of a ContentItem without referencing the content item.
+     * Used to specify where a new item is to be added
+     * @public
+     */
+    export interface Location {
+        parentItem: ContentItem;
+        index: number;
+    }
+
+    /**
+     * A selector used to specify a unique location in the layout
+     * @public
+     */
+    export interface LocationSelector {
+        /** Specifies selector algorithm */
+        typeId: LocationSelector.TypeId;
+        /** Used by algorithm to determine index in found ContentItem */
+        index?: number;
+    }
+
+    /** @public */
+    export namespace LocationSelector {
+        export const enum TypeId {
+            /** Stack with focused Item. Index specifies offset from index of focused item (eg 1 is the position after focused item) */
+            FocusedItem,
+            /** Stack with focused Item. Index specfies ContentItems index */
+            FocusedStack,
+            /** First stack found in layout */
+            FirstStack,
+            /** First Row or Column found in layout (rows are searched first) */
+            FirstRowOrColumn,
+            /** First Row in layout */
+            FirstRow,
+            /** First Column in layout */
+            FirstColumn,
+            /** Finds a location if layout is empty. The found location will be the root ContentItem. */
+            Empty,
+            /** Finds root if layout is empty, otherwise a child under root */
+            Root,
+        }
+    }
+
+    /**
+     * Default LocationSelectors array used if none is specified.  Will always find a location.
+     * @public
+     */
+    export const defaultLocationSelectors: LocationSelector[] = [
+        { typeId: LocationSelector.TypeId.FocusedStack, index: undefined },
+        { typeId: LocationSelector.TypeId.FirstStack, index: undefined },
+        { typeId: LocationSelector.TypeId.FirstRowOrColumn, index: undefined },
+        { typeId: LocationSelector.TypeId.Root, index: undefined },
+    ];
 }

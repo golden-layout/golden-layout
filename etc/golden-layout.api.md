@@ -559,7 +559,7 @@ export namespace Header {
     // @internal (undocumented)
     export type DockEvent = (this: void) => void;
     // @internal (undocumented)
-    export type MaximiseToggleEvent = (this: void, ev: Event) => void;
+    export type MaximiseToggleEvent = (this: void) => void;
     // @internal (undocumented)
     export type PopoutEvent = (this: void) => void;
     // @internal (undocumented)
@@ -837,10 +837,12 @@ export namespace LayoutConfig {
 export abstract class LayoutManager extends EventEmitter {
     // @internal
     constructor(parameters: LayoutManager.ConstructorParameters);
-    addComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): number;
+    addComponent(componentType: JsonValue, componentState?: JsonValue, locationSelectors?: readonly LayoutManager.LocationSelector[]): LayoutManager.Location | undefined;
     addItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig, index?: number): number;
     // @internal (undocumented)
     calculateItemAreas(): void;
+    // (undocumented)
+    checkMinimiseMaximisedStack(): void;
     clearComponentFocus(suppressEvent?: boolean): void;
     // @internal
     closeWindow(): void;
@@ -893,15 +895,11 @@ export abstract class LayoutManager extends EventEmitter {
     layoutConfig: ResolvedLayoutConfig;
     loadComponentAsRoot(itemConfig: ComponentItemConfig): void;
     loadLayout(layoutConfig: LayoutConfig): void;
-    // @internal (undocumented)
-    protected get maximisedStack(): Stack | undefined;
-    // @internal (undocumented)
-    maximiseStack(stack: Stack): void;
+    // (undocumented)
+    get maximisedStack(): Stack | undefined;
     // @deprecated
     minifyConfig(config: ResolvedLayoutConfig): ResolvedLayoutConfig;
-    // @internal (undocumented)
-    minimiseStack(stack: Stack): void;
-    newComponent(componentTypeName: string, componentState?: JsonValue, index?: number): ComponentItem;
+    newComponent(componentType: JsonValue, componentState?: JsonValue, locationSelectors?: LayoutManager.LocationSelector[]): ComponentItem | undefined;
     newItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig, index?: number): ContentItem;
     // (undocumented)
     get openPopouts(): BrowserPopout[];
@@ -923,6 +921,8 @@ export abstract class LayoutManager extends EventEmitter {
     get rootItem(): ContentItem | undefined;
     saveLayout(): ResolvedLayoutConfig;
     setFocusedComponentItem(item: ComponentItem | undefined, suppressEvents?: boolean): void;
+    // @internal
+    setMaximisedStack(stack: Stack | undefined): void;
     setSize(width: number, height: number): void;
     // @internal (undocumented)
     startComponentDrag(x: number, y: number, dragListener: DragListener, componentItem: ComponentItem, stack: Stack): void;
@@ -975,8 +975,33 @@ export namespace LayoutManager {
     export type GetComponentConstructorCallback = (this: void, config: ResolvedComponentItemConfig) => ComponentConstructor;
     // (undocumented)
     export type GetComponentEventHandler = (this: void, container: ComponentContainer, itemConfig: ResolvedComponentItemConfig) => ComponentItem.Component;
+    export interface Location {
+        // (undocumented)
+        index: number;
+        // (undocumented)
+        parentItem: ContentItem;
+    }
+    export interface LocationSelector {
+        index?: number;
+        typeId: LocationSelector.TypeId;
+    }
+    // (undocumented)
+    export namespace LocationSelector {
+        // (undocumented)
+        export const enum TypeId {
+            Empty = 6,
+            FirstColumn = 5,
+            FirstRow = 4,
+            FirstRowOrColumn = 3,
+            FirstStack = 2,
+            FocusedItem = 0,
+            FocusedStack = 1,
+            Root = 7
+        }
+    }
     // (undocumented)
     export type ReleaseComponentEventHandler = (this: void, container: ComponentContainer, component: ComponentItem.Component) => void;
+    const defaultLocationSelectors: LocationSelector[];
 }
 
 // Warning: (ae-internal-missing-underscore) The name "LeftAndTop" should be prefixed with an underscore because the declaration is marked as @internal
@@ -1516,6 +1541,10 @@ export class Stack extends ComponentParentableItem {
     // (undocumented)
     get isMaximised(): boolean;
     // (undocumented)
+    maximise(): void;
+    // (undocumented)
+    minimise(): void;
+    // (undocumented)
     newComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): ComponentItem;
     // (undocumented)
     newItem(itemConfig: ComponentItemConfig, index?: number): ContentItem;
@@ -1545,7 +1574,7 @@ export class Stack extends ComponentParentableItem {
     setUndocked(): void;
     // (undocumented)
     toConfig(): ResolvedStackItemConfig;
-    toggleMaximise(ev?: Event): void;
+    toggleMaximise(): void;
     // (undocumented)
     updateSize(): void;
 }

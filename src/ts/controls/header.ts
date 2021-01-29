@@ -641,11 +641,12 @@ export class Header extends EventEmitter {
     }
 
     /** @internal */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private handleButtonMaximiseToggleEvent(ev: Event) {
         if (this._maximiseToggleEvent === undefined) {
             throw new UnexpectedUndefinedError('HHBMTE16834');
         } else {
-            this._maximiseToggleEvent(ev);
+            this._maximiseToggleEvent();
         }
     }
 
@@ -706,7 +707,7 @@ export namespace Header {
     /** @internal */
     export type PopoutEvent = (this: void) => void;
     /** @internal */
-    export type MaximiseToggleEvent = (this: void, ev: Event) => void;
+    export type MaximiseToggleEvent = (this: void) => void;
     /** @internal */
     export type ClickEvent = (this: void, ev: MouseEvent) => void;
     /** @internal */

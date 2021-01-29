@@ -103,6 +103,7 @@ export class RowOrColumn extends ContentItem {
     addItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig,
         index?: number
     ): number {
+        this.layoutManager.checkMinimiseMaximisedStack();
         const resolvedItemConfig = ItemConfig.resolve(itemConfig);
         const contentItem = this.layoutManager.createAndInitContentItem(resolvedItemConfig, this);
         return this.addChild(contentItem, index, false);

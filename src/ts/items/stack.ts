@@ -44,8 +44,6 @@ export class Stack extends ComponentParentableItem {
     /** @internal */
     private readonly _initialWantMaximise: boolean;
     /** @internal */
-    private _isMaximised = false;
-    /** @internal */
     private _initialActiveItemIndex: number;
 
     /** @internal */
@@ -70,7 +68,7 @@ export class Stack extends ComponentParentableItem {
     get contentAreaDimensions(): Stack.ContentAreaDimensions | undefined { return this._contentAreaDimensions; }
     /** @internal */
     get initialWantMaximise(): boolean { return this._initialWantMaximise; }
-    get isMaximised(): boolean { return this._isMaximised; }
+    get isMaximised(): boolean { return this === this.layoutManager.maximisedStack; }
 
     /** @internal */
     constructor(layoutManager: LayoutManager, config: ResolvedStackItemConfig, private _stackParent: Stack.Parent) {
@@ -123,7 +121,7 @@ export class Stack extends ComponentParentableItem {
             () => this.remove(),
             () => this.handleDockEvent(),
             () => this.handlePopoutEvent(),
-            (ev) => this.toggleMaximise(ev),
+            () => this.toggleMaximise(),
             (ev) => this.handleHeaderClickEvent(ev),
             (ev) => this.handleHeaderTouchStartEvent(ev),
             (item) => this.handleHeaderComponentRemoveEvent(item),
@@ -317,6 +315,8 @@ export class Stack extends ComponentParentableItem {
     }
 
     addItem(itemConfig: ComponentItemConfig, index?: number): number {
+        this.layoutManager.checkMinimiseMaximisedStack();
+
         const resolvedItemConfig = ItemConfig.resolve(itemConfig);
         const contentItem = this.layoutManager.createAndInitContentItem(resolvedItemConfig, this);
         return this.addChild(contentItem, index);
@@ -384,21 +384,28 @@ export class Stack extends ComponentParentableItem {
     /**
      * Maximises the Item or minimises it if it is already maximised
      */
-    toggleMaximise(ev?: Event): void {
-        if (ev !== undefined) {
-            // ev.preventDefault();
+    toggleMaximise(): void {
+        if (this.isMaximised) {
+            this.minimise();
+        } else {
+            this.maximise();
         }
+    }
+
+    maximise(): void {
         if (!this.isMaximised) {
             this.dock(false);
-        }
-        if (this._isMaximised === true) {
-            this.layoutManager.minimiseStack(this);
-        } else {
-            this.layoutManager.maximiseStack(this);
-        }
 
-        this._isMaximised = !this._isMaximised;
-        this.emitBaseBubblingEvent('stateChanged');
+            this.layoutManager.setMaximisedStack(this);
+            this.emitBaseBubblingEvent('stateChanged');
+        }
+    }
+
+    minimise(): void {
+        if (this.isMaximised) {
+            this.layoutManager.setMaximisedStack(undefined);
+            this.emitBaseBubblingEvent('stateChanged');
+        }
     }
 
     /** @internal */
@@ -431,7 +438,7 @@ export class Stack extends ComponentParentableItem {
                 minHeight: this.minHeight,
                 id: this.id,
                 isClosable: this.isClosable,
-                maximised: this._isMaximised,
+                maximised: this.isMaximised,
                 header: this.createHeaderConfig(),
                 activeItemIndex,
             }
