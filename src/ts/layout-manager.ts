@@ -1,4 +1,4 @@
-import { ComponentItemConfig, LayoutConfig, RowOrColumnItemConfig, StackItemConfig } from './config/config';
+import { ComponentItemConfig, ItemConfig, LayoutConfig, RowOrColumnItemConfig, StackItemConfig } from './config/config';
 import {
     ResolvedComponentItemConfig,
     ResolvedItemConfig,
@@ -520,34 +520,6 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /**
-     * Adds a new child ContentItem under the root ContentItem.  If a root does not exist, then create root ContentItem instead
-     * @param itemConfig - ResolvedItemConfig of child to be added.
-     * @param index - Position under root. If undefined, then last.
-     * @returns New ContentItem created.
-    */
-    newItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig,  index?: number): ContentItem {
-        if (this._groundItem === undefined) {
-            throw new Error('Cannot add item before init');
-        } else {
-            return this._groundItem.newItem(itemConfig, index);
-        }
-    }
-
-    /**
-     * Adds a new child ContentItem under the root ContentItem.  If a root does not exist, then create root ContentItem instead
-     * @param itemConfig - ResolvedItemConfig of child to be added.
-     * @param index - Position under root. If undefined, then last.
-     * @returns -1 if added as root otherwise index in root ContentItem's content
-    */
-    addItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig,  index?: number): number {
-        if (this._groundItem === undefined) {
-            throw new Error('Cannot add item before init');
-        } else {
-            return this._groundItem.addItem(itemConfig, index);
-        }
-    }
-
-    /**
      * Adds a new ComponentItem.  Will use default location selectors to ensure a location is found and
      * component is successfully added
      * @param componentTypeName - Name of component type to be created.
@@ -620,6 +592,77 @@ export abstract class LayoutManager extends EventEmitter {
     addComponentAtLocation(componentType: JsonValue, componentState?: JsonValue,
         locationSelectors?: readonly LayoutManager.LocationSelector[]
     ): LayoutManager.Location | undefined {
+        const itemConfig: ComponentItemConfig = {
+            type: 'component',
+            componentType,
+            componentState,
+        };
+        
+        return this.addItemAtLocation(itemConfig, locationSelectors);
+    }
+
+    /**
+     * Adds a new ContentItem.  Will use default location selectors to ensure a location is found and
+     * component is successfully added
+     * @param itemConfig - ResolvedItemConfig of child to be added.
+     * @returns New ContentItem created.
+    */
+   newItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig): ContentItem {
+        const contentItem = this.newItemAtLocation(itemConfig);
+        if (contentItem === undefined) {
+            throw new AssertError('LMNC65588');
+        } else {
+            return contentItem;
+        }
+    }
+
+    /**
+     * Adds a new child ContentItem under the root ContentItem.  If a root does not exist, then create root ContentItem instead
+     * @param itemConfig - ResolvedItemConfig of child to be added.
+     * @param locationSelectors - Array of location selectors used to find determine location in layout where ContentItem
+     * will be added. First location in array which is valid will be used. If undefined,
+     * {@link (LayoutManager:namespace).defaultLocationSelectors} will be used.
+     * @returns New ContentItem created or undefined if no valid location selector was in array. */
+    newItemAtLocation(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig,
+        locationSelectors?: readonly LayoutManager.LocationSelector[]
+    ): ContentItem | undefined {
+        if (this._groundItem === undefined) {
+            throw new Error('Cannot add component before init');
+        } else {
+            const location = this.addItemAtLocation(itemConfig, locationSelectors);
+            if (location === undefined) {
+                return undefined;
+            } else {
+                const createdItem = location.parentItem.contentItems[location.index];
+                return createdItem;
+            }
+        }
+    }
+
+    /**
+     * Adds a new ContentItem.  Will use default location selectors to ensure a location is found and
+     * component is successfully added.
+     * @param itemConfig - ResolvedItemConfig of child to be added.
+     * @returns Location of new ContentItem created. */
+    addItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig): LayoutManager.Location {
+        const location = this.addItemAtLocation(itemConfig);
+        if (location === undefined) {
+            throw new AssertError('LMAI99943');
+        } else {
+            return location;
+        }
+    }
+
+    /**
+     * Adds a ContentItem at the first valid selector location.
+     * @param itemConfig - ResolvedItemConfig of child to be added.
+     * @param locationSelectors - Array of location selectors used to find determine location in layout where ContentItem
+     * will be added. First location in array which is valid will be used. If undefined,
+     * {@link (LayoutManager:namespace).defaultLocationSelectors} will be used.
+     * @returns Location of new ContentItem created or undefined if no valid location selector was in array. */
+    addItemAtLocation(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig,
+        locationSelectors?: readonly LayoutManager.LocationSelector[]
+    ): LayoutManager.Location | undefined {
         if (this._groundItem === undefined) {
             throw new Error('Cannot add component before init');
         } else {
@@ -637,25 +680,29 @@ export abstract class LayoutManager extends EventEmitter {
                 switch (parentItem.type) {
                     case ItemType.ground: {
                         const groundItem = parentItem as GroundItem;
-                        addIdx = groundItem.addComponent(componentType, componentState, location.index);
+                        addIdx = groundItem.addItem(itemConfig, location.index);
                         break;
                     }
                     case ItemType.row:
                     case ItemType.column: {
                         const rowOrColumn = parentItem as RowOrColumn;
-                        addIdx = rowOrColumn.addComponent(componentType, componentState, location.index);
+                        addIdx = rowOrColumn.addItem(itemConfig, location.index);
                         break;
                     }
                     case ItemType.stack: {
-                        const stack = parentItem as Stack;
-                        addIdx = stack.addComponent(componentType, componentState, location.index);
-                        break;
+                        if (!ItemConfig.isComponent(itemConfig)) {
+                            throw Error(i18nStrings[I18nStringId.ItemConfigIsNotTypeComponent]);
+                        } else {
+                            const stack = parentItem as Stack;
+                            addIdx = stack.addItem(itemConfig, location.index);
+                            break;
+                        }
                     }
                     case ItemType.component: {
-                        throw new AssertError('LMACC87444602');
+                        throw new AssertError('LMAIALC87444602');
                     }
                     default:
-                        throw new UnreachableCaseError('LMACU98881733', parentItem.type);
+                        throw new UnreachableCaseError('LMAIALU98881733', parentItem.type);
                 }
 
                 location.index = addIdx;
