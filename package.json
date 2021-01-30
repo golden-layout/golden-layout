@@ -21,7 +21,6 @@
   "typings": "dist/golden-layout/index.d.ts",
   "sideEffects": false,
   "scripts": {
-    "build:webpack": "npx webpack --mode development --config ./webpack/demo/webpack.config.js",
     "build:module": "tsc -p tsconfig.module.json",
     "build:module:api": "tsc -p tsconfig.module.api.json",
     "build:module:full": "tsc -p tsconfig.module.full.json",
@@ -29,25 +28,26 @@
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "build:ts": "npm run build:module && npm run build:cjs",
     "build:styles": "node ./scripts/css.js",
-    "build": "npm run clean && npm-run-all --parallel build:*",
-    "build:api": "npm run clean:libanddist && npm run build:module:api && npx api-extractor run --local --verbose && npm run copy:styles",
+    "build": "npm run clean && npm run build:module:api && npx api-extractor run --local --verbose && npm run copy:styles",
     "update:scss": "npx del-cli ./src/scss/goldenlayout-base.scss && npx copyfiles -f ./src/less/goldenlayout-base.less ./src/scss && npx less2sass ./src/scss/goldenlayout-base.less &&  npx del-cli ./src/scss/goldenlayout-base.less",
     "copy:styles": "cd src && npx copyfiles ./less/**/*.less ./scss/**/*.scss ./img/*.png ../dist/golden-layout",
+
     "clean": "npm-run-all clean:*",
     "clean:dist": "npx del-cli dist",
     "clean:lib": "npx del-cli lib",
-    "clean:libanddist": "npm run clean:dist && npm run clean:lib",
+
     "lint:autofix": "eslint src/ts --fix",
     "lint:ts": "eslint -c .eslintrc.js --ext .ts src/ts",
-    "demo": "webpack-dev-server --env.dev --mode development --config ./webpack/demo/webpack.config.js",
+
     "test": "cross-env karma start",
     "coverage": "karma start --single-run --no-auto-watch --coverage=true || echo done",
-    "doc": "npm run build:api && npx copyfiles -f temp/golden-layout.api.json doc/input && cd doc && npx api-documenter markdown",
+    
+    "doc": "npm run build && npx copyfiles -f temp/golden-layout.api.json doc/input && cd doc && npx api-documenter markdown",
     "doc:typeddocfull": "npx del-cli doc/full && typedoc --options ./typedoc.full.json",
     "doc:typeddocstrip": "npx del-cli doc/strip && typedoc --options ./typedoc.stripInternal.json",
-    "build:apitest:ts": "npx tsc -p api-test/tsconfig.json",
-    "build:apitest": "webpack --mode development --config ./api-test/webpack.config.js",
-    "start:apitest": "webpack serve --mode development --watch --config ./api-test/webpack.config.js"
+    
+    "apitest:build": "webpack --mode development --config ./apitest/webpack.config.js",
+    "apitest:serve": "webpack serve --mode development --watch --config ./apitest/webpack.config.js"
   },
   "devDependencies": {
     "@microsoft/api-documenter": "^7.12.6",

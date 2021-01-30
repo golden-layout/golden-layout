@@ -1,8 +1,0 @@
-{
-    "presets": [
-        ["@babel/preset-env", {
-            "targets": ">1%, firefox esr, not op_mini all",
-            "modules": false
-        }]
-    ]
-}

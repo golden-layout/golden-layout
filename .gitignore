@@ -8,6 +8,6 @@ npm-debug.log
 debug.log
 /debug.log
 /lib
-/api-test/dist
-/api-test/out-tsc
+/apitest/dist
+/apitest/out-tsc
 /temp

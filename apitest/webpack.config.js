@@ -7,9 +7,9 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = {
     entry: [
-        "./api-test/styles.css",
-        "./api-test/golden-layout.less",
-        "./api-test/main.ts",
+        path.resolve(__dirname, "styles.css"),
+        path.resolve(__dirname, "golden-layout.less"),
+        path.resolve(__dirname, "main.ts"),
     ],
 
     output: {
@@ -17,12 +17,13 @@ module.exports = {
         path: path.resolve(__dirname, 'dist/'),
     },
 
-    devtool: 'inline-source-map',
+    devtool: 'cheap-module-source-map',
 
     devServer: {
         port: 3000,
         writeToDisk: true,
-        publicPath: '/api-test/dist/',
+        publicPath: 'apitest/dist/',
+        contentBase: path.resolve(__dirname, 'dist'),
     },
 
     resolve: {
@@ -32,7 +33,7 @@ module.exports = {
     module: {
         rules: [
             {
-                test: /(.ts|.tsx)$/,
+                test: /.tsx?$/,
                 use: {
                     loader: 'ts-loader',
                     options: {
@@ -58,11 +59,6 @@ module.exports = {
                         loader: "less-loader",
                     },
                 ],
-            },
-            {
-                test: /\.js$/,
-                enforce: 'pre',
-                use: ['source-map-loader'],
             }
         ]
     },
