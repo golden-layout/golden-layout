@@ -28,9 +28,8 @@
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "build:ts": "npm run build:module && npm run build:cjs",
     "build:styles": "node ./scripts/css.js",
-    "build": "npm run clean && npm run build:module:api && npx api-extractor run --local --verbose && npm run copy:styles",
+    "build": "npm run clean && npm run build:cjs && npm run build:module:api && npx api-extractor run --local --verbose && npm run build:styles",
     "update:scss": "npx del-cli ./src/scss/goldenlayout-base.scss && npx copyfiles -f ./src/less/goldenlayout-base.less ./src/scss && npx less2sass ./src/scss/goldenlayout-base.less &&  npx del-cli ./src/scss/goldenlayout-base.less",
-    "copy:styles": "cd src && npx copyfiles ./less/**/*.less ./scss/**/*.scss ./img/*.png ../dist/golden-layout",
 
     "clean": "npm-run-all clean:*",
     "clean:dist": "npx del-cli dist",
