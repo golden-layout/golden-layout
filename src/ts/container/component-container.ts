@@ -270,7 +270,7 @@ export class ComponentContainer extends EventEmitter {
 
     /** @internal */
     setTab(tab: Tab): void {
-        this._tab = tab as Tab;
+        this._tab = tab;
         this.emit('tab', tab)
     }
 

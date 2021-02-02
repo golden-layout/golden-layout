@@ -118,6 +118,7 @@ export class Stack extends ComponentParentableItem {
         this._header = new Header(layoutManager,
             this, headerSettings,
             config.isClosable && close !== false,
+            () => this.getActiveComponentItem(),
             () => this.remove(),
             () => this.handleDockEvent(),
             () => this.handlePopoutEvent(),
@@ -127,7 +128,6 @@ export class Stack extends ComponentParentableItem {
             (item) => this.handleHeaderComponentRemoveEvent(item),
             (item) => this.handleHeaderComponentFocusEvent(item),
             (x, y, dragListener, item) => this.handleHeaderComponentStartDragEvent(x, y, dragListener, item),
-            () => this.handleStateChangedEvent(),
         );
 
         // this._dropZones = {};
@@ -195,6 +195,8 @@ export class Stack extends ComponentParentableItem {
                 }
 
                 this.setActiveComponentItem(contentItems[this._initialActiveItemIndex] as ComponentItem, false);
+
+                this._header.updateTabSizes();
             }
         }
         
@@ -224,11 +226,11 @@ export class Stack extends ComponentParentableItem {
                     this._activeComponentItem.hide();
                 }
                 this._activeComponentItem = componentItem;
-                this._header.setActiveComponentItem(componentItem);
+                this._header.processActiveComponentChanged(componentItem);
                 componentItem.show();
                 this.emit('activeContentItemChanged', componentItem);
                 this.layoutManager.emit('activeContentItemChanged', componentItem);
-                this.emitBaseBubblingEvent('stateChanged');
+                this.emitStateChangedEvent();
             }
         }
 
@@ -345,12 +347,13 @@ export class Stack extends ComponentParentableItem {
             this._childElementContainer.appendChild(contentItem.element);
             this._header.createTab(contentItem, index);
             this.setActiveComponentItem(contentItem, focus);
+            this._header.updateTabSizes();
             this.updateSize();
             this._header.updateClosability();
             if (this._stackParent.isRow || this._stackParent.isColumn) {
                 this._stackParent.validateDocking();
             }
-            this.emitBaseBubblingEvent('stateChanged');
+            this.emitStateChangedEvent();
 
             return index;
         }
@@ -359,26 +362,29 @@ export class Stack extends ComponentParentableItem {
     removeChild(contentItem: ContentItem, keepChild: boolean): void {
         const componentItem = contentItem as ComponentItem;
         const index = this.contentItems.indexOf(componentItem);
-        this._header.removeTab(componentItem);
         const stackWillBeDeleted = this.contentItems.length === 1;
-        if (componentItem.focused) {
-            componentItem.blur();
+
+        if (this._activeComponentItem === componentItem) {
+            if (componentItem.focused) {
+                componentItem.blur();
+            }
+            if (!stackWillBeDeleted) {
+                this.setActiveComponentItem(this.contentItems[Math.max(index - 1, 0)] as ComponentItem, false);
+            }
         }
+
+        this._header.removeTab(componentItem);
 
         super.removeChild(componentItem, keepChild);
 
         if (!stackWillBeDeleted) {
-            // there must be at least 1 content item
-            if (this._activeComponentItem === componentItem) {
-                this.setActiveComponentItem(this.contentItems[Math.max(index - 1, 0)] as ComponentItem, false);
-            }
-
             this._header.updateClosability();
             if (this._stackParent.isRow || this._stackParent.isColumn) {
                 this._stackParent.validateDocking();
             }
-            this.emitBaseBubblingEvent('stateChanged');
         }
+
+        this.emitStateChangedEvent();
     }
 
     /**
@@ -397,14 +403,14 @@ export class Stack extends ComponentParentableItem {
             this.dock(false);
 
             this.layoutManager.setMaximisedStack(this);
-            this.emitBaseBubblingEvent('stateChanged');
+            this.emitStateChangedEvent();
         }
     }
 
     minimise(): void {
         if (this.isMaximised) {
             this.layoutManager.setMaximisedStack(undefined);
-            this.emitBaseBubblingEvent('stateChanged');
+            this.emitStateChangedEvent();
         }
     }
 
@@ -719,15 +725,6 @@ export class Stack extends ComponentParentableItem {
     }
 
     /** @internal */
-    protected processChildReplaced(index: number, newChild: ContentItem): void {
-        if (!(newChild instanceof ComponentItem)) {
-            throw new AssertError('SPCR11056'); // Stacks can only have Component children
-        } else {
-            this._header.tabs[index].setComponentItem(newChild);
-        }
-    }
-
-    /** @internal */
     private updateNodeSize(): void {
         if (this.element.style.display !== 'none') {
             const isDocked = this._docker.docked;
@@ -752,7 +749,7 @@ export class Stack extends ComponentParentableItem {
                 this.contentItems[i].element.style.height = numberToPixels(content.height);
             }
             this.emit('resize');
-            this.emitBaseBubblingEvent('stateChanged');
+            this.emitStateChangedEvent();
         }
     }
 
@@ -924,11 +921,6 @@ export class Stack extends ComponentParentableItem {
     }
 
     /** @internal */
-    private handleStateChangedEvent() {
-        this.emitBaseBubblingEvent('stateChanged');
-    }
-
-    /** @internal */
     private handleHeaderClickEvent(ev: MouseEvent) {
         const eventName = EventEmitter.headerClickEventName;
         const bubblingEvent = new EventEmitter.ClickBubblingEvent(eventName, this, ev);
@@ -981,6 +973,11 @@ export class Stack extends ComponentParentableItem {
             }
             return result;
         }
+    }
+
+    /** @internal */
+    private emitStateChangedEvent() {
+        this.emitBaseBubblingEvent('stateChanged');
     }
 }
 

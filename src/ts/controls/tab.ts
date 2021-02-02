@@ -147,11 +147,6 @@ export class Tab {
     }
 
     /** @internal */
-    setComponentItem(value: ComponentItem): void {
-        this._componentItem = value;
-    }
-
-    /** @internal */
     setBlurred(): void {
         this._element.classList.remove(DomConstants.ClassName.Focused);
         this._titleElement.classList.remove(DomConstants.ClassName.Focused);

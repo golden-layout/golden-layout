@@ -270,11 +270,10 @@ export abstract class ContentItem extends EventEmitter {
     // @internal (undocumented)
     get popInParentIds(): string[];
     popout(): BrowserPopout;
-    // @internal (undocumented)
-    protected processChildReplaced(index: number, newChild: ContentItem): void;
     remove(): void;
     removeChild(contentItem: ContentItem, keepChild?: boolean): void;
-    replaceChild(oldChild: ContentItem, newChild: ContentItem, _$destroyOldChild?: boolean): void;
+    // @internal
+    replaceChild(oldChild: ContentItem, newChild: ContentItem, destroyOldChild?: boolean): void;
     // @internal (undocumented)
     setParent(parent: ContentItem): void;
     // @internal (undocumented)
@@ -489,8 +488,8 @@ export namespace GoldenLayout {
 // @public
 export class Header extends EventEmitter {
     // @internal
-    constructor(_layoutManager: LayoutManager, _parent: Stack, settings: Header.Settings, _configClosable: boolean, closeEvent: Header.CloseEvent, _dockEvent: Header.DockEvent | undefined, _popoutEvent: Header.PopoutEvent | undefined, _maximiseToggleEvent: Header.MaximiseToggleEvent | undefined, _clickEvent: Header.ClickEvent | undefined, _touchStartEvent: Header.TouchStartEvent | undefined, _componentRemoveEvent: Header.ComponentRemoveEvent | undefined, _componentFocusEvent: Header.ComponentFocusEvent | undefined, _componentDragStartEvent: Header.ComponentDragStartEvent | undefined, _stateChangedEvent: Header.StateChangedEvent | undefined);
-    // @deprecated
+    constructor(_layoutManager: LayoutManager, _parent: Stack, settings: Header.Settings, _configClosable: boolean, _getActiveComponentItemEvent: Header.GetActiveComponentItemEvent, closeEvent: Header.CloseEvent, _dockEvent: Header.DockEvent | undefined, _popoutEvent: Header.PopoutEvent | undefined, _maximiseToggleEvent: Header.MaximiseToggleEvent | undefined, _clickEvent: Header.ClickEvent | undefined, _touchStartEvent: Header.TouchStartEvent | undefined, _componentRemoveEvent: Header.ComponentRemoveEvent | undefined, _componentFocusEvent: Header.ComponentFocusEvent | undefined, _componentDragStartEvent: Header.ComponentDragStartEvent | undefined);
+    // @deprecated (undocumented)
     get activeContentItem(): ContentItem | null;
     // @internal (undocumented)
     applyFocusedValue(value: boolean): void;
@@ -498,6 +497,7 @@ export class Header extends EventEmitter {
     get controlsContainer(): HTMLElement;
     // (undocumented)
     get controlsContainerElement(): HTMLElement;
+    // @internal
     createTab(componentItem: ComponentItem, index: number): void;
     // @internal
     destroy(): void;
@@ -512,14 +512,13 @@ export class Header extends EventEmitter {
     // (undocumented)
     get parent(): Stack;
     // @internal (undocumented)
+    processActiveComponentChanged(newActiveComponentItem: ComponentItem): void;
+    // @internal (undocumented)
     processMaximised(): void;
     // @internal (undocumented)
     processMinimised(): void;
-    removeTab(componentItem: ContentItem): void;
     // @internal
-    setActiveComponentItem(item: ComponentItem): void;
-    // @deprecated
-    setActiveContentItem(item: ContentItem): void;
+    removeTab(componentItem: ComponentItem): void;
     // @internal
     setDockable(isDockable: boolean): boolean;
     // @internal
@@ -539,7 +538,7 @@ export class Header extends EventEmitter {
     // @internal
     updateClosability(): void;
     // @internal
-    updateTabSizes(showTabMenu?: boolean): void;
+    updateTabSizes(): void;
 }
 
 // @public (undocumented)
@@ -558,6 +557,8 @@ export namespace Header {
     export type ComponentRemoveEvent = (this: void, componentItem: ComponentItem) => void;
     // @internal (undocumented)
     export type DockEvent = (this: void) => void;
+    // @internal (undocumented)
+    export type GetActiveComponentItemEvent = (this: void) => ComponentItem;
     // @internal (undocumented)
     export type MaximiseToggleEvent = (this: void) => void;
     // @internal (undocumented)
@@ -1008,6 +1009,7 @@ export namespace LayoutManager {
     // (undocumented)
     export type ReleaseComponentEventHandler = (this: void, container: ComponentContainer, component: ComponentItem.Component) => void;
     const defaultLocationSelectors: readonly LocationSelector[];
+    const afterFocusedItemIfPossibleLocationSelectors: readonly LocationSelector[];
 }
 
 // Warning: (ae-internal-missing-underscore) The name "LeftAndTop" should be prefixed with an underscore because the declaration is marked as @internal
@@ -1558,8 +1560,6 @@ export class Stack extends ComponentParentableItem {
     onDrop(contentItem: ContentItem, area: ContentItem.Area): void;
     // @internal
     positionHeader(position: Side): void;
-    // @internal (undocumented)
-    protected processChildReplaced(index: number, newChild: ContentItem): void;
     // (undocumented)
     removeChild(contentItem: ContentItem, keepChild: boolean): void;
     // (undocumented)
@@ -1671,8 +1671,6 @@ export class Tab {
     setActive(isActive: boolean): void;
     // @internal (undocumented)
     setBlurred(): void;
-    // @internal (undocumented)
-    setComponentItem(value: ComponentItem): void;
     // @internal (undocumented)
     setFocused(): void;
     setTitle(title: string): void;

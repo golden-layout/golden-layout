@@ -1823,4 +1823,15 @@ export namespace LayoutManager {
         { typeId: LocationSelector.TypeId.FirstRowOrColumn, index: undefined },
         { typeId: LocationSelector.TypeId.Root, index: undefined },
     ];
+
+    /**
+     * LocationSelectors to try to get location next to existing focused item
+     * @public
+     */
+    export const afterFocusedItemIfPossibleLocationSelectors: readonly LocationSelector[] = [
+        { typeId: LocationSelector.TypeId.FocusedItem, index: 1 },
+        { typeId: LocationSelector.TypeId.FirstStack, index: undefined },
+        { typeId: LocationSelector.TypeId.FirstRowOrColumn, index: undefined },
+        { typeId: LocationSelector.TypeId.Root, index: undefined },
+    ];
 }

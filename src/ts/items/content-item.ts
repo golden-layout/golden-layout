@@ -182,16 +182,13 @@ export abstract class ContentItem extends EventEmitter {
     }
 
     /**
-     * Replaces oldChild with newChild. This used to use jQuery.replaceWith... which for
-     * some reason removes all event listeners, so isn't really an option.
-     *
+     * Replaces oldChild with newChild
      * @param oldChild -
      * @param newChild -
+     * @internal
      */
-    replaceChild(oldChild: ContentItem, newChild: ContentItem, _$destroyOldChild = false): void {
-
-        // newChild = this.layoutManager._$normalizeContentItem(newChild);
-
+    replaceChild(oldChild: ContentItem, newChild: ContentItem, destroyOldChild = false): void {
+        // Do not try to replace ComponentItem - will not work
         const index = this._contentItems.indexOf(oldChild);
         const parentNode = oldChild._element.parentNode;
 
@@ -207,7 +204,7 @@ export abstract class ContentItem extends EventEmitter {
             /*
             * Optionally destroy the old content item
             */
-            if (_$destroyOldChild === true) {
+            if (destroyOldChild === true) {
                 oldChild._parent = null;
                 oldChild.destroy(); // will now also destroy all children of oldChild
             }
@@ -217,11 +214,6 @@ export abstract class ContentItem extends EventEmitter {
             */
             this._contentItems[index] = newChild;
             newChild.setParent(this);
-
-            /*
-            * Give descendants a chance to process replace using index - eg. used by Header to update tab
-            */
-            this.processChildReplaced(index, newChild)
 
             //TODO This doesn't update the config... refactor to leave item nodes untouched after creation
             if (newChild._parent === null) {
@@ -386,12 +378,6 @@ export abstract class ContentItem extends EventEmitter {
         for (let i = 0; i < this._contentItems.length; i++) {
             this._contentItems[i].updateSize();
         }
-    }
-
-    /** @internal */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    protected processChildReplaced(index: number, newChild: ContentItem): void {
-        // virtual function to allow descendants to further process replaceChild()
     }
 
     /**
