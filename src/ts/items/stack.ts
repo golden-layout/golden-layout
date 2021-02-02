@@ -217,7 +217,7 @@ export class Stack extends ComponentParentableItem {
         }
     }
 
-    setActiveComponentItem(componentItem: ComponentItem, focus: boolean): void {
+    setActiveComponentItem(componentItem: ComponentItem, focus: boolean, suppressFocusEvent = false): void {
         if (this._activeComponentItem !== componentItem) {
             if (this.contentItems.indexOf(componentItem) === -1) {
                 throw new Error('componentItem is not a child of this stack');
@@ -235,7 +235,7 @@ export class Stack extends ComponentParentableItem {
         }
 
         if (this.focused || focus) {
-            componentItem.focus();
+            this.layoutManager.setFocusedComponentItem(componentItem, suppressFocusEvent);
         }
     }
 
@@ -725,6 +725,12 @@ export class Stack extends ComponentParentableItem {
     }
 
     /** @internal */
+    protected setParent(parent: ContentItem): void {
+        this._stackParent = parent as Stack.Parent;
+        super.setParent(parent);
+    }
+
+    /** @internal */
     private updateNodeSize(): void {
         if (this.element.style.display !== 'none') {
             const isDocked = this._docker.docked;
@@ -873,12 +879,6 @@ export class Stack extends ComponentParentableItem {
                 this._dropSegment = segment;
             }
         }
-    }
-
-    /** @internal */
-    setParent(parent: ContentItem): void {
-        this._stackParent = parent as Stack.Parent;
-        super.setParent(parent);
     }
 
     /** @internal */

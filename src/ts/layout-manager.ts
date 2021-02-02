@@ -1027,7 +1027,7 @@ export abstract class LayoutManager extends EventEmitter {
      * @param suppressEvent - Whether to emit focus event
      */
     focusComponent(item: ComponentItem, suppressEvent = false): void {
-        this.setFocusedComponentItem(item, suppressEvent);
+        item.focus(suppressEvent);
     }
 
     /**
@@ -1046,6 +1046,7 @@ export abstract class LayoutManager extends EventEmitter {
      *
      * @param item - If defined, specifies the component item to be given focus.  If undefined, clear component focus.
      * @param suppressEvents - Whether to emit focus and blur events
+     * @internal
      */
     setFocusedComponentItem(item: ComponentItem | undefined, suppressEvents = false): void {
         if (item !== this._focusedComponentItem) {

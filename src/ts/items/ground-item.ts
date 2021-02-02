@@ -335,6 +335,11 @@ export class GroundItem extends ComponentParentableItem {
         throw new Error('Cannot generate GroundItem config');
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    setActiveComponentItem(item: ComponentItem, focus: boolean, suppressFocusEvent: boolean): void {
+        // only applicable if ComponentItem is root and then it always has focus
+    }
+
     private updateNodeSize(): void {
         const { width, height } = getElementWidthAndHeight(this._containerElement);
 

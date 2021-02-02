@@ -425,12 +425,6 @@ export class RowOrColumn extends ContentItem {
         this.initContentItems();
     }
 
-    /** @internal */
-    setParent(parent: ContentItem): void {
-        this._rowOrColumnParent = parent;
-        super.setParent(parent);
-    }
-
     toConfig(): ResolvedRowOrColumnItemConfig {
         const result: ResolvedRowOrColumnItemConfig = {
             type: this.type as 'row' | 'column',
@@ -443,6 +437,12 @@ export class RowOrColumn extends ContentItem {
             isClosable: this.isClosable,
         }
         return result;
+    }
+
+    /** @internal */
+    protected setParent(parent: ContentItem): void {
+        this._rowOrColumnParent = parent;
+        super.setParent(parent);
     }
 
     /** @internal */

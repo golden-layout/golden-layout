@@ -156,6 +156,8 @@ export class ComponentItem extends ContentItem {
     setDragSize(width: number, height: number): void;
     // @internal (undocumented)
     setFocused(suppressEvent: boolean): void;
+    // @internal (undocumented)
+    protected setParent(parent: ContentItem): void;
     // (undocumented)
     setTab(tab: Tab): void;
     setTitle(title: string): void;
@@ -275,7 +277,7 @@ export abstract class ContentItem extends EventEmitter {
     // @internal
     replaceChild(oldChild: ContentItem, newChild: ContentItem, destroyOldChild?: boolean): void;
     // @internal (undocumented)
-    setParent(parent: ContentItem): void;
+    protected setParent(parent: ContentItem): void;
     // @internal (undocumented)
     show(): void;
     // (undocumented)
@@ -927,6 +929,7 @@ export abstract class LayoutManager extends EventEmitter {
     // (undocumented)
     get rootItem(): ContentItem | undefined;
     saveLayout(): ResolvedLayoutConfig;
+    // @internal
     setFocusedComponentItem(item: ComponentItem | undefined, suppressEvents?: boolean): void;
     // @internal
     setMaximisedStack(stack: Stack | undefined): void;
@@ -1451,7 +1454,7 @@ export class RowOrColumn extends ContentItem {
     removeChild(contentItem: ContentItem, keepChild: boolean): void;
     replaceChild(oldChild: ContentItem, newChild: ContentItem): void;
     // @internal (undocumented)
-    setParent(parent: ContentItem): void;
+    protected setParent(parent: ContentItem): void;
     // (undocumented)
     toConfig(): ResolvedRowOrColumnItemConfig;
     updateSize(): void;
@@ -1563,7 +1566,7 @@ export class Stack extends ComponentParentableItem {
     // (undocumented)
     removeChild(contentItem: ContentItem, keepChild: boolean): void;
     // (undocumented)
-    setActiveComponentItem(componentItem: ComponentItem, focus: boolean): void;
+    setActiveComponentItem(componentItem: ComponentItem, focus: boolean, suppressFocusEvent?: boolean): void;
     // @deprecated (undocumented)
     setActiveContentItem(item: ContentItem): void;
     // @internal (undocumented)
@@ -1573,7 +1576,7 @@ export class Stack extends ComponentParentableItem {
     // @internal (undocumented)
     setFocusedValue(value: boolean): void;
     // @internal (undocumented)
-    setParent(parent: ContentItem): void;
+    protected setParent(parent: ContentItem): void;
     // @internal (undocumented)
     setRowColumnClosable(value: boolean): void;
     // @internal (undocumented)

@@ -44,7 +44,7 @@ export class ComponentItem extends ContentItem {
     /** @internal */
     constructor(layoutManager: LayoutManager,
         config: ResolvedComponentItemConfig,
-        private readonly _parentItem: ComponentParentableItem
+        private _parentItem: ComponentParentableItem
     ) {
         super(layoutManager, config, _parentItem, document.createElement('div'));
 
@@ -172,7 +172,7 @@ export class ComponentItem extends ContentItem {
      * Focuses the item if it is not already focused
      */
     focus(suppressEvent = false): void {
-        this.layoutManager.setFocusedComponentItem(this, suppressEvent); 
+        this.parentItem.setActiveComponentItem(this, true, suppressEvent);
     }
 
     /** @internal */
@@ -200,6 +200,12 @@ export class ComponentItem extends ContentItem {
         if (!suppressEvent) {
             this.emitBaseBubblingEvent('blur');
         }
+    }
+
+    /** @internal */
+    protected setParent(parent: ContentItem): void {
+        this._parentItem = parent as ComponentParentableItem;
+        super.setParent(parent);
     }
 
     /** @internal */

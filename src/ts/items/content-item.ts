@@ -74,7 +74,7 @@ export abstract class ContentItem extends EventEmitter {
     }
 
     /** @internal */
-    constructor(readonly layoutManager: LayoutManager,
+    constructor(public readonly layoutManager: LayoutManager,
         config: ResolvedItemConfig,
         private _parent: ContentItem | null,
         private readonly _element: HTMLElement
@@ -346,7 +346,7 @@ export abstract class ContentItem extends EventEmitter {
     }
 
     /** @internal */
-    setParent(parent: ContentItem): void {
+    protected setParent(parent: ContentItem): void {
         this._parent = parent;
     }
 
