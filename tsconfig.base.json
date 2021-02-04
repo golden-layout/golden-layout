@@ -1,0 +1,52 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "target": "es2015",
+    "downlevelIteration": true,
+    "importHelpers": true,
+    "strict": true,
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "strictBindCallApply": true,
+    "alwaysStrict": true,
+    "noImplicitReturns": true,
+    "strictFunctionTypes": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    "strictPropertyInitialization": false,
+    "noUnusedLocals": false,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": "./",
+    "sourceMap": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "typeRoots": [
+      "node_modules/@types"
+    ],
+    "lib": [
+      "es2018",
+      "dom"
+    ]
+  },
+  "include": [
+    "src/**.ts",
+  ],
+  "exclude": [
+    "api-test",
+    "dist",
+    "demo",
+    "doc",
+    "etc",
+    "lib",
+    "node_modules",
+    "script",
+    "temp",
+    "test",
+    "typings/browser",
+    "typings/browser.d.ts",
+    "webpack",
+    "website"
+  ]
+}

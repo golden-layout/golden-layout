@@ -1,0 +1,64 @@
+html {
+    height: 100%;
+    width: 100%;
+}
+
+body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    overflow: hidden;
+}
+
+#bodySection {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+    width: 100%;
+}
+
+#layoutContainer {
+    height: 100%;
+    width: 100%;
+}
+
+#controls {
+    display: flex;
+    flex-direction: column;
+}
+
+.control {
+    margin: 2px;    
+}
+
+#addComponentSection {
+    display: flex;
+}
+
+#replaceComponentSection {
+    display: flex;
+}
+
+#predefinedLayoutsSection {
+    display: flex;
+}
+
+#saveAndReloadLayoutSection {
+    display: flex;
+}
+
+#clickCount {
+    display: flex;
+    flex-wrap: nowrap;
+    white-space: pre;
+}
+
+#stackHeaderClick {
+    display: flex;
+    flex-wrap: nowrap;
+    white-space: pre;
+}
+
+#stackHeaderClickedDiv {
+    display: inline-flex;
+}

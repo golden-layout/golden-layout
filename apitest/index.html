@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>Golden-Layout Demo</title>
+    </head>
+    <body>
+        <section id="bodySection">
+            <section id="controls">
+                <button id="registerExtraComponentTypesButton">Register extra Component Types</button>
+                <section id="addComponentSection">
+                    <select id="registeredComponentTypesForAddSelect" class="control"></select>
+                    <button id="addComponentButton" class="control">Add Component</button>
+                </section>
+                <section id="predefinedLayoutsSection">
+                    <select id="layoutSelect" class="control"></select>
+                    <button id="loadLayoutButton" class="control">Load Layout</button>
+                </section>
+                <section id="rootComponentSection">
+                    <button id="loadComponentAsRootButton" class="control">Load Component as Root</button>
+                </section>
+                <section id="replaceComponentSection">
+                    <select id="registeredComponentTypesForReplaceSelect" class="control"></select>
+                    <button id="replaceComponentButton" class="control">Replace Color Component with</button>
+                </section>
+                <section id="saveAndReloadLayoutSection">
+                    <button id="saveLayoutButton" class="control">Save Layout</button>
+                    <button id="reloadSavedLayoutButton" class="control">Reload saved Layout</button>
+                </section>
+                <section id="clickCount">
+                    <span>Click count: Capture: </span>
+                    <span id="captureClickCountSpan"></span>
+                    <span> Bubble: </span>
+                    <span id="bubbleClickCountSpan"></span>
+                </section>
+                <section id="stackHeaderClick">
+                    <span>Stack Header: </span>
+                    <div id="stackHeaderClickedDiv">
+                        <span>Clicked: </span>
+                        <span id="stackHeaderClickedItemCountSpan"></span>
+                    </div>
+                </section>
+            </section>
+            <section id="layoutContainer">
+            </section>
+        </section>
+    </body>
+</html>

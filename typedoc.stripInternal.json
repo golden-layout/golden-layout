@@ -1,0 +1,24 @@
+{
+    "tsconfig": "./tsconfig.module.strip.json",
+    "inputFiles": ["./src"],
+    "mode": "modules",
+    "stripInternal": true,
+    "out": "doc/strip",
+    "readme": "README.md",
+    "excludeNotExported": true,
+    "excludePrivate": true,
+    "excludeProtected": true,
+    "exclude": [
+        "./src/ts/utils/jquery-legacy.ts",
+        "./src/ts/utils/utils.ts.ts",
+        "./src/ts/controls/drag-source.ts",
+        "./src/ts/controls/drop-target-indicator.ts",
+        "./src/ts/controls/header-button.ts",
+        "./src/ts/controls/splitter.ts",
+        "./src/ts/controls/transition-indicator.ts",
+        "./src/ts/errors/internal-error.ts",
+        "./src/ts/utils/config-minifier.ts",
+        "./src/ts/utils/drag-listener.ts",
+        "./src/ts/utils/event-hub.ts"
+    ]
+}

@@ -12,6 +12,8 @@
 @color9: #555555; // Appears 1 time
 @color10: #ffffff; // Appears 2 time
 
+@color11: #354be3; // Appears 1 time
+
 // ".lm_dragging" is applied to BODY tag during Drag and is also directly applied to the root of the object being dragged
 
 // Entire GoldenLayout Container, if a background is set, it is visible as color of "pane header" and "splitters" (if these latest has opacity very low)
@@ -102,6 +104,10 @@
       .lm_close_tab {
         opacity: 1;
       }
+
+      &.lm_focused {
+        background-color: @color11;
+      }
     }
   }
 }
@@ -151,7 +157,7 @@
 // Pane controls (popout, maximize, minimize, close)
 .lm_controls {
   // All Pane controls shares these
-  > li {
+  > * {
     position: relative;
     background-position: center center;
     background-repeat: no-repeat;

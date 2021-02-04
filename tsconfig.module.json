@@ -1,0 +1,13 @@
+{
+    "extends": "./tsconfig.base.json",
+    "compilerOptions": {
+      "outDir": "dist/module",
+      "module": "es2020",
+      "declaration": true,
+      "declarationMap": true,
+      "declarationDir": "lib",
+      "sourceMap": true,
+      "inlineSourceMap": false
+    },
+    "include": [ "src" ]
+  }

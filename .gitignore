@@ -3,4 +3,11 @@ typings
 .idea
 .vscode
 npm-debug.log
-dist
+/dist
+/doc
+debug.log
+/debug.log
+/lib
+/apitest/dist
+/apitest/out-tsc
+/temp

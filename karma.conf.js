@@ -32,7 +32,7 @@ module.exports = function (config) {
     devtool: 'inline-source-map',
     resolve: {
         alias: {
-            'js': path.join(__dirname, 'src/js_es6'),
+            'js': path.join(__dirname, 'src/ts'),
             'less': path.join(__dirname, path.join('src', 'less')),
             'css': path.join(__dirname, path.join('src', 'css')),            
         }
@@ -59,7 +59,7 @@ module.exports = function (config) {
         {
             enforce: 'pre',
             test: /\.js$/,
-            include: /src\/js_es6/,
+            include: /src\/ts/,
             exclude: /node_modules/,
             use: [{ loader: 'istanbul-instrumenter-loader', query: { esModules: true } }]
         },
