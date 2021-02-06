@@ -875,6 +875,8 @@ export abstract class LayoutManager extends EventEmitter {
     //
     // @internal (undocumented)
     get eventHub(): EventHub;
+    // (undocumented)
+    findFirstComponentItemById(id: string): ComponentItem | undefined;
     focusComponent(item: ComponentItem, suppressEvent?: boolean): void;
     // (undocumented)
     get focusedComponentItem(): ComponentItem | undefined;

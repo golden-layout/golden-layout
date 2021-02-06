@@ -846,6 +846,14 @@ export abstract class LayoutManager extends EventEmitter {
         return contentItem;
     }
 
+    findFirstComponentItemById(id: string): ComponentItem | undefined {
+        if (this._groundItem === undefined) {
+            throw new UnexpectedUndefinedError('LMFFCIBI82446');
+        } else {
+            return this.findFirstContentItemTypeByIdRecursive(ItemType.component, id, this._groundItem) as ComponentItem;
+        }
+    }
+
     /**
      * Creates a popout window with the specified content at the specified position
      *
@@ -1565,15 +1573,40 @@ export abstract class LayoutManager extends EventEmitter {
             return undefined;
         } else {
             for (let i = 0; i < contentItemCount; i++) {
-                const contentItem = contentItems[0];
+                const contentItem = contentItems[i];
                 if (contentItem.type === type) {
                     return contentItem;
                 }
             }
 
             for (let i = 0; i < contentItemCount; i++) {
-                const contentItem = contentItems[0];
+                const contentItem = contentItems[i];
                 const foundContentItem = this.findFirstContentItemTypeRecursive(type, contentItem);
+                if (foundContentItem !== undefined) {
+                    return foundContentItem;
+                }
+            }
+
+            return undefined;
+        }
+    }
+
+    private findFirstContentItemTypeByIdRecursive(type: ItemType, id: string, node: ContentItem): ContentItem | undefined {
+        const contentItems = node.contentItems;
+        const contentItemCount = contentItems.length;
+        if (contentItemCount === 0) {
+            return undefined;
+        } else {
+            for (let i = 0; i < contentItemCount; i++) {
+                const contentItem = contentItems[i];
+                if (contentItem.type === type && contentItem.id === id) {
+                    return contentItem;
+                }
+            }
+
+            for (let i = 0; i < contentItemCount; i++) {
+                const contentItem = contentItems[i];
+                const foundContentItem = this.findFirstContentItemTypeByIdRecursive(type, id, contentItem);
                 if (foundContentItem !== undefined) {
                     return foundContentItem;
                 }
