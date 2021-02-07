@@ -1,6 +1,6 @@
 {
   "name": "golden-layout",
-  "version": "2.0.0-beta.22",
+  "version": "2.0.0",
   "description": "A multi-screen javascript Layout manager",
   "keywords": [
     "docking",
@@ -16,9 +16,12 @@
   },
   "license": "MIT",
   "author": "Golden Layout community",
-  "main": "dist/cjs/golden-layout.js",
-  "module": "dist/golden-layout/index.js",
-  "typings": "dist/golden-layout/index.d.ts",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "typings": "dist/types/index.d.ts",
+  "files": [
+    "dist/**/*"
+  ],
   "sideEffects": false,
   "scripts": {
     "build:module": "tsc -p tsconfig.module.json",

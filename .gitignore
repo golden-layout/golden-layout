@@ -2,6 +2,7 @@ node_modules
 typings
 .idea
 .vscode
+*.tgz
 npm-debug.log
 /dist
 /doc

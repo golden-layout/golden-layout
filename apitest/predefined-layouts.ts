@@ -1,4 +1,4 @@
-import { ComponentItemConfig, ItemType, LayoutConfig } from '../dist/golden-layout';
+import { ComponentItemConfig, ItemType, LayoutConfig } from '..';
 import { BooleanComponent } from './boolean-component';
 import { ColorComponent } from './color-component';
 import { TextComponent } from './text-component';
