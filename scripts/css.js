@@ -23,8 +23,8 @@ const ensureFolder = (dir) => {
 // Must be called for every .less file in src folder.
 const buildFile = async (filePath) => {
     console.log(`[INFO] Processing file: ${filePath}`);
-    const outputPath = filePath.replace('less', 'css').replace('src', 'dist/golden-layout').replace('.less', '.css');
-    const lessRawOutputFile = filePath.replace('src', 'dist/golden-layout');
+    const outputPath = filePath.replace('less', 'css').replace('src', 'dist').replace('.less', '.css');
+    const lessRawOutputFile = filePath.replace('src', 'dist');
     console.log(`[INFO] ${filePath} => render => ${outputPath}`);
     console.log(`[INFO] ${filePath} => copy => ${lessRawOutputFile}`);
 
@@ -44,20 +44,19 @@ console.log('[INFO] Creating directories');
 
 // We do not have mkdir -p without an extra dependency.
 ensureFolder('./dist');
-ensureFolder('./dist/golden-layout');
-ensureFolder('./dist/golden-layout/css');
-ensureFolder('./dist/golden-layout/less');
-ensureFolder('./dist/golden-layout/scss');
-ensureFolder('./dist/golden-layout/css/themes');
-ensureFolder('./dist/golden-layout/less/themes');
-ensureFolder('./dist/golden-layout/scss/themes');
-ensureFolder('./dist/golden-layout/img');
+ensureFolder('./dist/css');
+ensureFolder('./dist/less');
+ensureFolder('./dist/scss');
+ensureFolder('./dist/css/themes');
+ensureFolder('./dist/less/themes');
+ensureFolder('./dist/scss/themes');
+ensureFolder('./dist/img');
 
 
 // Build base.less file
 buildFile('./src/less/goldenlayout-base.less');
 // Copy the base scss file
-fs.copyFileSync('./src/scss/goldenlayout-base.scss', './dist/golden-layout/scss/goldenlayout-base.scss');
+fs.copyFileSync('./src/scss/goldenlayout-base.scss', './dist/scss/goldenlayout-base.scss');
 
 // Build every less theme
 fs.readdirSync('./src/less/themes').forEach(file => {
@@ -67,7 +66,7 @@ fs.readdirSync('./src/less/themes').forEach(file => {
 // Copy SCSS themes to dist
 fs.readdirSync('./src/scss/themes').forEach(file => {
     const srcPath = path.join('./src/scss/themes', file);
-    const dstPath = path.join('./dist/golden-layout/scss/themes', file);
+    const dstPath = path.join('./dist/scss/themes', file);
     console.log(`[INFO] ${srcPath} => copy => ${dstPath}`);
     fs.copyFileSync(srcPath, dstPath);
 });
@@ -75,7 +74,7 @@ fs.readdirSync('./src/scss/themes').forEach(file => {
 // Copy Images to dist
 fs.readdirSync('./src/img').forEach(file => {
     const srcPath = path.join('./src/img', file);
-    const dstPath = path.join('./dist/golden-layout/img', file);
+    const dstPath = path.join('./dist/img', file);
     console.log(`[INFO] ${srcPath} => copy => ${dstPath}`);
     fs.copyFileSync(srcPath, dstPath);
 });

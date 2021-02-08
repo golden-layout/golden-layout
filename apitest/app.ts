@@ -1,4 +1,4 @@
-import { ComponentItemConfig, ContentItem, EventEmitter, GoldenLayout, LayoutConfig, ResolvedLayoutConfig, Stack } from "../dist/golden-layout";
+import { ComponentItemConfig, ContentItem, EventEmitter, GoldenLayout, LayoutConfig, ResolvedLayoutConfig, Stack } from '..';
 import { BooleanComponent } from './boolean-component';
 import { ColorComponent } from './color-component';
 import { Layout, prefinedLayouts } from './predefined-layouts';

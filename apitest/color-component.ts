@@ -1,4 +1,4 @@
-import { ComponentContainer, JsonValue } from '../dist/golden-layout';
+import { ComponentContainer, JsonValue } from '..';
 
 export class ColorComponent {
     static readonly typeName = 'color';

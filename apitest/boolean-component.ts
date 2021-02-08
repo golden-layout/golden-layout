@@ -1,4 +1,4 @@
-import { ComponentContainer, JsonValue } from '../dist/golden-layout';
+import { ComponentContainer, JsonValue } from '..';
 
 export class BooleanComponent {
     static readonly typeName = 'boolean';
