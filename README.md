@@ -41,7 +41,7 @@ The Version 1 to Version 2 migration guide is available [here](#migration).
 
 ### Examples
 
-Version 2 examples are presented [here](#examples).
+Version 2 examples are presented [here](#code-examples).
 
 ## Features
 
@@ -230,7 +230,7 @@ The library distribution includes 2 TypeScript declaration (typing) files:
 
 Note that the allocation of API elements to either public or internal has not been finalised.  However any element used in either the `apitest` application or the example Angular application will remain labelled as public.
 
-## Examples
+## Code Examples
 
 ### Angular
 
