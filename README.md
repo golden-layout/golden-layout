@@ -347,13 +347,13 @@ These events can be set up in an application's start up code as shown in the exa
     }
 ```
 
-Alternatively, `component.element` could be used as the top most HTML element in the component. Example code for this could look like:
+Alternatively, `container.element` could be used as the top most HTML element in the component. Example code for this could look like:
 
 ```
     this._goldenLayout = new GoldenLayout(goldenLayoutHostElement);
 
     this._goldenLayout.getComponentEvent = (container, itemConfig) => {
-        const component = this.createFrameworkComponent(itemConfig, component.element);
+        const component = this.createFrameworkComponent(itemConfig, container.element);
         this._containerMap.set(container, component);
     }
 
