@@ -245,7 +245,7 @@ The following snippets of code demonstrate how Golden Layout can be used in Vue.
 
 #### Composable Hook
 
-```
+```ts
 import { GoldenLayout, LayoutConfig, LayoutManager } from 'golden-layout';
 import { Component, createVNode, onMounted, ref, render } from 'vue';
 
@@ -299,7 +299,7 @@ export function useGoldenLayout(components: Record<string, Component>, config?: 
 ```
 #### Usage
 
-```
+```tsx
 const Test = defineComponent(() => <span>It Works!</span>);
 
 export const Layout = defineComponent(() => {
@@ -329,7 +329,7 @@ The `LayoutManager.getComponentEvent` event will be fired whenever a container i
 
 These events can be set up in an application's start up code as shown in the example code below.
 
-```
+```js
     this._goldenLayout = new GoldenLayout(goldenLayoutHostElement);
 
     this._goldenLayout.getComponentEvent = (container, itemConfig) => {
@@ -349,7 +349,7 @@ These events can be set up in an application's start up code as shown in the exa
 
 Alternatively, `container.element` could be used as the top most HTML element in the component. Example code for this could look like:
 
-```
+```js
     this._goldenLayout = new GoldenLayout(goldenLayoutHostElement);
 
     this._goldenLayout.getComponentEvent = (container, itemConfig) => {
