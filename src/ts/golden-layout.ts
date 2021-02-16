@@ -25,7 +25,7 @@ export class GoldenLayout extends LayoutManager {
             document.body.style.visibility = 'hidden';
         }
 
-        if (this.layoutConfig.root === undefined) {
+        if (this.layoutConfig.root === undefined || this.isSubWindow) {
             this.init();
         }
     }

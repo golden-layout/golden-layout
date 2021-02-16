@@ -2,7 +2,7 @@ import { WidthAndHeight } from './types';
 
 /** @internal */
 export function getQueryStringParam(key: string): string | null {
-    const matches = location.hash.match(new RegExp(key + '=([^&]*)'));
+    const matches = location.search.match(new RegExp(key + '=([^&]*)'));
     return matches ? matches[1] : null;
 }
 
