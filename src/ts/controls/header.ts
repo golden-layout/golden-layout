@@ -113,19 +113,32 @@ export class Header extends EventEmitter {
     get controlsContainer(): HTMLElement { return this._controlsContainerElement; }
 
     /** @internal */
-    constructor(private _layoutManager: LayoutManager,
+    constructor(
+        /** @internal */
+        private _layoutManager: LayoutManager,
+        /** @internal */
         private _parent: Stack,
         settings: Header.Settings,
+        /** @internal */
         private readonly _configClosable: boolean,
+        /** @internal */
         private _getActiveComponentItemEvent: Header.GetActiveComponentItemEvent,
         closeEvent: Header.CloseEvent,
+        /** @internal */
         private _dockEvent: Header.DockEvent | undefined,
+        /** @internal */
         private _popoutEvent: Header.PopoutEvent | undefined,
+        /** @internal */
         private _maximiseToggleEvent: Header.MaximiseToggleEvent | undefined,
+        /** @internal */
         private _clickEvent: Header.ClickEvent | undefined,
+        /** @internal */
         private _touchStartEvent: Header.TouchStartEvent | undefined,
+        /** @internal */
         private _componentRemoveEvent: Header.ComponentRemoveEvent | undefined,
+        /** @internal */
         private _componentFocusEvent: Header.ComponentFocusEvent | undefined,
+        /** @internal */
         private _componentDragStartEvent: Header.ComponentDragStartEvent | undefined,
     ) {
         super();
@@ -399,6 +412,7 @@ export class Header extends EventEmitter {
         }
     }
 
+    /** @internal */
     private processTabDropdownActiveChanged() {
         setElementDisplayVisibility(this._tabDropdownButton.element, this._tabsContainer.dropdownActive);
     }

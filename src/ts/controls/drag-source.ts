@@ -1,10 +1,10 @@
-import { ItemConfig, ComponentItemConfig } from '../config/config';
-import { ResolvedComponentItemConfig, ResolvedItemConfig } from '../config/resolved-config';
+import { ComponentItemConfig } from '../config/config';
 import { UnexpectedNullError } from '../errors/internal-error';
 import { ComponentItem } from '../items/component-item';
 import { GroundItem } from '../items/ground-item';
 import { LayoutManager } from '../layout-manager';
 import { DragListener } from '../utils/drag-listener';
+import { JsonValue } from '../utils/types';
 import { DragProxy } from './drag-proxy';
 
 /**
@@ -21,10 +21,19 @@ export class DragSource {
     private _dummyGroundContentItem: GroundItem;
  
     /** @internal */
-    constructor(private readonly _element: HTMLElement,
+    constructor(
+        /** @internal */
+        private _layoutManager: LayoutManager,
+        /** @internal */
+        private readonly _element: HTMLElement,
+        /** @internal */
         private readonly _extraAllowableChildTargets: HTMLElement[],
-        private _itemConfigOrFtn: ComponentItemConfig | (() => ComponentItemConfig),
-        private _layoutManager: LayoutManager
+        /** @internal */
+        private _componentTypeOrFtn: JsonValue | (() => DragSource.ComponentItemConfig),
+        /** @internal */
+        private _componentState: JsonValue | undefined,
+        /** @internal */
+        private _title: string | undefined,
     ) {
         this._dragListener = null;
 
@@ -40,6 +49,7 @@ export class DragSource {
 
 	/**
 	 * Disposes of the drag listeners so the drag source is not usable any more.
+     * @internal
 	 */
 	destroy(): void {
 		this.removeDragListener();
@@ -65,24 +75,35 @@ export class DragSource {
      * @internal
      */
     private onDragStart(x: number, y: number) {
-        let itemConfig: ComponentItemConfig;
-        if (typeof this._itemConfigOrFtn === "function") {
-            itemConfig = this._itemConfigOrFtn();
+        let componentType: JsonValue;
+        let componentState: JsonValue | undefined;
+        let title: string | undefined;
+        if (typeof this._componentTypeOrFtn === "function") {
+            const dragSourceItemConfig: DragSource.ComponentItemConfig = this._componentTypeOrFtn();
+            componentType = dragSourceItemConfig.type;
+            componentState = dragSourceItemConfig.state;
+            title = dragSourceItemConfig.title;
         } else {
-            itemConfig = this._itemConfigOrFtn;
+            componentType = this._componentTypeOrFtn;
+            componentState = this._componentState;
+            title = this._title;
         }
-
-        const resolvedItemConfig = ItemConfig.resolve(itemConfig);
-
-        // const contentItem = this._layoutManager._$normalizeContentItem($.extend(true, {}, itemConfig));
-        const copiedConfig = ResolvedItemConfig.createCopy(resolvedItemConfig) as ResolvedComponentItemConfig;
 
         // Create a dummy ContentItem only for drag purposes
         // All ContentItems (except for GroundItem) need a parent.  When dragging, the parent is not used.
         // Instead of allowing null parents (as Javascript version did), use a temporary dummy GroundItem parent and add ContentItem to that
         // If this does not work, need to create alternative GroundItem class
-        
-        const componentItem = new ComponentItem(this._layoutManager, copiedConfig, this._dummyGroundContentItem)
+
+        const itemConfig: ComponentItemConfig = {
+            type: 'component',
+            componentType,
+            componentState,
+            title,
+        }
+        const resolvedItemConfig = ComponentItemConfig.resolve(itemConfig);
+
+        const componentItem = new ComponentItem(this._layoutManager, resolvedItemConfig, this._dummyGroundContentItem)
+        this._dummyGroundContentItem.contentItems.push(componentItem);
 
         if (this._dragListener === null) {
             throw new UnexpectedNullError('DSODSD66746');
@@ -119,4 +140,13 @@ export class DragSource {
             this._dragListener = null;
 		}
 	}
+}
+
+/** @public */
+export namespace DragSource {
+    export interface ComponentItemConfig {
+        type: JsonValue,
+        state?: JsonValue,
+        title?: string,
+    }
 }

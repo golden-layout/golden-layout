@@ -6,6 +6,16 @@
 
 <!-- ![Screenshot](https://cloud.githubusercontent.com/assets/512416/4584449/e6c154a0-4ffa-11e4-81a8-a7e5f8689dc5.PNG) -->
 
+## Version 2.0.1
+
+DragSources work in this release.
+
+Caution: **Breaking changes**
+1. `newComponent()` and `addComponent()` type functions in `LayoutManager`, `Stack` and `RowOrColumn` have a new `title` parameter.  This parameter is optional however it is not the last optional parameter.
+1. `LayoutManager.createDragSource()` has been renamed to `LayoutManager.newDragSource()`.  This is to make it more obvious that it is paired with `LayoutManager.removeDragSource()`
+1. `LayoutManager.newDragSource()` now only will create a ComponentItem. Its parameters have been changed to reflect that.
+1. TypeScript definition has been updated to remove many private declarations which should not have been included.
+
 ## Version 2
 
 Version 2.0 is now available from [NPM](https://www.npmjs.com/package/golden-layout). 

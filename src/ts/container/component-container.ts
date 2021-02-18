@@ -52,14 +52,24 @@ export class ComponentContainer extends EventEmitter {
     get element(): HTMLElement { return this._element; }
 
     /** @internal */
-    constructor(private readonly _config: ResolvedComponentItemConfig,
+    constructor(
+        /** @internal */
+        private readonly _config: ResolvedComponentItemConfig,
+        /** @internal */
         private readonly _parent: ComponentItem,
+        /** @internal */
         private readonly _layoutManager: LayoutManager,
+        /** @internal */
         private readonly _element: HTMLElement,
+        /** @internal */
         private readonly _updateItemConfigEvent: ComponentContainer.UpdateItemConfigEventHandler,
+        /** @internal */
         private readonly _showEvent: ComponentContainer.ShowEventHandler,
+        /** @internal */
         private readonly _hideEvent: ComponentContainer.HideEventHandler,
+        /** @internal */
         private readonly _focusEvent: ComponentContainer.FocusEventHandler,
+        /** @internal */
         private readonly _blurEvent: ComponentContainer.BlurEventHandler,
     ) {
         super();
@@ -302,6 +312,7 @@ export class ComponentContainer extends EventEmitter {
         }
     }
 
+    /** @internal */
     private releaseComponent() {
         this.emit('beforeComponentRelease', this._component);
         this.layoutManager.releaseComponent(this, this._component);

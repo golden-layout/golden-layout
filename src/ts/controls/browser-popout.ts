@@ -32,8 +32,12 @@ export class BrowserPopout extends EventEmitter {
      * @param _initialWindowSize - A map with width, height, top and left
      * @internal
      */
-    constructor(private _config: ResolvedPopoutLayoutConfig,
+    constructor(
+        /** @internal */
+        private _config: ResolvedPopoutLayoutConfig,
+        /** @internal */
         private _initialWindowSize: Rect,
+        /** @internal */
         private _layoutManager: LayoutManager,
     ) {
         super();

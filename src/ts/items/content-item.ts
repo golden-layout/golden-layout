@@ -76,7 +76,9 @@ export abstract class ContentItem extends EventEmitter {
     /** @internal */
     constructor(public readonly layoutManager: LayoutManager,
         config: ResolvedItemConfig,
+        /** @internal */
         private _parent: ContentItem | null,
+        /** @internal */
         private readonly _element: HTMLElement
     ) {
         super();

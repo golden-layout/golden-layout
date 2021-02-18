@@ -71,7 +71,10 @@ export class Stack extends ComponentParentableItem {
     get isMaximised(): boolean { return this === this.layoutManager.maximisedStack; }
 
     /** @internal */
-    constructor(layoutManager: LayoutManager, config: ResolvedStackItemConfig, private _stackParent: Stack.Parent) {
+    constructor(layoutManager: LayoutManager, config: ResolvedStackItemConfig,
+        /** @internal */
+        private _stackParent: Stack.Parent
+    ) {
         super(layoutManager, config, _stackParent, Stack.createElement(document));
 
         this._headerConfig = config.header;
@@ -293,20 +296,22 @@ export class Stack extends ComponentParentableItem {
         this._header.setRowColumnClosable(value);
     }
 
-    newComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): ComponentItem {
+    newComponent(componentType: JsonValue, componentState?: JsonValue, title?: string, index?: number): ComponentItem {
         const itemConfig: ComponentItemConfig = {
             type: 'component',
             componentType,
             componentState,
+            title,
         };
         return this.newItem(itemConfig, index) as ComponentItem;
     }
 
-    addComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): number {
+    addComponent(componentType: JsonValue, componentState?: JsonValue, title?: string, index?: number): number {
         const itemConfig: ComponentItemConfig = {
             type: 'component',
             componentType,
             componentState,
+            title,
         };
         return this.addItem(itemConfig, index);
     }
@@ -848,6 +853,7 @@ export class Stack extends ComponentParentableItem {
         return;
     }
 
+    /** @internal */
     private resetHeaderDropZone() {
         this.layoutManager.tabDropPlaceholder.remove();
     }

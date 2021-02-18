@@ -1,5 +1,6 @@
 /** @public */
 export abstract class ExternalError extends Error {
+    /** @internal */
     constructor(public readonly type: string, message: string) {
         super(message);
     }
@@ -7,6 +8,7 @@ export abstract class ExternalError extends Error {
 
 /** @public */
 export class ConfigurationError extends ExternalError {
+    /** @internal */
     constructor(message: string, public readonly node?: string) {
         super('Configuration', message);
     }
@@ -14,6 +16,7 @@ export class ConfigurationError extends ExternalError {
 
 /** @public */
 export class PopoutBlockedError extends ExternalError {
+    /** @internal */
     constructor(message: string) {
         super('PopoutBlocked', message);
     }    
@@ -21,6 +24,7 @@ export class PopoutBlockedError extends ExternalError {
 
 /** @public */
 export class ApiError extends ExternalError {
+    /** @internal */
     constructor(message: string) {
         super('API', message);
     }    

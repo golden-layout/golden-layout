@@ -526,8 +526,8 @@ export abstract class LayoutManager extends EventEmitter {
      * @param state - Optional initial state to be assigned to component
      * @returns New ComponentItem created.
      */
-    newComponent(componentType: JsonValue, componentState?: JsonValue): ComponentItem {
-        const componentItem = this.newComponentAtLocation(componentType, componentState);
+    newComponent(componentType: JsonValue, componentState?: JsonValue, title?: string): ComponentItem {
+        const componentItem = this.newComponentAtLocation(componentType, componentState, title);
         if (componentItem === undefined) {
             throw new AssertError('LMNC65588');
         } else {
@@ -544,13 +544,13 @@ export abstract class LayoutManager extends EventEmitter {
      * {@link (LayoutManager:namespace).defaultLocationSelectors} will be used
      * @returns New ComponentItem created or undefined if no valid location selector was in array.
      */
-    newComponentAtLocation(componentType: JsonValue, componentState?: JsonValue,
+    newComponentAtLocation(componentType: JsonValue, componentState?: JsonValue, title?: string,
         locationSelectors?: LayoutManager.LocationSelector[]
     ): ComponentItem | undefined{
         if (this._groundItem === undefined) {
             throw new Error('Cannot add component before init');
         } else {
-            const location = this.addComponentAtLocation(componentType, componentState, locationSelectors);
+            const location = this.addComponentAtLocation(componentType, componentState, title, locationSelectors);
             if (location === undefined) {
                 return undefined;
             } else {
@@ -571,8 +571,8 @@ export abstract class LayoutManager extends EventEmitter {
      * @param state - Optional initial state to be assigned to component
      * @returns Location of new ComponentItem created.
      */
-    addComponent(componentType: JsonValue, componentState?: JsonValue): LayoutManager.Location {
-        const location = this.addComponentAtLocation(componentType, componentState);
+    addComponent(componentType: JsonValue, componentState?: JsonValue, title?: string): LayoutManager.Location {
+        const location = this.addComponentAtLocation(componentType, componentState, title);
         if (location === undefined) {
             throw new AssertError('LMAC99943');
         } else {
@@ -589,13 +589,14 @@ export abstract class LayoutManager extends EventEmitter {
      * {@link (LayoutManager:namespace).defaultLocationSelectors} will be used.
      * @returns Location of new ComponentItem created or undefined if no valid location selector was in array.
      */
-    addComponentAtLocation(componentType: JsonValue, componentState?: JsonValue,
+    addComponentAtLocation(componentType: JsonValue, componentState?: JsonValue, title?: string,
         locationSelectors?: readonly LayoutManager.LocationSelector[]
     ): LayoutManager.Location | undefined {
         const itemConfig: ComponentItemConfig = {
             type: 'component',
             componentType,
             componentState,
+            title,
         };
         
         return this.addItemAtLocation(itemConfig, locationSelectors);
@@ -981,29 +982,27 @@ export abstract class LayoutManager extends EventEmitter {
 
     /**
      * Attaches DragListener to any given DOM element
-     * and turns it into a way of creating new ContentItems
+     * and turns it into a way of creating new ComponentItems
      * by 'dragging' the DOM element into the layout
      *
      * @param element -
-     * @param itemConfig - For the new item to be created, or a function which will provide it
+     * @param componentTypeOrFtn - Type of component to be created, or a function which will provide both component type and state
+     * @param componentState - Optional initial state of component.  This will be ignored if componentTypeOrFtn is a function
      *
      * @returns 1) an opaque object that identifies the DOM element
 	 *          and the attached itemConfig. This can be used in
 	 *          removeDragSource() later to get rid of the drag listeners.
      *          2) undefined if constrainDragToContainer is specified
      */
-    createDragSource(element: HTMLElement,
-        itemConfig: ResolvedComponentItemConfig | (() => ResolvedComponentItemConfig),
-        extraAllowableChildTargets: HTMLElement[] = [],
+    newDragSource(element: HTMLElement,
+        componentTypeOrFtn: JsonValue | (() => DragSource.ComponentItemConfig),
+        componentState?: JsonValue,
+        title?: string,
     ): DragSource | undefined {
-        if (this.layoutConfig.settings.constrainDragToContainer) {
-            return undefined;
-        } else {
-            const dragSource = new DragSource(element, extraAllowableChildTargets, itemConfig, this);
-            this._dragSources.push(dragSource);
+        const dragSource = new DragSource(this, element, [], componentTypeOrFtn, componentState, title);
+        this._dragSources.push(dragSource);
 
-            return dragSource;
-        }
+        return dragSource;
     }
 
     /**
@@ -1011,8 +1010,8 @@ export abstract class LayoutManager extends EventEmitter {
 	 * DOM element is not a drag source any more.
 	 */
 	removeDragSource(dragSource: DragSource): void {
-		dragSource.destroy();
 		removeFromArray(dragSource, this._dragSources );
+		dragSource.destroy();
     }
     
     /** @internal */
@@ -1558,6 +1557,7 @@ export abstract class LayoutManager extends EventEmitter {
         }
     }
 
+    /** @internal */
     private findFirstContentItemType(type: ItemType): ContentItem | undefined {
         if (this._groundItem === undefined) {
             throw new UnexpectedUndefinedError('LMFFCIT82446');
@@ -1566,6 +1566,7 @@ export abstract class LayoutManager extends EventEmitter {
         }
     }
 
+    /** @internal */
     private findFirstContentItemTypeRecursive(type: ItemType, node: ContentItem): ContentItem | undefined {
         const contentItems = node.contentItems;
         const contentItemCount = contentItems.length;
@@ -1591,6 +1592,7 @@ export abstract class LayoutManager extends EventEmitter {
         }
     }
 
+    /** @internal */
     private findFirstContentItemTypeByIdRecursive(type: ItemType, id: string, node: ContentItem): ContentItem | undefined {
         const contentItems = node.contentItems;
         const contentItemCount = contentItems.length;
@@ -1637,6 +1639,7 @@ export abstract class LayoutManager extends EventEmitter {
         }
     }
 
+    /** @internal */
     private findFirstLocation(selectors: readonly LayoutManager.LocationSelector[]): LayoutManager.Location | undefined {
         const count = selectors.length;
         for (let i = 0; i < count; i++) {
@@ -1649,6 +1652,7 @@ export abstract class LayoutManager extends EventEmitter {
         return undefined;
     }
 
+    /** @internal */
     private findLocation(selector: LayoutManager.LocationSelector): LayoutManager.Location | undefined {
         const selectorIndex = selector.index;
         switch (selector.typeId) {
@@ -1752,6 +1756,7 @@ export abstract class LayoutManager extends EventEmitter {
         }
     }
 
+    /** @internal */
     private tryCreateLocationFromParentItem(parentItem: ContentItem,
         selectorIndex: number | undefined
     ): LayoutManager.Location | undefined {
