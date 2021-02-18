@@ -257,7 +257,7 @@ export function useDocumentReady(func: () => void) {
         console.log(isDocumentReady());
         if (isDocumentReady()) func();
         else
-            document.addEventListener('DOMContentLoaded', () => func(), {
+            document.addEventListener('readystatechange', () => isDocumentReady() && func(), {
                 passive: true,
             });
     });
