@@ -16,6 +16,8 @@ Caution: **Breaking changes**
 1. `LayoutManager.newDragSource()` now only will create a ComponentItem. Its parameters have been changed to reflect that.
 1. TypeScript definition has been updated to remove many private declarations which should not have been included.
 
+Note that `LayoutManager.newDragSource()` does not require `LayoutConfig.settings.constrainDragToContainer` to be set to false.
+
 ## Version 2
 
 Version 2.0 is now available from [NPM](https://www.npmjs.com/package/golden-layout). 
