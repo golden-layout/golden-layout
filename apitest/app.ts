@@ -1,4 +1,4 @@
-import { ComponentItemConfig, ContentItem, EventEmitter, GoldenLayout, LayoutConfig, ResolvedLayoutConfig, Stack } from '..';
+import { ComponentItemConfig, ContentItem, DragSource, EventEmitter, GoldenLayout, LayoutConfig, ResolvedLayoutConfig, Stack } from '..';
 import { BooleanComponent } from './boolean-component';
 import { ColorComponent } from './color-component';
 import { Layout, prefinedLayouts } from './predefined-layouts';
@@ -81,6 +81,15 @@ export class App {
         }
         this._addComponentButton = addComponentButton;
         this._addComponentButton.addEventListener('click', this._addComponentButtonClickListener, { passive: true });
+
+        const addComponentByDragButton = document.querySelector('#addComponentByDragButton') as HTMLButtonElement;
+        if (addComponentByDragButton === null) {
+            throw Error('Could not find addComponentByDragButton');
+        }
+        const addComponentDragSource = this._goldenLayout.newDragSource(addComponentByDragButton, () => this.getDragComponentTypeAndState());
+        if (addComponentDragSource === undefined) {
+            throw Error('addComponentDragSource undefined');
+        }
 
         const layoutSelect = document.querySelector('#layoutSelect') as HTMLSelectElement;
         if (layoutSelect === null) {
@@ -185,7 +194,7 @@ export class App {
         this._captureClickCount++;
         this._captureClickCountSpan.innerText = this._captureClickCount.toString();
     }
-    
+
     private handleRegisterExtraComponentTypesButtonClick() {
         this._goldenLayout.registerComponentConstructor(TextComponent.typeName, TextComponent);
         this._goldenLayout.registerComponentConstructor(BooleanComponent.typeName, BooleanComponent);
@@ -215,6 +224,11 @@ export class App {
     private handleAddComponentButtonClick() {
         const componentType = this._registeredComponentTypesForAddSelect.value;
         this._goldenLayout.addComponent(componentType);
+    }
+
+    private getDragComponentTypeAndState(): DragSource.ComponentItemConfig {
+        const componentType = this._registeredComponentTypesForAddSelect.value;
+        return { type: componentType };
     }
 
     private handleLoadLayoutButtonClick() {

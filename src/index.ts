@@ -2,6 +2,7 @@ export * from './ts/config/config';
 export * from './ts/config/resolved-config';
 export { ComponentContainer } from './ts/container/component-container';
 export { BrowserPopout } from './ts/controls/browser-popout';
+export { DragSource } from './ts/controls/drag-source';
 export { Header } from './ts/controls/header';
 export { Tab } from './ts/controls/tab';
 export * from './ts/errors/external-error';

@@ -42,8 +42,10 @@ export class ComponentItem extends ContentItem {
     get focused(): boolean { return this._focused; }
 
     /** @internal */
-    constructor(layoutManager: LayoutManager,
+    constructor(
+        layoutManager: LayoutManager,
         config: ResolvedComponentItemConfig,
+        /** @internal */
         private _parentItem: ComponentParentableItem
     ) {
         super(layoutManager, config, _parentItem, document.createElement('div'));

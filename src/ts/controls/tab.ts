@@ -36,6 +36,7 @@ export class Tab {
     private readonly _dragStartListener = (x: number, y: number) => this.onDragStart(x, y);
     /** @internal */
     private readonly _contentItemDestroyListener = () => this.onContentItemDestroy();
+    /** @internal */
     private readonly _tabTitleChangedListener = (title: string) => this.setTitle(title)
 
     get isActive(): boolean { return this._isActive; }
@@ -48,10 +49,16 @@ export class Tab {
     get closeElement(): HTMLElement | undefined { return this._closeElement; }
 
     /** @internal */
-    constructor(private readonly _layoutManager: LayoutManager,
+    constructor(
+        /** @internal */
+        private readonly _layoutManager: LayoutManager,
+        /** @internal */
         private _componentItem: ComponentItem,
+        /** @internal */
         private _closeEvent: Tab.CloseEvent | undefined,
+        /** @internal */
         private _focusEvent: Tab.FocusEvent | undefined,
+        /** @internal */
         private _dragStartEvent: Tab.DragStartEvent | undefined
     ) {
         this._element = document.createElement('div');

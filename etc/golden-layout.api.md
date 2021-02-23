@@ -6,6 +6,7 @@
 
 // @public (undocumented)
 export class ApiError extends ExternalError {
+    // @internal
     constructor(message: string);
 }
 
@@ -26,7 +27,10 @@ export interface AreaLinkedRect {
 // @public
 export class BrowserPopout extends EventEmitter {
     // @internal
-    constructor(_config: ResolvedPopoutLayoutConfig, _initialWindowSize: Rect, _layoutManager: LayoutManager);
+    constructor(
+    _config: ResolvedPopoutLayoutConfig,
+    _initialWindowSize: Rect,
+    _layoutManager: LayoutManager);
     // (undocumented)
     close(): void;
     // (undocumented)
@@ -41,7 +45,16 @@ export class BrowserPopout extends EventEmitter {
 // @public (undocumented)
 export class ComponentContainer extends EventEmitter {
     // @internal
-    constructor(_config: ResolvedComponentItemConfig, _parent: ComponentItem, _layoutManager: LayoutManager, _element: HTMLElement, _updateItemConfigEvent: ComponentContainer.UpdateItemConfigEventHandler, _showEvent: ComponentContainer.ShowEventHandler, _hideEvent: ComponentContainer.HideEventHandler, _focusEvent: ComponentContainer.FocusEventHandler, _blurEvent: ComponentContainer.BlurEventHandler);
+    constructor(
+    _config: ResolvedComponentItemConfig,
+    _parent: ComponentItem,
+    _layoutManager: LayoutManager,
+    _element: HTMLElement,
+    _updateItemConfigEvent: ComponentContainer.UpdateItemConfigEventHandler,
+    _showEvent: ComponentContainer.ShowEventHandler,
+    _hideEvent: ComponentContainer.HideEventHandler,
+    _focusEvent: ComponentContainer.FocusEventHandler,
+    _blurEvent: ComponentContainer.BlurEventHandler);
     blur(suppressEvent?: boolean): void;
     // @internal (undocumented)
     checkEmitHide(): void;
@@ -117,7 +130,8 @@ export namespace ComponentContainer {
 // @public (undocumented)
 export class ComponentItem extends ContentItem {
     // @internal
-    constructor(layoutManager: LayoutManager, config: ResolvedComponentItemConfig, _parentItem: ComponentParentableItem);
+    constructor(layoutManager: LayoutManager, config: ResolvedComponentItemConfig,
+    _parentItem: ComponentParentableItem);
     // (undocumented)
     applyUpdatableConfig(config: ResolvedComponentItemConfig): void;
     blur(suppressEvent?: boolean): void;
@@ -205,6 +219,7 @@ export type Config = LayoutConfig;
 
 // @public (undocumented)
 export class ConfigurationError extends ExternalError {
+    // @internal
     constructor(message: string, node?: string | undefined);
     // (undocumented)
     readonly node?: string | undefined;
@@ -213,7 +228,9 @@ export class ConfigurationError extends ExternalError {
 // @public
 export abstract class ContentItem extends EventEmitter {
     // @internal
-    constructor(layoutManager: LayoutManager, config: ResolvedItemConfig, _parent: ContentItem | null, _element: HTMLElement);
+    constructor(layoutManager: LayoutManager, config: ResolvedItemConfig,
+    _parent: ContentItem | null,
+    _element: HTMLElement);
     addChild(contentItem: ContentItem, index?: number | null, suspendResize?: boolean): number;
     // @internal (undocumented)
     addPopInParentId(id: string): void;
@@ -306,6 +323,33 @@ export namespace ContentItem {
 }
 
 // @public
+export class DragSource {
+    // @internal
+    constructor(
+    _layoutManager: LayoutManager,
+    _element: HTMLElement,
+    _extraAllowableChildTargets: HTMLElement[],
+    _componentTypeOrFtn: JsonValue | (() => DragSource.ComponentItemConfig),
+    _componentState: JsonValue | undefined,
+    _title: string | undefined);
+    // @internal
+    destroy(): void;
+    }
+
+// @public (undocumented)
+export namespace DragSource {
+    // (undocumented)
+    export interface ComponentItemConfig {
+        // (undocumented)
+        state?: JsonValue;
+        // (undocumented)
+        title?: string;
+        // (undocumented)
+        type: JsonValue;
+    }
+}
+
+// @public
 export class EventEmitter {
     addEventListener<K extends keyof EventEmitter.EventParamsMap>(eventName: K, callback: EventEmitter.Callback<K>): void;
     emit<K extends keyof EventEmitter.EventParamsMap>(eventName: K, ...args: EventEmitter.EventParamsMap[K]): void;
@@ -337,9 +381,12 @@ export namespace EventEmitter {
     export type BeforeComponentReleaseParams = [component: unknown];
     // (undocumented)
     export class BubblingEvent {
-        constructor(_name: string, _target: EventEmitter);
+        // @internal
+        constructor(
+        _name: string,
+        _target: EventEmitter);
         // (undocumented)
-        isPropagationStopped: boolean;
+        get isPropagationStopped(): boolean;
         // (undocumented)
         get name(): string;
         // @deprecated (undocumented)
@@ -355,7 +402,9 @@ export namespace EventEmitter {
     export type Callback<K extends keyof EventEmitter.EventParamsMap> = (this: void, ...args: EventParamsMap[K]) => void;
     // (undocumented)
     export class ClickBubblingEvent extends BubblingEvent {
-        constructor(name: string, target: EventEmitter, _mouseEvent: MouseEvent);
+        // @internal
+        constructor(name: string, target: EventEmitter,
+        _mouseEvent: MouseEvent);
         // (undocumented)
         get mouseEvent(): MouseEvent;
         }
@@ -451,7 +500,9 @@ export namespace EventEmitter {
     export type StringParam = [string];
     // (undocumented)
     export class TouchStartBubblingEvent extends BubblingEvent {
-        constructor(name: string, target: EventEmitter, _touchEvent: TouchEvent);
+        // @internal
+        constructor(name: string, target: EventEmitter,
+        _touchEvent: TouchEvent);
         // (undocumented)
         get touchEvent(): TouchEvent;
         }
@@ -467,6 +518,7 @@ export namespace EventEmitter {
 
 // @public (undocumented)
 export abstract class ExternalError extends Error {
+    // @internal
     constructor(type: string, message: string);
     // (undocumented)
     readonly type: string;
@@ -490,7 +542,19 @@ export namespace GoldenLayout {
 // @public
 export class Header extends EventEmitter {
     // @internal
-    constructor(_layoutManager: LayoutManager, _parent: Stack, settings: Header.Settings, _configClosable: boolean, _getActiveComponentItemEvent: Header.GetActiveComponentItemEvent, closeEvent: Header.CloseEvent, _dockEvent: Header.DockEvent | undefined, _popoutEvent: Header.PopoutEvent | undefined, _maximiseToggleEvent: Header.MaximiseToggleEvent | undefined, _clickEvent: Header.ClickEvent | undefined, _touchStartEvent: Header.TouchStartEvent | undefined, _componentRemoveEvent: Header.ComponentRemoveEvent | undefined, _componentFocusEvent: Header.ComponentFocusEvent | undefined, _componentDragStartEvent: Header.ComponentDragStartEvent | undefined);
+    constructor(
+    _layoutManager: LayoutManager,
+    _parent: Stack, settings: Header.Settings,
+    _configClosable: boolean,
+    _getActiveComponentItemEvent: Header.GetActiveComponentItemEvent, closeEvent: Header.CloseEvent,
+    _dockEvent: Header.DockEvent | undefined,
+    _popoutEvent: Header.PopoutEvent | undefined,
+    _maximiseToggleEvent: Header.MaximiseToggleEvent | undefined,
+    _clickEvent: Header.ClickEvent | undefined,
+    _touchStartEvent: Header.TouchStartEvent | undefined,
+    _componentRemoveEvent: Header.ComponentRemoveEvent | undefined,
+    _componentFocusEvent: Header.ComponentFocusEvent | undefined,
+    _componentDragStartEvent: Header.ComponentDragStartEvent | undefined);
     // @deprecated (undocumented)
     get activeContentItem(): ContentItem | null;
     // @internal (undocumented)
@@ -842,8 +906,8 @@ export namespace LayoutConfig {
 export abstract class LayoutManager extends EventEmitter {
     // @internal
     constructor(parameters: LayoutManager.ConstructorParameters);
-    addComponent(componentType: JsonValue, componentState?: JsonValue): LayoutManager.Location;
-    addComponentAtLocation(componentType: JsonValue, componentState?: JsonValue, locationSelectors?: readonly LayoutManager.LocationSelector[]): LayoutManager.Location | undefined;
+    addComponent(componentType: JsonValue, componentState?: JsonValue, title?: string): LayoutManager.Location;
+    addComponentAtLocation(componentType: JsonValue, componentState?: JsonValue, title?: string, locationSelectors?: readonly LayoutManager.LocationSelector[]): LayoutManager.Location | undefined;
     addItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig): LayoutManager.Location;
     addItemAtLocation(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig, locationSelectors?: readonly LayoutManager.LocationSelector[]): LayoutManager.Location | undefined;
     // @internal (undocumented)
@@ -859,8 +923,6 @@ export abstract class LayoutManager extends EventEmitter {
     createAndInitContentItem(config: ResolvedItemConfig, parent: ContentItem): ContentItem;
     // @internal
     createContentItem(config: ResolvedItemConfig, parent: ContentItem): ContentItem;
-    // Warning: (ae-forgotten-export) The symbol "DragSource" needs to be exported by the entry point index.d.ts
-    createDragSource(element: HTMLElement, itemConfig: ResolvedComponentItemConfig | (() => ResolvedComponentItemConfig), extraAllowableChildTargets?: HTMLElement[]): DragSource | undefined;
     createPopout(itemConfigOrContentItem: ContentItem | ResolvedRootItemConfig, positionAndSize: ResolvedPopoutLayoutConfig.Window, parentId: string | null, indexInParent: number | null): BrowserPopout;
     // @internal (undocumented)
     createPopoutFromContentItem(item: ContentItem, window: ResolvedPopoutLayoutConfig.Window | undefined, parentId: string | null, indexInParent: number | null | undefined): BrowserPopout;
@@ -908,8 +970,9 @@ export abstract class LayoutManager extends EventEmitter {
     get maximisedStack(): Stack | undefined;
     // @deprecated
     minifyConfig(config: ResolvedLayoutConfig): ResolvedLayoutConfig;
-    newComponent(componentType: JsonValue, componentState?: JsonValue): ComponentItem;
-    newComponentAtLocation(componentType: JsonValue, componentState?: JsonValue, locationSelectors?: LayoutManager.LocationSelector[]): ComponentItem | undefined;
+    newComponent(componentType: JsonValue, componentState?: JsonValue, title?: string): ComponentItem;
+    newComponentAtLocation(componentType: JsonValue, componentState?: JsonValue, title?: string, locationSelectors?: LayoutManager.LocationSelector[]): ComponentItem | undefined;
+    newDragSource(element: HTMLElement, componentTypeOrFtn: JsonValue | (() => DragSource.ComponentItemConfig), componentState?: JsonValue, title?: string): DragSource | undefined;
     newItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig): ContentItem;
     newItemAtLocation(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig, locationSelectors?: readonly LayoutManager.LocationSelector[]): ContentItem | undefined;
     // (undocumented)
@@ -1029,6 +1092,7 @@ export interface LeftAndTop {
 
 // @public (undocumented)
 export class PopoutBlockedError extends ExternalError {
+    // @internal
     constructor(message: string);
 }
 
@@ -1113,7 +1177,7 @@ export namespace ResolvedComponentItemConfig {
     // (undocumented)
     export function createCopy(original: ResolvedComponentItemConfig): ResolvedComponentItemConfig;
     // (undocumented)
-    export function createDefault(): ResolvedComponentItemConfig;
+    export function createDefault(componentType?: JsonValue, componentState?: JsonValue, title?: string): ResolvedComponentItemConfig;
     // @internal (undocumented)
     export function resolveComponentTypeName(itemConfig: ResolvedComponentItemConfig): string | undefined;
 }
@@ -1440,17 +1504,18 @@ export namespace RootItemConfig {
 // @public (undocumented)
 export class RowOrColumn extends ContentItem {
     // @internal
-    constructor(isColumn: boolean, layoutManager: LayoutManager, config: ResolvedRowOrColumnItemConfig, _rowOrColumnParent: ContentItem);
+    constructor(isColumn: boolean, layoutManager: LayoutManager, config: ResolvedRowOrColumnItemConfig,
+    _rowOrColumnParent: ContentItem);
     addChild(contentItem: ContentItem, index?: number, suspendResize?: boolean): number;
     // (undocumented)
-    addComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): number;
+    addComponent(componentType: JsonValue, componentState?: JsonValue, title?: string, index?: number): number;
     // (undocumented)
     addItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig, index?: number): number;
     dock(contentItem: Stack, mode?: boolean, collapsed?: boolean): void;
     // @internal
     init(): void;
     // (undocumented)
-    newComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): ComponentItem;
+    newComponent(componentType: JsonValue, componentState?: JsonValue, title?: string, index?: number): ComponentItem;
     // (undocumented)
     newItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig, index?: number): ContentItem;
     removeChild(contentItem: ContentItem, keepChild: boolean): void;
@@ -1512,11 +1577,12 @@ export namespace Side {
 // @public (undocumented)
 export class Stack extends ComponentParentableItem {
     // @internal
-    constructor(layoutManager: LayoutManager, config: ResolvedStackItemConfig, _stackParent: Stack.Parent);
+    constructor(layoutManager: LayoutManager, config: ResolvedStackItemConfig,
+    _stackParent: Stack.Parent);
     // (undocumented)
     addChild(contentItem: ContentItem, index?: number, focus?: boolean): number;
     // (undocumented)
-    addComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): number;
+    addComponent(componentType: JsonValue, componentState?: JsonValue, title?: string, index?: number): number;
     // (undocumented)
     addItem(itemConfig: ComponentItemConfig, index?: number): number;
     // (undocumented)
@@ -1558,7 +1624,7 @@ export class Stack extends ComponentParentableItem {
     // (undocumented)
     minimise(): void;
     // (undocumented)
-    newComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): ComponentItem;
+    newComponent(componentType: JsonValue, componentState?: JsonValue, title?: string, index?: number): ComponentItem;
     // (undocumented)
     newItem(itemConfig: ComponentItemConfig, index?: number): ContentItem;
     // @internal
@@ -1660,7 +1726,12 @@ export namespace StackItemConfig {
 // @public
 export class Tab {
     // @internal
-    constructor(_layoutManager: LayoutManager, _componentItem: ComponentItem, _closeEvent: Tab.CloseEvent | undefined, _focusEvent: Tab.FocusEvent | undefined, _dragStartEvent: Tab.DragStartEvent | undefined);
+    constructor(
+    _layoutManager: LayoutManager,
+    _componentItem: ComponentItem,
+    _closeEvent: Tab.CloseEvent | undefined,
+    _focusEvent: Tab.FocusEvent | undefined,
+    _dragStartEvent: Tab.DragStartEvent | undefined);
     // (undocumented)
     get closeElement(): HTMLElement | undefined;
     // (undocumented)

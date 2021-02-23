@@ -227,7 +227,7 @@ export namespace ResolvedComponentItemConfig {
         return result;
     }
 
-    export function createDefault(): ResolvedComponentItemConfig {
+    export function createDefault(componentType: JsonValue = '', componentState?: JsonValue, title = ''): ResolvedComponentItemConfig {
         const result: ResolvedComponentItemConfig = {
             type: ItemType.component,
             content: [],
@@ -239,10 +239,10 @@ export namespace ResolvedComponentItemConfig {
             maximised: ResolvedHeaderedItemConfig.defaultMaximised,
             isClosable: ResolvedItemConfig.defaults.isClosable,
             reorderEnabled: ResolvedComponentItemConfig.defaultReorderEnabled,
-            title: '',
+            title,
             header: undefined,
-            componentType: '',
-            componentState: {},
+            componentType,
+            componentState,
         }
         return result;
     }

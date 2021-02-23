@@ -44,6 +44,7 @@ export class RowOrColumn extends ContentItem {
 
     /** @internal */
     constructor(isColumn: boolean, layoutManager: LayoutManager, config: ResolvedRowOrColumnItemConfig,
+        /** @internal */
         private _rowOrColumnParent: ContentItem
     ) {
         super(layoutManager, config, _rowOrColumnParent, RowOrColumn.createElement(document, isColumn));
@@ -70,20 +71,22 @@ export class RowOrColumn extends ContentItem {
         }
     }
 
-    newComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): ComponentItem {
+    newComponent(componentType: JsonValue, componentState?: JsonValue, title?: string, index?: number): ComponentItem {
         const itemConfig: ComponentItemConfig = {
             type: 'component',
             componentType,
             componentState,
+            title,
         };
         return this.newItem(itemConfig, index) as ComponentItem;
     }
 
-    addComponent(componentType: JsonValue, componentState?: JsonValue, index?: number): number {
+    addComponent(componentType: JsonValue, componentState?: JsonValue, title?: string, index?: number): number {
         const itemConfig: ComponentItemConfig = {
             type: 'component',
             componentType,
             componentState,
+            title,
         };
         return this.addItem(itemConfig, index);
     }

@@ -140,6 +140,7 @@ export class EventEmitter {
         }
     }
 
+    /** @internal */
     private emitAllEvent(eventName: string, args: unknown[]) {
         const allEventSubscriptionsCount = this._allEventSubscriptions.length;
         if (allEventSubscriptionsCount > 0) {
@@ -217,25 +218,36 @@ export namespace EventEmitter {
     export type TouchStartBubblingEventParam = [TouchStartBubblingEvent];
 
     export class BubblingEvent {
-        isPropagationStopped = false;
+        /** @internal */
+        private _isPropagationStopped = false;
 
         get name(): string { return this._name; }
         get target(): EventEmitter { return this._target; }
         /** @deprecated Use {@link (EventEmitter:namespace).(BubblingEvent:class).target} instead */
         get origin(): EventEmitter { return this._target; }
+        get isPropagationStopped(): boolean { return this._isPropagationStopped; }
     
-        constructor(private readonly _name: string, private readonly _target: EventEmitter) {
+        /** @internal */
+        constructor(
+            /** @internal */
+            private readonly _name: string,
+            /** @internal */
+            private readonly _target: EventEmitter) {
         }
     
         stopPropagation(): void {
-            this.isPropagationStopped = true;
+            this._isPropagationStopped = true;
         }
     }
 
     export class ClickBubblingEvent extends BubblingEvent {
         get mouseEvent(): MouseEvent { return this._mouseEvent; }
 
-        constructor(name: string, target: EventEmitter, private readonly _mouseEvent: MouseEvent) {
+        /** @internal */
+        constructor(name: string, target: EventEmitter,
+            /** @internal */
+            private readonly _mouseEvent: MouseEvent
+        ) {
             super(name, target);
         }
     }
@@ -243,7 +255,11 @@ export namespace EventEmitter {
     export class TouchStartBubblingEvent extends BubblingEvent {
         get touchEvent(): TouchEvent { return this._touchEvent; }
 
-        constructor(name: string, target: EventEmitter, private readonly _touchEvent: TouchEvent) {
+        /** @internal */
+        constructor(name: string, target: EventEmitter,
+            /** @internal */
+            private readonly _touchEvent: TouchEvent
+        ) {
             super(name, target);
         }
     }
