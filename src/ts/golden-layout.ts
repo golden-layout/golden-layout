@@ -108,7 +108,7 @@ export class GoldenLayout extends LayoutManager {
         popInButtonElement.appendChild(iconElement);
         popInButtonElement.appendChild(bgElement);
 
-        popInButtonElement.click = () => this.emit('popIn');
+        popInButtonElement.addEventListener('click', () => this.emit('popIn'));
 
         const headElement = document.head;
 
