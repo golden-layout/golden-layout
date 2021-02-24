@@ -374,7 +374,8 @@ export class Stack extends ComponentParentableItem {
                 componentItem.blur();
             }
             if (!stackWillBeDeleted) {
-                this.setActiveComponentItem(this.contentItems[Math.max(index - 1, 0)] as ComponentItem, false);
+                const newActiveComponentIdx = index === 0 ? 1 : index - 1;
+                this.setActiveComponentItem(this.contentItems[newActiveComponentIdx] as ComponentItem, false);
             }
         }
 
