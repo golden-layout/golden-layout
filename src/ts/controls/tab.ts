@@ -47,6 +47,16 @@ export class Tab {
     get element(): HTMLElement { return this._element; }
     get titleElement(): HTMLElement { return this._titleElement; }
     get closeElement(): HTMLElement | undefined { return this._closeElement; }
+    get reorderEnabled(): boolean { return this._dragListener !== undefined; }
+    set reorderEnabled(value: boolean) {
+        if (value !== this.reorderEnabled) {
+            if (value) {
+                this.enableReorder();
+            } else {
+                this.disableReorder();
+            }
+        }
+    }
 
     /** @internal */
     constructor(
@@ -82,9 +92,7 @@ export class Tab {
         const reorderEnabled = _componentItem.reorderEnabled ?? this._layoutManager.layoutConfig.settings.reorderEnabled;
 
         if (reorderEnabled) {
-            this._dragListener = new DragListener(this._element, [this._titleElement]);
-            this._dragListener.on('dragStart', this._dragStartListener);
-            this._componentItem.on('destroy', this._contentItemDestroyListener);
+            this.enableReorder();
         }
 
         this._element.addEventListener('click', this._tabClickListener, { passive: true });
@@ -102,7 +110,6 @@ export class Tab {
         this._componentItem.setTab(this);
         this._layoutManager.emit('tabCreated', this);
     }
-
 
     /**
      * Sets the tab's title to the provided string and sets
@@ -145,10 +152,8 @@ export class Tab {
         this._closeElement?.removeEventListener('touchstart', this._closeTouchStartListener);
         // this._closeElement?.removeEventListener('mousedown', this._closeMouseDownListener);
         this._componentItem.off('titleChanged', this._tabTitleChangedListener);
-        if (this._dragListener !== undefined) {
-            this._componentItem.off('destroy', this._contentItemDestroyListener);
-            this._dragListener.off('dragStart', this._dragStartListener);
-            this._dragListener = undefined;
+        if (this.reorderEnabled) {
+            this.disableReorder();
         }
         this._element.remove();
     }
@@ -256,6 +261,24 @@ export class Tab {
             throw new UnexpectedUndefinedError('TNA15007');
         } else {
             this._focusEvent(this._componentItem);
+        }
+    }
+
+    /** @internal */
+    private enableReorder() {
+        this._dragListener = new DragListener(this._element, [this._titleElement]);
+        this._dragListener.on('dragStart', this._dragStartListener);
+        this._componentItem.on('destroy', this._contentItemDestroyListener);
+    }
+
+    /** @internal */
+    private disableReorder() {
+        if (this._dragListener === undefined) {
+            throw new UnexpectedUndefinedError('TDR87745');
+        } else {
+            this._componentItem.off('destroy', this._contentItemDestroyListener);
+            this._dragListener.off('dragStart', this._dragStartListener);
+            this._dragListener = undefined;
         }
     }
 }

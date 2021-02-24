@@ -1744,6 +1744,9 @@ export class Tab {
     get element(): HTMLElement;
     // (undocumented)
     get isActive(): boolean;
+    // (undocumented)
+    get reorderEnabled(): boolean;
+    set reorderEnabled(value: boolean);
     setActive(isActive: boolean): void;
     // @internal (undocumented)
     setBlurred(): void;
