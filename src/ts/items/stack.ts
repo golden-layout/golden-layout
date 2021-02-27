@@ -374,7 +374,11 @@ export class Stack extends ComponentParentableItem {
                 componentItem.blur();
             }
             if (!stackWillBeDeleted) {
-                this.setActiveComponentItem(this.contentItems[Math.max(index - 1, 0)] as ComponentItem, false);
+                // At this point we're already sure we have at least one content item left *after*
+                // removing contentItem, so we can safely assume index 1 is a valid one if 
+                // the index of contentItem is 0, otherwise we just use the previous content item.
+                const newActiveComponentIdx = index === 0 ? 1 : index - 1;
+                this.setActiveComponentItem(this.contentItems[newActiveComponentIdx] as ComponentItem, false);
             }
         }
 

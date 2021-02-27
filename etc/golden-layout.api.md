@@ -364,10 +364,10 @@ export class EventEmitter {
     // (undocumented)
     on<K extends keyof EventEmitter.EventParamsMap>(eventName: K, callback: EventEmitter.Callback<K>): void;
     removeEventListener<K extends keyof EventEmitter.EventParamsMap>(eventName: K, callback: EventEmitter.Callback<K>): void;
-    trigger: <K extends "hide" | "show" | "closed" | "open" | "blur" | "close" | "drag" | "focus" | "resize" | "maximised" | "__all" | "activeContentItemChanged" | "destroy" | "dragStart" | "dragStop" | "initialised" | "itemDropped" | "minimised" | "popIn" | "shown" | "stateChanged" | "tab" | "tabCreated" | "titleChanged" | "windowClosed" | "windowOpened" | "beforeComponentRelease" | "beforeItemDestroyed" | "itemCreated" | "itemDestroyed" | "stackHeaderClick" | "stackHeaderTouchStart">(eventName: K, ...args: EventEmitter.EventParamsMap[K]) => void;
+    trigger: <K extends keyof EventEmitter.EventParamsMap>(eventName: K, ...args: EventEmitter.EventParamsMap[K]) => void;
     // (undocumented)
     tryBubbleEvent(name: string, args: unknown[]): void;
-    unbind: <K extends "hide" | "show" | "closed" | "open" | "blur" | "close" | "drag" | "focus" | "resize" | "maximised" | "__all" | "activeContentItemChanged" | "destroy" | "dragStart" | "dragStop" | "initialised" | "itemDropped" | "minimised" | "popIn" | "shown" | "stateChanged" | "tab" | "tabCreated" | "titleChanged" | "windowClosed" | "windowOpened" | "beforeComponentRelease" | "beforeItemDestroyed" | "itemCreated" | "itemDestroyed" | "stackHeaderClick" | "stackHeaderTouchStart">(eventName: K, callback: EventEmitter.Callback<K>) => void;
+    unbind: <K extends keyof EventEmitter.EventParamsMap>(eventName: K, callback: EventEmitter.Callback<K>) => void;
 }
 
 // @public (undocumented)
@@ -1744,6 +1744,9 @@ export class Tab {
     get element(): HTMLElement;
     // (undocumented)
     get isActive(): boolean;
+    // (undocumented)
+    get reorderEnabled(): boolean;
+    set reorderEnabled(value: boolean);
     setActive(isActive: boolean): void;
     // @internal (undocumented)
     setBlurred(): void;
