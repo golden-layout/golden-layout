@@ -49,7 +49,6 @@ const miniStackConfig: LayoutConfig = {
                 header: {
                     show: "top",
                 },
-                isClosable: false,
                 componentType: ColorComponent.typeName,
                 width: 30,
                 componentState: 'white',

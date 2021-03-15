@@ -11,7 +11,7 @@ export class ColorComponent {
     private _containerFocusinListener = () => this.handleClickFocusEvent();
     private _beforeComponentReleaseEventListener = () => this.handleBeforeComponentReleaseEvent()
     private _inputChangeListener = () => this.handleInputChangeEvent();
-    private _shownEventListener = () => this.handleShownEvent();
+    private _showEventListener = () => this.handleShowEvent();
 
     constructor(private _container: ComponentContainer, state: JsonValue | undefined) {
         let color: string;
@@ -42,7 +42,7 @@ export class ColorComponent {
 
         this._container.stateRequestEvent = () => this.handleContainerStateRequestEvent();
         this._container.addEventListener('beforeComponentRelease', this._beforeComponentReleaseEventListener);
-        this._container.addEventListener('shown', this._shownEventListener);
+        this._container.addEventListener('show', this._showEventListener);
 
         this._container.element.addEventListener('click', this._containerClickListener);
         this._container.element.addEventListener('focusin', this._containerFocusinListener);
@@ -65,13 +65,13 @@ export class ColorComponent {
         this._inputElement.removeEventListener('change', this._inputChangeListener);
         this._container.element.removeChild(this._inputElement);
         this._container.element.removeChild(this._paraElement);
-        this._container.removeEventListener('shown', this._shownEventListener);
+        this._container.removeEventListener('show', this._showEventListener);
         this._container.removeEventListener('beforeComponentRelease', this._beforeComponentReleaseEventListener);
         this._container.element.removeEventListener('click', this._containerClickListener);
         this._container.element.removeEventListener('focusin', this._containerFocusinListener);
     }
 
-    private handleShownEvent(): void {
+    private handleShowEvent(): void {
         this._paraElement.style.backgroundColor = 'purple';
         setTimeout(() => { 
             this._paraElement.style.backgroundColor = ''
