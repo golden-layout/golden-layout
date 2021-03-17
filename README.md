@@ -242,20 +242,20 @@ The library distribution includes 2 TypeScript declaration (typing) files:
 
 Note that the allocation of API elements to either public or internal has not been finalised.  However any element used in either the `apitest` application or the example Angular application will remain labelled as public.
 
-## Code Examples
+# Code Examples
 
-### Angular
+## Angular
 
 An example Angular application using Golden Layout is available.  The source can be installed by cloning the repository:\
 [https://github.com/golden-layout/golden-layout-ng-app](https://github.com/golden-layout/golden-layout-ng-app)
 
 After installing the source, the app can be built and started with the standard build and start scripts.
 
-### Vue
+## Vue
 
 The following snippets of code demonstrate how Golden Layout can be used in Vue.
 
-#### Composable Hook
+### Composable Hook
 
 ```ts
 import { GoldenLayout, LayoutConfig, LayoutManager } from 'golden-layout';
@@ -309,7 +309,7 @@ export function useGoldenLayout(components: Record<string, Component>, config?: 
     return { element, initialized, layout };
 }
 ```
-#### Usage
+### Usage
 
 ```tsx
 const Test = defineComponent(() => <span>It Works!</span>);
@@ -333,7 +333,7 @@ export const Layout = defineComponent(() => {
 });
 ```
 
-### Other Frameworks
+## Other Frameworks
 
 When attaching a component, all Golden Layout does is provide the HTML Element of a container: `Container.element`. Components can use this element to bind to that Golden Layout container.  For example, the component's top most HTML element could be attached as a child to this container element.
 
@@ -391,3 +391,38 @@ Also note that if `LayoutManager.getComponentEvent` is set up, you should **not*
 * `LayoutManager.registerGetComponentConstructorCallback()`
 
 `LayoutManager.getComponentEvent` is the recommended approach for binding components to Golden Layout. The above component register functions, were mainly included in Golden Layout for backwards compatibility.
+
+# Notes
+
+## Understanding Focus
+
+Components can have focus.  This is analagous to HTML Elements having focus.
+
+Only one component in a layout can have focus at any time (or alternatively, no component has focus). Similarly to HTML elements, a component will be focused when you click on its tab.  You can programatically give a component focus by calling the `focus()` method on its container.  Likewise, you can remove focus from a container by calling `ComponentContainer.blur()`.
+
+Clicking on HTML within a component will not automatically give a Golden Layout component focus.  However this can be achieved by listening to the bubbling `click` and/or `focusin` events and calling `ComponentContainer.focus()` in these events' handlers.  The `apitest` demonstrates this technique.
+
+A focused component's tab and header HTML elements will contain the class `lm_focused`.  This can be used to highlight the focused tab and or header.  The `goldenlayout-dark-theme.less` theme that ships with Golden Layout (and is used by `apitest`) will set the background color of a focused tab to a different color from other tabs.  If you do NOT want focused tabs to be highlighted, ensure that the `lm_focused` selector is removed from the relevant css/less/scss used by your application.
+
+## Understanding LocationSelectors
+
+LocationSelectors specify the location of a component in terms of a parent and a index.  LocationSelectors are useful for specifying where a new ContentItem should be placed.
+
+A `LocationSelector` does not specify the parent directly.  Instead it specifies how the parent is to be searched for.  It has the type:
+```
+export interface LocationSelector {
+    typeId: LocationSelector.TypeId;
+    index?: number;
+}
+```
+
+`typeId` specifies the algorithm used to search for a parent.
+`index` is used by the algorithm to work out the preferred child position under the parent.
+
+Some `LocationSelector.TypeId` will always find a location.  Eg: `LocationSelector.TypeId.Root` is guaranteed to find a location.  Others may not find a location.  Eg: `LocationSelector.TypeId.FirstStack` will not find a location if a layout is empty.
+
+The `LayoutManager.addComponentAtLocation()` and `LayoutManager.newComponentAtLocation()` use an array of LocationSelectors to determine the location at which a new/added component will be installed.  These functions will attempt to find a valid location starting with the first element in the LocationSelectors array.  When a valid location is found, that location will be used for the new component.  If no valid location is found from the LocationSelectors in the array, then the component will not be added.
+
+The `LayoutManager.addComponent()` and `LayoutManager.newComponent()` use a default LocationSelectors array.  The last element in this default array is a LocationSelector of type `LocationSelector.TypeId.Root`.  So this array is guaranteed to find a location.  Accordingly, `LayoutManager.addComponent()` and `LayoutManager.newComponent()` will always succeed in adding a component.
+
+This default LocationSelectors array is available at `LayoutManager.defaultLocationSelectors`.  An alternative predefined array is available at `LayoutManager.afterFocusedItemIfPossibleLocationSelectors`.
