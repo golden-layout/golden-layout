@@ -188,6 +188,7 @@ export namespace EventEmitter {
         "popIn": NoParams;
         "resize": NoParams;
         "show": NoParams;
+        /** @deprecated - use show instead */
         "shown": NoParams;
         "stateChanged": NoParams;
         "tab": UnknownParam;

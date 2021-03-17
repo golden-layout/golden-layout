@@ -140,7 +140,7 @@ export class ComponentContainer extends EventEmitter {
 
     /** @internal */
     checkEmitShow(): void {
-        // emit 'shown' only if the container has a valid size
+        // emit 'show' only if the container has a valid size
         if (this._isHidden) {
             this._isHidden = false;
             if (this._height === 0 && this._width === 0) {
@@ -148,11 +148,13 @@ export class ComponentContainer extends EventEmitter {
             } else {
                 this._isShownWithZeroDimensions = false;
                 this.emit('shown');
+                this.emit('show');
             }
         } else {
             if (this._isShownWithZeroDimensions && (this._height !== 0 || this._width !== 0)) {
                 this._isShownWithZeroDimensions = false;
                 this.emit('shown');
+                this.emit('show');
             }
         }
     }
@@ -308,6 +310,7 @@ export class ComponentContainer extends EventEmitter {
             if (this._isShownWithZeroDimensions && (this._height !== 0 || this._width !== 0)) {
                 this._isShownWithZeroDimensions = false;
                 this.emit('shown');
+                this.emit('show');
             }
         }
     }

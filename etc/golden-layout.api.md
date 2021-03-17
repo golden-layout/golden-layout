@@ -475,7 +475,7 @@ export namespace EventEmitter {
         "resize": NoParams;
         // (undocumented)
         "show": NoParams;
-        // (undocumented)
+        // @deprecated (undocumented)
         "shown": NoParams;
         // (undocumented)
         "stackHeaderClick": ClickBubblingEventParam;
