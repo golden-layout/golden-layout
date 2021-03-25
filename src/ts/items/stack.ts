@@ -331,16 +331,6 @@ export class Stack extends ComponentParentableItem {
 
     addChild(contentItem: ContentItem, index?: number, focus = false): number {
         if(index !== undefined && index > this.contentItems.length){
-            /* 
-             * UGLY PATCH: PR #428, commit a4e84ec5 fixed a bug appearing on touchscreens during the drag of a panel. 
-             * The bug was caused by the physical removal of the element on drag: partial documentation is at issue #425. 
-             * The fix introduced the function undisplayChild() (called 'undisplay' to differentiate it from jQuery.hide), 
-             * which doesn't remove the element but only hides it: that's why when a tab is dragged & dropped into its 
-             * original container (at the end), the index here could be off by one.
-             */
-            /* Better workarounds now exists
-             * https://stackoverflow.com/questions/33298828/touch-move-event-dont-fire-after-touch-start-target-is-removed
-             */
             index -= 1;
             throw new AssertError('SAC99728'); // undisplayChild() removed so this condition should no longer occur
         }        

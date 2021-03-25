@@ -14,15 +14,11 @@ export class DragListener extends EventEmitter {
     private _nOriginalX: number;
     private _nOriginalY: number;
     private _dragging: boolean;
-    private _mouseTouchTracking = false;
+    private _pointerTracking = false;
 
-    private _mouseDownEventListener = (ev: MouseEvent) => this.onMouseDown(ev);
-    private _mouseMoveEventListener = (ev: MouseEvent) => this.onMouseMove(ev);
-    private _mouseUpEventListener = (ev: MouseEvent) => this.onMouseUp(ev);
-
-    private _touchStartEventListener = (ev: TouchEvent) => this.onTouchStart(ev);
-    private _touchMoveEventListener = (ev: TouchEvent) => this.onTouchMove(ev);
-    private _touchEndEventListener = (ev: TouchEvent) => this.onTouchEnd(ev);
+    private _pointerDownEventListener = (ev: PointerEvent) => this.onPointerDown(ev);
+    private _pointerMoveEventListener = (ev: PointerEvent) => this.onPointerMove(ev);
+    private _pointerUpEventListener = (ev: PointerEvent) => this.onPointerUp(ev);
 
     constructor(private _eElement: HTMLElement, extraAllowableChildTargets: HTMLElement[]) {
         super();
@@ -56,55 +52,33 @@ export class DragListener extends EventEmitter {
 
         this._dragging = false;
 
-        this._eElement.addEventListener('mousedown', this._mouseDownEventListener, { passive: true });
-        this._eElement.addEventListener('touchstart', this._touchStartEventListener, { passive: true });
+        this._eElement.addEventListener('pointerdown', this._pointerDownEventListener, { passive: true });
     }
 
     destroy(): void {
-        this.checkRemoveMouseTouchTrackingEventListeners();
+        this.checkRemovePointerTrackingEventListeners();
 
-        this._eElement.removeEventListener('mousedown', this._mouseDownEventListener);
-        this._eElement.removeEventListener('touchstart', this._touchStartEventListener);
+        this._eElement.removeEventListener('pointerdown', this._pointerDownEventListener);
     }
 
     cancelDrag(): void {
-        const dragEvent: EventEmitter.DragEvent = {
-            mouseEvent: undefined,
-            touchEvent: undefined,
-            pageX: -1,
-            pageY: -1,
-        };
-    
-        this.processDragStop(dragEvent);
+        this.processDragStop(undefined);
     }
 
-    private onMouseDown(oEvent: MouseEvent) {
-        if (this._allowableTargets.includes(oEvent.target as HTMLElement) && oEvent.button === 0) {
-            const coordinates = this.getMouseCoordinates(oEvent);
-            this.processMouseDownTouchStart(coordinates);
+    private onPointerDown(oEvent: PointerEvent) {
+        if (this._allowableTargets.includes(oEvent.target as HTMLElement) && oEvent.isPrimary) {
+            const coordinates = this.getPointerCoordinates(oEvent);
+            this.processPointerDown(coordinates);
         }
     }
 
-    private onTouchStart(oEvent: TouchEvent) {
-        // oEvent.preventDefault();
-
-        if (this._allowableTargets.includes(oEvent.target as HTMLElement)) {
-            const coordinates = this.getTouchCoordinates(oEvent);
-            if (coordinates !== undefined) {
-                this.processMouseDownTouchStart(coordinates);
-            }
-        }
-    }
-
-    private processMouseDownTouchStart(coordinates: DragListener.MouseTouchCoordinates) {
+    private processPointerDown(coordinates: DragListener.PointerCoordinates) {
         this._nOriginalX = coordinates.x;
         this._nOriginalY = coordinates.y;
 
-        this._oDocument.addEventListener('mousemove', this._mouseMoveEventListener);
-        this._oDocument.addEventListener('touchmove', this._touchMoveEventListener, { passive: true });
-        this._oDocument.addEventListener('mouseup', this._mouseUpEventListener, { passive: true });
-        this._oDocument.addEventListener('touchend', this._touchEndEventListener, { passive: true });
-        this._mouseTouchTracking = true;
+        this._oDocument.addEventListener('pointermove', this._pointerMoveEventListener, { passive: true });
+        this._oDocument.addEventListener('pointerup', this._pointerUpEventListener, { passive: true });
+        this._pointerTracking = true;
 
         this._timeout = setTimeout(
             () => {
@@ -119,39 +93,13 @@ export class DragListener extends EventEmitter {
             , this._nDelay);
     }
 
-    private onMouseMove(oEvent: MouseEvent) {
-        if (this._mouseTouchTracking) {
-            oEvent.preventDefault();
-
-            const coordinates = this.getMouseCoordinates(oEvent);
-            const dragEvent: EventEmitter.DragEvent = {
-                mouseEvent: oEvent,
-                touchEvent: undefined,
-                pageX: coordinates.x,
-                pageY: coordinates.y,
-            }
-            this.processDragMove(dragEvent);
+    private onPointerMove(oEvent: PointerEvent) {
+        if (this._pointerTracking) {
+            this.processDragMove(oEvent);
         }
     }
 
-    private onTouchMove(oEvent: TouchEvent) {
-        if (this._mouseTouchTracking) {
-            // oEvent.preventDefault();
-
-            const coordinates = this.getTouchCoordinates(oEvent);
-            if (coordinates !== undefined) {
-                const dragEvent: EventEmitter.DragEvent = {
-                    mouseEvent: undefined,
-                    touchEvent: oEvent,
-                    pageX: coordinates.x,
-                    pageY: coordinates.y,
-                }
-                this.processDragMove(dragEvent);
-            }
-        }
-    }
-
-    private processDragMove(dragEvent: EventEmitter.DragEvent) {
+    private processDragMove(dragEvent: PointerEvent) {
         this._nX = dragEvent.pageX - this._nOriginalX;
         this._nY = dragEvent.pageY - this._nOriginalY;
 
@@ -169,42 +117,17 @@ export class DragListener extends EventEmitter {
         }
     }
 
-    private onMouseUp(oEvent: MouseEvent) {
-        const coordinates = this.getMouseCoordinates(oEvent);
-        const dragEvent: EventEmitter.DragEvent = {
-            mouseEvent: oEvent,
-            touchEvent: undefined,
-            pageX: coordinates.x,
-            pageY: coordinates.y,
-        }
-        this.processDragStop(dragEvent);
+    private onPointerUp(oEvent: PointerEvent) {
+        this.processDragStop(oEvent);
     }
 
-    private onTouchEnd(oEvent: TouchEvent): void {
-        let coordinates = this.getTouchCoordinates(oEvent);
-        if (coordinates === undefined) {
-            // not sure what else to do here
-            coordinates = {
-                x: this._nOriginalX,
-                y: this._nOriginalY,
-            };
-        }
-        const dragEvent: EventEmitter.DragEvent = {
-            mouseEvent: undefined,
-            touchEvent: oEvent,
-            pageX: coordinates.x,
-            pageY: coordinates.y,
-        }
-        this.processDragStop(dragEvent);
-    }
-
-    private processDragStop(dragEvent: EventEmitter.DragEvent) {
+    private processDragStop(dragEvent?: PointerEvent) {
         if (this._timeout !== undefined) {
             clearTimeout(this._timeout);
             this._timeout = undefined;
         }
 
-        this.checkRemoveMouseTouchTrackingEventListeners();
+        this.checkRemovePointerTrackingEventListeners();
     
         if (this._dragging === true) {
             this._eBody.classList.remove(DomConstants.ClassName.Dragging);
@@ -215,13 +138,11 @@ export class DragListener extends EventEmitter {
         }
     }
 
-    private checkRemoveMouseTouchTrackingEventListeners(): void {
-        if (this._mouseTouchTracking) {
-            this._oDocument.removeEventListener('mousemove', this._mouseMoveEventListener);
-            this._oDocument.removeEventListener('touchmove', this._touchMoveEventListener);
-            this._oDocument.removeEventListener('mouseup', this._mouseUpEventListener);
-            this._oDocument.removeEventListener('touchend', this._touchEndEventListener);
-            this._mouseTouchTracking = false;
+    private checkRemovePointerTrackingEventListeners(): void {
+        if (this._pointerTracking) {
+            this._oDocument.removeEventListener('pointermove', this._pointerMoveEventListener);
+            this._oDocument.removeEventListener('pointerup', this._pointerUpEventListener);
+            this._pointerTracking = false;
         }    
     }
 
@@ -237,32 +158,19 @@ export class DragListener extends EventEmitter {
         this.emit('dragStart', this._nOriginalX, this._nOriginalY);
     }
 
-    private getMouseCoordinates(event: MouseEvent) {
-        const result: DragListener.MouseTouchCoordinates = {
+    private getPointerCoordinates(event: PointerEvent) {
+        const result: DragListener.PointerCoordinates = {
             x: event.pageX,
             y: event.pageY
         };
         return result;
     }
 
-    private getTouchCoordinates(event: TouchEvent) {
-        const targetTouches = event.targetTouches;
-        if (targetTouches.length === 0) {
-            return undefined;
-        } else {
-            const targetTouch = event.targetTouches[0]
-            const result: DragListener.MouseTouchCoordinates = {
-                x: targetTouch.pageX,
-                y: targetTouch.pageY
-            };
-            return result;
-        }
-    }
 }
 
 /** @internal */
 export namespace DragListener {
-    export interface MouseTouchCoordinates {
+    export interface PointerCoordinates {
         x: number,
         y: number,
     }

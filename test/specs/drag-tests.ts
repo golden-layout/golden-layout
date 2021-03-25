@@ -86,13 +86,13 @@ describe('drag source', function() {
 	}
 
 	function startDrag(): void {
-		const mouseDownEvent = new MouseEvent('mousedown', {
+		const pointerDownEvent = new PointerEvent('pointerdown', {
 			bubbles: true,
 			clientX: dragSourceElement.clientLeft,
 			clientY: dragSourceElement.clientTop,
-			button: 0
+			isPrimary: true,
 		});
-		dragSourceElement.dispatchEvent(mouseDownEvent);
+		dragSourceElement.dispatchEvent(pointerDownEvent);
 	}
 
 	function doDrag(): void {
@@ -101,19 +101,19 @@ describe('drag source', function() {
 			throw new Error ('no root rectangle!');
 		}
 		// choose a point on the far right side
-		const mouseMoveX = rootRect.left + rootRect.width * 0.9;
-		const mouseMoveY = rootRect.top + rootRect.height * 0.5;
+		const pointerMoveX = rootRect.left + rootRect.width * 0.9;
+		const pointerMoveY = rootRect.top + rootRect.height * 0.5;
 
-		const mouseMoveEvent = new MouseEvent('mousemove', {
+		const pointerMoveEvent = new PointerEvent('pointermove', {
 			bubbles: true,
-			clientX: mouseMoveX,
-			clientY: mouseMoveY
+			clientX: pointerMoveX,
+			clientY: pointerMoveY
 		});
-		dragSourceElement.dispatchEvent(mouseMoveEvent);
+		dragSourceElement.dispatchEvent(pointerMoveEvent);
 	}
 
 	function endDrag(): void {
-		const mouseUpEvent = new MouseEvent('mouseup', {bubbles: true});
-		dragSourceElement.dispatchEvent(mouseUpEvent);
+		const pointerUpEvent = new PointerEvent('pointerup', {bubbles: true});
+		dragSourceElement.dispatchEvent(pointerUpEvent);
 	}
 });

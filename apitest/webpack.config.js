@@ -21,6 +21,8 @@ module.exports = {
 
     devServer: {
         port: 3000,
+        // un-comment to allow testing from remote devices:
+        // host: '0.0.0.0',
         writeToDisk: true,
         publicPath: 'apitest/dist/',
         contentBase: path.resolve(__dirname, 'dist'),

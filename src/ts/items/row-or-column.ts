@@ -175,55 +175,6 @@ export class RowOrColumn extends ContentItem {
         return index;
     }
 
-
-    // /**
-    //  * Undisplays a child of this element
-    //  */
-    // undisplayChild(contentItem: ContentItem): void {
-    //     const undisplayedItemSize = contentItem.config[this._dimension];
-    //     const index = this.contentItems.indexOf(contentItem);
-    //     const splitterIndex = Math.max(index - 1, 0);
-
-    //     if (index === -1) {
-    //         throw new Error('Can\'t undisplay child. ContentItem is not child of this Row or Column');
-    //     }
-
-    //     /**
-    //      * Hide the splitter before the item or after if the item happens
-    //      * to be the first in the row/column
-    //      */
-    //     if (this._splitter[splitterIndex]) {
-    //         setElementDisplayVisibility(this._splitter[splitterIndex].element, false);
-    //     }
-
-    //     if (splitterIndex < this._splitter.length) {
-    //         if (this.isDocked(splitterIndex)) {
-    //             setElementDisplayVisibility(this._splitter[splitterIndex].element, false);
-    //         }
-    //     }
-
-    //     /**
-    //      * Allocate the space that the hidden item occupied to the remaining items
-    //      */
-    //     const dockedCount = this.calculateDockedCount();
-    //     for (let i = 0; i < this.contentItems.length; i++) {
-    //         if (this.contentItems[i] !== contentItem) {
-    //             if (!this.isDocked(i))
-    //                 this.contentItems[i].config[this._dimension] += undisplayedItemSize / (this.contentItems.length - 1 - dockedCount);                
-    //         } else {
-    //           this.contentItems[i].config[this._dimension] = 0
-    //         }
-    //     }
-
-    //     if (this.contentItems.length === 1) {
-    //         super.undisplayChild(contentItem);
-    //     }
-
-    //     this.updateSize();
-    //     this.emitBubblingEvent('stateChanged');
-    // }
-
-
     /**
      * Removes a child of this element
      *

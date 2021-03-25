@@ -212,8 +212,8 @@ export namespace EventEmitter {
     export type BubblingEventParam = [EventEmitter.BubblingEvent]
     export type StringParam = [string];
     export type DragStartParams = [originalX: number, originalY: number];
-    export type DragStopParams = [event: DragEvent];
-    export type DragParams = [offsetX: number, offsetY: number, event: DragEvent];
+    export type DragStopParams = [event: PointerEvent|undefined];
+    export type DragParams = [offsetX: number, offsetY: number, event: PointerEvent];
     export type BeforeComponentReleaseParams = [component: unknown];
     export type ClickBubblingEventParam = [ClickBubblingEvent];
     export type TouchStartBubblingEventParam = [TouchStartBubblingEvent];
@@ -263,12 +263,5 @@ export namespace EventEmitter {
         ) {
             super(name, target);
         }
-    }
-
-    export interface DragEvent {
-        mouseEvent: MouseEvent | undefined;
-        touchEvent: TouchEvent | undefined;
-        pageX: number;
-        pageY: number;
     }
 }

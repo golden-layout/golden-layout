@@ -411,22 +411,11 @@ export namespace EventEmitter {
     // (undocumented)
     export type ClickBubblingEventParam = [ClickBubblingEvent];
     // (undocumented)
-    export interface DragEvent {
-        // (undocumented)
-        mouseEvent: MouseEvent | undefined;
-        // (undocumented)
-        pageX: number;
-        // (undocumented)
-        pageY: number;
-        // (undocumented)
-        touchEvent: TouchEvent | undefined;
-    }
-    // (undocumented)
-    export type DragParams = [offsetX: number, offsetY: number, event: DragEvent];
+    export type DragParams = [offsetX: number, offsetY: number, event: PointerEvent];
     // (undocumented)
     export type DragStartParams = [originalX: number, originalY: number];
     // (undocumented)
-    export type DragStopParams = [event: DragEvent];
+    export type DragStopParams = [event: PointerEvent | undefined];
     // (undocumented)
     export interface EventParamsMap {
         // (undocumented)
