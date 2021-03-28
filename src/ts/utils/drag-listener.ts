@@ -106,7 +106,17 @@ export class DragListener extends EventEmitter {
         this._oDocument.addEventListener('touchend', this._touchEndEventListener, { passive: true });
         this._mouseTouchTracking = true;
 
-        this._timeout = setTimeout(() => this.startDrag(), this._nDelay);
+        this._timeout = setTimeout(
+            () => {
+                try {
+                    this.startDrag()
+                }
+                catch (err) {
+                    console.error(err);
+                    throw err;
+                }
+            }
+            , this._nDelay);
     }
 
     private onMouseMove(oEvent: MouseEvent) {
