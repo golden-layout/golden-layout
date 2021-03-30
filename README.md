@@ -345,8 +345,7 @@ export default defineComponent({
     const componentInstances = ref<ComponentInstance[]>([]);
 
     const createComponent = (type: string, element: HTMLElement) => {
-      const component = componentTypes.has(type);
-      if (component == null) {
+      if (!componentTypes.has(type)) {
         throw new Error(`Component not found: '${type}'`);
       }
       ++instanceId;
