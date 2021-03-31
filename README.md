@@ -258,8 +258,8 @@ The following snippets of code demonstrate how Golden Layout can be used in Vue.
 ### Composable Hook
 
 ```ts
-import { GoldenLayout, LayoutConfig, LayoutManager } from 'golden-layout';
-import { Component, createVNode, onMounted, ref, render } from 'vue';
+import { GoldenLayout, LayoutConfig } from 'golden-layout';
+import { onMounted, ref } from 'vue';
 
 export const isClient = typeof window !== 'undefined';
 export const isDocumentReady = () => isClient && document.readyState === 'complete' && document.body != null;
@@ -275,28 +275,27 @@ export function useDocumentReady(func: () => void) {
     });
 }
 
-export function useGoldenLayout(components: Record<string, Component>, config?: LayoutConfig) {
+export function useGoldenLayout(
+    createComponent: (type: string, container: HTMLElement) => void,
+    destroyComponent: (container: HTMLElement) => void,
+    config?: LayoutConfig
+) {
     const element = ref<HTMLElement | null>(null);
     const layout = ref<GoldenLayout | null>(null);
     const initialized = ref(false);
-
-    const componentsTypeMap = new Map<string, Component>(Object.entries(components));
 
     useDocumentReady(() => {
         if (element.value == null) throw new Error('Element must be set.');
         const goldenLayout = new GoldenLayout(element.value);
 
-        const getComponentEvent: LayoutManager.GetComponentEventHandler = (container, itemConfig) => {
+        goldenLayout.getComponentEvent = (container, itemConfig) => {
             const { componentType } = itemConfig;
             if (typeof componentType !== 'string') throw new Error('Invalid component type.');
-
-            const component = componentsTypeMap.get(componentType);
-            if (component == null) throw new Error(`Component not found: '${componentType}'`);
-
-            const node = createVNode(component);
-            render(node, container.element);
-        };
-        goldenLayout.getComponentEvent = getComponentEvent;
+            createComponent(componentType, container.element);
+        }
+        goldenLayout.releaseComponentEvent = container => {
+            destroyComponent(container.element);
+        }
 
         if (config != null) goldenLayout.loadLayout(config);
 
@@ -311,26 +310,77 @@ export function useGoldenLayout(components: Record<string, Component>, config?: 
 ```
 ### Usage
 
-```tsx
-const Test = defineComponent(() => <span>It Works!</span>);
+```vue
+<template>
+  <div ref="element" style="width: 100%; height: 75vh">
+    <teleport
+      v-for="{ id, type, element } in componentInstances"
+      :key="id"
+      :to="element"
+    >
+      <component :is="type"></component>
+    </teleport>
+  </div>
+</template>
+<script lang="ts">
+import { useGoldenLayout } from "@/use-golden-layout";
+import { defineComponent, h, ref } from "vue";
+import "golden-layout/dist/css/goldenlayout-base.css";
+import "golden-layout/dist/css/themes/goldenlayout-dark-theme.css";
 
-export const Layout = defineComponent(() => {
-    const { element } = useGoldenLayout(
-        { Test },
-        {
-            root: {
-                type: 'row',
-                content: [
-                    {
-                        type: 'component',
-                        componentType: 'Test',
-                    },
-                ],
-            },
-        }
-    );
-    return () => <div ref={element} style="width: 100%; height: 75vh"></div>;
+const Test = defineComponent({ render: () => h('span', 'It works!') });
+
+const components = { Test, /* other components */ };
+
+export default defineComponent({
+  components,
+  setup() {
+    interface ComponentInstance {
+      id: number;
+      type: string;
+      element: HTMLElement;
+    }
+    let instanceId = 0;
+    const componentTypes = new Set(Object.keys(components));
+    const componentInstances = ref<ComponentInstance[]>([]);
+
+    const createComponent = (type: string, element: HTMLElement) => {
+      if (!componentTypes.has(type)) {
+        throw new Error(`Component not found: '${type}'`);
+      }
+      ++instanceId;
+      componentInstances.value = componentInstances.value.concat({
+        id: instanceId,
+        type,
+        element,
+      });
+    };
+    const destroyComponent = (toBeRemoved: HTMLElement) => {
+      componentInstances.value = componentInstances.value.filter(
+        ({ element }) => element === toBeRemoved
+      );
+    };
+
+    const { element } = useGoldenLayout(createComponent, destroyComponent, {
+      root: {
+        type: "column",
+        content: [
+          {
+            type: "component",
+            componentType: "Test",
+          },
+          {
+            type: "component",
+            componentType: "Test",
+          },
+        ],
+      },
+    });
+
+    return { element, componentInstances };
+  },
 });
+</script>
 ```
 
 ## Other Frameworks
