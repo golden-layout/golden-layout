@@ -357,7 +357,7 @@ export default defineComponent({
     };
     const destroyComponent = (toBeRemoved: HTMLElement) => {
       componentInstances.value = componentInstances.value.filter(
-        ({ element }) => element === toBeRemoved
+        ({ element }) => element !== toBeRemoved
       );
     };
 
