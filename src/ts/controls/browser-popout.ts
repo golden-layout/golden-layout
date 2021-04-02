@@ -121,7 +121,6 @@ export class BrowserPopout extends EventEmitter {
      * parent isn't available anymore it falls back to the layout's topmost element
      */
     popIn(): void {
-        console.log('PopIn!');
         let parentItem: ContentItem;
         let index = this._config.indexInParent;
 
