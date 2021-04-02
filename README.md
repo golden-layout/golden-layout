@@ -324,7 +324,7 @@ export function useGoldenLayout(
 </template>
 <script lang="ts">
 import { useGoldenLayout } from "@/use-golden-layout";
-import { defineComponent, h, ref, shallowRef } from "vue";
+import { defineComponent, h, shallowRef } from "vue";
 import "golden-layout/dist/css/goldenlayout-base.css";
 import "golden-layout/dist/css/themes/goldenlayout-dark-theme.css";
 
