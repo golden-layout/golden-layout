@@ -404,6 +404,7 @@ export namespace ResolvedLayoutConfig {
         readonly tabOverlapAllowance: number;
         readonly reorderOnTabMenuClick: boolean;
         readonly tabControlOffset: number;
+        readonly popInOnClose: boolean;
     }
 
     export namespace Settings {
@@ -416,7 +417,8 @@ export namespace ResolvedLayoutConfig {
             responsiveMode: ResponsiveMode.none, // was onload
             tabOverlapAllowance: 0,
             reorderOnTabMenuClick: true,
-            tabControlOffset: 10
+            tabControlOffset: 10,
+            popInOnClose: false,
         } as const;
 
         export function createCopy(original: Settings): Settings {
@@ -430,6 +432,7 @@ export namespace ResolvedLayoutConfig {
                 tabOverlapAllowance: original.tabOverlapAllowance,
                 reorderOnTabMenuClick: original.reorderOnTabMenuClick,
                 tabControlOffset: original.tabControlOffset,
+                popInOnClose: original.popInOnClose,
             }
         }
     }

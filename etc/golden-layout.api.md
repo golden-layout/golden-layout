@@ -882,6 +882,7 @@ export namespace LayoutConfig {
         constrainDragToContainer?: boolean;
         // @deprecated (undocumented)
         hasHeaders?: boolean;
+        popInOnClose?: boolean;
         popoutWholeStack?: boolean;
         reorderEnabled?: boolean;
         reorderOnTabMenuClick?: boolean;
@@ -1366,6 +1367,8 @@ export namespace ResolvedLayoutConfig {
         readonly closePopoutsOnUnload: boolean;
         // (undocumented)
         readonly constrainDragToContainer: boolean;
+        // (undocumented)
+        readonly popInOnClose: boolean;
         // (undocumented)
         readonly popoutWholeStack: boolean;
         // (undocumented)
