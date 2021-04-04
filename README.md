@@ -259,7 +259,7 @@ The following snippets of code demonstrate how Golden Layout can be used in Vue.
 
 ```ts
 import { GoldenLayout, LayoutConfig } from 'golden-layout';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, shallowRef } from 'vue';
 
 export const isClient = typeof window !== 'undefined';
 export const isDocumentReady = () => isClient && document.readyState === 'complete' && document.body != null;
@@ -280,8 +280,8 @@ export function useGoldenLayout(
     destroyComponent: (container: HTMLElement) => void,
     config?: LayoutConfig
 ) {
-    const element = ref<HTMLElement | null>(null);
-    const layout = ref<GoldenLayout | null>(null);
+    const element = shallowRef<HTMLElement | null>(null);
+    const layout = shallowRef<GoldenLayout | null>(null);
     const initialized = ref(false);
 
     useDocumentReady(() => {
@@ -324,7 +324,7 @@ export function useGoldenLayout(
 </template>
 <script lang="ts">
 import { useGoldenLayout } from "@/use-golden-layout";
-import { defineComponent, h, ref } from "vue";
+import { defineComponent, h, shallowRef } from "vue";
 import "golden-layout/dist/css/goldenlayout-base.css";
 import "golden-layout/dist/css/themes/goldenlayout-dark-theme.css";
 
@@ -342,7 +342,7 @@ export default defineComponent({
     }
     let instanceId = 0;
     const componentTypes = new Set(Object.keys(components));
-    const componentInstances = ref<ComponentInstance[]>([]);
+    const componentInstances = shallowRef<ComponentInstance[]>([]);
 
     const createComponent = (type: string, element: HTMLElement) => {
       if (!componentTypes.has(type)) {
