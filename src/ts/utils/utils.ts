@@ -92,7 +92,7 @@ export function deepExtendValue(existingTarget: unknown, value: unknown): unknow
     if (typeof value !== 'object') {
         return value;
     } else {
-        if (value instanceof Array) {
+        if (Array.isArray(value)) {
             const length = value.length;
             const targetArray = new Array<unknown>(length);
             for (let i = 0; i < length; i++) {
@@ -127,27 +127,6 @@ export function deepExtendValue(existingTarget: unknown, value: unknown): unknow
         }
     }
 }
-
-// REPLACED with window.requestAnimationFrame using arrow function
-// I do not think animFrame() is needed anymore
-// 
-// This is based on Paul Irish's shim, but looks quite odd in comparison. Why?
-// Because
-// a) it shouldn't affect the global requestAnimationFrame function
-// b) it shouldn't pass on the time that has passed
-//
-// @param   {Function} fn
-// @returns {void}
-// export function animFrame(fn) {
-//     return (window.requestAnimationFrame ||
-//         window.webkitRequestAnimationFrame ||
-//         window.mozRequestAnimationFrame ||
-//         function(callback) {
-//             window.setTimeout(callback, 1000 / 60);
-//         })(function() {
-//         fn();
-//     });
-// }
 
 /** @internal */
 export function removeFromArray<T>(item: T, array: T[]): void {

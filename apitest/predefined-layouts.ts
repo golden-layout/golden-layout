@@ -85,6 +85,9 @@ const component: Layout = {
 };
 
 const standardConfig: LayoutConfig = {
+    settings: {
+        popoutWholeStack: true,
+    },
     root: {
         type: "row",
         content: [
