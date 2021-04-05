@@ -389,7 +389,7 @@ export abstract class ContentItem extends EventEmitter {
      */
     private createContentItems(content: readonly ResolvedItemConfig[]) {
         // this can be undefined e.g. for components which are also content items
-        const count = content.length ?? 0;
+        const count = content.length;
         const result = new Array<ContentItem>(count);
         for (let i = 0; i < content.length; i++) {
             result[i] = this.layoutManager.createContentItem(content[i], this);
