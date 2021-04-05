@@ -41,7 +41,7 @@ describe( 'it is possible to select elements from the tree using selectors', fun
 
 	it( 'returns an empty array if no item was found for id', function(){
 		var items = layout.root.getItemsById( 'doesNotExist' );
-		expect( items instanceof Array ).toBe( true );
+		expect( Array.isArray(items) ).toBe( true );
 		expect( items.length ).toBe( 0 );
 	});
 
@@ -62,7 +62,7 @@ describe( 'it is possible to select elements from the tree using selectors', fun
 
 	it( 'returns an empty array if no item was found for type', function(){
 		var items = layout.root.getItemsByType( 'row' );
-		expect( items instanceof Array ).toBe( true );
+		expect( Array.isArray(items) ).toBe( true );
 		expect( items.length ).toBe( 0 );
 	});
 

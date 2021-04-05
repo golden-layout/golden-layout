@@ -90,18 +90,16 @@ export class BrowserPopout extends EventEmitter {
     getGlInstance(): LayoutManager {
         if (this._popoutWindow === null) {
             throw new UnexpectedNullError('BPGGI24693');
-        } else {
-            return this._popoutWindow.__glInstance;
         }
+        return this._popoutWindow.__glInstance;
     }
 
     /** @internal */
     getWindow(): Window {
         if (this._popoutWindow === null) {
             throw new UnexpectedNullError('BPGW087215');
-        } else {
-            return this._popoutWindow;
         }
+        return this._popoutWindow;
     }
 
     close(): void {
@@ -124,48 +122,51 @@ export class BrowserPopout extends EventEmitter {
         let parentItem: ContentItem;
         let index = this._config.indexInParent;
 
-        if (this._config.parentId) {
+        if (!this._config.parentId) {
+            return;
+        }
 
-            /*
-             * The deepExtend call seems a bit pointless, but it's crucial to
-             * copy the config returned by this.getGlInstance().toConfig()
-             * onto a new object. Internet Explorer keeps the references
-             * to objects on the child window, resulting in the following error
-             * once the child window is closed:
-             *
-             * The callee (server [not server application]) is not available and disappeared
-             */
-            const glInstanceLayoutConfig = this.getGlInstance().saveLayout();
-            const copiedGlInstanceLayoutConfig = deepExtend({}, glInstanceLayoutConfig) as ResolvedLayoutConfig;
-            const copiedRoot = copiedGlInstanceLayoutConfig.root;
-            if (copiedRoot === undefined) {
-                throw new UnexpectedUndefinedError('BPPIR19998');
+        /*
+        * The deepExtend call seems a bit pointless, but it's crucial to
+        * copy the config returned by this.getGlInstance().toConfig()
+        * onto a new object. Internet Explorer keeps the references
+        * to objects on the child window, resulting in the following error
+        * once the child window is closed:
+        *
+        * The callee (server [not server application]) is not available and disappeared
+        */
+        const glInstanceLayoutConfig = this.getGlInstance().saveLayout();
+        const copiedGlInstanceLayoutConfig = deepExtend({}, glInstanceLayoutConfig) as ResolvedLayoutConfig;
+        const copiedRoot = copiedGlInstanceLayoutConfig.root;
+        if (copiedRoot === undefined) {
+            throw new UnexpectedUndefinedError('BPPIR19998');
+        }
+        const groundItem = this._layoutManager.groundItem;
+        if (groundItem === undefined) {
+            throw new UnexpectedUndefinedError('BPPIG34972');
+        }
+        parentItem = groundItem.getItemsByPopInParentId(this._config.parentId)[0];
+
+        /*
+        * Fallback if parentItem is not available. Either add it to the topmost
+        * item or make it the topmost item if the layout is empty
+        */
+        if (!parentItem) {
+            if (groundItem.contentItems.length > 0) {
+                parentItem = groundItem.contentItems[0];
             } else {
-                const groundItem = this._layoutManager.groundItem;
-                if (groundItem === undefined) {
-                    throw new UnexpectedUndefinedError('BPPIG34972');
-                } else {
-                    parentItem = groundItem.getItemsByPopInParentId(this._config.parentId)[0];
-
-                    /*
-                    * Fallback if parentItem is not available. Either add it to the topmost
-                    * item or make it the topmost item if the layout is empty
-                    */
-                    if (!parentItem) {
-                        if (groundItem.contentItems.length > 0) {
-                            parentItem = groundItem.contentItems[0];
-                        } else {
-                            parentItem = groundItem;
-                        }
-                        index = 0;
-                    }
-
-                    const newContentItem = this._layoutManager.createAndInitContentItem(copiedRoot, parentItem);
-
-                    parentItem.addChild(newContentItem, index);
-                    this.close();
-                }
+                parentItem = groundItem;
             }
+            index = 0;
+        }
+
+        const newContentItem = this._layoutManager.createAndInitContentItem(copiedRoot, parentItem);
+
+        parentItem.addChild(newContentItem, index);
+        if (this._layoutManager.layoutConfig.settings.popInOnClose) {
+            this._onClose();
+        } else {
+            this.close();
         }
     }
 
@@ -213,7 +214,13 @@ export class BrowserPopout extends EventEmitter {
         }
 
         this._popoutWindow.addEventListener('load', () => this.positionWindow(), { passive: true })
-        this._popoutWindow.addEventListener('beforeunload', () => this._onClose(), { passive: true })
+        this._popoutWindow.addEventListener('beforeunload', () => {
+            if (this._layoutManager.layoutConfig.settings.popInOnClose) {
+                this.popIn();
+            } else {
+                this._onClose();
+            }
+        }, { passive: true })
 
         /**
          * Polling the childwindow to find out if GoldenLayout has been initialised

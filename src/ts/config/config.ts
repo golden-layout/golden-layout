@@ -535,6 +535,12 @@ export namespace LayoutConfig {
          * Default: 10
          */
         tabControlOffset?: number;
+
+        /**
+         * Specifies whether to pop in elements when closing a popout window.
+         * Default: false
+         */
+        popInOnClose?: boolean;
     }
 
     export namespace Settings {
@@ -549,6 +555,7 @@ export namespace LayoutConfig {
                 tabOverlapAllowance: settings?.tabOverlapAllowance ?? ResolvedLayoutConfig.Settings.defaults.tabOverlapAllowance,
                 reorderOnTabMenuClick: settings?.reorderOnTabMenuClick ?? ResolvedLayoutConfig.Settings.defaults.reorderOnTabMenuClick,
                 tabControlOffset: settings?.tabControlOffset ?? ResolvedLayoutConfig.Settings.defaults.tabControlOffset,
+                popInOnClose: settings?.popInOnClose ?? ResolvedLayoutConfig.Settings.defaults.popInOnClose,
             }
             return result;
         }

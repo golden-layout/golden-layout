@@ -25,7 +25,7 @@ export class GoldenLayout extends LayoutManager {
             document.body.style.visibility = 'hidden';
         }
 
-        if (this.layoutConfig.root === undefined) {
+        if (this.layoutConfig.root === undefined || this.isSubWindow) {
             this.init();
         }
     }
@@ -98,18 +98,6 @@ export class GoldenLayout extends LayoutManager {
      * @internal
      */
     private adjustToWindowMode() {
-        const popInButtonElement = document.createElement('div');
-        popInButtonElement.classList.add(DomConstants.ClassName.Popin);
-        popInButtonElement.setAttribute('title', this.layoutConfig.header.dock);
-        const iconElement = document.createElement('div');
-        iconElement.classList.add(DomConstants.ClassName.Icon);
-        const bgElement = document.createElement('div');
-        bgElement.classList.add(DomConstants.ClassName.Bg);
-        popInButtonElement.appendChild(iconElement);
-        popInButtonElement.appendChild(bgElement);
-
-        popInButtonElement.click = () => this.emit('popIn');
-
         const headElement = document.head;
 
         const appendNodeLists = new Array<NodeListOf<Element>>(4);
@@ -129,7 +117,19 @@ export class GoldenLayout extends LayoutManager {
         const bodyElement = document.body;
         bodyElement.innerHTML = '';
         bodyElement.style.visibility = 'visible';
-        bodyElement.appendChild(popInButtonElement);
+        if (!this.layoutConfig.settings.popInOnClose) {
+            const popInButtonElement = document.createElement('div');
+            popInButtonElement.classList.add(DomConstants.ClassName.Popin);
+            popInButtonElement.setAttribute('title', this.layoutConfig.header.dock);
+            const iconElement = document.createElement('div');
+            iconElement.classList.add(DomConstants.ClassName.Icon);
+            const bgElement = document.createElement('div');
+            bgElement.classList.add(DomConstants.ClassName.Bg);
+            popInButtonElement.appendChild(iconElement);
+            popInButtonElement.appendChild(bgElement);
+            popInButtonElement.addEventListener('click', () => this.emit('popIn'));
+            bodyElement.appendChild(popInButtonElement);
+        }
 
         /*
         * This seems a bit pointless, but actually causes a reflow/re-evaluation getting around

@@ -2,7 +2,7 @@ import { WidthAndHeight } from './types';
 
 /** @internal */
 export function getQueryStringParam(key: string): string | null {
-    const matches = location.hash.match(new RegExp(key + '=([^&]*)'));
+    const matches = location.search.match(new RegExp(key + '=([^&]*)'));
     return matches ? matches[1] : null;
 }
 
@@ -92,7 +92,7 @@ export function deepExtendValue(existingTarget: unknown, value: unknown): unknow
     if (typeof value !== 'object') {
         return value;
     } else {
-        if (value instanceof Array) {
+        if (Array.isArray(value)) {
             const length = value.length;
             const targetArray = new Array<unknown>(length);
             for (let i = 0; i < length; i++) {
@@ -111,7 +111,7 @@ export function deepExtendValue(existingTarget: unknown, value: unknown): unknow
                     if (typeof existingTarget !== "object") {
                         return deepExtend({}, valueObj); // overwrite
                     } else {
-                        if (existingTarget instanceof Array) {
+                        if (Array.isArray(existingTarget)) {
                             return deepExtend({}, valueObj); // overwrite
                         } else {
                             if (existingTarget === null) {
@@ -127,27 +127,6 @@ export function deepExtendValue(existingTarget: unknown, value: unknown): unknow
         }
     }
 }
-
-// REPLACED with window.requestAnimationFrame using arrow function
-// I do not think animFrame() is needed anymore
-// 
-// This is based on Paul Irish's shim, but looks quite odd in comparison. Why?
-// Because
-// a) it shouldn't affect the global requestAnimationFrame function
-// b) it shouldn't pass on the time that has passed
-//
-// @param   {Function} fn
-// @returns {void}
-// export function animFrame(fn) {
-//     return (window.requestAnimationFrame ||
-//         window.webkitRequestAnimationFrame ||
-//         window.mozRequestAnimationFrame ||
-//         function(callback) {
-//             window.setTimeout(callback, 1000 / 60);
-//         })(function() {
-//         fn();
-//     });
-// }
 
 /** @internal */
 export function removeFromArray<T>(item: T, array: T[]): void {

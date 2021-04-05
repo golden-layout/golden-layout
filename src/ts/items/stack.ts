@@ -870,8 +870,10 @@ export class Stack extends ComponentParentableItem {
             this.element.classList.add('lm_' + this._header.side);
         }
 
-        const adjacentPosition = [Side.right, Side.bottom].includes(this._header.side) ? 'beforeend' : 'afterend';
-        this._header.element.insertAdjacentElement(adjacentPosition, this._childElementContainer); // move
+        //if ([Side.right, Side.bottom].includes(this._header.side)) {
+        //    // move the header behind the content.
+        //    this.element.appendChild(this._header.element);  
+        //}
         this.updateSize();
     }
 

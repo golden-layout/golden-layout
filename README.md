@@ -6,59 +6,19 @@
 
 <!-- ![Screenshot](https://cloud.githubusercontent.com/assets/512416/4584449/e6c154a0-4ffa-11e4-81a8-a7e5f8689dc5.PNG) -->
 
-## Version 2.0.1
+## Table of Contents
 
-DragSources work in this release.
-
-Caution: **Breaking changes**
-1. `newComponent()` and `addComponent()` type functions in `LayoutManager`, `Stack` and `RowOrColumn` have a new `title` parameter.  This parameter is optional however it is not the last optional parameter.
-1. `LayoutManager.createDragSource()` has been renamed to `LayoutManager.newDragSource()`.  This is to make it more obvious that it is paired with `LayoutManager.removeDragSource()`
-1. `LayoutManager.newDragSource()` now only will create a ComponentItem. Its parameters have been changed to reflect that.
-1. TypeScript definition has been updated to remove many private declarations which should not have been included.
-
-Note that `LayoutManager.newDragSource()` does not require `LayoutConfig.settings.constrainDragToContainer` to be set to false.
-
-## Version 2
-
-Version 2.0 is now available from [NPM](https://www.npmjs.com/package/golden-layout). 
-
-This version is a substantial change from the previous (1.5.9) version.  The change can be summarised as:
-
-1. The code has been ported to TypeScript
-1. The primary focus of maintenance will be on reliability.
-
-Before migrating from version 1, it is **important** to review the following:
-
-#### Dropped Features
-
-As part of the port, the code base was significantly refactored.  A number of features have been dropped from the version 1.0 as their implementation was not robust enough to meet the reliability requirements of version 2.  The dropped features are:
-
-* **React Support** - The [FlexLayout](https://github.com/caplin/FlexLayout) library has been designed for React components.  We recommend developers using React to use this library instead of Golden Layout.
-* **Nested Stacks** - While it was possible to create layouts with Nested Stacks in version 1, the implementation was incomplete.  Due to the large amount of work that would have been necessary to fix the implementation, it was decided instead to drop this feature. Version 2 explicitly does not allow nested stacks.
-* [**Internal and Public API**](#public-and-internal-apis) - All classes, interfaces, functions and properties are marked as either `internal` or `public`. Only `public` APIs are generally available to applications.
-* **Legacy Browsers** - The library will now only target modern browsers (see package.json for browserlist configuration)
-* **No JQuery** - JQuery is no longer used in Golden Layout (many would consider this as an added feature)
-
-#### Features implemented but not ready for production
-
-Some features have been ported to TypeScript but are not yet ready for production.  These features are:
-
-* **Popouts** - The coding for this has been completed however testing still needs to be carried out.
-* **Touch Support** - Improvements are required in accessing browser Touch/Drag APIs.  Also some conceptual aspects of the implementation need to be improved.  These will be carried out in a future release.
-* **Some API functions** - While most API functions have been ported, not all have been tested.  The APIs used in the Test Application (both apitest app and Angular example) have been tested and are ready for production.  Other API functions should work but please take this warning into account.
-
-### Migration
-
-The Version 1 to Version 2 migration guide is available [here](#migration).
-
-### Examples
-
-Version 2 examples are presented [here](#code-examples).
+- [Features](#features)
+- [Installation](#installation--usage)
+- [Examples](#code-examples)
+- [Notes](#notes)
+- [Version 2](#version-2)
+- [Migration Guide](#migration-to-v2)
 
 ## Features
 
 * ~~Full touch support~~
-* ~~Native popup windows~~
+* Native popup windows
 * Completely themeable
 * Comprehensive API
 * Powerful persistence
@@ -105,10 +65,269 @@ If you wish to test the library with other applications, you can link to the Gol
 
 Your application will then use the distribution in the Golden Layout repository `dist` subfolder. If you wish to make changes to the Golden Layout library, you will need to run the `build:api` to regenerate the `dist` folder.
 
-### Angular Example App
-A sample Angular application using Golden Layout is available. More details are [here](#angular).
+## Code Examples
 
-## Migration
+### Angular
+
+An example Angular application using Golden Layout is available.  The source can be installed by cloning the repository:\
+[https://github.com/golden-layout/golden-layout-ng-app](https://github.com/golden-layout/golden-layout-ng-app)
+
+After installing the source, the app can be built and started with the standard build and start scripts.
+
+### Vue
+
+The following snippets of code demonstrate how Golden Layout can be used in Vue.
+
+#### Composable Hook
+
+```ts
+import { GoldenLayout, LayoutConfig } from 'golden-layout';
+import { onMounted, ref, shallowRef } from 'vue';
+
+export const isClient = typeof window !== 'undefined';
+export const isDocumentReady = () => isClient && document.readyState === 'complete' && document.body != null;
+
+export function useDocumentReady(func: () => void) {
+    onMounted(() => {
+        console.log(isDocumentReady());
+        if (isDocumentReady()) func();
+        else
+            document.addEventListener('readystatechange', () => isDocumentReady() && func(), {
+                passive: true,
+            });
+    });
+}
+
+export function useGoldenLayout(
+    createComponent: (type: string, container: HTMLElement) => void,
+    destroyComponent: (container: HTMLElement) => void,
+    config?: LayoutConfig
+) {
+    const element = shallowRef<HTMLElement | null>(null);
+    const layout = shallowRef<GoldenLayout | null>(null);
+    const initialized = ref(false);
+
+    useDocumentReady(() => {
+        if (element.value == null) throw new Error('Element must be set.');
+        const goldenLayout = new GoldenLayout(element.value);
+
+        goldenLayout.getComponentEvent = (container, itemConfig) => {
+            const { componentType } = itemConfig;
+            if (typeof componentType !== 'string') throw new Error('Invalid component type.');
+            createComponent(componentType, container.element);
+        }
+        goldenLayout.releaseComponentEvent = container => {
+            destroyComponent(container.element);
+        }
+
+        if (config != null) goldenLayout.loadLayout(config);
+
+        // https://github.com/microsoft/TypeScript/issues/34933
+        layout.value = goldenLayout as any;
+
+        initialized.value = true;
+    });
+
+    return { element, initialized, layout };
+}
+```
+#### Usage
+
+```vue
+<template>
+  <div ref="element" style="width: 100%; height: 75vh">
+    <teleport
+      v-for="{ id, type, element } in componentInstances"
+      :key="id"
+      :to="element"
+    >
+      <component :is="type"></component>
+    </teleport>
+  </div>
+</template>
+<script lang="ts">
+import { useGoldenLayout } from "@/use-golden-layout";
+import { defineComponent, h, shallowRef } from "vue";
+import "golden-layout/dist/css/goldenlayout-base.css";
+import "golden-layout/dist/css/themes/goldenlayout-dark-theme.css";
+
+const Test = defineComponent({ render: () => h('span', 'It works!') });
+
+const components = { Test, /* other components */ };
+
+export default defineComponent({
+  components,
+  setup() {
+    interface ComponentInstance {
+      id: number;
+      type: string;
+      element: HTMLElement;
+    }
+    let instanceId = 0;
+    const componentTypes = new Set(Object.keys(components));
+    const componentInstances = shallowRef<ComponentInstance[]>([]);
+
+    const createComponent = (type: string, element: HTMLElement) => {
+      if (!componentTypes.has(type)) {
+        throw new Error(`Component not found: '${type}'`);
+      }
+      ++instanceId;
+      componentInstances.value = componentInstances.value.concat({
+        id: instanceId,
+        type,
+        element,
+      });
+    };
+    const destroyComponent = (toBeRemoved: HTMLElement) => {
+      componentInstances.value = componentInstances.value.filter(
+        ({ element }) => element !== toBeRemoved
+      );
+    };
+
+    const { element } = useGoldenLayout(createComponent, destroyComponent, {
+      root: {
+        type: "column",
+        content: [
+          {
+            type: "component",
+            componentType: "Test",
+          },
+          {
+            type: "component",
+            componentType: "Test",
+          },
+        ],
+      },
+    });
+
+    return { element, componentInstances };
+  },
+});
+</script>
+```
+
+### Other Frameworks
+
+When attaching a component, all Golden Layout does is provide the HTML Element of a container: `Container.element`. Components can use this element to bind to that Golden Layout container.  For example, the component's top most HTML element could be attached as a child to this container element.
+
+The `LayoutManager.getComponentEvent` event will be fired whenever a container is created and needs a component. The `LayoutManager.releaseComponentEvent` event will be fired before a container is destroyed and gives the application a chance to tear-down the component.
+
+These events can be set up in an application's start up code as shown in the example code below.
+
+```js
+    this._goldenLayout = new GoldenLayout(goldenLayoutHostElement);
+
+    this._goldenLayout.getComponentEvent = (container, itemConfig) => {
+        const component = this.createFrameworkComponent(itemConfig);
+        // component.element is the top most HTML element in the component
+        container.element.appendChild(component.element);
+        this._containerMap.set(container, component);
+    }
+
+    this._goldenLayout.releaseComponentEvent = (container, component) => {
+        // do this if you need to dispose resources
+        const component = this._containerMap.get(container);
+        this.disposeFrameworkComponent(component);
+        this._containerMap.delete(container);
+    }
+```
+
+Alternatively, `container.element` could be used as the top most HTML element in the component. Example code for this could look like:
+
+```js
+    this._goldenLayout = new GoldenLayout(goldenLayoutHostElement);
+
+    this._goldenLayout.getComponentEvent = (container, itemConfig) => {
+        const component = this.createFrameworkComponent(itemConfig, container.element);
+        this._containerMap.set(container, component);
+    }
+
+    this._goldenLayout.releaseComponentEvent = (container, component) => {
+        // do this if you need to dispose resources
+        const component = this._containerMap.get(container);
+        this.disposeFrameworkComponent(component);
+        this._containerMap.delete(container);
+    }
+```
+
+Once the `LayoutManager.getComponentEvent` and (optionally) `LayoutManager.releaseComponentEvent` events have been set up, functions that create components can be used.  For example:
+
+* `LayoutManager.loadLayout()`
+* `LayoutManager.addComponent()`
+
+Also note that if `LayoutManager.getComponentEvent` is set up, you should **not** register any components with the register functions:
+
+* `LayoutManager.registerComponent()`
+* `LayoutManager.registerComponentConstructor()`
+* `LayoutManager.registerComponentFactoryFunction()`
+* `LayoutManager.registerComponentFunction()`
+* `LayoutManager.registerGetComponentConstructorCallback()`
+
+`LayoutManager.getComponentEvent` is the recommended approach for binding components to Golden Layout. The above component register functions, were mainly included in Golden Layout for backwards compatibility.
+
+## Notes
+
+### Understanding Focus
+
+Components can have focus.  This is analagous to HTML Elements having focus.
+
+Only one component in a layout can have focus at any time (or alternatively, no component has focus). Similarly to HTML elements, a component will be focused when you click on its tab.  You can programatically give a component focus by calling the `focus()` method on its container.  Likewise, you can remove focus from a container by calling `ComponentContainer.blur()`.
+
+Clicking on HTML within a component will not automatically give a Golden Layout component focus.  However this can be achieved by listening to the bubbling `click` and/or `focusin` events and calling `ComponentContainer.focus()` in these events' handlers.  The `apitest` demonstrates this technique.
+
+A focused component's tab and header HTML elements will contain the class `lm_focused`.  This can be used to highlight the focused tab and or header.  The `goldenlayout-dark-theme.less` theme that ships with Golden Layout (and is used by `apitest`) will set the background color of a focused tab to a different color from other tabs.  If you do NOT want focused tabs to be highlighted, ensure that the `lm_focused` selector is removed from the relevant css/less/scss used by your application.
+
+### Understanding LocationSelectors
+
+LocationSelectors specify the location of a component in terms of a parent and a index.  LocationSelectors are useful for specifying where a new ContentItem should be placed.
+
+A `LocationSelector` does not specify the parent directly.  Instead it specifies how the parent is to be searched for.  It has the type:
+```
+export interface LocationSelector {
+    typeId: LocationSelector.TypeId;
+    index?: number;
+}
+```
+
+`typeId` specifies the algorithm used to search for a parent.
+`index` is used by the algorithm to work out the preferred child position under the parent.
+
+Some `LocationSelector.TypeId` will always find a location.  Eg: `LocationSelector.TypeId.Root` is guaranteed to find a location.  Others may not find a location.  Eg: `LocationSelector.TypeId.FirstStack` will not find a location if a layout is empty.
+
+The `LayoutManager.addComponentAtLocation()` and `LayoutManager.newComponentAtLocation()` use an array of LocationSelectors to determine the location at which a new/added component will be installed.  These functions will attempt to find a valid location starting with the first element in the LocationSelectors array.  When a valid location is found, that location will be used for the new component.  If no valid location is found from the LocationSelectors in the array, then the component will not be added.
+
+The `LayoutManager.addComponent()` and `LayoutManager.newComponent()` use a default LocationSelectors array.  The last element in this default array is a LocationSelector of type `LocationSelector.TypeId.Root`.  So this array is guaranteed to find a location.  Accordingly, `LayoutManager.addComponent()` and `LayoutManager.newComponent()` will always succeed in adding a component.
+
+This default LocationSelectors array is available at `LayoutManager.defaultLocationSelectors`.  An alternative predefined array is available at `LayoutManager.afterFocusedItemIfPossibleLocationSelectors`.
+
+
+## Version 2
+
+This version is a substantial change from the previous (1.5.9) version.  The change can be summarised as:
+
+1. The code has been ported to TypeScript
+1. The primary focus of maintenance will be on reliability.
+
+Before migrating from version 1, it is **important** to review the following:
+
+#### Dropped Features
+
+As part of the port, the code base was significantly refactored.  A number of features have been dropped from the version 1.0 as their implementation was not robust enough to meet the reliability requirements of version 2.  The dropped features are:
+
+* **React Support** - The [FlexLayout](https://github.com/caplin/FlexLayout) library has been designed for React components.  We recommend developers using React to use this library instead of Golden Layout.
+* **Nested Stacks** - While it was possible to create layouts with Nested Stacks in version 1, the implementation was incomplete.  Due to the large amount of work that would have been necessary to fix the implementation, it was decided instead to drop this feature. Version 2 explicitly does not allow nested stacks.
+* [**Internal and Public API**](#public-and-internal-apis) - All classes, interfaces, functions and properties are marked as either `internal` or `public`. Only `public` APIs are generally available to applications.
+* **Legacy Browsers** - The library will now only target modern browsers (see package.json for browserlist configuration)
+* **No JQuery** - JQuery is no longer used in Golden Layout (many would consider this as an added feature)
+
+#### Features implemented but not ready for production
+
+Some features have been ported to TypeScript but are not yet ready for production.  These features are:
+
+* **Touch Support** - Improvements are required in accessing browser Touch/Drag APIs.  Also some conceptual aspects of the implementation need to be improved.  These will be carried out in a future release.
+* **Some API functions** - While most API functions have been ported, not all have been tested.  The APIs used in the Test Application (both apitest app and Angular example) have been tested and are ready for production.  Other API functions should work but please take this warning into account.
+
+## Migration to v2
 Version 2 has been re-written in TypeScript. A general code cleanup has been carried out as part of this re-write.  
 
 Also, some changes have been made to the GoldenLayout API.  Where possible, backwards compatibility has been retained,however functions and properties kept for backwards compatibility have been marked as deprecated. It is strongly recommend applications be migrated to the new API.
@@ -241,238 +460,3 @@ The library distribution includes 2 TypeScript declaration (typing) files:
 1. `golden-layout-untrimmed.d.ts` which contains all (public and internal) API elements.  Use this declaration file if you wish to access any API element in the library however please take the above warning into account.
 
 Note that the allocation of API elements to either public or internal has not been finalised.  However any element used in either the `apitest` application or the example Angular application will remain labelled as public.
-
-# Code Examples
-
-## Angular
-
-An example Angular application using Golden Layout is available.  The source can be installed by cloning the repository:\
-[https://github.com/golden-layout/golden-layout-ng-app](https://github.com/golden-layout/golden-layout-ng-app)
-
-After installing the source, the app can be built and started with the standard build and start scripts.
-
-## Vue
-
-The following snippets of code demonstrate how Golden Layout can be used in Vue.
-
-### Composable Hook
-
-```ts
-import { GoldenLayout, LayoutConfig } from 'golden-layout';
-import { onMounted, ref, shallowRef } from 'vue';
-
-export const isClient = typeof window !== 'undefined';
-export const isDocumentReady = () => isClient && document.readyState === 'complete' && document.body != null;
-
-export function useDocumentReady(func: () => void) {
-    onMounted(() => {
-        console.log(isDocumentReady());
-        if (isDocumentReady()) func();
-        else
-            document.addEventListener('readystatechange', () => isDocumentReady() && func(), {
-                passive: true,
-            });
-    });
-}
-
-export function useGoldenLayout(
-    createComponent: (type: string, container: HTMLElement) => void,
-    destroyComponent: (container: HTMLElement) => void,
-    config?: LayoutConfig
-) {
-    const element = shallowRef<HTMLElement | null>(null);
-    const layout = shallowRef<GoldenLayout | null>(null);
-    const initialized = ref(false);
-
-    useDocumentReady(() => {
-        if (element.value == null) throw new Error('Element must be set.');
-        const goldenLayout = new GoldenLayout(element.value);
-
-        goldenLayout.getComponentEvent = (container, itemConfig) => {
-            const { componentType } = itemConfig;
-            if (typeof componentType !== 'string') throw new Error('Invalid component type.');
-            createComponent(componentType, container.element);
-        }
-        goldenLayout.releaseComponentEvent = container => {
-            destroyComponent(container.element);
-        }
-
-        if (config != null) goldenLayout.loadLayout(config);
-
-        // https://github.com/microsoft/TypeScript/issues/34933
-        layout.value = goldenLayout as any;
-
-        initialized.value = true;
-    });
-
-    return { element, initialized, layout };
-}
-```
-### Usage
-
-```vue
-<template>
-  <div ref="element" style="width: 100%; height: 75vh">
-    <teleport
-      v-for="{ id, type, element } in componentInstances"
-      :key="id"
-      :to="element"
-    >
-      <component :is="type"></component>
-    </teleport>
-  </div>
-</template>
-<script lang="ts">
-import { useGoldenLayout } from "@/use-golden-layout";
-import { defineComponent, h, shallowRef } from "vue";
-import "golden-layout/dist/css/goldenlayout-base.css";
-import "golden-layout/dist/css/themes/goldenlayout-dark-theme.css";
-
-const Test = defineComponent({ render: () => h('span', 'It works!') });
-
-const components = { Test, /* other components */ };
-
-export default defineComponent({
-  components,
-  setup() {
-    interface ComponentInstance {
-      id: number;
-      type: string;
-      element: HTMLElement;
-    }
-    let instanceId = 0;
-    const componentTypes = new Set(Object.keys(components));
-    const componentInstances = shallowRef<ComponentInstance[]>([]);
-
-    const createComponent = (type: string, element: HTMLElement) => {
-      if (!componentTypes.has(type)) {
-        throw new Error(`Component not found: '${type}'`);
-      }
-      ++instanceId;
-      componentInstances.value = componentInstances.value.concat({
-        id: instanceId,
-        type,
-        element,
-      });
-    };
-    const destroyComponent = (toBeRemoved: HTMLElement) => {
-      componentInstances.value = componentInstances.value.filter(
-        ({ element }) => element !== toBeRemoved
-      );
-    };
-
-    const { element } = useGoldenLayout(createComponent, destroyComponent, {
-      root: {
-        type: "column",
-        content: [
-          {
-            type: "component",
-            componentType: "Test",
-          },
-          {
-            type: "component",
-            componentType: "Test",
-          },
-        ],
-      },
-    });
-
-    return { element, componentInstances };
-  },
-});
-</script>
-```
-
-## Other Frameworks
-
-When attaching a component, all Golden Layout does is provide the HTML Element of a container: `Container.element`. Components can use this element to bind to that Golden Layout container.  For example, the component's top most HTML element could be attached as a child to this container element.
-
-The `LayoutManager.getComponentEvent` event will be fired whenever a container is created and needs a component. The `LayoutManager.releaseComponentEvent` event will be fired before a container is destroyed and gives the application a chance to tear-down the component.
-
-These events can be set up in an application's start up code as shown in the example code below.
-
-```js
-    this._goldenLayout = new GoldenLayout(goldenLayoutHostElement);
-
-    this._goldenLayout.getComponentEvent = (container, itemConfig) => {
-        const component = this.createFrameworkComponent(itemConfig);
-        // component.element is the top most HTML element in the component
-        container.element.appendChild(component.element);
-        this._containerMap.set(container, component);
-    }
-
-    this._goldenLayout.releaseComponentEvent = (container, component) => {
-        // do this if you need to dispose resources
-        const component = this._containerMap.get(container);
-        this.disposeFrameworkComponent(component);
-        this._containerMap.delete(container);
-    }
-```
-
-Alternatively, `container.element` could be used as the top most HTML element in the component. Example code for this could look like:
-
-```js
-    this._goldenLayout = new GoldenLayout(goldenLayoutHostElement);
-
-    this._goldenLayout.getComponentEvent = (container, itemConfig) => {
-        const component = this.createFrameworkComponent(itemConfig, container.element);
-        this._containerMap.set(container, component);
-    }
-
-    this._goldenLayout.releaseComponentEvent = (container, component) => {
-        // do this if you need to dispose resources
-        const component = this._containerMap.get(container);
-        this.disposeFrameworkComponent(component);
-        this._containerMap.delete(container);
-    }
-```
-
-Once the `LayoutManager.getComponentEvent` and (optionally) `LayoutManager.releaseComponentEvent` events have been set up, functions that create components can be used.  For example:
-
-* `LayoutManager.loadLayout()`
-* `LayoutManager.addComponent()`
-
-Also note that if `LayoutManager.getComponentEvent` is set up, you should **not** register any components with the register functions:
-
-* `LayoutManager.registerComponent()`
-* `LayoutManager.registerComponentConstructor()`
-* `LayoutManager.registerComponentFactoryFunction()`
-* `LayoutManager.registerComponentFunction()`
-* `LayoutManager.registerGetComponentConstructorCallback()`
-
-`LayoutManager.getComponentEvent` is the recommended approach for binding components to Golden Layout. The above component register functions, were mainly included in Golden Layout for backwards compatibility.
-
-# Notes
-
-## Understanding Focus
-
-Components can have focus.  This is analagous to HTML Elements having focus.
-
-Only one component in a layout can have focus at any time (or alternatively, no component has focus). Similarly to HTML elements, a component will be focused when you click on its tab.  You can programatically give a component focus by calling the `focus()` method on its container.  Likewise, you can remove focus from a container by calling `ComponentContainer.blur()`.
-
-Clicking on HTML within a component will not automatically give a Golden Layout component focus.  However this can be achieved by listening to the bubbling `click` and/or `focusin` events and calling `ComponentContainer.focus()` in these events' handlers.  The `apitest` demonstrates this technique.
-
-A focused component's tab and header HTML elements will contain the class `lm_focused`.  This can be used to highlight the focused tab and or header.  The `goldenlayout-dark-theme.less` theme that ships with Golden Layout (and is used by `apitest`) will set the background color of a focused tab to a different color from other tabs.  If you do NOT want focused tabs to be highlighted, ensure that the `lm_focused` selector is removed from the relevant css/less/scss used by your application.
-
-## Understanding LocationSelectors
-
-LocationSelectors specify the location of a component in terms of a parent and a index.  LocationSelectors are useful for specifying where a new ContentItem should be placed.
-
-A `LocationSelector` does not specify the parent directly.  Instead it specifies how the parent is to be searched for.  It has the type:
-```
-export interface LocationSelector {
-    typeId: LocationSelector.TypeId;
-    index?: number;
-}
-```
-
-`typeId` specifies the algorithm used to search for a parent.
-`index` is used by the algorithm to work out the preferred child position under the parent.
-
-Some `LocationSelector.TypeId` will always find a location.  Eg: `LocationSelector.TypeId.Root` is guaranteed to find a location.  Others may not find a location.  Eg: `LocationSelector.TypeId.FirstStack` will not find a location if a layout is empty.
-
-The `LayoutManager.addComponentAtLocation()` and `LayoutManager.newComponentAtLocation()` use an array of LocationSelectors to determine the location at which a new/added component will be installed.  These functions will attempt to find a valid location starting with the first element in the LocationSelectors array.  When a valid location is found, that location will be used for the new component.  If no valid location is found from the LocationSelectors in the array, then the component will not be added.
-
-The `LayoutManager.addComponent()` and `LayoutManager.newComponent()` use a default LocationSelectors array.  The last element in this default array is a LocationSelector of type `LocationSelector.TypeId.Root`.  So this array is guaranteed to find a location.  Accordingly, `LayoutManager.addComponent()` and `LayoutManager.newComponent()` will always succeed in adding a component.
-
-This default LocationSelectors array is available at `LayoutManager.defaultLocationSelectors`.  An alternative predefined array is available at `LayoutManager.afterFocusedItemIfPossibleLocationSelectors`.
