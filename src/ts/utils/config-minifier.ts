@@ -104,7 +104,7 @@ export namespace ConfigMinifier {
             if (from === null) {
                 return null;
             } else {
-                if (from instanceof Array) {
+                if (Array.isArray(from)) {
                     return translateArray(from, minify);
                 } else {
                     return translateObject(from as Record<string, unknown>, minify);

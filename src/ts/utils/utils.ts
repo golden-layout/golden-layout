@@ -111,7 +111,7 @@ export function deepExtendValue(existingTarget: unknown, value: unknown): unknow
                     if (typeof existingTarget !== "object") {
                         return deepExtend({}, valueObj); // overwrite
                     } else {
-                        if (existingTarget instanceof Array) {
+                        if (Array.isArray(existingTarget)) {
                             return deepExtend({}, valueObj); // overwrite
                         } else {
                             if (existingTarget === null) {

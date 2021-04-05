@@ -31,7 +31,7 @@ describe( 'Dynamic ids work properly', function(){
 
 	it( 'adds the second id to an array', function(){
 		item.addId( 'id_2' );
-		expect( item.config.id instanceof Array ).toBe( true );
+		expect( Array.isArray(item.config.id) ).toBe( true );
 		expect( item.config.id.length ).toBe( 2 );
 		expect( item.config.id[ 0 ] ).toBe( 'id_1' );
 		expect( item.config.id[ 1 ] ).toBe( 'id_2' );
@@ -43,7 +43,7 @@ describe( 'Dynamic ids work properly', function(){
 
 	it( 'doesn\t add duplicated ids', function(){
 		item.addId( 'id_2' );
-		expect( item.config.id instanceof Array ).toBe( true );
+		expect( Array.isArray(item.config.id) ).toBe( true );
 		expect( item.config.id.length ).toBe( 2 );
 		expect( item.config.id[ 0 ] ).toBe( 'id_1' );
 		expect( item.config.id[ 1 ] ).toBe( 'id_2' );
