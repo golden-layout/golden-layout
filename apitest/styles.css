@@ -25,6 +25,7 @@ body {
 #controls {
     display: flex;
     flex-direction: column;
+    padding: 2px;
 }
 
 .control {
@@ -51,6 +52,11 @@ body {
     display: flex;
     flex-wrap: nowrap;
     white-space: pre;
+}
+
+#captureClickCountSpan,
+#bubbleClickCountSpan {
+    min-width: 2em;
 }
 
 #stackHeaderClick {
