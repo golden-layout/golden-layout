@@ -411,22 +411,11 @@ export namespace EventEmitter {
     // (undocumented)
     export type ClickBubblingEventParam = [ClickBubblingEvent];
     // (undocumented)
-    export interface DragEvent {
-        // (undocumented)
-        mouseEvent: MouseEvent | undefined;
-        // (undocumented)
-        pageX: number;
-        // (undocumented)
-        pageY: number;
-        // (undocumented)
-        touchEvent: TouchEvent | undefined;
-    }
-    // (undocumented)
-    export type DragParams = [offsetX: number, offsetY: number, event: DragEvent];
+    export type DragParams = [offsetX: number, offsetY: number, event: PointerEvent];
     // (undocumented)
     export type DragStartParams = [originalX: number, originalY: number];
     // (undocumented)
-    export type DragStopParams = [event: DragEvent];
+    export type DragStopParams = [event: PointerEvent | undefined];
     // (undocumented)
     export interface EventParamsMap {
         // (undocumented)
@@ -973,7 +962,7 @@ export abstract class LayoutManager extends EventEmitter {
     minifyConfig(config: ResolvedLayoutConfig): ResolvedLayoutConfig;
     newComponent(componentType: JsonValue, componentState?: JsonValue, title?: string): ComponentItem;
     newComponentAtLocation(componentType: JsonValue, componentState?: JsonValue, title?: string, locationSelectors?: LayoutManager.LocationSelector[]): ComponentItem | undefined;
-    newDragSource(element: HTMLElement, componentTypeOrFtn: JsonValue | (() => DragSource.ComponentItemConfig), componentState?: JsonValue, title?: string): DragSource | undefined;
+    newDragSource(element: HTMLElement, componentTypeOrFtn: JsonValue | (() => DragSource.ComponentItemConfig), componentState?: JsonValue, title?: string): DragSource;
     newItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig): ContentItem;
     newItemAtLocation(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig, locationSelectors?: readonly LayoutManager.LocationSelector[]): ContentItem | undefined;
     // (undocumented)

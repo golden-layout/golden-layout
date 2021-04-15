@@ -122,6 +122,7 @@ $height6: 15px; // Appears 1 time
     padding: 0px 10px 5px;
     padding-right: 25px;
     position: relative;
+    touch-action: none;
 
     i {
       width: $width6;

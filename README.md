@@ -437,7 +437,7 @@ Several properties and functions have been renamed in `header.ts` and `tab.ts`. 
 
 ### Events
 1. All DOM events are now propagated so that they can be handled by parents or globally.
-1. preventDefault() is only called by MouseMove listener used in DragListener. All other event listeners are added with passive: true.
+1. preventDefault() is not called by any event listeners.
 1. Bubbling Events are now emitted with the parameter EventEmitter.BubblingEvent (or descendant)
 1. New EventEmitter events:
     * beforeComponentRelease

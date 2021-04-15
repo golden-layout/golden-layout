@@ -147,7 +147,7 @@ export class DragProxy extends EventEmitter {
      * @param event -
      * @internal
      */
-    private onDrag(offsetX: number, offsetY: number, event: EventEmitter.DragEvent) {
+    private onDrag(offsetX: number, offsetY: number, event: PointerEvent) {
 
         const x = event.pageX;
         const y = event.pageY;

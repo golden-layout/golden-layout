@@ -989,16 +989,15 @@ export abstract class LayoutManager extends EventEmitter {
      * @param componentTypeOrFtn - Type of component to be created, or a function which will provide both component type and state
      * @param componentState - Optional initial state of component.  This will be ignored if componentTypeOrFtn is a function
      *
-     * @returns 1) an opaque object that identifies the DOM element
+     * @returns an opaque object that identifies the DOM element
 	 *          and the attached itemConfig. This can be used in
 	 *          removeDragSource() later to get rid of the drag listeners.
-     *          2) undefined if constrainDragToContainer is specified
      */
     newDragSource(element: HTMLElement,
         componentTypeOrFtn: JsonValue | (() => DragSource.ComponentItemConfig),
         componentState?: JsonValue,
         title?: string,
-    ): DragSource | undefined {
+    ): DragSource {
         const dragSource = new DragSource(this, element, [], componentTypeOrFtn, componentState, title);
         this._dragSources.push(dragSource);
 
@@ -1198,7 +1197,7 @@ export abstract class LayoutManager extends EventEmitter {
 
     /** @internal */
     getArea(x: number, y: number): ContentItem.Area | null {
-        let mathingArea = null;
+        let matchingArea = null;
         let smallestSurface = Infinity;
 
         for (let i = 0; i < this._itemAreas.length; i++) {
@@ -1212,11 +1211,11 @@ export abstract class LayoutManager extends EventEmitter {
                 smallestSurface > area.surface
             ) {
                 smallestSurface = area.surface;
-                mathingArea = area;
+                matchingArea = area;
             }
         }
 
-        return mathingArea;
+        return matchingArea;
     }
 
     /** @internal */
