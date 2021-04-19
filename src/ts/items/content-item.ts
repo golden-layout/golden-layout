@@ -202,7 +202,7 @@ export abstract class ContentItem extends EventEmitter {
             throw new UnexpectedNullError('CIRCP23232');
         } else {
             parentNode.replaceChild(newChild._element, oldChild._element);
-
+            
             /*
             * Optionally destroy the old content item
             */
@@ -216,6 +216,9 @@ export abstract class ContentItem extends EventEmitter {
             */
             this._contentItems[index] = newChild;
             newChild.setParent(this);
+            // newChild inherits the sizes from the old child:
+            newChild.height = oldChild.height;
+            newChild.width = oldChild.width;
 
             //TODO This doesn't update the config... refactor to leave item nodes untouched after creation
             if (newChild._parent === null) {
