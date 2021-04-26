@@ -61,12 +61,14 @@
 .lm_splitter {
   position: relative;
   z-index: 2;
+  touch-action: none;
 
   &.lm_vertical {
     .lm_drag_handle {
       width: @width0;
       position: absolute;
       cursor: ns-resize;
+      touch-action: none;
     }
   }
 
@@ -78,6 +80,7 @@
       height: @height0;
       position: absolute;
       cursor: ew-resize;
+      touch-action: none;
     }
   }
 }
