@@ -76,7 +76,7 @@ export class DragListener extends EventEmitter {
         this._nOriginalX = coordinates.x;
         this._nOriginalY = coordinates.y;
 
-        this._oDocument.addEventListener('pointermove', this._pointerMoveEventListener, { passive: true });
+        this._oDocument.addEventListener('pointermove', this._pointerMoveEventListener);
         this._oDocument.addEventListener('pointerup', this._pointerUpEventListener, { passive: true });
         this._pointerTracking = true;
 
@@ -96,6 +96,7 @@ export class DragListener extends EventEmitter {
     private onPointerMove(oEvent: PointerEvent) {
         if (this._pointerTracking) {
             this.processDragMove(oEvent);
+            oEvent.preventDefault();
         }
     }
 
