@@ -149,12 +149,19 @@ export class GoldenLayout extends LayoutManager {
 
 /** @public */
 export namespace GoldenLayout {
+    /** @internal
+     * Veriable to hold the state whether we already checked if we are running in a sub window.
+     * Fixes popout and creation of nested golden-layouts.
+     */
+    let subWindowChecked = false;
+
     /** @internal */
     export function createConfig(configOrOptionalContainer: LayoutConfig | HTMLElement | undefined,
         containerElement?: HTMLElement):
         LayoutManager.ConstructorParameters
     {
-        const windowConfigKey = getQueryStringParam('gl-window');
+        const windowConfigKey = subWindowChecked ? null : getQueryStringParam('gl-window');
+        subWindowChecked = true;
         const isSubWindow = windowConfigKey !== null;  
 
         let config: ResolvedLayoutConfig | undefined;
