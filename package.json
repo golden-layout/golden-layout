@@ -1,6 +1,6 @@
 {
   "name": "golden-layout",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "A multi-screen javascript Layout manager",
   "keywords": [
     "docking",
