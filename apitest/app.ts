@@ -1,3 +1,4 @@
+import { EventComponent } from './event-component';
 import { ComponentItemConfig, ContentItem, DragSource, EventEmitter, GoldenLayout, LayoutConfig, ResolvedLayoutConfig, Stack } from '..';
 import { BooleanComponent } from './boolean-component';
 import { ColorComponent } from './color-component';
@@ -55,6 +56,7 @@ export class App {
         this._layoutElement = layoutElement;
         this._goldenLayout = new GoldenLayout(this._layoutElement);
         this._goldenLayout.registerComponentConstructor(ColorComponent.typeName, ColorComponent);
+        this._goldenLayout.registerComponentConstructor(EventComponent.typeName, EventComponent);
         this._goldenLayout.addEventListener('stackHeaderClick', (event) => this.handleStackHeaderClick(event));
 
         // If you are running in a child window, register all known component types!

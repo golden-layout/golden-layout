@@ -1,6 +1,14 @@
 import { LayoutManager } from '../layout-manager';
 import { EventEmitter } from './event-emitter';
 
+// Add our ChildEvent to WindowEventMap for type safety
+/** @public */
+declare global {
+    interface WindowEventMap {
+        [EventHub.ChildEventName]: CustomEvent<EventHub.ChildEventDetail>;
+    }
+}
+
 /**
  * An EventEmitter singleton that propagates events
  * across multiple windows. This is a little bit trickier since
@@ -12,17 +20,8 @@ import { EventEmitter } from './event-emitter';
  * - Propagate events from parent to this and children
  * - Propagate events from children to the other children (but not the emitting one) and the parent
  *
+ * @public
  */
-
-// Add our ChildEvent to WindowEventMap for type safety
-/** @internal */
-declare global {
-    interface WindowEventMap {
-        [EventHub.ChildEventName]: CustomEvent<EventHub.ChildEventDetail>;
-    }
-}
-
-/** @internal */
 export class EventHub extends EventEmitter {
     private _childEventSource: LayoutManager | null;
     private _dontPropagateToParent: string | null;
@@ -30,18 +29,27 @@ export class EventHub extends EventEmitter {
     private _childEventListener = (childEvent: CustomEvent<EventHub.ChildEventDetail>) => this.onEventFromChild(childEvent);
 
     constructor(private _layoutManager: LayoutManager) {
-        
+
         super();
 
         this._dontPropagateToParent = null;
         this._childEventSource = null;
-        this.on(EventEmitter.ALL_EVENT, (name, ...args) => this.onEventFromThis(name as string, args));
+        this.on(EventEmitter.ALL_EVENT, (evn, ...args) => this.onEventFromThis(evn as string, args));
 
         globalThis.addEventListener(EventHub.ChildEventName, this._childEventListener, { passive: true });
     }
 
     /**
+     * Broadcasts a message to all other currently opened windows.
+     * @public
+     */
+    emitUserBroadcast(...args: EventEmitter.UnknownParams): void {
+        this.emit('userBroadcast', args);
+    }
+
+    /**
      * Destroys the EventHub
+     * @internal
      */
     destroy(): void {
         globalThis.removeEventListener(EventHub.ChildEventName, this._childEventListener);
@@ -49,6 +57,7 @@ export class EventHub extends EventEmitter {
 
     /**
      * Called by the parent layout.
+     * @internal
      */
     onEventFromParent(eventName: string, ...args: unknown[]): void {
         this._dontPropagateToParent = eventName;
@@ -114,7 +123,7 @@ export class EventHub extends EventEmitter {
     }
 }
 
-/** @internal */
+/** @public */
 export namespace EventHub {
     export const ChildEventName = 'gl_child_event';
     export type ChildEventDetail = {

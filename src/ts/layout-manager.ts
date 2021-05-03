@@ -129,7 +129,11 @@ export abstract class LayoutManager extends EventEmitter {
     get transitionIndicator(): TransitionIndicator | null { return this._transitionIndicator; }
     get width(): number | null { return this._width; }
     get height(): number | null { return this._height; }
-    /** @internal */
+    /** 
+     * Retrieves the {@link (EventHub:class)} instance associated with this layout manager.
+     * This can be used to propagate events between the windows
+     * @public 
+     */
     get eventHub(): EventHub { return this._eventHub; }
     get rootItem(): ContentItem | undefined {
         if (this._groundItem === undefined) {
