@@ -267,6 +267,12 @@ Also note that if `LayoutManager.getComponentEvent` is set up, you should **not*
 
 ## Notes
 
+### Using Popouts
+
+Popouts are supported, although the scope is more limited than in the original v1. Popouts are enabled by default for all content items. Popouts are disabled by either setting `{ popout: false }` in the `header` configuration or when a component is not closable. Also, as a popout user, make sure to register all component types before initializing the golden-layout instance in your child windows. 
+
+Popout examples are available in the `standard` and `tabDropdown` layouts within the apitest application.
+
 ### Understanding Focus
 
 Components can have focus.  This is analagous to HTML Elements having focus.
