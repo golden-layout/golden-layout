@@ -403,7 +403,9 @@ export abstract class LayoutManager extends EventEmitter {
             if (this.getComponentEvent !== undefined) {
                 component = this.getComponentEvent(container, itemConfig);
             } else {
-                throw new Error();
+                // There is no component registered for this type, and we don't have a getComponentEvent defined.
+                // This might happen when the user pops out a dialog and the component types are not registered upfront.
+                throw new AssertError('LMGC10009');
             }
         }
 

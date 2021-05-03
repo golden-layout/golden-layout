@@ -57,6 +57,13 @@ export class App {
         this._goldenLayout.registerComponentConstructor(ColorComponent.typeName, ColorComponent);
         this._goldenLayout.addEventListener('stackHeaderClick', (event) => this.handleStackHeaderClick(event));
 
+        // If you are running in a child window, register all known component types!
+        // This is required when a popout is created.
+        // There are several ways to check whether we're running in a child window, for the sake of simplicity, we check for window.opener.
+        if (window.opener) {
+            this.handleRegisterExtraComponentTypesButtonClick();
+        }
+
         const registerExtraComponentTypesButton = document.querySelector('#registerExtraComponentTypesButton') as HTMLButtonElement;
         if (registerExtraComponentTypesButton === null) {
             throw Error('Could not find RegisterExtraComponentTypesButton');
