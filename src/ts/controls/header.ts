@@ -302,10 +302,13 @@ export class Header extends EventEmitter {
                     }
                 }
             }
+        }
 
-            if (this._closeButton !== null) {
-                setElementDisplayVisibility(this._closeButton.element, isClosable);
-            }
+        if (this._closeButton !== null) {
+            setElementDisplayVisibility(this._closeButton.element, isClosable);
+        }
+        if (this._popoutButton !== null) {
+            setElementDisplayVisibility(this._popoutButton.element, isClosable);
         }
 
         this._canRemoveComponent = isClosable || this._tabsContainer.tabCount > 1;
