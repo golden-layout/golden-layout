@@ -509,25 +509,26 @@ export namespace EventEmitter {
 
 // @public
 export class EventHub extends EventEmitter {
-    constructor(_layoutManager: LayoutManager);
+    // @internal
+    constructor(
+    _layoutManager: LayoutManager);
     // @internal
     destroy(): void;
+    emit<K extends keyof EventEmitter.EventParamsMap>(eventName: K, ...args: EventEmitter.EventParamsMap[K]): void;
     emitUserBroadcast(...args: EventEmitter.UnknownParams): void;
-    // @internal
-    onEventFromParent(eventName: string, ...args: unknown[]): void;
     }
 
 // @public (undocumented)
 export namespace EventHub {
-    const // (undocumented)
+    const // @internal (undocumented)
     ChildEventName = "gl_child_event";
-    // (undocumented)
+    // @internal (undocumented)
     export type ChildEventDetail = {
         layoutManager: LayoutManager;
         eventName: string;
         args: unknown[];
     };
-    // (undocumented)
+    // @internal (undocumented)
     export type ChildEventInit = CustomEventInit<ChildEventDetail>;
 }
 

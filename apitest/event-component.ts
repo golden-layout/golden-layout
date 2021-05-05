@@ -1,15 +1,15 @@
-import { ComponentContainer, EventEmitter, JsonValue } from '..';
+import { ComponentContainer, EventEmitter } from '..';
 
 export class EventComponent {
     static readonly typeName = 'event';
 
     private _inputElement: HTMLInputElement;
     private _sendElement: HTMLButtonElement;
-    
+
     private _containerClickListener = () => this.handleClickFocusEvent();
     private _containerFocusinListener = () => this.handleClickFocusEvent();
 
-    constructor(private _container: ComponentContainer, state: JsonValue | undefined) {
+    constructor(private _container: ComponentContainer) {
         this._inputElement = document.createElement('input');
         this._inputElement.type = "text";
         this._inputElement.style.display = "block";
@@ -26,7 +26,6 @@ export class EventComponent {
             const evt = document.createElement('span');
             evt.innerText = `Received: ${ev}`
             this._container.element.appendChild(evt);
-            console.log(ev);
         };
 
         this._container.layoutManager.eventHub.on('userBroadcast', cb);
@@ -36,7 +35,7 @@ export class EventComponent {
 
         this._container.element.addEventListener('click', this._containerClickListener);
         this._container.element.addEventListener('focusin', this._containerFocusinListener);
-        
+
     }
 
     private handleClickFocusEvent(): void {
