@@ -14,7 +14,7 @@ describe('drag source', function() {
 				content: [
 					{
 						type: 'component',
-						componentType: 'testComponent',
+						componentType: TestTools.TEST_COMPONENT_NAME,
 						componentState: { html: '<div id="item-1"></div>' }
 					}
 				]
@@ -44,7 +44,7 @@ describe('drag source', function() {
 		dragSourceElement.id = 'dragSrc';
 		document.body.appendChild(dragSourceElement);
 
-		const componentType = 'testComponent';
+		const componentType = TestTools.TEST_COMPONENT_NAME;
 		const componentState = { html: `<div class="${createdFromDragSourceClass}"></div>` };
 		const componentTitle = 'created from drag source';
 		

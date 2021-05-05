@@ -1,13 +1,14 @@
 import { ComponentContainer, ContentItem, GoldenLayout, JsonValue, LayoutConfig, RowOrColumn, Stack } from '../..';
 
 export default class TestTools {
+	public static readonly TEST_COMPONENT_NAME = 'testComponent';
 
 	public static createLayout(config: LayoutConfig): GoldenLayout {
 		const myLayout = new GoldenLayout();
 
-		myLayout.registerComponentFactoryFunction('testComponent', TestTools.createTestComponent);
+		myLayout.registerComponentFactoryFunction(this.TEST_COMPONENT_NAME, TestTools.createTestComponent);
 
-		myLayout.loadLayout(config);		
+		myLayout.loadLayout(config);
 
 		expect(myLayout.isInitialised).toBeTrue();
 
