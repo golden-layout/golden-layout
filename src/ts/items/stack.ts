@@ -30,7 +30,7 @@ export class Stack extends ComponentParentableItem {
     /** @internal */
     private readonly _maximisedEnabled: boolean;
     /** @internal */
-    private _activeComponentItem: ComponentItem;
+    private _activeComponentItem: ComponentItem|undefined;
     /** @internal */
     private _dropSegment: Stack.Segment;
     /** @internal */
@@ -245,20 +245,18 @@ export class Stack extends ComponentParentableItem {
     /** @deprecated Use {@link (Stack:class).getActiveComponentItem} */
     getActiveContentItem(): ContentItem | null {
         let result: ContentItem | null;
-        result = this.getActiveComponentItem();
-        if (result === undefined) {
-            result = null;
-        }
+        const activeComponentItem = this.getActiveComponentItem();
+        result = activeComponentItem === undefined ? null : activeComponentItem;        
         return result;
     }
 
-    getActiveComponentItem(): ComponentItem {
+    getActiveComponentItem(): ComponentItem|undefined {
         return this._activeComponentItem;
     }
 
     /** @internal */
     focusActiveContentItem(): void {
-        this._activeComponentItem.focus();
+        this._activeComponentItem?.focus();
     }
 
     /** @internal */
@@ -415,7 +413,7 @@ export class Stack extends ComponentParentableItem {
 
     /** @internal */
     destroy(): void {
-        if (this._activeComponentItem.focused) {
+        if (this._activeComponentItem?.focused) {
             this._activeComponentItem.blur();
         }
         super.destroy();
@@ -430,9 +428,15 @@ export class Stack extends ComponentParentableItem {
     }
 
     toConfig(): ResolvedStackItemConfig {
-        const activeItemIndex = this.contentItems.indexOf(this._activeComponentItem);
-        if (activeItemIndex < 0) {
-            throw new AssertError('STC69221');
+        let activeItemIndex: number|undefined;
+        if (this._activeComponentItem) {
+            activeItemIndex = this.contentItems.indexOf(this._activeComponentItem);
+            if (activeItemIndex < 0) {
+                throw new Error('active component item not found in stack');
+            }
+        }
+        if (this.contentItems.length > 0 && activeItemIndex === undefined) {
+            throw new Error('expected non-empty stack to have an active component item');
         } else {
             const result: ResolvedStackItemConfig = {
                 type: 'stack',

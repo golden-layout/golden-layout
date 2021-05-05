@@ -128,7 +128,7 @@ export class TabsContainer {
     /**
      * Pushes the tabs to the tab dropdown if the available space is not sufficient
      */
-    updateTabSizes(availableWidth: number, activeComponentItem: ComponentItem): void {
+    updateTabSizes(availableWidth: number, activeComponentItem: ComponentItem|undefined): void {
         let dropDownActive = false;
         const success = this.tryUpdateTabSizes(dropDownActive, availableWidth, activeComponentItem);
         if (!success) {
@@ -143,8 +143,12 @@ export class TabsContainer {
         }
     }
 
-    tryUpdateTabSizes(dropdownActive: boolean, availableWidth: number, activeComponentItem: ComponentItem): boolean {
+    tryUpdateTabSizes(dropdownActive: boolean, availableWidth: number, activeComponentItem: ComponentItem|undefined): boolean {
         if (this._tabs.length > 0) {
+            if (activeComponentItem === undefined) {
+                throw new Error('non-empty tabs must have active component item');
+            }
+
             let cumulativeTabWidth = 0;
             let tabOverlapAllowanceExceeded = false;
             const tabOverlapAllowance = this._layoutManager.layoutConfig.settings.tabOverlapAllowance;
