@@ -12,13 +12,17 @@ declare global {
 /**
  * An EventEmitter singleton that propagates events
  * across multiple windows. This is a little bit trickier since
- * windows are allowed to open childWindows in their own right
+ * windows are allowed to open childWindows in their own right.
  *
- * This means that we deal with a tree of windows. Hence the rules for event propagation are:
+ * This means that we deal with a tree of windows. Therefore, we do the event propagation in two phases:
  *
- * - Propagate events from this layout to both parents and children
- * - Propagate events from parent to this and children
- * - Propagate events from children to the other children (but not the emitting one) and the parent
+ * - Propagate events from this layout to the parent layout
+ *   - Repeat until the event arrived at the root layout
+ * - Propagate events to this layout and to all children
+ *   - Repeat until all layouts got the event
+ *
+ * **WARNING**: Only userBroadcast events are propagated between windows.
+ * This means the you have to take care of propagating state changes between windows yourself.
  *
  * @public
  */

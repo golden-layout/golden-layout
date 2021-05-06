@@ -283,7 +283,10 @@ layoutManager.eventHub.on('userBroadcast',  (...ev: EventEmitter.UnknownParams) 
 
 See event-component.ts in apitest for a complete example of broadcasting user messages.
 
-**NOTE**: The EventHub is restricted to `userBroadcast` events, other event types will not be broadcasted between windows.
+#### Limitations
+
+- The EventHub is restricted to `userBroadcast` events, other event types will not be broadcasted between windows.
+- This means the you have to take care of propagating state changes between windows yourself.
 
 ### Understanding Focus
 
