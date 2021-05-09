@@ -128,7 +128,7 @@ export class EventHub extends EventEmitter {
      * @internal
      */
     private propagateToThisAndSubtree(eventName: string, args: unknown[]) {
-        this.emitUnknown(eventName, args);
+        this.emitUnknown(eventName, ...args);
         for (let i = 0; i < this._layoutManager.openPopouts.length; i++) {
             const childGl = this._layoutManager.openPopouts[i].getGlInstance();
 
