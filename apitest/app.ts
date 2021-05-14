@@ -1,3 +1,4 @@
+import { EventComponent } from './event-component';
 import { ComponentItemConfig, ContentItem, DragSource, EventEmitter, GoldenLayout, LayoutConfig, ResolvedLayoutConfig, Stack } from '..';
 import { BooleanComponent } from './boolean-component';
 import { ColorComponent } from './color-component';
@@ -9,7 +10,7 @@ export class App {
     private _controlsElement: HTMLElement;
     private _goldenLayout: GoldenLayout;
     private _registerExtraComponentTypesButton;
-    private _registerExtraComponentTypesButtonClickListener = () => this.handleRegisterExtraComponentTypesButtonClick();
+    private _registerExtraComponentTypesButtonClickListener = () => this.registerExtraComponentTypes();
     private _registeredComponentTypesForAddSelect: HTMLSelectElement;
     private _registeredComponentTypesForAddSelectChangeListener = () => this.handleRegisteredComponentTypesForAddSelectChange();
     private _addComponentButton: HTMLButtonElement;
@@ -34,7 +35,7 @@ export class App {
     private _captureClickCountSpan: HTMLSpanElement;
     private _stackHeaderClickedDiv: HTMLDivElement;
     private _stackHeaderClickedItemCountSpan: HTMLSpanElement;
- 
+
     private _allComponentsRegistered = false;
     private _savedLayout: ResolvedLayoutConfig | undefined;
 
@@ -55,6 +56,7 @@ export class App {
         this._layoutElement = layoutElement;
         this._goldenLayout = new GoldenLayout(this._layoutElement);
         this._goldenLayout.registerComponentConstructor(ColorComponent.typeName, ColorComponent);
+        this._goldenLayout.registerComponentConstructor(EventComponent.typeName, EventComponent);
         this._goldenLayout.addEventListener('stackHeaderClick', (event) => this.handleStackHeaderClick(event));
 
         const registerExtraComponentTypesButton = document.querySelector('#registerExtraComponentTypesButton') as HTMLButtonElement;
@@ -169,6 +171,13 @@ export class App {
         globalThis.addEventListener('resize', this._windowResizeListener, { passive: true });
         globalThis.addEventListener('click', this._globalBubbleClickListener, { passive: true });
         globalThis.addEventListener('click', this._globalCaptureClickListener, { capture: true, passive: true });
+
+        // If you are running in a child window, register all known component types!
+        // This is required when a popout is created.
+        // There are several ways to check whether we're running in a child window, for the sake of simplicity, we check for window.opener.
+        if (this._goldenLayout.isSubWindow) {
+            this.registerExtraComponentTypes();
+        }
     }
 
     start(): void {
@@ -189,13 +198,17 @@ export class App {
         this._bubbleClickCount++;
         this._bubbleClickCountSpan.innerText = this._bubbleClickCount.toString();
     }
-    
+
     private handleGlobalCaptureClickEvent() {
         this._captureClickCount++;
         this._captureClickCountSpan.innerText = this._captureClickCount.toString();
     }
 
-    private handleRegisterExtraComponentTypesButtonClick() {
+    private registerExtraComponentTypes() {
+        if (this._allComponentsRegistered) {
+            return;
+        }
+
         this._goldenLayout.registerComponentConstructor(TextComponent.typeName, TextComponent);
         this._goldenLayout.registerComponentConstructor(BooleanComponent.typeName, BooleanComponent);
         this._allComponentsRegistered = true;

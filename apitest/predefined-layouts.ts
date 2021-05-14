@@ -1,3 +1,4 @@
+import { EventComponent } from './event-component';
 import { ComponentItemConfig, ItemType, LayoutConfig } from '..';
 import { BooleanComponent } from './boolean-component';
 import { ColorComponent } from './color-component';
@@ -176,6 +177,14 @@ const standardConfig: LayoutConfig = {
                                 componentType: ColorComponent.typeName,
                                 componentState: {
                                     companyName: "Stock X",
+                                },
+                            } as ComponentItemConfig,
+                            {
+                                type: "component",
+                                title: "comp 1",
+                                componentType: EventComponent.typeName,
+                                componentState: {
+                                    companyName: "Event",
                                 },
                             } as ComponentItemConfig,
                             {

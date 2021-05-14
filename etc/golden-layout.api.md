@@ -479,6 +479,8 @@ export namespace EventEmitter {
         // (undocumented)
         "titleChanged": StringParam;
         // (undocumented)
+        "userBroadcast": UnknownParams;
+        // (undocumented)
         "windowClosed": UnknownParam;
         // (undocumented)
         "windowOpened": UnknownParam;
@@ -503,6 +505,31 @@ export namespace EventEmitter {
     export type UnknownParam = [unknown];
     // (undocumented)
     export type UnknownParams = unknown[];
+}
+
+// @public
+export class EventHub extends EventEmitter {
+    // @internal
+    constructor(
+    _layoutManager: LayoutManager);
+    // @internal
+    destroy(): void;
+    emit<K extends keyof EventEmitter.EventParamsMap>(eventName: K, ...args: EventEmitter.EventParamsMap[K]): void;
+    emitUserBroadcast(...args: EventEmitter.UnknownParams): void;
+    }
+
+// @public (undocumented)
+export namespace EventHub {
+    const // @internal (undocumented)
+    ChildEventName = "gl_child_event";
+    // @internal (undocumented)
+    export type ChildEventDetail = {
+        layoutManager: LayoutManager;
+        eventName: string;
+        args: unknown[];
+    };
+    // @internal (undocumented)
+    export type ChildEventInit = CustomEventInit<ChildEventDetail>;
 }
 
 // @public (undocumented)
@@ -923,9 +950,6 @@ export abstract class LayoutManager extends EventEmitter {
     //
     // @internal (undocumented)
     get dropTargetIndicator(): DropTargetIndicator | null;
-    // Warning: (ae-forgotten-export) The symbol "EventHub" needs to be exported by the entry point index.d.ts
-    //
-    // @internal (undocumented)
     get eventHub(): EventHub;
     // (undocumented)
     findFirstComponentItemById(id: string): ComponentItem | undefined;

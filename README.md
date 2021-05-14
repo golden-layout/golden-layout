@@ -267,6 +267,27 @@ Also note that if `LayoutManager.getComponentEvent` is set up, you should **not*
 
 ## Notes
 
+### Using Popouts
+
+Popouts are supported, although the scope is more limited than in the original v1. Popouts are enabled by default for all content items. Popouts are disabled by either setting `{ popout: false }` in the `header` configuration or when a component is not closable. Also, as a popout user, make sure to register all component types before initializing the golden-layout instance in your child windows.
+
+Popout examples are available in the `standard` and `tabDropdown` layouts within the apitest application.
+
+EventHub can be used to broadcast messages and events to all windows.  The LayoutManager.eventHub.emitUserBroadcast() function is used to broadcast messages.  Messages can be received by listening to “userBroadcast” events.  For example:
+
+```ts
+layoutManager.eventHub.on('userBroadcast',  (...ev: EventEmitter.UnknownParams) => {
+  // respond to user broadcast event
+});
+```
+
+See event-component.ts in apitest for a complete example of broadcasting user messages.
+
+#### Limitations
+
+- The EventHub is restricted to `userBroadcast` events, other event types will not be broadcasted between windows.
+- This means the you have to take care of propagating state changes between windows yourself.
+
 ### Understanding Focus
 
 Components can have focus.  This is analagous to HTML Elements having focus.
@@ -328,7 +349,7 @@ Some features have been ported to TypeScript but are not yet ready for productio
 * **Some API functions** - While most API functions have been ported, not all have been tested.  The APIs used in the Test Application (both apitest app and Angular example) have been tested and are ready for production.  Other API functions should work but please take this warning into account.
 
 ## Migration to v2
-Version 2 has been re-written in TypeScript. A general code cleanup has been carried out as part of this re-write.  
+Version 2 has been re-written in TypeScript. A general code cleanup has been carried out as part of this re-write.
 
 Also, some changes have been made to the GoldenLayout API.  Where possible, backwards compatibility has been retained,however functions and properties kept for backwards compatibility have been marked as deprecated. It is strongly recommend applications be migrated to the new API.
 

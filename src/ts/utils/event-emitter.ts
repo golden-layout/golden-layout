@@ -146,11 +146,11 @@ export class EventEmitter {
         if (allEventSubscriptionsCount > 0) {
             const unknownArgs = args.slice() as EventEmitter.UnknownParams;
             unknownArgs.unshift(eventName);
-    
+
             const allEventSubcriptions = this._allEventSubscriptions.slice();
-    
+
             for (let i = 0; i < allEventSubscriptionsCount; i++) {
-                allEventSubcriptions[i](unknownArgs);
+                allEventSubcriptions[i](...unknownArgs);
             }
         }
     }
@@ -204,6 +204,7 @@ export namespace EventEmitter {
         "blur": BubblingEventParam;
         "stackHeaderClick": ClickBubblingEventParam;
         "stackHeaderTouchStart": TouchStartBubblingEventParam;
+        "userBroadcast": UnknownParams;
     }
 
     export type UnknownParams = unknown[];
@@ -227,7 +228,7 @@ export namespace EventEmitter {
         /** @deprecated Use {@link (EventEmitter:namespace).(BubblingEvent:class).target} instead */
         get origin(): EventEmitter { return this._target; }
         get isPropagationStopped(): boolean { return this._isPropagationStopped; }
-    
+
         /** @internal */
         constructor(
             /** @internal */
@@ -235,7 +236,7 @@ export namespace EventEmitter {
             /** @internal */
             private readonly _target: EventEmitter) {
         }
-    
+
         stopPropagation(): void {
             this._isPropagationStopped = true;
         }

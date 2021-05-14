@@ -13,6 +13,7 @@ export { RowOrColumn } from './ts/items/row-or-column';
 export { Stack } from './ts/items/stack';
 export { LayoutManager } from './ts/layout-manager';
 export { EventEmitter } from './ts/utils/event-emitter';
+export { EventHub } from './ts/utils/event-hub';
 export * from './ts/utils/i18n-strings';
 export * from './ts/utils/types';
 
