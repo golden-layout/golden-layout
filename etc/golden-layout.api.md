@@ -411,6 +411,8 @@ export namespace EventEmitter {
     // (undocumented)
     export type ClickBubblingEventParam = [ClickBubblingEvent];
     // (undocumented)
+    export type ComponentItemParam = [ComponentItem];
+    // (undocumented)
     export type DragParams = [offsetX: number, offsetY: number, event: PointerEvent];
     // (undocumented)
     export type DragStartParams = [originalX: number, originalY: number];
@@ -421,7 +423,7 @@ export namespace EventEmitter {
         // (undocumented)
         "__all": UnknownParams;
         // (undocumented)
-        "activeContentItemChanged": UnknownParam;
+        "activeContentItemChanged": ComponentItemParam;
         // (undocumented)
         "beforeComponentRelease": BeforeComponentReleaseParams;
         // (undocumented)
@@ -451,7 +453,7 @@ export namespace EventEmitter {
         // (undocumented)
         "itemDestroyed": BubblingEventParam;
         // (undocumented)
-        "itemDropped": UnknownParam;
+        "itemDropped": ComponentItemParam;
         // (undocumented)
         "maximised": NoParams;
         // (undocumented)
@@ -473,22 +475,26 @@ export namespace EventEmitter {
         // (undocumented)
         "stateChanged": NoParams;
         // (undocumented)
-        "tab": UnknownParam;
+        "tab": TabParam;
         // (undocumented)
-        "tabCreated": UnknownParam;
+        "tabCreated": TabParam;
         // (undocumented)
         "titleChanged": StringParam;
         // (undocumented)
         "userBroadcast": UnknownParams;
         // (undocumented)
-        "windowClosed": UnknownParam;
+        "windowClosed": PopoutParam;
         // (undocumented)
-        "windowOpened": UnknownParam;
+        "windowOpened": PopoutParam;
     }
     // (undocumented)
     export type NoParams = [];
     // (undocumented)
+    export type PopoutParam = [BrowserPopout];
+    // (undocumented)
     export type StringParam = [string];
+    // (undocumented)
+    export type TabParam = [Tab];
     // (undocumented)
     export class TouchStartBubblingEvent extends BubblingEvent {
         // @internal
