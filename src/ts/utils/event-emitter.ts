@@ -67,7 +67,7 @@ export class EventEmitter {
     }
 
     /**
-     * Removes a listener for an event, or all listeners if no callback and context is provided.
+     * Removes a listener for an event.
      * @param eventName - The name of the event
      * @param callback - The previously registered callback method (optional)
      */
