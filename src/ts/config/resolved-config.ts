@@ -129,7 +129,7 @@ export interface ResolvedStackItemConfig extends ResolvedHeaderedItemConfig {
     readonly type: 'stack';
     readonly content: ResolvedComponentItemConfig[];
     /** The index of the active item in the Stack.  Only undefined if the Stack is empty. */
-    readonly activeItemIndex: number|undefined;
+    readonly activeItemIndex: number | undefined;
 }
 
 /** @public */

@@ -220,7 +220,7 @@ export namespace EventEmitter {
     export type BubblingEventParam = [EventEmitter.BubblingEvent]
     export type StringParam = [string];
     export type DragStartParams = [originalX: number, originalY: number];
-    export type DragStopParams = [event: PointerEvent|undefined];
+    export type DragStopParams = [event: PointerEvent | undefined];
     export type DragParams = [offsetX: number, offsetY: number, event: PointerEvent];
     export type BeforeComponentReleaseParams = [component: unknown];
     export type ClickBubblingEventParam = [ClickBubblingEvent];

@@ -54,14 +54,14 @@ export default class TestTools {
 			}
 			else {
 				expect(node.isStack || node.isRow || node.isColumn).toBeTrue();
-				node = (node as unknown as Stack|RowOrColumn).contentItems[pathSegmentAsInt]
+				node = (node as unknown as Stack | RowOrColumn).contentItems[pathSegmentAsInt]
 				expect(node).toBeDefined();
 			}
 		}
 		return node;
 	}
 
-	public static getDragProxy(): HTMLDivElement|null {
+	public static getDragProxy(): HTMLDivElement | null {
 		// class copied from DomConstants.ClassName.DragProxy (could instead expose this in public API?)
 		const dragProxy = document.querySelector('.lm_dragProxy') as HTMLDivElement;
 		return dragProxy;

@@ -498,7 +498,7 @@ export class Header extends EventEmitter {
 /** @public */
 export namespace Header {
     /** @internal */
-    export type GetActiveComponentItemEvent = (this: void) => ComponentItem|undefined;
+    export type GetActiveComponentItemEvent = (this: void) => ComponentItem | undefined;
     /** @internal */
     export type CloseEvent = (this: void) => void;
     /** @internal */

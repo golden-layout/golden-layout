@@ -30,7 +30,7 @@ export class Stack extends ComponentParentableItem {
     /** @internal */
     private readonly _maximisedEnabled: boolean;
     /** @internal */
-    private _activeComponentItem: ComponentItem|undefined;
+    private _activeComponentItem: ComponentItem | undefined;
     /** @internal */
     private _dropSegment: Stack.Segment;
     /** @internal */
@@ -244,13 +244,10 @@ export class Stack extends ComponentParentableItem {
 
     /** @deprecated Use {@link (Stack:class).getActiveComponentItem} */
     getActiveContentItem(): ContentItem | null {
-        let result: ContentItem | null;
-        const activeComponentItem = this.getActiveComponentItem();
-        result = activeComponentItem === undefined ? null : activeComponentItem;        
-        return result;
+        return this.getActiveComponentItem() ?? null;
     }
 
-    getActiveComponentItem(): ComponentItem|undefined {
+    getActiveComponentItem(): ComponentItem | undefined {
         return this._activeComponentItem;
     }
 
@@ -428,7 +425,7 @@ export class Stack extends ComponentParentableItem {
     }
 
     toConfig(): ResolvedStackItemConfig {
-        let activeItemIndex: number|undefined;
+        let activeItemIndex: number | undefined;
         if (this._activeComponentItem) {
             activeItemIndex = this.contentItems.indexOf(this._activeComponentItem);
             if (activeItemIndex < 0) {
