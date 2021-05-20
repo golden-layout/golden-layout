@@ -1,4 +1,4 @@
-import { UnexpectedNullError, UnexpectedUndefinedError } from '../errors/internal-error';
+import { UnexpectedUndefinedError } from '../errors/internal-error';
 import { ComponentItem } from '../items/component-item';
 import { ContentItem } from '../items/content-item';
 import { Stack } from '../items/stack';

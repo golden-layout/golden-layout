@@ -1,4 +1,4 @@
-import { GoldenLayout, LayoutConfig, LayoutManager } from '../../dist/types';
+import { ContentItem, GoldenLayout, LayoutConfig, LayoutManager } from '../../dist/types';
 import TestTools from './test-tools';
 
 describe( 'layout with empty stack', function(){
@@ -50,8 +50,9 @@ describe( 'layout with empty stack', function(){
 	});
 
 	it( 'can have child added to the empty stack', function(){
-		var stack = layout.rootItem?.contentItems[2];
+		const stack = layout.rootItem?.contentItems[2];
 		expect( stack?.isStack ).toBe( true );
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		expect( stack!.contentItems.length ).toBe( 0 );
 
 		const addedItem = layout.newItemAtLocation(
@@ -63,7 +64,7 @@ describe( 'layout with empty stack', function(){
 		);
 
 		const itemInOriginallyEmptyStack = TestTools.verifyPath('2.stack.0.component', layout);
-		expect(itemInOriginallyEmptyStack).toEqual(addedItem!);
+		expect(itemInOriginallyEmptyStack as ContentItem | undefined).toEqual(addedItem);
 	});
 
 });
