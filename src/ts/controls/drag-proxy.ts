@@ -259,8 +259,8 @@ export class DragProxy extends EventEmitter {
                 height -= (!this._sided ? headerHeight : 0);
                 this._proxyContainerElement.style.width = numberToPixels(width);
                 this._proxyContainerElement.style.height = numberToPixels(height);
-                this._componentItem.show();
                 this._componentItem.setDragSize(width, height);
+                this._componentItem.show();
             }
         }
     }
