@@ -88,7 +88,7 @@ export class ComponentContainer extends EventEmitter {
     // (undocumented)
     get parent(): ComponentItem;
     replaceComponent(itemConfig: ComponentItemConfig): void;
-    // @internal (undocumented)
+    // @internal
     setDragSize(width: number, height: number): void;
     setSize(width: number, height: number): boolean;
     // @internal
