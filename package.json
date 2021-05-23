@@ -37,6 +37,7 @@
     "clean": "npm-run-all clean:*",
     "clean:dist": "npx del-cli dist",
     "clean:lib": "npx del-cli lib",
+    "clean:test": "npx del-cli test/dist",
     "lint:autofix": "eslint src/ts --fix",
     "lint:ts": "eslint -c .eslintrc.js --ext .ts src/ts test",
     "test:watch": "karma start",
