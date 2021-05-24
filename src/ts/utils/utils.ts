@@ -152,6 +152,7 @@ export function getUniqueId(): string {
  * @internal
 */
 export function stripTags(input: string): string {
-    const strippedInput = input.replace(/(<([^>]+)>)/ig, '');
-    return strippedInput.trim();
+    const tmp = document.createElement("span");
+    tmp.innerHTML = input;
+    return tmp.innerText.trim();
 }

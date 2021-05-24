@@ -117,8 +117,8 @@ export class Tab {
      * html tags) of the same string.
      */
     setTitle(title: string): void {
-        this._element.title = stripTags(title);
-        this._titleElement.innerText = title;
+        this._titleElement.innerHTML = title;
+        this._element.title = this._titleElement.innerText; // = stripTags(title)
     }
 
     /**
