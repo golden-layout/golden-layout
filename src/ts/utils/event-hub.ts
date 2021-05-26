@@ -1,86 +1,110 @@
 import { LayoutManager } from '../layout-manager';
 import { EventEmitter } from './event-emitter';
 
-/**
- * An EventEmitter singleton that propagates events
- * across multiple windows. This is a little bit trickier since
- * windows are allowed to open childWindows in their own right
- *
- * This means that we deal with a tree of windows. Hence the rules for event propagation are:
- *
- * - Propagate events from this layout to both parents and children
- * - Propagate events from parent to this and children
- * - Propagate events from children to the other children (but not the emitting one) and the parent
- *
- */
-
 // Add our ChildEvent to WindowEventMap for type safety
-/** @internal */
+/** @public */
 declare global {
     interface WindowEventMap {
         [EventHub.ChildEventName]: CustomEvent<EventHub.ChildEventDetail>;
     }
 }
 
-/** @internal */
+/**
+ * An EventEmitter singleton that propagates events
+ * across multiple windows. This is a little bit trickier since
+ * windows are allowed to open childWindows in their own right.
+ *
+ * This means that we deal with a tree of windows. Therefore, we do the event propagation in two phases:
+ *
+ * - Propagate events from this layout to the parent layout
+ *   - Repeat until the event arrived at the root layout
+ * - Propagate events to this layout and to all children
+ *   - Repeat until all layouts got the event
+ *
+ * **WARNING**: Only userBroadcast events are propagated between windows.
+ * This means the you have to take care of propagating state changes between windows yourself.
+ *
+ * @public
+ */
 export class EventHub extends EventEmitter {
-    private _childEventSource: LayoutManager | null;
-    private _dontPropagateToParent: string | null;
 
+    /** @internal */
     private _childEventListener = (childEvent: CustomEvent<EventHub.ChildEventDetail>) => this.onEventFromChild(childEvent);
 
-    constructor(private _layoutManager: LayoutManager) {
-        
+    /**
+     * Creates a new EventHub instance
+     * @param _layoutManager - the layout manager to synchronize between the windows
+     * @internal
+     */
+    constructor(
+        /** @internal */
+        private _layoutManager: LayoutManager
+    ) {
         super();
-
-        this._dontPropagateToParent = null;
-        this._childEventSource = null;
-        this.on(EventEmitter.ALL_EVENT, (name, ...args) => this.onEventFromThis(name as string, args));
-
         globalThis.addEventListener(EventHub.ChildEventName, this._childEventListener, { passive: true });
     }
 
     /**
+     * Emit an event and notify listeners
+     *
+     * @param eventName - The name of the event
+     * @param args - Additional arguments that will be passed to the listener
+     * @public
+     */
+    emit<K extends keyof EventEmitter.EventParamsMap>(eventName: K, ...args: EventEmitter.EventParamsMap[K]): void {
+        if (eventName === 'userBroadcast') {
+            // Explicitly redirect the user broadcast to our overridden method.
+            this.emitUserBroadcast(...args);
+        } else {
+            super.emit(eventName, ...args);
+        }
+    }
+
+    /**
+     * Broadcasts a message to all other currently opened windows.
+     * @public
+     */
+    emitUserBroadcast(...args: EventEmitter.UnknownParams): void {
+        // Step 1: Bubble up the event
+        this.handleUserBroadcastEvent('userBroadcast', args);
+    }
+
+    /**
      * Destroys the EventHub
+     * @internal
      */
     destroy(): void {
         globalThis.removeEventListener(EventHub.ChildEventName, this._childEventListener);
     }
 
     /**
-     * Called by the parent layout.
+     * Internal processor to process local events.
+     * @internal
      */
-    onEventFromParent(eventName: string, ...args: unknown[]): void {
-        this._dontPropagateToParent = eventName;
-        this.emitUnknown(eventName, args);
-    }
-
-    /**
-     * Called on every event emitted on this eventHub, regardles of origin.
-     */
-    private onEventFromThis(eventName: string, ...args: unknown[]) {
-        if (this._layoutManager.isSubWindow && args[0] !== this._dontPropagateToParent) {
+    private handleUserBroadcastEvent(eventName: string, args: unknown[]) {
+        if (this._layoutManager.isSubWindow) {
+            // We are a sub window and received an event from one of our children.
+            // So propagate it to the Root.
             this.propagateToParent(eventName, args);
+        } else {
+            // We are the root window, propagate it to the subtree below us.
+            this.propagateToThisAndSubtree(eventName, args);
         }
-        this.propagateToChildren(eventName, args);
-
-        //Reset
-        this._dontPropagateToParent = null;
-        this._childEventSource = null;
     }
 
     /**
      * Callback for child events raised on the window
+     * @internal
      */
     private onEventFromChild(event: CustomEvent<EventHub.ChildEventDetail>) {
         const detail = event.detail;
-        this._childEventSource = detail.layoutManager;
-        this.emitUnknown(detail.eventName, detail.args);
+        this.handleUserBroadcastEvent(detail.eventName, detail.args);
     }
 
     /**
      * Propagates the event to the parent by emitting
      * it on the parent's DOM window
+     * @internal
      */
     private propagateToParent(eventName: string, args: unknown[]) {
         const detail: EventHub.ChildEventDetail = {
@@ -100,28 +124,34 @@ export class EventHub extends EventEmitter {
     }
 
     /**
-     * Propagate events to children
+     * Propagate events to the whole subtree under this event hub.
+     * @internal
      */
-    private propagateToChildren(eventName: string, args: unknown[]) {
-
+    private propagateToThisAndSubtree(eventName: string, args: unknown[]) {
+        this.emitUnknown(eventName, ...args);
         for (let i = 0; i < this._layoutManager.openPopouts.length; i++) {
             const childGl = this._layoutManager.openPopouts[i].getGlInstance();
 
-            if (childGl && childGl !== this._childEventSource) {
-                childGl.eventHub.onEventFromParent(eventName, args);
+            if (childGl) {
+                childGl.eventHub.propagateToThisAndSubtree(eventName, args);
             }
         }
     }
 }
 
-/** @internal */
+/** @public */
 export namespace EventHub {
+
+    /** @internal */
     export const ChildEventName = 'gl_child_event';
+
+    /** @internal */
     export type ChildEventDetail = {
         layoutManager: LayoutManager;
         eventName: string;
         args: unknown[];
     };
 
+    /** @internal */
     export type ChildEventInit = CustomEventInit<ChildEventDetail>;
 }

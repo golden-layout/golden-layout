@@ -1,3 +1,7 @@
+import { BrowserPopout } from '../controls/browser-popout';
+import { Tab } from '../controls/tab';
+import { ComponentItem } from '../items/component-item';
+
 /**
  * A generic and very fast EventEmitter implementation. On top of emitting the actual event it emits an
  * {@link (EventEmitter:namespace).ALL_EVENT} event for every event triggered. This allows to hook into it and proxy events forwards
@@ -146,11 +150,11 @@ export class EventEmitter {
         if (allEventSubscriptionsCount > 0) {
             const unknownArgs = args.slice() as EventEmitter.UnknownParams;
             unknownArgs.unshift(eventName);
-    
+
             const allEventSubcriptions = this._allEventSubscriptions.slice();
-    
+
             for (let i = 0; i < allEventSubscriptionsCount; i++) {
-                allEventSubcriptions[i](unknownArgs);
+                allEventSubcriptions[i](...unknownArgs);
             }
         }
     }
@@ -172,7 +176,7 @@ export namespace EventEmitter {
 
     export interface EventParamsMap {
         "__all": UnknownParams;
-        "activeContentItemChanged": UnknownParam;
+        "activeContentItemChanged": ComponentItemParam;
         "close": NoParams;
         "closed": NoParams;
         "destroy": NoParams;
@@ -181,7 +185,7 @@ export namespace EventEmitter {
         "dragStop": DragStopParams;
         "hide": NoParams;
         "initialised": NoParams;
-        "itemDropped": UnknownParam;
+        "itemDropped": ComponentItemParam;
         "maximised": NoParams;
         "minimised": NoParams;
         "open": NoParams;
@@ -191,11 +195,11 @@ export namespace EventEmitter {
         /** @deprecated - use show instead */
         "shown": NoParams;
         "stateChanged": NoParams;
-        "tab": UnknownParam;
-        "tabCreated": UnknownParam;
+        "tab": TabParam;
+        "tabCreated": TabParam;
         "titleChanged": StringParam;
-        "windowClosed": UnknownParam;
-        "windowOpened": UnknownParam;
+        "windowClosed": PopoutParam;
+        "windowOpened": PopoutParam;
         "beforeComponentRelease": BeforeComponentReleaseParams;
         "beforeItemDestroyed": BubblingEventParam;
         "itemCreated": BubblingEventParam;
@@ -204,11 +208,15 @@ export namespace EventEmitter {
         "blur": BubblingEventParam;
         "stackHeaderClick": ClickBubblingEventParam;
         "stackHeaderTouchStart": TouchStartBubblingEventParam;
+        "userBroadcast": UnknownParams;
     }
 
     export type UnknownParams = unknown[];
     export type NoParams = [];
     export type UnknownParam = [unknown];
+    export type PopoutParam = [BrowserPopout];
+    export type ComponentItemParam = [ComponentItem];
+    export type TabParam = [Tab];
     export type BubblingEventParam = [EventEmitter.BubblingEvent]
     export type StringParam = [string];
     export type DragStartParams = [originalX: number, originalY: number];
@@ -227,7 +235,7 @@ export namespace EventEmitter {
         /** @deprecated Use {@link (EventEmitter:namespace).(BubblingEvent:class).target} instead */
         get origin(): EventEmitter { return this._target; }
         get isPropagationStopped(): boolean { return this._isPropagationStopped; }
-    
+
         /** @internal */
         constructor(
             /** @internal */
@@ -235,7 +243,7 @@ export namespace EventEmitter {
             /** @internal */
             private readonly _target: EventEmitter) {
         }
-    
+
         stopPropagation(): void {
             this._isPropagationStopped = true;
         }

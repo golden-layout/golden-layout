@@ -411,6 +411,8 @@ export namespace EventEmitter {
     // (undocumented)
     export type ClickBubblingEventParam = [ClickBubblingEvent];
     // (undocumented)
+    export type ComponentItemParam = [ComponentItem];
+    // (undocumented)
     export type DragParams = [offsetX: number, offsetY: number, event: PointerEvent];
     // (undocumented)
     export type DragStartParams = [originalX: number, originalY: number];
@@ -421,7 +423,7 @@ export namespace EventEmitter {
         // (undocumented)
         "__all": UnknownParams;
         // (undocumented)
-        "activeContentItemChanged": UnknownParam;
+        "activeContentItemChanged": ComponentItemParam;
         // (undocumented)
         "beforeComponentRelease": BeforeComponentReleaseParams;
         // (undocumented)
@@ -451,7 +453,7 @@ export namespace EventEmitter {
         // (undocumented)
         "itemDestroyed": BubblingEventParam;
         // (undocumented)
-        "itemDropped": UnknownParam;
+        "itemDropped": ComponentItemParam;
         // (undocumented)
         "maximised": NoParams;
         // (undocumented)
@@ -473,20 +475,26 @@ export namespace EventEmitter {
         // (undocumented)
         "stateChanged": NoParams;
         // (undocumented)
-        "tab": UnknownParam;
+        "tab": TabParam;
         // (undocumented)
-        "tabCreated": UnknownParam;
+        "tabCreated": TabParam;
         // (undocumented)
         "titleChanged": StringParam;
         // (undocumented)
-        "windowClosed": UnknownParam;
+        "userBroadcast": UnknownParams;
         // (undocumented)
-        "windowOpened": UnknownParam;
+        "windowClosed": PopoutParam;
+        // (undocumented)
+        "windowOpened": PopoutParam;
     }
     // (undocumented)
     export type NoParams = [];
     // (undocumented)
+    export type PopoutParam = [BrowserPopout];
+    // (undocumented)
     export type StringParam = [string];
+    // (undocumented)
+    export type TabParam = [Tab];
     // (undocumented)
     export class TouchStartBubblingEvent extends BubblingEvent {
         // @internal
@@ -503,6 +511,31 @@ export namespace EventEmitter {
     export type UnknownParam = [unknown];
     // (undocumented)
     export type UnknownParams = unknown[];
+}
+
+// @public
+export class EventHub extends EventEmitter {
+    // @internal
+    constructor(
+    _layoutManager: LayoutManager);
+    // @internal
+    destroy(): void;
+    emit<K extends keyof EventEmitter.EventParamsMap>(eventName: K, ...args: EventEmitter.EventParamsMap[K]): void;
+    emitUserBroadcast(...args: EventEmitter.UnknownParams): void;
+    }
+
+// @public (undocumented)
+export namespace EventHub {
+    const // @internal (undocumented)
+    ChildEventName = "gl_child_event";
+    // @internal (undocumented)
+    export type ChildEventDetail = {
+        layoutManager: LayoutManager;
+        eventName: string;
+        args: unknown[];
+    };
+    // @internal (undocumented)
+    export type ChildEventInit = CustomEventInit<ChildEventDetail>;
 }
 
 // @public (undocumented)
@@ -923,9 +956,6 @@ export abstract class LayoutManager extends EventEmitter {
     //
     // @internal (undocumented)
     get dropTargetIndicator(): DropTargetIndicator | null;
-    // Warning: (ae-forgotten-export) The symbol "EventHub" needs to be exported by the entry point index.d.ts
-    //
-    // @internal (undocumented)
     get eventHub(): EventHub;
     // (undocumented)
     findFirstComponentItemById(id: string): ComponentItem | undefined;
