@@ -21,14 +21,12 @@ import {
  * @internal
  */
 export class DragProxy extends EventEmitter {
-    private _area: ContentItem.Area | null;
-    private _lastValidArea: ContentItem.Area | null;
+    private _area: ContentItem.Area | null = null;
+    private _lastValidArea: ContentItem.Area | null = null;
     private _minX: number;
     private _minY: number;
     private _maxX: number;
     private _maxY: number;
-    private _width: number;
-    private _height: number;
     private _sided: boolean;
     private _element: HTMLElement;
     private _proxyContainerElement: HTMLElement;
@@ -49,12 +47,39 @@ export class DragProxy extends EventEmitter {
 
         super();
 
-        this._area = null;
-        this._lastValidArea = null;
-
         this._dragListener.on('drag', (offsetX, offsetY, event) => this.onDrag(offsetX, offsetY, event));
         this._dragListener.on('dragStop', () => this.onDrop());
 
+        this.createDragProxyElements(x, y);
+
+        if (this._componentItem.parent === null) {
+            // Note that _contentItem will have dummy GroundItem as parent if initiated by a external drag source
+            throw new UnexpectedNullError('DPC10097');
+        }
+
+        this._componentItemFocused = this._componentItem.focused;
+        if (this._componentItemFocused) {
+            this._componentItem.blur();
+        }
+        this._componentItem.parent.removeChild(this._componentItem, true);
+
+        this.setDimensions();
+
+        document.body.appendChild(this._element);
+
+        this.determineMinMaxXY();
+        if (this._layoutManager.layoutConfig.settings.constrainDragToContainer) {
+            const constrainedPosition = this.getXYWithinMinMax(x, y);
+            x = constrainedPosition.x;
+            y = constrainedPosition.y;
+        }
+
+        this._layoutManager.calculateItemAreas();
+        this.setDropPosition(x, y);
+    }
+
+    /** Create Stack-like structure to contain the dragged component */
+    private createDragProxyElements(initialX: number, initialY: number): void {
         this._element = document.createElement('div');
         this._element.classList.add(DomConstants.ClassName.DragProxy);
         const headerElement = document.createElement('div');
@@ -82,59 +107,36 @@ export class DragProxy extends EventEmitter {
                 this._proxyContainerElement.insertAdjacentElement('afterend', headerElement);
             }
         }
-        this._element.style.left = numberToPixels(x);
-        this._element.style.top = numberToPixels(y);
+        this._element.style.left = numberToPixels(initialX);
+        this._element.style.top = numberToPixels(initialY);
         tabElement.setAttribute('title', stripTags(this._componentItem.title));
         titleElement.insertAdjacentText('afterbegin', this._componentItem.title);
         this._proxyContainerElement.appendChild(this._componentItem.element);
+    }
 
-        if (this._componentItem.parent === null) {
-            // Note that _contentItem will have dummy GroundItem as parent if initiated by a external drag source
-            throw new UnexpectedNullError('DPC10097');
-        } else {
-            this._componentItemFocused = this._componentItem.focused;
-            if (this._componentItemFocused) {
-                this._componentItem.blur();
-            }
-            this._componentItem.parent.removeChild(this._componentItem, true);
+    private determineMinMaxXY(): void {
+        const offset = getJQueryOffset(this._layoutManager.container);
+        this._minX = offset.left;
+        this._minY = offset.top;
+        const { width: containerWidth, height: containerHeight } = getElementWidthAndHeight(this._layoutManager.container);
+        this._maxX = containerWidth + this._minX;
+        this._maxY = containerHeight + this._minY;
+    }
 
-            this._layoutManager.calculateItemAreas();
-            this.setDimensions();
-
-            document.body.appendChild(this._element);
-
-            const offset = getJQueryOffset(this._layoutManager.container);
-
-            this._minX = offset.left;
-            this._minY = offset.top;
-            const { width: containerWidth, height: containerHeight } = getElementWidthAndHeight(this._layoutManager.container);
-            this._maxX = containerWidth + this._minX;
-            this._maxY = containerHeight + this._minY;
-            const { width: elementWidth, height: elementHeight } = getElementWidthAndHeight(this._element);
-            this._width = elementWidth;
-            this._height = elementHeight;
-
-
-            if (this._layoutManager.layoutConfig.settings.constrainDragToContainer) {
-                if (x <= this._minX) {
-                    x = Math.ceil(this._minX + 1);
-                } else {
-                    if (x >= this._maxX) {
-                        x = Math.floor(this._maxX - 1);
-                    }
-                }
-
-                if (y <= this._minY) {
-                    y = Math.ceil(this._minY + 1);
-                } else {
-                    if (y >= this._maxY) {
-                        y = Math.floor(this._maxY - 1);
-                    }
-                }
-            }
-    
-            this.setDropPosition(x, y);
+    private getXYWithinMinMax(x: number, y: number): {x: number, y: number} {
+        if (x <= this._minX) {
+            x = Math.ceil(this._minX + 1);
+        } else if (x >= this._maxX) {
+            x = Math.floor(this._maxX - 1);
         }
+        
+        if (y <= this._minY) {
+            y = Math.ceil(this._minY + 1);
+        } else if (y >= this._maxY) {
+            y = Math.floor(this._maxY - 1);
+        }
+        
+        return {x,y};   
     }
 
     /**
@@ -246,22 +248,22 @@ export class DragProxy extends EventEmitter {
         const dimensions = this._layoutManager.layoutConfig.dimensions;
         if (dimensions === undefined) {
             throw new Error('DragProxy.setDimensions: dimensions undefined');
-        } else {
-            let width = dimensions.dragProxyWidth;
-            let height = dimensions.dragProxyHeight;
-            if (width === undefined || height === undefined) {
-                throw new Error('DragProxy.setDimensions: width and/or height undefined');
-            } else {
-                const headerHeight = this._layoutManager.layoutConfig.header.show === false ? 0 : dimensions.headerHeight;
-                this._element.style.width = numberToPixels(width);
-                this._element.style.height = numberToPixels(height)
-                width -= (this._sided ? headerHeight : 0);
-                height -= (!this._sided ? headerHeight : 0);
-                this._proxyContainerElement.style.width = numberToPixels(width);
-                this._proxyContainerElement.style.height = numberToPixels(height);
-                this._componentItem.show();
-                this._componentItem.setDragSize(width, height);
-            }
         }
+        
+        let width = dimensions.dragProxyWidth;
+        let height = dimensions.dragProxyHeight;
+        if (width === undefined || height === undefined) {
+            throw new Error('DragProxy.setDimensions: width and/or height undefined');
+        }
+    
+        const headerHeight = this._layoutManager.layoutConfig.header.show === false ? 0 : dimensions.headerHeight;
+        this._element.style.width = numberToPixels(width);
+        this._element.style.height = numberToPixels(height)
+        width -= (this._sided ? headerHeight : 0);
+        height -= (!this._sided ? headerHeight : 0);
+        this._proxyContainerElement.style.width = numberToPixels(width);
+        this._proxyContainerElement.style.height = numberToPixels(height);
+        this._componentItem.setDragSize(width, height);
+        this._componentItem.show();
     }
 }

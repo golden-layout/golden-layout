@@ -114,6 +114,8 @@ export abstract class ContentItem extends EventEmitter {
 
     /**
      * Removes a child node (and its children) from the tree
+     * @param contentItem - The child item to remove
+     * @param keepChild - Whether to destroy the removed item
      */
     removeChild(contentItem: ContentItem, keepChild = false): void {
         /*
@@ -129,7 +131,7 @@ export abstract class ContentItem extends EventEmitter {
         }
 
         /**
-		 * Call ._$destroy on the content item. 
+		 * Call destroy on the content item. 
 		 * All children are destroyed as well
 		 */
         if (!keepChild) {
