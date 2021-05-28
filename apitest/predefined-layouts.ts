@@ -1,5 +1,5 @@
 import { EventComponent } from './event-component';
-import { ComponentItemConfig, ItemType, LayoutConfig } from '..';
+import { ComponentItemConfig, ItemType, LayoutConfig, StackItemConfig } from '..';
 import { BooleanComponent } from './boolean-component';
 import { ColorComponent } from './color-component';
 import { TextComponent } from './text-component';
@@ -68,6 +68,38 @@ const miniStackConfig: LayoutConfig = {
 const miniStackLayout: Layout = {
     name: 'miniStack',
     config: miniStackConfig,
+};
+
+const rowWithEmptyStackConfig: LayoutConfig = {
+    root: {
+        type: ItemType.row,
+        content: [
+            {
+                type: "component",
+                title: "Golden",
+                componentType: ColorComponent.typeName,
+                width: 30,
+                componentState: 'gold',
+            } as ComponentItemConfig,
+            {
+                title: "Layout",
+                header: { show: "top", popout: false },
+                type: "component",
+                componentType: ColorComponent.typeName,
+                componentState: undefined,
+            } as ComponentItemConfig,
+            {
+                type: "stack",
+                isClosable: false,
+                content: []
+            } as StackItemConfig,
+        ],
+    },
+};
+
+const rowWithEmptyStackLayout: Layout = {
+    name: 'row with empty stack',
+    config: rowWithEmptyStackConfig,
 };
 
 const componentConfig: LayoutConfig = {
@@ -477,6 +509,6 @@ export interface PredefinedLayouts {
 }
 
 export const prefinedLayouts: PredefinedLayouts = {
-    colorComponentCompatible: [miniRowLayout, miniStackLayout, component, standardLayout],
+    colorComponentCompatible: [miniRowLayout, miniStackLayout, rowWithEmptyStackLayout, component, standardLayout],
     allComponents: [miniRowLayout, miniStackLayout, component, responsiveLayout, standardLayout, tabDropdownLayout]
 };

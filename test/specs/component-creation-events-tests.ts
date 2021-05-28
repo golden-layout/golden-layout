@@ -1,4 +1,4 @@
-import { GoldenLayout, ComponentContainer, LayoutConfig } from '../..'
+import { GoldenLayout, ComponentContainer, LayoutConfig } from '../..';
 
 describe('component creation', function () {
 
