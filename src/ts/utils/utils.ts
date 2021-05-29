@@ -145,13 +145,3 @@ export function getUniqueId(): string {
         .toString(36)
         .replace('.', '');
 }
-
-/**
- * Removes html tags from a string
- * @returns input without tags
- * @internal
-*/
-export function stripTags(input: string): string {
-    const strippedInput = input.replace(/(<([^>]+)>)/ig, '');
-    return strippedInput.trim();
-}

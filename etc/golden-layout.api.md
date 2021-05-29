@@ -88,7 +88,7 @@ export class ComponentContainer extends EventEmitter {
     // (undocumented)
     get parent(): ComponentItem;
     replaceComponent(itemConfig: ComponentItemConfig): void;
-    // @internal (undocumented)
+    // @internal
     setDragSize(width: number, height: number): void;
     setSize(width: number, height: number): boolean;
     // @internal
@@ -646,7 +646,7 @@ export namespace Header {
     // @internal (undocumented)
     export type DockEvent = (this: void) => void;
     // @internal (undocumented)
-    export type GetActiveComponentItemEvent = (this: void) => ComponentItem;
+    export type GetActiveComponentItemEvent = (this: void) => ComponentItem | undefined;
     // @internal (undocumented)
     export type MaximiseToggleEvent = (this: void) => void;
     // @internal (undocumented)
@@ -1479,8 +1479,7 @@ export namespace ResolvedRowOrColumnItemConfig {
 
 // @public (undocumented)
 export interface ResolvedStackItemConfig extends ResolvedHeaderedItemConfig {
-    // (undocumented)
-    readonly activeItemIndex: number;
+    readonly activeItemIndex: number | undefined;
     // (undocumented)
     readonly content: ResolvedComponentItemConfig[];
     // (undocumented)
@@ -1622,7 +1621,7 @@ export class Stack extends ComponentParentableItem {
     // @internal (undocumented)
     focusActiveContentItem(): void;
     // (undocumented)
-    getActiveComponentItem(): ComponentItem;
+    getActiveComponentItem(): ComponentItem | undefined;
     // @deprecated (undocumented)
     getActiveContentItem(): ContentItem | null;
     // @internal (undocumented)

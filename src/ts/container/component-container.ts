@@ -286,15 +286,20 @@ export class ComponentContainer extends EventEmitter {
         this.emit('tab', tab)
     }
 
-    /** @internal */
+    /**
+     * Set the container's size, but considered temporary (for dragging)
+     * so don't emit any events. 
+     * @internal */
     setDragSize(width: number, height: number): void {
+        this._width = width;
+        this._height = height;
         setElementWidth(this._element, width);
         setElementHeight(this._element, height);
     }
 
     /**
-     * Set's the containers size. Called by the container's component item.
-     * To set the size programmatically from within the component itself,
+     * Sets the container's size. Called by the container's component item.
+     * To instead set the size programmatically from within the component itself,
      * use the public setSize method
      * @param width - in px
      * @param height - in px

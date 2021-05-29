@@ -1,6 +1,6 @@
 {
   "name": "golden-layout",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "A multi-screen javascript Layout manager",
   "keywords": [
     "docking",
@@ -20,7 +20,8 @@
   "module": "dist/esm/index.js",
   "typings": "dist/types/index.d.ts",
   "files": [
-    "dist/**/*"
+    "dist/**/*",
+    "src/**/*"
   ],
   "sideEffects": false,
   "scripts": {
@@ -37,9 +38,11 @@
     "clean": "npm-run-all clean:*",
     "clean:dist": "npx del-cli dist",
     "clean:lib": "npx del-cli lib",
+    "clean:test": "npx del-cli test/dist",
     "lint:autofix": "eslint src/ts --fix",
     "lint:ts": "eslint -c .eslintrc.js --ext .ts src/ts test",
-    "test": "cross-env karma start",
+    "test:watch": "karma start",
+    "test": "karma start --single-run --browsers ChromeHeadless",
     "coverage": "karma start --single-run --no-auto-watch --coverage=true || echo done",
     "doc": "npm run build && npx copyfiles -f temp/golden-layout.api.json doc/input && cd doc && npx api-documenter markdown",
     "doc:typeddocfull": "npx del-cli doc/full && typedoc --options ./typedoc.full.json",

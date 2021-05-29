@@ -67,7 +67,7 @@ export class EventEmitter {
     }
 
     /**
-     * Removes a listener for an event, or all listeners if no callback and context is provided.
+     * Removes a listener for an event.
      * @param eventName - The name of the event
      * @param callback - The previously registered callback method (optional)
      */
@@ -220,7 +220,7 @@ export namespace EventEmitter {
     export type BubblingEventParam = [EventEmitter.BubblingEvent]
     export type StringParam = [string];
     export type DragStartParams = [originalX: number, originalY: number];
-    export type DragStopParams = [event: PointerEvent|undefined];
+    export type DragStopParams = [event: PointerEvent | undefined];
     export type DragParams = [offsetX: number, offsetY: number, event: PointerEvent];
     export type BeforeComponentReleaseParams = [component: unknown];
     export type ClickBubblingEventParam = [ClickBubblingEvent];

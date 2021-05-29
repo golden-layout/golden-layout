@@ -1,4 +1,4 @@
-import { UnexpectedNullError, UnexpectedUndefinedError } from '../errors/internal-error';
+import { UnexpectedUndefinedError } from '../errors/internal-error';
 import { ComponentItem } from '../items/component-item';
 import { ContentItem } from '../items/content-item';
 import { Stack } from '../items/stack';
@@ -439,11 +439,10 @@ export class Header extends EventEmitter {
             }
         } else {
             const activeComponentItem = this._getActiveComponentItemEvent();
-            if (activeComponentItem === null) {
-                throw new UnexpectedNullError('HOPC70222');
-            } else {
+            if (activeComponentItem) {
                 activeComponentItem.popout();
             }
+            // else: if the stack is empty there won't be an active item (and nothing to popout)
         }
     }
 
@@ -499,7 +498,7 @@ export class Header extends EventEmitter {
 /** @public */
 export namespace Header {
     /** @internal */
-    export type GetActiveComponentItemEvent = (this: void) => ComponentItem;
+    export type GetActiveComponentItemEvent = (this: void) => ComponentItem | undefined;
     /** @internal */
     export type CloseEvent = (this: void) => void;
     /** @internal */

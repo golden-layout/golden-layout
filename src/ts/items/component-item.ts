@@ -116,12 +116,9 @@ export class ComponentItem extends ContentItem {
     // Used by Drag Proxy
     /** @internal */
     setDragSize(width: number, height: number): void {
-        if (this.element.style.display !== 'none') {
-            // Do not update size of hidden components to prevent unwanted reflows
-            setElementWidth(this.element, width);
-            setElementHeight(this.element, height);
-            this._container.setDragSize(width, height);
-        }
+        setElementWidth(this.element, width);
+        setElementHeight(this.element, height);
+        this._container.setDragSize(width, height);
     }
 
     /** @internal */
