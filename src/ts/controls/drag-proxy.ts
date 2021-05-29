@@ -10,8 +10,7 @@ import { getJQueryOffset } from '../utils/jquery-legacy';
 import { Side } from '../utils/types';
 import {
     getElementWidthAndHeight,
-    numberToPixels,
-    stripTags
+    numberToPixels
 } from '../utils/utils';
 
 /**
@@ -34,7 +33,7 @@ export class DragProxy extends EventEmitter {
 
     get element(): HTMLElement { return this._element; }
 
-    /** 
+    /**
      * @param x - The initial x position
      * @param y - The initial y position
      * @internal
@@ -109,7 +108,7 @@ export class DragProxy extends EventEmitter {
         }
         this._element.style.left = numberToPixels(initialX);
         this._element.style.top = numberToPixels(initialY);
-        tabElement.setAttribute('title', stripTags(this._componentItem.title));
+        tabElement.setAttribute('title', this._componentItem.title);
         titleElement.insertAdjacentText('afterbegin', this._componentItem.title);
         this._proxyContainerElement.appendChild(this._componentItem.element);
     }
@@ -129,14 +128,14 @@ export class DragProxy extends EventEmitter {
         } else if (x >= this._maxX) {
             x = Math.floor(this._maxX - 1);
         }
-        
+
         if (y <= this._minY) {
             y = Math.ceil(this._minY + 1);
         } else if (y >= this._maxY) {
             y = Math.floor(this._maxY - 1);
         }
-        
-        return {x,y};   
+
+        return {x,y};
     }
 
     /**
@@ -249,13 +248,13 @@ export class DragProxy extends EventEmitter {
         if (dimensions === undefined) {
             throw new Error('DragProxy.setDimensions: dimensions undefined');
         }
-        
+
         let width = dimensions.dragProxyWidth;
         let height = dimensions.dragProxyHeight;
         if (width === undefined || height === undefined) {
             throw new Error('DragProxy.setDimensions: width and/or height undefined');
         }
-    
+
         const headerHeight = this._layoutManager.layoutConfig.header.show === false ? 0 : dimensions.headerHeight;
         this._element.style.width = numberToPixels(width);
         this._element.style.height = numberToPixels(height)
