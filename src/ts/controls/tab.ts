@@ -3,7 +3,6 @@ import { ComponentItem } from '../items/component-item';
 import { LayoutManager } from '../layout-manager';
 import { DomConstants } from '../utils/dom-constants';
 import { DragListener } from '../utils/drag-listener';
-import { stripTags } from '../utils/utils';
 
 /**
  * Represents an individual tab within a Stack's header
@@ -117,8 +116,8 @@ export class Tab {
      * html tags) of the same string.
      */
     setTitle(title: string): void {
-        this._element.title = stripTags(title);
         this._titleElement.innerText = title;
+        this._element.title = title;
     }
 
     /**
