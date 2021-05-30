@@ -183,25 +183,6 @@
   .lm_close {
     background-image: data-uri('../../img/lm_close_white.png');
   }
-
-  // Icon to toggle Pane Docking at mouse hover
-  .lm_dock {
-    background-image: data-uri('../../img/lm_docked_white.png');
-    transform:rotate(-45deg);
-    transition:transform 300ms;
-  }
-}
-
-.lm_stack.lm_docked {
-  .lm_controls .lm_dock {
-    transform:rotate(0deg);
-  }
-
-  > .lm_items {
-    border-color: @color9;
-    border-image: linear-gradient(to right, @color5 1%, @color6 100%);
-    box-shadow: 0 2px 2px @color0;
-  }
 }
 
 // If a specific Pane is maximized
