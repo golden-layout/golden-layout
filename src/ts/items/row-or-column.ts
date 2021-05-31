@@ -741,30 +741,30 @@ export class RowOrColumn extends ContentItem {
     }
 
     /**
-     * Invoked when a splitter's DragListener fires drag. Updates the splitters DOM position,
+     * Invoked when a splitter's DragListener fires drag. Updates the splitter's DOM position,
      * but not the sizes of the elements the splitter controls in order to minimize resize events
      *
      * @param splitter -
-     * @param offsetX - Relative pixel values to the splitters original position. Can be negative
-     * @param offsetY - Relative pixel values to the splitters original position. Can be negative
+     * @param offsetX - Relative pixel values to the splitter's original position. Can be negative
+     * @param offsetY - Relative pixel values to the splitter's original position. Can be negative
      * @internal
      */
     private onSplitterDrag(splitter: Splitter, offsetX: number, offsetY: number) {
-        const offset = this._isColumn ? offsetY : offsetX;
+        let offset = this._isColumn ? offsetY : offsetX;
 
         if (this._splitterMinPosition === null || this._splitterMaxPosition === null) {
             throw new UnexpectedNullError('ROCOSD59226');
-        } else {
-            if (offset > this._splitterMinPosition && offset < this._splitterMaxPosition) {
-                this._splitterPosition = offset;
-                const offsetPixels = numberToPixels(offset);
-                if (this._isColumn) {
-                    splitter.element.style.top = offsetPixels;
-                } else {
-                    splitter.element.style.left = offsetPixels;
-                }
-            }
         }
+        offset = Math.max(offset, this._splitterMinPosition);
+        offset = Math.min(offset, this._splitterMaxPosition);
+
+        this._splitterPosition = offset;
+        const offsetPixels = numberToPixels(offset);
+        if (this._isColumn) {
+            splitter.element.style.top = offsetPixels;
+        } else {
+            splitter.element.style.left = offsetPixels;
+        }        
     }
 
     /**
