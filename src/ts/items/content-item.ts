@@ -37,13 +37,13 @@ export abstract class ContentItem extends EventEmitter {
     private _isInitialised;
 
     /** @internal */
-    width: number; // percentage
+    width: number; // pixels
     /** @internal */
-    minWidth: number; // percentage
+    minWidth: number; // pixels
     /** @internal */
-    height: number; // percentage
+    height: number; // pixels
     /** @internal */
-    minHeight: number; // percentage
+    minHeight: number; // pixels
 
     isGround: boolean
     isRow: boolean
@@ -131,7 +131,7 @@ export abstract class ContentItem extends EventEmitter {
         }
 
         /**
-		 * Call destroy on the content item. 
+		 * Call destroy on the content item.
 		 * All children are destroyed as well
 		 */
         if (!keepChild) {
@@ -204,7 +204,7 @@ export abstract class ContentItem extends EventEmitter {
             throw new UnexpectedNullError('CIRCP23232');
         } else {
             parentNode.replaceChild(newChild._element, oldChild._element);
-            
+
             /*
             * Optionally destroy the old content item
             */
