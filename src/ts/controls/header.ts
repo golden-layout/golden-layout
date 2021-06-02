@@ -94,6 +94,7 @@ export class Header extends EventEmitter {
     get layoutManager(): LayoutManager { return this._layoutManager; }
     get parent(): Stack { return this._parent; }
     get tabs(): Tab[] { return this._tabsContainer.tabs; }
+    get lastVisibleTabIndex(): number { return this._tabsContainer.lastVisibleTabIndex; }
     /**
      * @deprecated use {@link (Stack:class).getActiveComponentItem} */
     get activeContentItem(): ContentItem | null {

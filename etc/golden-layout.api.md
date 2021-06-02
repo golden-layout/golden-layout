@@ -594,6 +594,8 @@ export class Header extends EventEmitter {
     // (undocumented)
     get element(): HTMLElement;
     // (undocumented)
+    get lastVisibleTabIndex(): number;
+    // (undocumented)
     get layoutManager(): LayoutManager;
     // @internal (undocumented)
     get leftRightSided(): boolean;

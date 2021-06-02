@@ -18,7 +18,8 @@ export class TabsContainer {
 
     get tabs(): Tab[] { return this._tabs; }
     get tabCount(): number { return this._tabs.length; }
-
+    get lastVisibleTabIndex(): number { return this._lastVisibleTabIndex; }
+    
     get element(): HTMLElement { return this._element; }
     get dropdownElement(): HTMLElement { return this._dropdownElement; }
     get dropdownActive(): boolean { return this._dropdownActive; }
