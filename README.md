@@ -54,6 +54,11 @@ After installing the source and building the distribution, you can build and sta
 You can then view it in your browser using the following link:\
 http://localhost:3000/
 
+### Building single-file bundles
+
+We provide different types of single file bundles for easier consumption without toolchain in-place. To do this, run `npm run build:bundles`, afterwards find your bundled files in `dist/bundle/`.
+Bundles are not built by default and are not included in the NPM package, we recommend everyone to consume the library through NPM and webpack.
+
 ### Debugging Golden Layout library
 
 The `apitest` app can be used to debug the Golden Layout library.  Its `webpack` configuration will import the Golden Layout library source map, allowing debuggers to step through the library source code and place break points.
