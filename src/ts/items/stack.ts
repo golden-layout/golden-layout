@@ -761,7 +761,8 @@ export class Stack extends ComponentParentableItem {
 
     /** @internal */
     private highlightHeaderDropZone(x: number): void {
-        const tabsLength = this._header.tabs.length;
+        // Only walk over the visible tabs
+        const tabsLength = this._header.lastVisibleTabIndex + 1;
 
         const dropTargetIndicator = this.layoutManager.dropTargetIndicator;
         if (dropTargetIndicator === null) {
@@ -783,6 +784,7 @@ export class Stack extends ComponentParentableItem {
             };
         } else {
             let tabIndex = 0;
+            // This indicates whether our cursor is exactly over a tab
             let isAboveTab = false;
             let tabTop: number;
             let tabLeft: number;
@@ -801,13 +803,14 @@ export class Stack extends ComponentParentableItem {
                     tabWidth = getElementWidth(tabElement);
                 }
 
-                if (x > tabLeft && x < tabLeft + tabWidth) {
+                if (x >= tabLeft && x < tabLeft + tabWidth) {
                     isAboveTab = true;
                 } else {
                     tabIndex++;
                 }
             } while (tabIndex < tabsLength && !isAboveTab);
 
+            // If we're not above any tabs, or to the right of any tab, we are out of the area, so give up
             if (isAboveTab === false && x < tabLeft) {
                 return;
             }
