@@ -1098,7 +1098,7 @@ export abstract class LayoutManager extends EventEmitter {
             case ItemType.ground: throw new AssertError('LMCCIFC68871');
             case ItemType.row: return new RowOrColumn(false, this, config as ResolvedRowOrColumnItemConfig, parent);
             case ItemType.column: return new RowOrColumn(true, this, config as ResolvedRowOrColumnItemConfig, parent);
-            case ItemType.stack: return new Stack(this, config as ResolvedStackItemConfig, parent as Stack.Parent);
+            case ItemType.stack: return new Stack(this, config as ResolvedStackItemConfig, parent);
             case ItemType.component:
                 return new ComponentItem(this, config as ResolvedComponentItemConfig, parent as Stack);
             default:

@@ -4,20 +4,18 @@ import { Splitter } from '../controls/splitter'
 import { AssertError, UnexpectedNullError } from '../errors/internal-error'
 import { LayoutManager } from '../layout-manager'
 import { DomConstants } from '../utils/dom-constants'
-import { ItemType, JsonValue, Side, WidthOrHeightPropertyName } from '../utils/types'
+import { ItemType, JsonValue, WidthOrHeightPropertyName } from '../utils/types'
 import {
     getElementHeight,
     getElementWidth,
     getElementWidthAndHeight,
     numberToPixels,
     pixelsToNumber,
-    setElementDisplayVisibility,
     setElementHeight,
     setElementWidth
 } from "../utils/utils"
 import { ComponentItem } from './component-item'
 import { ContentItem } from './content-item'
-import { Stack } from './stack'
 
 /** @public */
 export class RowOrColumn extends ContentItem {
@@ -138,10 +136,6 @@ export class RowOrColumn extends ContentItem {
             if (index > 0) {
                 this.contentItems[index - 1].element.insertAdjacentElement('afterend', splitterElement);
                 splitterElement.insertAdjacentElement('afterend', contentItem.element);
-                if (this.isDocked(index - 1)) {
-                    setElementDisplayVisibility(this._splitter[index - 1].element, false);
-                    setElementDisplayVisibility(this._splitter[index].element, true);
-                }
             } else {
                 this.contentItems[0].element.insertAdjacentElement('beforebegin', splitterElement);
                 splitterElement.insertAdjacentElement('beforebegin', contentItem.element);
@@ -170,7 +164,6 @@ export class RowOrColumn extends ContentItem {
 
         this.updateSize();
         this.emitBaseBubblingEvent('stateChanged');
-        this.validateDocking();
 
         return index;
     }
@@ -183,7 +176,6 @@ export class RowOrColumn extends ContentItem {
      *
      */
     removeChild(contentItem: ContentItem, keepChild: boolean): void {
-        const removedItemSize = contentItem[this._dimension];
         const index = this.contentItems.indexOf(contentItem);
         const splitterIndex = Math.max(index - 1, 0);
 
@@ -200,36 +192,15 @@ export class RowOrColumn extends ContentItem {
             this._splitter.splice(splitterIndex, 1);
         }
 
-        if (splitterIndex < this._splitter.length) {
-            if (this.isDocked(splitterIndex))
-                setElementDisplayVisibility(this._splitter[splitterIndex].element, false);
-        }
-        /**
-         * Allocate the space that the removed item occupied to the remaining items
-         */
-        const dockedCount = this.calculateDockedCount();
-        for (let i = 0; i < this.contentItems.length; i++) {
-            if (this.contentItems[i] !== contentItem) {
-                if (!this.isDocked(i))
-                    this.contentItems[i][this._dimension] += removedItemSize / (this.contentItems.length - 1 - dockedCount);
-
-            }
-        }
-
         super.removeChild(contentItem, keepChild);
 
         if (this.contentItems.length === 1 && this.isClosable === true) {
             const childItem = this.contentItems[0];
             this.contentItems.length = 0;
             this._rowOrColumnParent.replaceChild(this, childItem, true);
-            if (this._rowOrColumnParent instanceof RowOrColumn) { // this check not included originally.
-                // If Ground, then validateDocking not require
-                this._rowOrColumnParent.validateDocking();
-            }
         } else {
             this.updateSize();
             this.emitBaseBubblingEvent('stateChanged');
-            this.validateDocking();
         }
     }
 
@@ -253,100 +224,6 @@ export class RowOrColumn extends ContentItem {
     }
 
     /**
-     * Dock or undock a child if it posiible
-     *
-     * @param contentItem -
-     * @param mode - Toggle if undefined
-     * @param collapsed - After docking
-     */
-    dock(contentItem: Stack, mode?: boolean, collapsed?: boolean): void {
-        if (this.contentItems.length === 1)
-            throw new Error('Can\'t dock child when it single');
-
-        const removedItemSize = contentItem[this._dimension];
-        // this is wrong - does not reflect the stack and component settings for header.show
-        const headerSize = this.layoutManager.layoutConfig.header.show === false ? 0 : this.layoutManager.layoutConfig.dimensions.headerHeight;
-        const index = this.contentItems.indexOf(contentItem);
-        const splitterIndex = Math.max(index - 1, 0);
-
-        if (index === -1) {
-            throw new Error('Can\'t dock child. ContentItem is not child of this Row or Column');
-        }
-        const isDocked = contentItem.docker.docked;
-        if (mode !== undefined && mode === isDocked)
-            return;
-        if (isDocked) { // undock it
-            this._splitter[splitterIndex].element.style.display = '';
-            for (let i = 0; i < this.contentItems.length; i++) {
-                const newItemSize = contentItem.docker.size;
-                if (this.contentItems[i] === contentItem) {
-                    contentItem[this._dimension] = newItemSize;
-                } else {
-                    const itemSize = this.contentItems[i][this._dimension] *= (100 - newItemSize) / 100;
-                    this.contentItems[i][this._dimension] = itemSize;
-                }
-            }
-            contentItem.setUndocked();
-        } else { // dock
-            if (this.contentItems.length - this.calculateDockedCount() < 2)
-                throw new AssertError('Can\'t dock child when it is last in ' + this.type);
-            const autoside: {[columnRow: string]: { [firstLast: string]: Side }} = {
-                column: {
-                    first: Side.top,
-                    last: Side.bottom,
-                },
-                row: {
-                    first: Side.left,
-                    last: Side.right,
-                }
-            };
-            const required = autoside[this._configType][index ? 'last' : 'first'];
-            if (contentItem.headerSide !== required)
-                contentItem.positionHeader(required);
-
-            if (this._splitter[splitterIndex]) {
-                setElementDisplayVisibility(this._splitter[splitterIndex].element, false);
-            }
-            const dockedCount = this.calculateDockedCount();
-            for (let i = 0; i < this.contentItems.length; i++) {
-                if (this.contentItems[i] !== contentItem) {
-                    if (!this.isDocked(i))
-                        this.contentItems[i][this._dimension] += removedItemSize / (this.contentItems.length - 1 - dockedCount);
-                } else
-                    this.contentItems[i][this._dimension] = 0;
-            }
-            contentItem.setDocked({
-                docked: true,
-                dimension: this._dimension,
-                size: removedItemSize,
-                realSize: RowOrColumn.getElementDimensionSize(contentItem.element, this._dimension) - headerSize,
-            });
-            if (collapsed) {
-                RowOrColumn.setElementDimensionSize(contentItem.childElementContainer, this._dimension, 0);
-            }
-        }
-        contentItem.element.classList.toggle(DomConstants.ClassName.Docked, contentItem.docker.docked);
-        this.updateSize();
-        this.emitBaseBubblingEvent('stateChanged');
-        this.validateDocking();
-    }
-
-    /**
-     * Validate if row or column has ability to dock
-     * @internal
-     */
-    validateDocking(): void {
-        const can = this.contentItems.length - this.calculateDockedCount() > 1;
-        for (let i = 0; i < this.contentItems.length; ++i) {
-            const contentItem = this.contentItems[i];
-            if (contentItem instanceof Stack) {
-                contentItem.setDockable(this.isDocked(i) ?? can);
-                contentItem.setRowColumnClosable(can);
-            }
-        }
-    }
-
-    /**
      * Invoked recursively by the layout manager. ContentItem.init appends
      * the contentItem's DOM elements to the container, RowOrColumn init adds splitters
      * in between them
@@ -365,15 +242,6 @@ export class RowOrColumn extends ContentItem {
 
         for (let i = 0; i < this.contentItems.length - 1; i++) {
             this.contentItems[i].element.insertAdjacentElement('afterend', this.createSplitter(i).element);
-        }
-        for (let i = 0; i < this.contentItems.length; i++) {
-            const contentItem = this.contentItems[i];
-            // was previously
-            // if (this.contentItems[i]._header && this.contentItems[i]._header.docked)
-            // I think this.contentItems[i]._header.docked did not exist (and was always undefined) so the below may be wrong
-            if (contentItem instanceof Stack && contentItem.docker.docked) {
-                this.dock(contentItem, true, true);
-            }
         }
 
         this.initContentItems();
@@ -441,22 +309,12 @@ export class RowOrColumn extends ContentItem {
      */
     private calculateAbsoluteSizes() {
         const totalSplitterSize = (this.contentItems.length - 1) * this._splitterSize;
-        const headerSize = this.layoutManager.layoutConfig.dimensions.headerHeight;
         let { width: totalWidth, height: totalHeight } = getElementWidthAndHeight(this.element);
 
         if (this._isColumn) {
             totalHeight -= totalSplitterSize;
         } else {
             totalWidth -= totalSplitterSize;
-        }
-        for (let i = 0; i < this.contentItems.length; i++) {
-            if (this.isDocked(i)) {
-                if (this._isColumn) {
-                    totalHeight -= headerSize - this._splitterSize;
-                } else {
-                    totalWidth -= headerSize - this._splitterSize;
-                }
-            }
         }
 
         let totalAssigned = 0;
@@ -469,8 +327,6 @@ export class RowOrColumn extends ContentItem {
             } else {
                 itemSize = Math.floor(totalWidth * (this.contentItems[i].width / 100));
             }
-            if (this.isDocked(i))
-                itemSize = headerSize;
 
             totalAssigned += itemSize;
             itemSizes.push(itemSize);
@@ -676,29 +532,6 @@ export class RowOrColumn extends ContentItem {
             before: this.contentItems[index],
             after: this.contentItems[index + 1]
         };
-    }
-
-    /** @internal */
-    private isDocked(index: number) {
-        if (index >= this.contentItems.length) {
-            return false;
-        } else {
-            const contentItem = this.contentItems[index];
-            if (contentItem instanceof Stack) {
-                return contentItem.docker.docked;
-            } else {
-                return false;
-            }
-        }
-    }
-
-    /** @internal */
-    private calculateDockedCount() {
-        let count = 0;
-        for (let i = 0; i < this.contentItems.length; ++i)
-            if (this.isDocked(i))
-                count++;
-        return count;
     }
 
     /**

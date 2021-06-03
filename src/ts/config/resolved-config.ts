@@ -98,7 +98,6 @@ export namespace ResolvedHeaderedItemConfig {
         // undefined means get property value from LayoutConfig
         readonly show: false | Side | undefined;
         readonly popout: false | string | undefined;
-        readonly dock: false | string | undefined;
         readonly maximise: false | string | undefined;
         readonly close: string | undefined;
         readonly minimise: string | undefined;
@@ -113,7 +112,6 @@ export namespace ResolvedHeaderedItemConfig {
                 return {
                     show: show ?? original.show,
                     popout: original.popout,
-                    dock: original.dock,
                     close: original.close,
                     maximise: original.maximise,
                     minimise: original.minimise,
