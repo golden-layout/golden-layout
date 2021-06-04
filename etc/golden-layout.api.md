@@ -35,7 +35,6 @@ export class BrowserPopout extends EventEmitter {
     close(): void;
     // (undocumented)
     getGlInstance(): LayoutManager;
-    // @internal (undocumented)
     getWindow(): Window;
     popIn(): void;
     // (undocumented)
