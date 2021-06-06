@@ -166,7 +166,6 @@ export namespace HeaderedItemConfig {
                 const result: ResolvedHeaderedItemConfig.Header = {
                     show: header?.show ?? (hasHeaders === undefined ? undefined : hasHeaders ? ResolvedLayoutConfig.Header.defaults.show : false),
                     popout: header?.popout,
-                    dock: header?.dock,
                     maximise: header?.maximise,
                     close: header?.close,
                     minimise: header?.minimise,

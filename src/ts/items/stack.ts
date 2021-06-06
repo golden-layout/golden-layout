@@ -40,16 +40,10 @@ export class Stack extends ComponentParentableItem {
     /** @internal */
     private _headerSideChanged = false;
     /** @internal */
-    private _docker: Stack.Docker;
-    /** @internal */
     private readonly _initialWantMaximise: boolean;
     /** @internal */
     private _initialActiveItemIndex: number;
 
-    /** @internal */
-    private _elementMouseEnterEventListener = () => this.onElementMouseEnter();
-    /** @internal */
-    private _elementMouseLeaveEventListener = () => this.onElementMouseLeave();
     /** @internal */
     private _resizeListener = () => this.handleResize();
     /** @internal */
@@ -61,21 +55,21 @@ export class Stack extends ComponentParentableItem {
     get headerShow(): boolean { return this._header.show; }
     get headerSide(): Side { return this._header.side; }
     get headerLeftRightSided(): boolean { return this._header.leftRightSided; }
-    get dockEnabled(): boolean { return this._header.dockEnabled; }
-    /** @internal */
-    get docker(): Stack.Docker { return this._docker; }
     /** @internal */
     get contentAreaDimensions(): Stack.ContentAreaDimensions | undefined { return this._contentAreaDimensions; }
     /** @internal */
     get initialWantMaximise(): boolean { return this._initialWantMaximise; }
     get isMaximised(): boolean { return this === this.layoutManager.maximisedStack; }
+    get stackParent(): ContentItem { 
+        if (!this.parent) {
+            throw new Error('Stack should always have a parent');
+        }
+        return this.parent;
+    }
 
     /** @internal */
-    constructor(layoutManager: LayoutManager, config: ResolvedStackItemConfig,
-        /** @internal */
-        private _stackParent: Stack.Parent
-    ) {
-        super(layoutManager, config, _stackParent, Stack.createElement(document));
+    constructor(layoutManager: LayoutManager, config: ResolvedStackItemConfig, parent: ContentItem) {
+        super(layoutManager, config, parent, Stack.createElement(document));
 
         this._headerConfig = config.header;
         const layoutHeaderConfig = layoutManager.layoutConfig.header;
@@ -95,7 +89,6 @@ export class Stack extends ComponentParentableItem {
         // check for defined value for each item in order of Stack (this Item), Component (first child), Manager.
         const show = this._headerConfig?.show ?? componentHeaderConfig?.show ?? layoutHeaderConfig.show;
         const popout = this._headerConfig?.popout ?? componentHeaderConfig?.popout ?? layoutHeaderConfig.popout;
-        const dock = this._headerConfig?.dock ?? componentHeaderConfig?.dock ?? layoutHeaderConfig.dock;
         const maximise = this._headerConfig?.maximise ?? componentHeaderConfig?.maximise ?? layoutHeaderConfig.maximise;
         const close = this._headerConfig?.close ?? componentHeaderConfig?.close ?? layoutHeaderConfig.close;
         const minimise = this._headerConfig?.minimise ?? componentHeaderConfig?.minimise ?? layoutHeaderConfig.minimise;
@@ -106,8 +99,6 @@ export class Stack extends ComponentParentableItem {
             side: show === false ? Side.top : show,
             popoutEnabled: popout !== false,
             popoutLabel: popout === false ? '' : popout,
-            dockEnabled: dock !== false,
-            dockLabel: dock === false ? '' : dock,
             maximiseEnabled: this._maximisedEnabled,
             maximiseLabel: maximise === false ? '' : maximise,
             closeEnabled: close !== false,
@@ -123,7 +114,6 @@ export class Stack extends ComponentParentableItem {
             config.isClosable && close !== false,
             () => this.getActiveComponentItem(),
             () => this.remove(),
-            () => this.handleDockEvent(),
             () => this.handlePopoutEvent(),
             () => this.toggleMaximise(),
             (ev) => this.handleHeaderClickEvent(ev),
@@ -146,22 +136,11 @@ export class Stack extends ComponentParentableItem {
             this.on('minimised', this._minimisedListener);
         }
 
-        this.element.addEventListener('mouseenter', this._elementMouseEnterEventListener, { passive: true });
-        this.element.addEventListener('mouseleave', this._elementMouseLeaveEventListener, { passive: true });
         this.element.appendChild(this._header.element);
         this.element.appendChild(this._childElementContainer);
 
-        this.setUndocked();
         this.setupHeaderPosition();
         this._header.updateClosability();
-    }
-
-    /** @internal */
-    dock(mode?: boolean): void {
-        if (this._header.dockEnabled)
-            if (this._stackParent.isColumn || this._stackParent.isColumn) {
-                this._stackParent.dock(this, mode);
-            }
     }
 
     updateSize(): void {
@@ -204,10 +183,6 @@ export class Stack extends ComponentParentableItem {
         }
         
         this._header.updateClosability();
-		if (this._stackParent.isRow || this._stackParent.isColumn) {
-			this._stackParent.validateDocking();
-        }
-        
         this.initContentItems();
     }
 
@@ -260,30 +235,6 @@ export class Stack extends ComponentParentableItem {
     setFocusedValue(value: boolean): void {
         this._header.applyFocusedValue(value);
         super.setFocusedValue(value);
-    }
-
-    /** @internal */
-    setDocked(value: Stack.Docker): void {
-        if (!value.docked) {
-            throw new AssertError('SSD3396');
-        } else {
-            this._docker = value;
-        }
-    }
-
-    /** @internal */
-    setUndocked(): void {
-        this._docker = {
-            docked: false,
-            dimension: 'width', // value ignored
-            size: 0, // value ignored
-            realSize: 0, // value ignored
-        }
-    }
-
-    /** @internal */
-    setDockable(value: boolean): void {
-        this._header.setDockable(value);
     }
 
     /** @internal */
@@ -340,11 +291,7 @@ export class Stack extends ComponentParentableItem {
             this._header.updateTabSizes();
             this.updateSize();
             this._header.updateClosability();
-            if (this._stackParent.isRow || this._stackParent.isColumn) {
-                this._stackParent.validateDocking();
-            }
             this.emitStateChangedEvent();
-
             return index;
         }
     }
@@ -373,9 +320,6 @@ export class Stack extends ComponentParentableItem {
 
         if (!stackWillBeDeleted) {
             this._header.updateClosability();
-            if (this._stackParent.isRow || this._stackParent.isColumn) {
-                this._stackParent.validateDocking();
-            }
         }
 
         this.emitStateChangedEvent();
@@ -394,8 +338,6 @@ export class Stack extends ComponentParentableItem {
 
     maximise(): void {
         if (!this.isMaximised) {
-            this.dock(false);
-
             this.layoutManager.setMaximisedStack(this);
             this.emitStateChangedEvent();
         }
@@ -419,8 +361,6 @@ export class Stack extends ComponentParentableItem {
             this.off('maximised', this._maximisedListener);
             this.off('minimised', this._minimisedListener);
         }
-        this.element.removeEventListener('mouseenter', this._elementMouseEnterEventListener);
-        this.element.removeEventListener('mouseleave', this._elementMouseLeaveEventListener);
         this._header.destroy();
     }
 
@@ -502,7 +442,7 @@ export class Stack extends ComponentParentableItem {
         const isVertical = this._dropSegment === Stack.Segment.Top || this._dropSegment === Stack.Segment.Bottom;
         const isHorizontal = this._dropSegment === Stack.Segment.Left || this._dropSegment === Stack.Segment.Right;
         const insertBefore = this._dropSegment === Stack.Segment.Top || this._dropSegment === Stack.Segment.Left;
-        const hasCorrectParent = (isVertical && this._stackParent.isColumn) || (isHorizontal && this._stackParent.isRow);
+        const hasCorrectParent = (isVertical && this.stackParent.isColumn) || (isHorizontal && this.stackParent.isRow);
         const dimension = isVertical ? 'height' : 'width';
 
         /*
@@ -535,11 +475,11 @@ export class Stack extends ComponentParentableItem {
          * layd out in the correct way. Just add it as a child
          */
         if (hasCorrectParent) {
-            const index = this._stackParent.contentItems.indexOf(this);
-            this._stackParent.addChild(contentItem, insertBefore ? index : index + 1, true);
+            const index = this.stackParent.contentItems.indexOf(this);
+            this.stackParent.addChild(contentItem, insertBefore ? index : index + 1, true);
             this[dimension] *= 0.5;
             contentItem[dimension] = this[dimension];
-            this._stackParent.updateSize();
+            this.stackParent.updateSize();
             /*
              * This handles items that are dropped on top or bottom of a row or left / right of a column. We need
              * to create the appropriate contentItem for them to live in
@@ -548,7 +488,7 @@ export class Stack extends ComponentParentableItem {
             const type = isVertical ? ItemType.column : ItemType.row;
             const itemConfig = ResolvedItemConfig.createDefault(type) as ResolvedItemConfig;
             const rowOrColumn = this.layoutManager.createContentItem(itemConfig, this);
-            this._stackParent.replaceChild(this, rowOrColumn);
+            this.stackParent.replaceChild(this, rowOrColumn);
 
             rowOrColumn.addChild(contentItem, insertBefore ? 0 : undefined, true);
             rowOrColumn.addChild(this, insertBefore ? undefined : 0, true);
@@ -557,7 +497,6 @@ export class Stack extends ComponentParentableItem {
             contentItem[dimension] = 50;
             rowOrColumn.updateSize();
         }
-        this._stackParent.validateDocking();
     }
 
     /**
@@ -714,9 +653,6 @@ export class Stack extends ComponentParentableItem {
      * @internal
      */
     positionHeader(position: Side): void {
-        if (this._docker.docked) {
-            throw new Error('Can\'t change header position in docked stack');
-        }
         if (this._header.side !== position) {
             this._header.setSide(position);
             this._headerSideChanged = true;
@@ -725,31 +661,16 @@ export class Stack extends ComponentParentableItem {
     }
 
     /** @internal */
-    protected setParent(parent: ContentItem): void {
-        this._stackParent = parent as Stack.Parent;
-        super.setParent(parent);
-    }
-
-    /** @internal */
     private updateNodeSize(): void {
         if (this.element.style.display !== 'none') {
-            const isDocked = this._docker.docked;
             const content: WidthAndHeight = getElementWidthAndHeight(this.element);
 
             if (this._header.show) {
                 const dimension = this._header.leftRightSided ? WidthOrHeightPropertyName.width : WidthOrHeightPropertyName.height;
                 content[dimension] -= this.layoutManager.layoutConfig.dimensions.headerHeight;
             }
-            if (isDocked) {
-                content[this._docker.dimension] = this._docker.realSize;
-            }
-            if (!isDocked || this._docker.dimension === WidthOrHeightPropertyName.height) {
-                this._childElementContainer.style.width = numberToPixels(content.width);
-            }
-            if (!isDocked || this._docker.dimension === WidthOrHeightPropertyName.width) {
-                this._childElementContainer.style.height = numberToPixels(content.height);
-            }
-
+            this._childElementContainer.style.width = numberToPixels(content.width);
+            this._childElementContainer.style.height = numberToPixels(content.height);
             for (let i = 0; i < this.contentItems.length; i++) {
                 this.contentItems[i].element.style.width = numberToPixels(content.width);
                 this.contentItems[i].element.style.height = numberToPixels(content.height);
@@ -761,7 +682,8 @@ export class Stack extends ComponentParentableItem {
 
     /** @internal */
     private highlightHeaderDropZone(x: number): void {
-        const tabsLength = this._header.tabs.length;
+        // Only walk over the visible tabs
+        const tabsLength = this._header.lastVisibleTabIndex + 1;
 
         const dropTargetIndicator = this.layoutManager.dropTargetIndicator;
         if (dropTargetIndicator === null) {
@@ -783,6 +705,7 @@ export class Stack extends ComponentParentableItem {
             };
         } else {
             let tabIndex = 0;
+            // This indicates whether our cursor is exactly over a tab
             let isAboveTab = false;
             let tabTop: number;
             let tabLeft: number;
@@ -801,13 +724,14 @@ export class Stack extends ComponentParentableItem {
                     tabWidth = getElementWidth(tabElement);
                 }
 
-                if (x > tabLeft && x < tabLeft + tabWidth) {
+                if (x >= tabLeft && x < tabLeft + tabWidth) {
                     isAboveTab = true;
                 } else {
                     tabIndex++;
                 }
             } while (tabIndex < tabsLength && !isAboveTab);
 
+            // If we're not above any tabs, or to the right of any tab, we are out of the area, so give up
             if (isAboveTab === false && x < tabLeft) {
                 return;
             }
@@ -900,25 +824,6 @@ export class Stack extends ComponentParentableItem {
     }
 
     /** @internal */
-    private onElementMouseEnter() {
-        if (this._docker.docked) {
-            this._childElementContainer.style[this._docker.dimension] = numberToPixels(this._docker.realSize);
-        }
-    }
-
-    /** @internal */
-    private onElementMouseLeave() {
-        if (this._docker.docked) {
-            this._childElementContainer.style[this._docker.dimension] = numberToPixels(0);
-        }
-    }
-
-    /** @internal */
-    private handleDockEvent() {
-        this.dock();
-    }
-
-    /** @internal */
     private handlePopoutEvent() {
         this.popout();
     }
@@ -967,7 +872,6 @@ export class Stack extends ComponentParentableItem {
                 result = {
                     show,
                     popout: undefined,
-                    dock: undefined,
                     maximise: undefined,
                     close: undefined,
                     minimise: undefined,
@@ -1006,19 +910,6 @@ export namespace Stack {
     export type ContentAreaDimensions = {
         [segment: string]: ContentAreaDimension;
     };
-
-    /** @internal */
-    export interface Docker {
-        docked: boolean;
-        dimension: WidthOrHeightPropertyName;
-        size: number;
-        realSize: number;
-    }
-
-    export interface Parent extends ContentItem {
-        dock(contentItem: Stack, mode?: boolean, collapsed?: boolean): void;
-        validateDocking(): void;
-    }
 
     /** @internal */
     export function createElement(document: Document): HTMLDivElement {

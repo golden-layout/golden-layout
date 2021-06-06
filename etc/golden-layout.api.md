@@ -35,7 +35,6 @@ export class BrowserPopout extends EventEmitter {
     close(): void;
     // (undocumented)
     getGlInstance(): LayoutManager;
-    // @internal (undocumented)
     getWindow(): Window;
     popIn(): void;
     // (undocumented)
@@ -569,7 +568,6 @@ export class Header extends EventEmitter {
     _parent: Stack, settings: Header.Settings,
     _configClosable: boolean,
     _getActiveComponentItemEvent: Header.GetActiveComponentItemEvent, closeEvent: Header.CloseEvent,
-    _dockEvent: Header.DockEvent | undefined,
     _popoutEvent: Header.PopoutEvent | undefined,
     _maximiseToggleEvent: Header.MaximiseToggleEvent | undefined,
     _clickEvent: Header.ClickEvent | undefined,
@@ -589,10 +587,10 @@ export class Header extends EventEmitter {
     createTab(componentItem: ComponentItem, index: number): void;
     // @internal
     destroy(): void;
-    // @internal (undocumented)
-    get dockEnabled(): boolean;
     // (undocumented)
     get element(): HTMLElement;
+    // (undocumented)
+    get lastVisibleTabIndex(): number;
     // (undocumented)
     get layoutManager(): LayoutManager;
     // @internal (undocumented)
@@ -607,8 +605,6 @@ export class Header extends EventEmitter {
     processMinimised(): void;
     // @internal
     removeTab(componentItem: ComponentItem): void;
-    // @internal
-    setDockable(isDockable: boolean): boolean;
     // @internal
     setRowColumnClosable(value: boolean): void;
     // @internal (undocumented)
@@ -644,8 +640,6 @@ export namespace Header {
     // @internal (undocumented)
     export type ComponentRemoveEvent = (this: void, componentItem: ComponentItem) => void;
     // @internal (undocumented)
-    export type DockEvent = (this: void) => void;
-    // @internal (undocumented)
     export type GetActiveComponentItemEvent = (this: void) => ComponentItem | undefined;
     // @internal (undocumented)
     export type MaximiseToggleEvent = (this: void) => void;
@@ -657,10 +651,6 @@ export namespace Header {
         closeEnabled: boolean;
         // (undocumented)
         closeLabel: string;
-        // (undocumented)
-        dockEnabled: boolean;
-        // (undocumented)
-        dockLabel: string;
         // (undocumented)
         maximiseEnabled: boolean;
         // (undocumented)
@@ -1249,8 +1239,6 @@ export namespace ResolvedHeaderedItemConfig {
         // (undocumented)
         readonly close: string | undefined;
         // (undocumented)
-        readonly dock: false | string | undefined;
-        // (undocumented)
         readonly maximise: false | string | undefined;
         // (undocumented)
         readonly minimise: string | undefined;
@@ -1532,7 +1520,6 @@ export class RowOrColumn extends ContentItem {
     addComponent(componentType: JsonValue, componentState?: JsonValue, title?: string, index?: number): number;
     // (undocumented)
     addItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig, index?: number): number;
-    dock(contentItem: Stack, mode?: boolean, collapsed?: boolean): void;
     // @internal
     init(): void;
     // (undocumented)
@@ -1546,8 +1533,6 @@ export class RowOrColumn extends ContentItem {
     // (undocumented)
     toConfig(): ResolvedRowOrColumnItemConfig;
     updateSize(): void;
-    // @internal
-    validateDocking(): void;
 }
 
 // @public (undocumented)
@@ -1598,8 +1583,7 @@ export namespace Side {
 // @public (undocumented)
 export class Stack extends ComponentParentableItem {
     // @internal
-    constructor(layoutManager: LayoutManager, config: ResolvedStackItemConfig,
-    _stackParent: Stack.Parent);
+    constructor(layoutManager: LayoutManager, config: ResolvedStackItemConfig, parent: ContentItem);
     // (undocumented)
     addChild(contentItem: ContentItem, index?: number, focus?: boolean): number;
     // (undocumented)
@@ -1612,12 +1596,6 @@ export class Stack extends ComponentParentableItem {
     get contentAreaDimensions(): Stack.ContentAreaDimensions | undefined;
     // @internal (undocumented)
     destroy(): void;
-    // @internal (undocumented)
-    dock(mode?: boolean): void;
-    // (undocumented)
-    get dockEnabled(): boolean;
-    // @internal (undocumented)
-    get docker(): Stack.Docker;
     // @internal (undocumented)
     focusActiveContentItem(): void;
     // (undocumented)
@@ -1659,17 +1637,11 @@ export class Stack extends ComponentParentableItem {
     // @deprecated (undocumented)
     setActiveContentItem(item: ContentItem): void;
     // @internal (undocumented)
-    setDockable(value: boolean): void;
-    // @internal (undocumented)
-    setDocked(value: Stack.Docker): void;
-    // @internal (undocumented)
     setFocusedValue(value: boolean): void;
     // @internal (undocumented)
-    protected setParent(parent: ContentItem): void;
-    // @internal (undocumented)
     setRowColumnClosable(value: boolean): void;
-    // @internal (undocumented)
-    setUndocked(): void;
+    // (undocumented)
+    get stackParent(): ContentItem;
     // (undocumented)
     toConfig(): ResolvedStackItemConfig;
     toggleMaximise(): void;
@@ -1692,24 +1664,6 @@ export namespace Stack {
     };
     // @internal (undocumented)
     export function createElement(document: Document): HTMLDivElement;
-    // @internal (undocumented)
-    export interface Docker {
-        // (undocumented)
-        dimension: WidthOrHeightPropertyName;
-        // (undocumented)
-        docked: boolean;
-        // (undocumented)
-        realSize: number;
-        // (undocumented)
-        size: number;
-    }
-    // (undocumented)
-    export interface Parent extends ContentItem {
-        // (undocumented)
-        dock(contentItem: Stack, mode?: boolean, collapsed?: boolean): void;
-        // (undocumented)
-        validateDocking(): void;
-    }
     // @internal (undocumented)
     export const enum Segment {
         // (undocumented)

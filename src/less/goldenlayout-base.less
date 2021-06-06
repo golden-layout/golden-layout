@@ -69,6 +69,7 @@
       position: absolute;
       cursor: ns-resize;
       touch-action: none;
+      user-select: none;
     }
   }
 
@@ -81,6 +82,7 @@
       position: absolute;
       cursor: ew-resize;
       touch-action: none;
+      user-select: none;
     }
   }
 }
@@ -198,30 +200,6 @@
     > .lm_header {
       position: absolute;
       bottom: 0;
-    }
-  }
-}
-
-.lm_stack.lm_docked {
-  overflow: visible;
-  z-index: 3;
-
-  > .lm_header {
-    z-index: 5;
-  }
-
-  > .lm_items {
-    *z-index: 3;
-    transition: height .4s ease-in;
-    border: solid 2px;
-    border-image-slice: 1 !important;
-    margin: -2px 0;
-  }
-
-  &.lm_left,
-  &.lm_right {
-    > .lm_items {
-      transition: width .4s ease-in, height .001s linear;
     }
   }
 }
