@@ -7,7 +7,7 @@ import { ContentItem } from '../items/content-item';
 import { LayoutManager } from '../layout-manager';
 import { EventEmitter } from '../utils/event-emitter';
 import { JsonValue } from '../utils/types';
-import { deepExtend, setElementHeight, setElementWidth } from '../utils/utils';
+import { deepExtend, setElementHeight, setElementWidth, numberToPixels } from '../utils/utils';
 
 /** @public */
 export class ComponentContainer extends EventEmitter {
@@ -311,6 +311,13 @@ export class ComponentContainer extends EventEmitter {
             this._height = height;
             setElementWidth(this._element, width);
             setElementHeight(this._element, height);
+            if (this._element.parentNode !== this.parent.element) {
+                const box = this.parent.element.getBoundingClientRect();
+                const root = this.layoutManager.container.getBoundingClientRect();
+                this._element.style.position = "absolute";
+                this._element.style.left = numberToPixels(box.x - root.x);
+                this._element.style.top = numberToPixels(box.y - root.y);
+            }
             this.emit('resize');
             if (this._isShownWithZeroDimensions && (this._height !== 0 || this._width !== 0)) {
                 this._isShownWithZeroDimensions = false;
@@ -322,8 +329,9 @@ export class ComponentContainer extends EventEmitter {
 
     /** @internal */
     private releaseComponent() {
-        this.emit('beforeComponentRelease', this._component);
-        this.layoutManager.releaseComponent(this, this._component);
+        const component = this._component || this._element;
+        this.emit('beforeComponentRelease', component);
+        this.layoutManager.releaseComponent(this, component);
     }
 }
 

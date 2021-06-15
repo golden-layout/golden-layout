@@ -130,6 +130,8 @@ export class TabsContainer {
      * Pushes the tabs to the tab dropdown if the available space is not sufficient
      */
     updateTabSizes(availableWidth: number, activeComponentItem: ComponentItem | undefined): void {
+        if (!activeComponentItem)
+            return;
         let dropDownActive = false;
         const success = this.tryUpdateTabSizes(dropDownActive, availableWidth, activeComponentItem);
         if (!success) {

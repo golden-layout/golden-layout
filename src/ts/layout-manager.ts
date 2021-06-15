@@ -103,6 +103,7 @@ export abstract class LayoutManager extends EventEmitter {
 
     readonly isSubWindow: boolean;
     layoutConfig: ResolvedLayoutConfig;
+    componentParent: HTMLElement | undefined;
 
     /**
      * If a new component is required and:
@@ -114,6 +115,7 @@ export abstract class LayoutManager extends EventEmitter {
      * {@link (LayoutManager:class).releaseComponentEvent} instead of registering a constructor callback
      */
     getComponentEvent: LayoutManager.GetComponentEventHandler | undefined;
+    createComponent: LayoutManager.CreateComponentHandler | undefined;
     releaseComponentEvent: LayoutManager.ReleaseComponentEventHandler | undefined;
 
     get container(): HTMLElement { return this._containerElement; }
@@ -209,6 +211,7 @@ export abstract class LayoutManager extends EventEmitter {
             }
             this._dragSources = [];
 
+            this.createComponent = undefined;
             this.getComponentEvent = undefined;
             this.releaseComponentEvent = undefined;
 
@@ -1784,6 +1787,8 @@ export namespace LayoutManager {
     export type ComponentConstructor = new(container: ComponentContainer, state: JsonValue | undefined) => ComponentItem.Component;
     export type ComponentFactoryFunction = (container: ComponentContainer, state: JsonValue | undefined) => ComponentItem.Component;
     export type GetComponentConstructorCallback = (this: void, config: ResolvedComponentItemConfig) => ComponentConstructor
+    export type CreateComponentHandler =
+        (this: void, item: ComponentItem, parentElement : HTMLElement, itemConfig: ResolvedComponentItemConfig) => HTMLElement;
     export type GetComponentEventHandler =
         (this: void, container: ComponentContainer, itemConfig: ResolvedComponentItemConfig) => ComponentItem.Component;
     export type ReleaseComponentEventHandler =

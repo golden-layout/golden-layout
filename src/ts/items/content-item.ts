@@ -103,7 +103,7 @@ export abstract class ContentItem extends EventEmitter {
         this._pendingEventPropagations = {};
         this._throttledEvents = ['stateChanged'];
 
-        this._contentItems = this.createContentItems(config.content);
+        this._contentItems = this.createContentItems(config.content || []);
     }
 
     /**

@@ -662,7 +662,7 @@ export class Stack extends ComponentParentableItem {
 
     /** @internal */
     private updateNodeSize(): void {
-        if (this.element.style.display !== 'none') {
+        if (this.element.parentNode && this.element.style.display !== 'none') {
             const content: WidthAndHeight = getElementWidthAndHeight(this.element);
 
             if (this._header.show) {

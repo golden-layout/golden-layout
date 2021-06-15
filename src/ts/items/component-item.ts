@@ -5,7 +5,7 @@ import { UnexpectedNullError } from '../errors/internal-error';
 import { LayoutManager } from '../layout-manager';
 import { DomConstants } from '../utils/dom-constants';
 import { ItemType, JsonValue } from '../utils/types';
-import { getElementWidthAndHeight, setElementHeight, setElementWidth } from '../utils/utils';
+import { getElementWidthAndHeight, setElementHeight, setElementWidth, setElementDisplayVisibility, numberToPixels } from '../utils/utils';
 import { ComponentParentableItem } from './component-parentable-item';
 import { ContentItem } from './content-item';
 
@@ -58,9 +58,15 @@ export class ComponentItem extends ContentItem {
 
         this._initialWantMaximise = config.maximised;
 
-        const containerElement = document.createElement('div');
-        containerElement.classList.add(DomConstants.ClassName.Content);
-        this.element.appendChild(containerElement);
+        const parentElement = layoutManager.componentParent || this.element;
+        let containerElement;
+        if (layoutManager.createComponent) {
+            containerElement = (layoutManager.createComponent)(this, parentElement, config);
+        } else {
+            containerElement = document.createElement('div');
+            containerElement.classList.add(DomConstants.ClassName.Content);
+            parentElement.appendChild(containerElement);
+        }
         this._container = new ComponentContainer(config, this, layoutManager, containerElement,
             (itemConfig) => this.handleUpdateItemConfigEvent(itemConfig),
             () => this.show(),
@@ -158,12 +164,16 @@ export class ComponentItem extends ContentItem {
     /** @internal */
     hide(): void {
         this._container.checkEmitHide();
+        if (this.container.element.parentNode != this.element)
+            setElementDisplayVisibility(this.container.element, false);
         super.hide();
     }
 
     /** @internal */
     show(): void {
         this._container.checkEmitShow();
+        if (this.container.element.parentNode != this.element)
+            setElementDisplayVisibility(this.container.element, true);
         super.show();
     }
 
@@ -214,7 +224,7 @@ export class ComponentItem extends ContentItem {
 
     /** @internal */
     private updateNodeSize(): void {
-        if (this.element.style.display !== 'none') {
+        if (this.element.parentNode && this.element.style.display !== 'none') {
             // Do not update size of hidden components to prevent unwanted reflows
             const { width, height } = getElementWidthAndHeight(this.element);
             this._container.setSizeToNodeSize(width, height);
