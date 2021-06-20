@@ -1,3 +1,4 @@
+import { UnexpectedNullError } from '../errors/internal-error';
 import { LayoutManager } from '../layout-manager';
 import { EventEmitter } from './event-emitter';
 
@@ -120,7 +121,12 @@ export class EventHub extends EventEmitter {
         };
 
         const event = new CustomEvent<EventHub.ChildEventDetail>(EventHub.ChildEventName, eventInit);
-        globalThis.opener.dispatchEvent(event);
+        const opener = globalThis.opener;
+        if (opener === null) {
+            throw new UnexpectedNullError('EHPTP15778')
+        }
+
+        opener.dispatchEvent(event);
     }
 
     /**

@@ -96,7 +96,7 @@ export class BrowserPopout extends EventEmitter {
 
     /**
      * Retrieves the native BrowserWindow backing this popout.
-     * Might throw an {@link (UnexpectedNullError:class)} exception when the window is not initialized yet.
+     * Might throw an UnexpectedNullError exception when the window is not initialized yet.
      * @public
      */
     getWindow(): Window {
