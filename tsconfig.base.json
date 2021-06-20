@@ -9,6 +9,7 @@
     "strictNullChecks": true,
     "noImplicitAny": true,
     "noImplicitThis": true,
+    "noImplicitOverride": true,
     "strictBindCallApply": true,
     "alwaysStrict": true,
     "noImplicitReturns": true,

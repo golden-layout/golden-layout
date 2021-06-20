@@ -71,7 +71,7 @@ export class ComponentItem extends ContentItem {
     }
 
     /** @internal */
-    destroy(): void {
+    override destroy(): void {
         this._container.destroy()
         super.destroy();
     }
@@ -128,7 +128,7 @@ export class ComponentItem extends ContentItem {
     }
 
     /** @internal */
-    init(): void {
+    override init(): void {
         this.updateNodeSize();
 
         super.init();
@@ -156,13 +156,13 @@ export class ComponentItem extends ContentItem {
     }
 
     /** @internal */
-    hide(): void {
+    override hide(): void {
         this._container.checkEmitHide();
         super.hide();
     }
 
     /** @internal */
-    show(): void {
+    override show(): void {
         this._container.checkEmitShow();
         super.show();
     }
@@ -202,7 +202,7 @@ export class ComponentItem extends ContentItem {
     }
 
     /** @internal */
-    protected setParent(parent: ContentItem): void {
+    protected override setParent(parent: ContentItem): void {
         this._parentItem = parent as ComponentParentableItem;
         super.setParent(parent);
     }

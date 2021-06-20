@@ -60,7 +60,7 @@ export class Stack extends ComponentParentableItem {
     /** @internal */
     get initialWantMaximise(): boolean { return this._initialWantMaximise; }
     get isMaximised(): boolean { return this === this.layoutManager.maximisedStack; }
-    get stackParent(): ContentItem { 
+    get stackParent(): ContentItem {
         if (!this.parent) {
             throw new Error('Stack should always have a parent');
         }
@@ -149,7 +149,7 @@ export class Stack extends ComponentParentableItem {
     }
 
     /** @internal */
-    init(): void {
+    override init(): void {
         if (this.isInitialised === true) return;
 
         this.updateNodeSize();
@@ -181,7 +181,7 @@ export class Stack extends ComponentParentableItem {
                 this._header.updateTabSizes();
             }
         }
-        
+
         this._header.updateClosability();
         this.initContentItems();
     }
@@ -232,7 +232,7 @@ export class Stack extends ComponentParentableItem {
     }
 
     /** @internal */
-    setFocusedValue(value: boolean): void {
+    override setFocusedValue(value: boolean): void {
         this._header.applyFocusedValue(value);
         super.setFocusedValue(value);
     }
@@ -275,11 +275,11 @@ export class Stack extends ComponentParentableItem {
         return this.addChild(contentItem, index);
     }
 
-    addChild(contentItem: ContentItem, index?: number, focus = false): number {
+    override addChild(contentItem: ContentItem, index?: number, focus = false): number {
         if(index !== undefined && index > this.contentItems.length){
             index -= 1;
             throw new AssertError('SAC99728'); // undisplayChild() removed so this condition should no longer occur
-        }        
+        }
 
         if (!(contentItem instanceof ComponentItem)) {
             throw new AssertError('SACC88532'); // Stacks can only have Component children
@@ -296,7 +296,7 @@ export class Stack extends ComponentParentableItem {
         }
     }
 
-    removeChild(contentItem: ContentItem, keepChild: boolean): void {
+    override removeChild(contentItem: ContentItem, keepChild: boolean): void {
         const componentItem = contentItem as ComponentItem;
         const index = this.contentItems.indexOf(componentItem);
         const stackWillBeDeleted = this.contentItems.length === 1;
@@ -307,7 +307,7 @@ export class Stack extends ComponentParentableItem {
             }
             if (!stackWillBeDeleted) {
                 // At this point we're already sure we have at least one content item left *after*
-                // removing contentItem, so we can safely assume index 1 is a valid one if 
+                // removing contentItem, so we can safely assume index 1 is a valid one if
                 // the index of contentItem is 0, otherwise we just use the previous content item.
                 const newActiveComponentIdx = index === 0 ? 1 : index - 1;
                 this.setActiveComponentItem(this.contentItems[newActiveComponentIdx] as ComponentItem, false);
@@ -351,7 +351,7 @@ export class Stack extends ComponentParentableItem {
     }
 
     /** @internal */
-    destroy(): void {
+    override destroy(): void {
         if (this._activeComponentItem?.focused) {
             this._activeComponentItem.blur();
         }
@@ -412,7 +412,7 @@ export class Stack extends ComponentParentableItem {
      * @internal
      */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    onDrop(contentItem: ContentItem, area: ContentItem.Area): void {
+    override onDrop(contentItem: ContentItem, area: ContentItem.Area): void {
         /*
          * The item was dropped on the header area. Just add it as a child of this stack and
          * get the hell out of this logic
@@ -458,7 +458,7 @@ export class Stack extends ComponentParentableItem {
 
 
         /*
-         * If the contentItem that's being dropped is not dropped on a Stack (cases which just passed above and 
+         * If the contentItem that's being dropped is not dropped on a Stack (cases which just passed above and
          * which would wrap the contentItem in a Stack) we need to check whether contentItem is a RowOrColumn.
          * If it is, we need to re-wrap it in a Stack like it was when it was dragged by its Tab (it was dragged!).
          */
@@ -507,7 +507,7 @@ export class Stack extends ComponentParentableItem {
      * @param y - Absolute Screen Y
      * @internal
      */
-    highlightDropZone(x: number, y: number): void {
+    override highlightDropZone(x: number, y: number): void {
         for (const key in this._contentAreaDimensions) {
             const segment = key as Stack.Segment;
             const area = this._contentAreaDimensions[segment].hoverArea;
@@ -787,7 +787,7 @@ export class Stack extends ComponentParentableItem {
 
         //if ([Side.right, Side.bottom].includes(this._header.side)) {
         //    // move the header behind the content.
-        //    this.element.appendChild(this._header.element);  
+        //    this.element.appendChild(this._header.element);
         //}
         this.updateSize();
     }
@@ -917,5 +917,5 @@ export namespace Stack {
         element.classList.add(DomConstants.ClassName.Item);
         element.classList.add(DomConstants.ClassName.Stack);
         return element;
-    } 
+    }
 }

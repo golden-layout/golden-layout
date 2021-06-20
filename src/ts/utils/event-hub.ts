@@ -52,7 +52,7 @@ export class EventHub extends EventEmitter {
      * @param args - Additional arguments that will be passed to the listener
      * @public
      */
-    emit<K extends keyof EventEmitter.EventParamsMap>(eventName: K, ...args: EventEmitter.EventParamsMap[K]): void {
+    override emit<K extends keyof EventEmitter.EventParamsMap>(eventName: K, ...args: EventEmitter.EventParamsMap[K]): void {
         if (eventName === 'userBroadcast') {
             // Explicitly redirect the user broadcast to our overridden method.
             this.emitUserBroadcast(...args);

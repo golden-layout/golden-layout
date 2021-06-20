@@ -431,7 +431,7 @@ export abstract class ContentItem extends EventEmitter {
         }
     }
 
-    tryBubbleEvent(name: string, args: unknown[]): void {
+    override tryBubbleEvent(name: string, args: unknown[]): void {
         if (args.length === 1) {
             const event = args[0];
             if (event instanceof EventEmitter.BubblingEvent &&

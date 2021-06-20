@@ -21,7 +21,7 @@ export class GroundItem extends ComponentParentableItem {
     private readonly _containerElement: HTMLElement;
 
     constructor(layoutManager: LayoutManager, rootItemConfig: ResolvedRootItemConfig | undefined, containerElement: HTMLElement) {
-      
+
         super(layoutManager, ResolvedGroundItemConfig.create(rootItemConfig), null, GroundItem.createElement(document));
 
         this.isGround = true;
@@ -30,7 +30,7 @@ export class GroundItem extends ComponentParentableItem {
         this._containerElement.appendChild(this.element);
     }
 
-    init(): void {
+    override init(): void {
         if (this.isInitialised === true) return;
 
         this.updateNodeSize();
@@ -44,7 +44,7 @@ export class GroundItem extends ComponentParentableItem {
         this.initContentItems();
     }
 
-    /** 
+    /**
      * Loads a new Layout
      * Internal only.  To load a new layout with API, use {@link (LayoutManager:class).loadLayout}
      */
@@ -63,7 +63,7 @@ export class GroundItem extends ComponentParentableItem {
      * Internal only.  To load a add with API, use {@link (LayoutManager:class).addItem}
      * @returns -1 if added as root otherwise index in root ContentItem's content
      */
-    addItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig, 
+    addItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig,
         index?: number
     ): number {
         this.layoutManager.checkMinimiseMaximisedStack();
@@ -71,7 +71,7 @@ export class GroundItem extends ComponentParentableItem {
         const resolvedItemConfig = ItemConfig.resolve(itemConfig);
         let parent: ContentItem;
         if (this.contentItems.length > 0) {
-            parent = this.contentItems[0];          
+            parent = this.contentItems[0];
         } else {
             parent = this;
         }
@@ -103,7 +103,7 @@ export class GroundItem extends ComponentParentableItem {
      * Adds a Root ContentItem.
      * Internal only.  To replace Root ContentItem with API, use {@link (LayoutManager:class).loadLayout}
      */
-    addChild(contentItem: ContentItem, index?: number): number {
+     override addChild(contentItem: ContentItem, index?: number): number {
         if (this.contentItems.length > 0) {
             throw new Error('Ground node can only have a single child');
         } else {
@@ -119,7 +119,7 @@ export class GroundItem extends ComponentParentableItem {
     }
 
     /** @internal */
-    calculateConfigContent(): ResolvedRootItemConfig[] {
+    override calculateConfigContent(): ResolvedRootItemConfig[] {
         const contentItems = this.contentItems;
         const count = contentItems.length;
         const result = new Array<ResolvedRootItemConfig>(count);
@@ -188,12 +188,12 @@ export class GroundItem extends ComponentParentableItem {
         return result;
     }
 
-    highlightDropZone(x: number, y: number, area: AreaLinkedRect): void {
+    override highlightDropZone(x: number, y: number, area: AreaLinkedRect): void {
         this.layoutManager.tabDropPlaceholder.remove();
         super.highlightDropZone(x, y, area);
     }
 
-    onDrop(contentItem: ContentItem, area: GroundItem.Area): void {
+    override onDrop(contentItem: ContentItem, area: GroundItem.Area): void {
 
         if (contentItem.isComponent) {
             const itemConfig = ResolvedStackItemConfig.createDefault();
@@ -209,7 +209,7 @@ export class GroundItem extends ComponentParentableItem {
             this.addChild(contentItem);
         } else {
             /*
-             * If the contentItem that's being dropped is not dropped on a Stack (cases which just passed above and 
+             * If the contentItem that's being dropped is not dropped on a Stack (cases which just passed above and
              * which would wrap the contentItem in a Stack) we need to check whether contentItem is a RowOrColumn.
              * If it is, we need to re-wrap it in a Stack like it was when it was dragged by its Tab (it was dragged!).
              */
@@ -373,7 +373,7 @@ export namespace GroundItem {
             x1: 'x2',
         };
     }
-    
+
     export function createElement(document: Document): HTMLDivElement {
         const element = document.createElement('div');
         element.classList.add(DomConstants.ClassName.GoldenLayout);

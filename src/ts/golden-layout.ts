@@ -38,10 +38,10 @@ export class GoldenLayout extends LayoutManager {
      * If called before the document is ready it adds itself as a listener
      * to the document.ready event
      * @deprecated LayoutConfig should not be loaded in {@link (LayoutManager:class)} constructor, but rather in a
-     * {@link (LayoutManager:class).loadLayout} call.  If LayoutConfig is not specified in {@link (LayoutManager:class)} constructor, 
+     * {@link (LayoutManager:class).loadLayout} call.  If LayoutConfig is not specified in {@link (LayoutManager:class)} constructor,
      * then init() will be automatically called internally and should not be called externally.
      */
-    init(): void {
+    override init(): void {
         /**
          * Create the popout windows straight away. If popouts are blocked
          * an error is thrown on the same 'thread' rather than a timeout and can
@@ -162,7 +162,7 @@ export namespace GoldenLayout {
     {
         const windowConfigKey = subWindowChecked ? null : getQueryStringParam('gl-window');
         subWindowChecked = true;
-        const isSubWindow = windowConfigKey !== null;  
+        const isSubWindow = windowConfigKey !== null;
 
         let config: ResolvedLayoutConfig | undefined;
         if (windowConfigKey !== null) {

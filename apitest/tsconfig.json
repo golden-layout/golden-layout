@@ -15,6 +15,7 @@
 	   "noUnusedLocals":true,
 	   "strictPropertyInitialization": true,
 	   "noImplicitAny": true,
+       "noImplicitOverride": true,
 	   "downlevelIteration": true,
        "baseUrl": "./",
 	},
