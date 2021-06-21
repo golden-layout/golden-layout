@@ -4,12 +4,21 @@ export class TextComponent {
     private static readonly undefinedTextValue = '<undefined>';
     static readonly typeName = 'text';
 
+    private _rootElement: HTMLElement;
     private _inputElement: HTMLInputElement;
 
     private _containerClickListener = () => this.handleClickFocusEvent();
     private _containerFocusinListener = () => this.handleClickFocusEvent();
 
-    constructor(private _container: ComponentContainer, state: JsonValue | undefined) {
+    get rootHtmlElement(): HTMLElement { return this._rootElement; }
+
+    constructor(private _container: ComponentContainer, state: JsonValue | undefined, virtual: boolean) {
+        if (virtual) {
+            this._rootElement = document.createElement('div');
+        } else {
+            this._rootElement = this._container.element;
+        }
+
         let textValue: string;
         if (state === undefined) {
             textValue = TextComponent.undefinedTextValue;
@@ -26,12 +35,12 @@ export class TextComponent {
         this._inputElement.type = "text";
         this._inputElement.value = textValue;
         this._inputElement.style.display = "block";
-        this._container.element.appendChild(this._inputElement);
+        this._rootElement.appendChild(this._inputElement);
 
         this._container.stateRequestEvent = () => this.handleContainerStateRequestEvent();
 
-        this._container.element.addEventListener('click', this._containerClickListener);
-        this._container.element.addEventListener('focusin', this._containerFocusinListener);
+        this._rootElement.addEventListener('click', this._containerClickListener);
+        this._rootElement.addEventListener('focusin', this._containerFocusinListener);
     }
 
     handleContainerStateRequestEvent(): TextComponent.State | undefined {

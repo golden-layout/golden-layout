@@ -1,9 +1,10 @@
-import { ComponentContainer, JsonValue } from '..';
+import { ComponentContainer, GoldenLayout, JsonValue } from '..';
 
-export class ColorComponent {
+export class ColorComponent implements GoldenLayout.VirtuableComponent {
     static readonly typeName = 'color';
     static readonly undefinedColor = 'MediumVioletRed';
 
+    private _rootElement: HTMLElement;
     private _paraElement: HTMLParagraphElement;
     private _inputElement: HTMLInputElement;
 
@@ -13,7 +14,15 @@ export class ColorComponent {
     private _inputChangeListener = () => this.handleInputChangeEvent();
     private _showEventListener = () => this.handleShowEvent();
 
-    constructor(private _container: ComponentContainer, state: JsonValue | undefined) {
+    get rootHtmlElement(): HTMLElement { return this._rootElement; }
+
+    constructor(private _container: ComponentContainer, state: JsonValue | undefined, virtual: boolean) {
+        if (virtual) {
+            this._rootElement = document.createElement('div');
+        } else {
+            this._rootElement = this._container.element;
+        }
+
         let color: string;
         if (state === undefined) {
             color = ColorComponent.undefinedColor;
@@ -30,7 +39,7 @@ export class ColorComponent {
         this._paraElement.style.color = color;
         const title = this._container.title;
         this._paraElement.innerText = (title ?? "unknown") + " component";
-        this._container.element.appendChild(this._paraElement);
+        this._rootElement.appendChild(this._paraElement);
 
         this._inputElement = document.createElement('input');
         this._inputElement.type = "text";
@@ -38,14 +47,14 @@ export class ColorComponent {
         this._inputElement.style.display = "block";
 
         this._inputElement.addEventListener('input', this._inputChangeListener, { passive: true });
-        this._container.element.appendChild(this._inputElement);
+        this._rootElement.appendChild(this._inputElement);
 
         this._container.stateRequestEvent = () => this.handleContainerStateRequestEvent();
         this._container.addEventListener('beforeComponentRelease', this._beforeComponentReleaseEventListener);
         this._container.addEventListener('show', this._showEventListener);
 
-        this._container.element.addEventListener('click', this._containerClickListener);
-        this._container.element.addEventListener('focusin', this._containerFocusinListener);
+        this._rootElement.addEventListener('click', this._containerClickListener);
+        this._rootElement.addEventListener('focusin', this._containerFocusinListener);
     }
 
     private handleInputChangeEvent() {
@@ -63,17 +72,17 @@ export class ColorComponent {
 
     private handleBeforeComponentReleaseEvent(): void {
         this._inputElement.removeEventListener('change', this._inputChangeListener);
-        this._container.element.removeChild(this._inputElement);
-        this._container.element.removeChild(this._paraElement);
+        this._rootElement.removeChild(this._inputElement);
+        this._rootElement.removeChild(this._paraElement);
         this._container.removeEventListener('show', this._showEventListener);
         this._container.removeEventListener('beforeComponentRelease', this._beforeComponentReleaseEventListener);
-        this._container.element.removeEventListener('click', this._containerClickListener);
-        this._container.element.removeEventListener('focusin', this._containerFocusinListener);
+        this._rootElement.removeEventListener('click', this._containerClickListener);
+        this._rootElement.removeEventListener('focusin', this._containerFocusinListener);
     }
 
     private handleShowEvent(): void {
         this._paraElement.style.backgroundColor = 'purple';
-        setTimeout(() => { 
+        setTimeout(() => {
             this._paraElement.style.backgroundColor = ''
         }, 1000);
     }

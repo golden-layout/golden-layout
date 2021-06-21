@@ -15,7 +15,7 @@ export default class TestTools {
 		return myLayout;
 	}
 
-	public static createTestComponent( container: ComponentContainer, state?: JsonValue): void {
+	public static createTestComponent( container: ComponentContainer, state?: JsonValue): undefined {
 		if ( state === undefined ) {
 			const span = document.createElement('span');
 			span.innerText = 'that worked';
@@ -27,11 +27,12 @@ export default class TestTools {
 				container.element.outerHTML = html;
 			}
 		}
+        return undefined;
 	}
 
 	/**
 	 * Takes a path of type.index.type.index, and returns the corresponding resolved item config
-	 * 
+	 *
 	 * @example
 	 * verifyPath('row.0.stack.1.component', layout)
 	 * // returns object of type ComponentItemConfig

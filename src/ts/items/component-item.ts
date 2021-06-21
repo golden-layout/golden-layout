@@ -32,7 +32,7 @@ export class ComponentItem extends ContentItem {
     get reorderEnabled(): boolean { return this._reorderEnabled; }
     /** @internal */
     get initialWantMaximise(): boolean { return this._initialWantMaximise; }
-    get component(): ComponentItem.Component { return this._container.component; }
+    get component(): ComponentContainer.Component | undefined { return this._container.component; }
     get container(): ComponentContainer { return this._container; }
     get parentItem(): ComponentParentableItem { return this._parentItem; }
 
@@ -157,13 +157,13 @@ export class ComponentItem extends ContentItem {
 
     /** @internal */
     override hide(): void {
-        this._container.checkEmitHide();
+        this._container.notifyVisibilityChanged(false);
         super.hide();
     }
 
     /** @internal */
     override show(): void {
-        this._container.checkEmitShow();
+        this._container.notifyVisibilityChanged(false);
         super.show();
     }
 
@@ -227,5 +227,5 @@ export type Component = ComponentItem;
 
 /** @public */
 export namespace ComponentItem {
-    export type Component = unknown;
+    export type Component = ComponentContainer.Component;
 }

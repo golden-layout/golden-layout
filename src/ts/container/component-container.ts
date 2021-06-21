@@ -14,7 +14,7 @@ export class ComponentContainer extends EventEmitter {
     /** @internal */
     private _componentType: JsonValue;
     /** @internal */
-    private _component: ComponentItem.Component;
+    private _boundComponent: ComponentContainer.BoundComponent;
     /** @internal */
     private _width: number | null;
     /** @internal */
@@ -33,6 +33,8 @@ export class ComponentContainer extends EventEmitter {
     private _tab: Tab;
 
     stateRequestEvent: ComponentContainer.StateRequestEventHandler | undefined;
+    sizeChangedEvent: ComponentContainer.SizeChangedEvent | undefined;
+    visibilityChangedEvent: ComponentContainer.VisibilityChangedEvent | undefined;
 
     get width(): number | null { return this._width; }
     get height(): number | null { return this._height; }
@@ -40,7 +42,8 @@ export class ComponentContainer extends EventEmitter {
     /** @internal @deprecated use {@link (ComponentContainer:class).componentType} */
     get componentName(): JsonValue { return this._componentType; }
     get componentType(): JsonValue { return this._componentType; }
-    get component(): ComponentItem.Component { return this._component; }
+    get virtual(): boolean { return this._boundComponent.virtual; }
+    get component(): ComponentContainer.Component | undefined { return this._boundComponent.component; }
     get tab(): Tab { return this._tab; }
     get title(): string { return this._parent.title; }
     get layoutManager(): LayoutManager { return this._layoutManager; }
@@ -84,7 +87,7 @@ export class ComponentContainer extends EventEmitter {
         this._initialState = _config.componentState;
         this._state = this._initialState;
 
-        this._component = this.layoutManager.getComponent(this, _config);
+        this._boundComponent = this.layoutManager.bindComponent(this, _config);
     }
 
     /** @internal */
@@ -105,15 +108,6 @@ export class ComponentContainer extends EventEmitter {
      */
     hide(): void {
         this._hideEvent();
-    }
-
-    /** @internal */
-    checkEmitHide(): void {
-        if (!this._isHidden) {
-            this.emit('hide');
-            this._isHidden = true;
-            this._isShownWithZeroDimensions = false;
-        }
     }
 
     /**
@@ -138,27 +132,6 @@ export class ComponentContainer extends EventEmitter {
         this._blurEvent(suppressEvent);
     }
 
-    /** @internal */
-    checkEmitShow(): void {
-        // emit 'show' only if the container has a valid size
-        if (this._isHidden) {
-            this._isHidden = false;
-            if (this._height === 0 && this._width === 0) {
-                this._isShownWithZeroDimensions = true;
-            } else {
-                this._isShownWithZeroDimensions = false;
-                this.emit('shown');
-                this.emit('show');
-            }
-        } else {
-            if (this._isShownWithZeroDimensions && (this._height !== 0 || this._width !== 0)) {
-                this._isShownWithZeroDimensions = false;
-                this.emit('shown');
-                this.emit('show');
-            }
-        }
-    }
-
     /**
      * Set the size from within the container. Traverses up
      * the item tree until it finds a row or column element
@@ -170,6 +143,8 @@ export class ComponentContainer extends EventEmitter {
      * @param height - The new height in pixel
      *
      * @returns resizeSuccesful
+     *
+     * @internal
      */
     setSize(width: number, height: number): boolean {
         let ancestorItem: ContentItem | null = this._parent;
@@ -241,7 +216,7 @@ export class ComponentContainer extends EventEmitter {
 
             this._updateItemConfigEvent(config);
 
-            this._component = this.layoutManager.getComponent(this, config);
+            this._boundComponent = this.layoutManager.bindComponent(this, config);
             this.emit('stateChanged');
         }
     }
@@ -288,13 +263,19 @@ export class ComponentContainer extends EventEmitter {
 
     /**
      * Set the container's size, but considered temporary (for dragging)
-     * so don't emit any events. 
+     * so don't emit any events.
      * @internal */
     setDragSize(width: number, height: number): void {
         this._width = width;
         this._height = height;
-        setElementWidth(this._element, width);
-        setElementHeight(this._element, height);
+        if (!this._boundComponent.virtual) {
+            setElementWidth(this._element, width);
+            setElementHeight(this._element, height);
+        } else {
+            if (this.sizeChangedEvent !== undefined) {
+                this.sizeChangedEvent(this, width, height);
+            }
+        }
     }
 
     /**
@@ -309,8 +290,17 @@ export class ComponentContainer extends EventEmitter {
         if (width !== this._width || height !== this._height) {
             this._width = width;
             this._height = height;
-            setElementWidth(this._element, width);
-            setElementHeight(this._element, height);
+
+            if (!this._boundComponent.virtual) {
+                setElementWidth(this._element, width);
+                setElementHeight(this._element, height);
+            } else {
+                // component is virtual
+                if (this.sizeChangedEvent !== undefined) {
+                    this.sizeChangedEvent(this, width, height);
+                }
+            }
+
             this.emit('resize');
             if (this._isShownWithZeroDimensions && (this._height !== 0 || this._width !== 0)) {
                 this._isShownWithZeroDimensions = false;
@@ -321,9 +311,54 @@ export class ComponentContainer extends EventEmitter {
     }
 
     /** @internal */
+    notifyVisibilityChanged(value: boolean): void {
+        if (this._boundComponent.virtual) {
+            if (this.visibilityChangedEvent !== undefined) {
+                this.visibilityChangedEvent(this, value);
+            }
+        }
+
+        if (value) {
+            this.checkEmitShow();
+        } else {
+            this.checkEmitHide();
+        }
+    }
+
+    /** @internal */
+    private checkEmitShow(): void {
+        // emit 'show' only if the container has a valid size
+        if (this._isHidden) {
+            this._isHidden = false;
+            if (this._height === 0 && this._width === 0) {
+                this._isShownWithZeroDimensions = true;
+            } else {
+                this._isShownWithZeroDimensions = false;
+                this.emit('shown');
+                this.emit('show');
+            }
+        } else {
+            if (this._isShownWithZeroDimensions && (this._height !== 0 || this._width !== 0)) {
+                this._isShownWithZeroDimensions = false;
+                this.emit('shown');
+                this.emit('show');
+            }
+        }
+    }
+
+    /** @internal */
+    private checkEmitHide(): void {
+        if (!this._isHidden) {
+            this.emit('hide');
+            this._isHidden = true;
+            this._isShownWithZeroDimensions = false;
+        }
+    }
+
+    /** @internal */
     private releaseComponent() {
-        this.emit('beforeComponentRelease', this._component);
-        this.layoutManager.releaseComponent(this, this._component);
+        this.emit('beforeComponentRelease', this._boundComponent.component);
+        this.layoutManager.unbindComponent(this, this._boundComponent.virtual, this._boundComponent.component);
     }
 }
 
@@ -332,7 +367,16 @@ export type ItemContainer = ComponentContainer;
 
 /** @public */
 export namespace ComponentContainer {
+    export type Component = unknown;
+
+    export interface BoundComponent {
+        virtual: boolean;
+        component: Component | undefined;
+    }
+
     export type StateRequestEventHandler = (this: void) => JsonValue | undefined;
+    export type VisibilityChangedEvent = (this: void, container: ComponentContainer, visible: boolean) => void;
+    export type SizeChangedEvent = (this: void, container: ComponentContainer, width: number, height: number) => void;
     /** @internal */
     export type ShowEventHandler = (this: void) => void;
     /** @internal */

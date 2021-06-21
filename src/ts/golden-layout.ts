@@ -1,199 +1,273 @@
-import { LayoutConfig } from './config/config';
-import { ResolvedLayoutConfig, ResolvedPopoutLayoutConfig } from './config/resolved-config';
-import { LayoutManager } from './layout-manager';
-import { DomConstants } from './utils/dom-constants';
-import { getQueryStringParam } from './utils/utils';
+import { ResolvedComponentItemConfig } from './config/resolved-config';
+import { ComponentContainer } from './container/component-container';
+import { ApiError, RegisterError } from './errors/external-error';
+import { AssertError, UnexpectedUndefinedError } from './errors/internal-error';
+import { I18nStringId, i18nStrings } from './utils/i18n-strings';
+import { JsonValue } from './utils/types';
+import { deepExtendValue, ensureElementPositioned, setElementDisplayVisibility, setElementHeight, setElementWidth } from './utils/utils';
+import { VirtualLayout } from './virtual-layout';
 
 /** @public */
-export class GoldenLayout extends LayoutManager {
+export class GoldenLayout extends VirtualLayout {
     /** @internal */
-    private _subWindowsCreated = false;
+    private _componentTypes: Record<string, GoldenLayout.ComponentInstantiator> = {};
     /** @internal */
-    private _creationTimeoutPassed = false;
+    private _getComponentConstructorFtn: GoldenLayout.GetComponentConstructorCallback;
+
+    private _virtuableComponentMap = new Map<ComponentContainer, GoldenLayout.VirtuableComponent>();
+    private _containerSizeChangedEventListener =
+        (container: ComponentContainer, width: number, height: number) => this.handleContainerSizeChangedEvent(container, width, height);
+    private _containerVisibilityChangedEventListener =
+        (container: ComponentContainer, visible: boolean) => this.handleContainerVisibilityChangedEvent(container, visible);
 
     /**
-    * @param container - A Dom HTML element. Defaults to body
-    */
-   constructor(container?: HTMLElement);
-   /** @deprecated specify layoutConfig in {@link (LayoutManager:class).loadLayout} */
-   constructor(config: LayoutConfig, container?: HTMLElement);
-   /** @internal */
-   constructor(configOrOptionalContainer: LayoutConfig | HTMLElement | undefined, container?: HTMLElement) {
-        super(GoldenLayout.createConfig(configOrOptionalContainer, container));
-
-        if (this.isSubWindow) {
-            document.body.style.visibility = 'hidden';
-        }
-
-        if (this.layoutConfig.root === undefined || this.isSubWindow) {
-            this.init();
-        }
-    }
-
-    /**
-     * Creates the actual layout. Must be called after all initial components
-     * are registered. Recurses through the configuration and sets up
-     * the item tree.
+     * Register a new component type with the layout manager.
      *
-     * If called before the document is ready it adds itself as a listener
-     * to the document.ready event
-     * @deprecated LayoutConfig should not be loaded in {@link (LayoutManager:class)} constructor, but rather in a
-     * {@link (LayoutManager:class).loadLayout} call.  If LayoutConfig is not specified in {@link (LayoutManager:class)} constructor,
-     * then init() will be automatically called internally and should not be called externally.
+     * @deprecated See {@link https://stackoverflow.com/questions/40922531/how-to-check-if-a-javascript-function-is-a-constructor}
+     * instead use {@link (GoldenLayout:class).registerComponentConstructor}
+     * or {@link (GoldenLayout:class).registerComponentFactoryFunction}
      */
-    override init(): void {
-        /**
-         * Create the popout windows straight away. If popouts are blocked
-         * an error is thrown on the same 'thread' rather than a timeout and can
-         * be caught. This also prevents any further initilisation from taking place.
-         */
-        if (this._subWindowsCreated === false) {
-            this.createSubWindows();
-            this._subWindowsCreated = true;
-        }
-
-
-        /**
-         * If the document isn't ready yet, wait for it.
-         */
-        if (document.readyState === 'loading' || document.body === null) {
-            document.addEventListener('DOMContentLoaded', () => this.init(), { passive: true });
-            return;
-        }
-
-        /**
-         * If this is a subwindow, wait a few milliseconds for the original
-         * page's js calls to be executed, then replace the bodies content
-         * with GoldenLayout
-         */
-        if (this.isSubWindow === true && this._creationTimeoutPassed === false) {
-            setTimeout(() => this.init(), 7);
-            this._creationTimeoutPassed = true;
-            return;
-        }
-
-        if (this.isSubWindow === true) {
-            this.adjustToWindowMode();
-        }
-
-        super.init();
-    }
-
-
-    /**
-     * Creates Subwindows (if there are any). Throws an error
-     * if popouts are blocked.
-     * @internal
-     */
-    private createSubWindows() {
-        for (let i = 0; i < this.layoutConfig.openPopouts.length; i++) {
-            const popoutConfig = this.layoutConfig.openPopouts[i];
-            this.createPopoutFromPopoutLayoutConfig(popoutConfig);
+    registerComponent(name: string,
+        componentConstructorOrFactoryFtn: GoldenLayout.ComponentConstructor | GoldenLayout.ComponentFactoryFunction,
+        virtual = false
+    ): void {
+        if (typeof componentConstructorOrFactoryFtn !== 'function') {
+            throw new ApiError('registerComponent() componentConstructorOrFactoryFtn parameter is not a function')
+        } else {
+            if (componentConstructorOrFactoryFtn.hasOwnProperty('prototype')) {
+                const componentConstructor = componentConstructorOrFactoryFtn as GoldenLayout.ComponentConstructor;
+                this.registerComponentConstructor(name, componentConstructor, virtual);
+            } else {
+                const componentFactoryFtn = componentConstructorOrFactoryFtn as GoldenLayout.ComponentFactoryFunction;
+                this.registerComponentFactoryFunction(name, componentFactoryFtn, virtual);
+            }
         }
     }
 
     /**
-     * This is executed when GoldenLayout detects that it is run
-     * within a previously opened popout window.
-     * @internal
+     * Register a new component type with the layout manager.
      */
-    private adjustToWindowMode() {
-        const headElement = document.head;
+    registerComponentConstructor(typeName: string, componentConstructor: GoldenLayout.ComponentConstructor, virtual = false): void {
+        if (typeof componentConstructor !== 'function') {
+            throw new Error(i18nStrings[I18nStringId.PleaseRegisterAConstructorFunction]);
+        }
 
-        const appendNodeLists = new Array<NodeListOf<Element>>(4);
-        appendNodeLists[0] = document.querySelectorAll('body link');
-        appendNodeLists[1] = document.querySelectorAll('body style');
-        appendNodeLists[2] = document.querySelectorAll('template');
-        appendNodeLists[3] = document.querySelectorAll('.gl_keep');
+        if (this._componentTypes[typeName] !== undefined) {
+            throw new Error(`${i18nStrings[I18nStringId.ComponentIsAlreadyRegistered]}: ${typeName}`);
+        }
 
-        for (let listIdx = 0; listIdx < appendNodeLists.length; listIdx++) {
-            const appendNodeList = appendNodeLists[listIdx];
-            for (let nodeIdx = 0; nodeIdx < appendNodeList.length; nodeIdx++) {
-                const node = appendNodeList[nodeIdx];
-                headElement.appendChild(node);
+        this._componentTypes[typeName] = {
+            constructor: componentConstructor,
+            factoryFunction: undefined,
+            virtual,
+        };
+    }
+
+    /**
+     * Register a new component with the layout manager.
+     */
+    registerComponentFactoryFunction(typeName: string, componentFactoryFunction: GoldenLayout.ComponentFactoryFunction, virtual = false): void {
+        if (typeof componentFactoryFunction !== 'function') {
+            throw new Error('Please register a constructor function');
+        }
+
+        if (this._componentTypes[typeName] !== undefined) {
+            throw new Error('Component ' + typeName + ' is already registered');
+        }
+
+        this._componentTypes[typeName] = {
+            constructor: undefined,
+            factoryFunction: componentFactoryFunction,
+            virtual,
+        };
+    }
+
+    /**
+     * Register a component function with the layout manager. This function should
+     * return a constructor for a component based on a config.
+     * This function will be called if a component type with the required name is not already registered.
+     * It is recommended that applications use the {@link (VirtualLayout:class).getComponentEvent} and
+     * {@link (VirtualLayout:class).releaseComponentEvent} instead of registering a constructor callback
+     * @deprecated use {@link (GoldenLayout:class).registerGetComponentConstructorCallback}
+     */
+    registerComponentFunction(callback: GoldenLayout.GetComponentConstructorCallback): void {
+        this.registerGetComponentConstructorCallback(callback);
+    }
+
+    /**
+     * Register a callback closure with the layout manager which supplies a Component Constructor.
+     * This callback should return a constructor for a component based on a config.
+     * This function will be called if a component type with the required name is not already registered.
+     * It is recommended that applications use the {@link (VirtualLayout:class).getComponentEvent} and
+     * {@link (VirtualLayout:class).releaseComponentEvent} instead of registering a constructor callback
+     */
+    registerGetComponentConstructorCallback(callback: GoldenLayout.GetComponentConstructorCallback): void {
+        if (typeof callback !== 'function') {
+            throw new Error('Please register a callback function');
+        }
+
+        if (this._getComponentConstructorFtn !== undefined) {
+            console.warn('Multiple component functions are being registered.  Only the final registered function will be used.')
+        }
+
+        this._getComponentConstructorFtn = callback;
+    }
+
+    getRegisteredComponentTypeNames(): string[] {
+        return Object.keys(this._componentTypes);
+    }
+
+    /**
+     * Returns a previously registered component instantiator.  Attempts to utilize registered
+     * component type by first, then falls back to the component constructor callback function (if registered).
+     * If neither gets an instantiator, then returns `undefined`.
+     * Note that `undefined` will return if config.componentType is not a string
+     *
+     * @param config - The item config
+     * @public
+     */
+    getComponentInstantiator(config: ResolvedComponentItemConfig): GoldenLayout.ComponentInstantiator | undefined {
+        let instantiator: GoldenLayout.ComponentInstantiator | undefined;
+
+        const typeName = ResolvedComponentItemConfig.resolveComponentTypeName(config)
+        if (typeName !== undefined) {
+            instantiator = this._componentTypes[typeName];
+        }
+        if (instantiator === undefined) {
+            if (this._getComponentConstructorFtn !== undefined) {
+                instantiator = {
+                    constructor: this._getComponentConstructorFtn(config),
+                    factoryFunction: undefined,
+                    virtual: false,
+                }
             }
         }
 
-        const bodyElement = document.body;
-        bodyElement.innerHTML = '';
-        bodyElement.style.visibility = 'visible';
-        if (!this.layoutConfig.settings.popInOnClose) {
-            const popInButtonElement = document.createElement('div');
-            popInButtonElement.classList.add(DomConstants.ClassName.Popin);
-            popInButtonElement.setAttribute('title', this.layoutConfig.header.dock);
-            const iconElement = document.createElement('div');
-            iconElement.classList.add(DomConstants.ClassName.Icon);
-            const bgElement = document.createElement('div');
-            bgElement.classList.add(DomConstants.ClassName.Bg);
-            popInButtonElement.appendChild(iconElement);
-            popInButtonElement.appendChild(bgElement);
-            popInButtonElement.addEventListener('click', () => this.emit('popIn'));
-            bodyElement.appendChild(popInButtonElement);
+        return instantiator;
+    }
+
+    /** @internal */
+    override bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BoundComponent {
+        let instantiator: GoldenLayout.ComponentInstantiator | undefined;
+
+        const typeName = ResolvedComponentItemConfig.resolveComponentTypeName(itemConfig);
+        if (typeName !== undefined) {
+            instantiator = this._componentTypes[typeName];
+        }
+        if (instantiator === undefined) {
+            if (this._getComponentConstructorFtn !== undefined) {
+                instantiator = {
+                    constructor: this._getComponentConstructorFtn(itemConfig),
+                    factoryFunction: undefined,
+                    virtual: false,
+                }
+            }
         }
 
-        /*
-        * This seems a bit pointless, but actually causes a reflow/re-evaluation getting around
-        * slickgrid's "Cannot find stylesheet." bug in chrome
-        */
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const x = document.body.offsetHeight;
+        let result: ComponentContainer.BoundComponent;
+        if (instantiator !== undefined) {
+            const virtual = instantiator.virtual;
+            // handle case where component is obtained by name or component constructor callback
+            let componentState: JsonValue | undefined;
+            if (itemConfig.componentState === undefined) {
+                componentState = undefined;
+            } else {
+                // make copy
+                componentState = deepExtendValue({}, itemConfig.componentState) as JsonValue;
+            }
 
-        /*
-        * Expose this instance on the window object
-        * to allow the opening window to interact with
-        * it
-        */
-        window.__glInstance = this;
+            let component: ComponentContainer.Component | undefined;
+            const componentConstructor = instantiator.constructor;
+            if (componentConstructor !== undefined) {
+                component = new componentConstructor(container, componentState, virtual);
+            } else {
+                const factoryFunction = instantiator.factoryFunction;
+                if (factoryFunction !== undefined) {
+                    component = factoryFunction(container, componentState, virtual);
+                } else {
+                    throw new AssertError('LMBCFFU10008');
+                }
+            }
+
+            if (virtual) {
+                if (component === undefined) {
+                    throw new UnexpectedUndefinedError('GLBCVCU988774');
+                } else {
+                    const virtuableComponent = component as GoldenLayout.VirtuableComponent;
+                    ensureElementPositioned(virtuableComponent.rootHtmlElement);
+                    this._virtuableComponentMap.set(container, virtuableComponent);
+                    container.sizeChangedEvent = this._containerSizeChangedEventListener;
+                    container.visibilityChangedEvent = this._containerVisibilityChangedEventListener;
+                    component = undefined; // Do not pass component to container. Container does not expect it as virtual
+                }
+            }
+
+            result = {
+                virtual: instantiator.virtual,
+                component,
+            };
+
+        } else {
+            // Use getComponentEvent
+            result = super.bindComponent(container, itemConfig);
+        }
+
+        return result;
+    }
+
+    /** @internal */
+    override unbindComponent(container: ComponentContainer, virtual: boolean, component: ComponentContainer.Component | undefined): void {
+        const virtuableComponent = this._virtuableComponentMap.get(container);
+        if (virtuableComponent === undefined) {
+            super.unbindComponent(container, virtual, component)
+        } else {
+            this._virtuableComponentMap.delete(container);
+        }
+    }
+
+    private handleContainerSizeChangedEvent(container: ComponentContainer, width: number, height: number): void {
+        const virtuableComponent = this._virtuableComponentMap.get(container);
+        if (virtuableComponent === undefined) {
+            throw new UnexpectedUndefinedError('GLHCSCE55933');
+        } else {
+            const rootElement = virtuableComponent.rootHtmlElement;
+            if (rootElement === undefined) {
+                throw new RegisterError(i18nStrings[I18nStringId.ComponentIsNotVirtuable] + ' ' + container.title);
+            } else {
+                setElementWidth(rootElement, width);
+                setElementHeight(rootElement, height);
+            }
+        }
+    }
+
+    private handleContainerVisibilityChangedEvent(container: ComponentContainer, visible: boolean): void {
+        const virtuableComponent = this._virtuableComponentMap.get(container);
+        if (virtuableComponent === undefined) {
+            throw new UnexpectedUndefinedError('GLHCVCE55934');
+        } else {
+            const rootElement = virtuableComponent.rootHtmlElement;
+            if (rootElement === undefined) {
+                throw new RegisterError(i18nStrings[I18nStringId.ComponentIsNotVirtuable] + ' ' + container.title);
+            } else {
+                setElementDisplayVisibility(virtuableComponent.rootHtmlElement, visible);
+            }
+        }
     }
 }
 
 /** @public */
 export namespace GoldenLayout {
-    /** @internal
-     * Veriable to hold the state whether we already checked if we are running in a sub window.
-     * Fixes popout and creation of nested golden-layouts.
-     */
-    let subWindowChecked = false;
+    export interface VirtuableComponent {
+        rootHtmlElement: HTMLElement;
+    }
 
-    /** @internal */
-    export function createConfig(configOrOptionalContainer: LayoutConfig | HTMLElement | undefined,
-        containerElement?: HTMLElement):
-        LayoutManager.ConstructorParameters
-    {
-        const windowConfigKey = subWindowChecked ? null : getQueryStringParam('gl-window');
-        subWindowChecked = true;
-        const isSubWindow = windowConfigKey !== null;
+    export type ComponentConstructor = new(container: ComponentContainer, state: JsonValue | undefined, virtual: boolean) => ComponentContainer.Component;
+    export type ComponentFactoryFunction = (container: ComponentContainer, state: JsonValue | undefined, virtual: boolean) => ComponentContainer.Component | undefined;
+    export type GetComponentConstructorCallback = (this: void, config: ResolvedComponentItemConfig) => ComponentConstructor;
 
-        let config: ResolvedLayoutConfig | undefined;
-        if (windowConfigKey !== null) {
-            const windowConfigStr = localStorage.getItem(windowConfigKey);
-            if (windowConfigStr === null) {
-                throw new Error('Null gl-window Config');
-            }
-            localStorage.removeItem(windowConfigKey);
-            const minifiedWindowConfig = JSON.parse(windowConfigStr) as ResolvedPopoutLayoutConfig;
-            config = ResolvedLayoutConfig.unminifyConfig(minifiedWindowConfig);
-        } else {
-            if (configOrOptionalContainer === undefined) {
-                config = undefined;
-            } else {
-                if (configOrOptionalContainer instanceof HTMLElement) {
-                    config = undefined;
-                    containerElement = configOrOptionalContainer;
-                } else {
-                    if (LayoutConfig.isResolved(configOrOptionalContainer)) {
-                        config = configOrOptionalContainer as ResolvedLayoutConfig;
-                    } else {
-                        config = LayoutConfig.resolve(configOrOptionalContainer);
-                    }
-                }
-            }
-        }
-
-        return {
-            layoutConfig: config,
-            isSubWindow,
-            containerElement,
-        };
+    export interface ComponentInstantiator {
+        constructor: ComponentConstructor | undefined;
+        factoryFunction: ComponentFactoryFunction | undefined;
+        virtual: boolean;
     }
 }

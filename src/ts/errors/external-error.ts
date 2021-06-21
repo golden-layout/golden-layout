@@ -19,7 +19,7 @@ export class PopoutBlockedError extends ExternalError {
     /** @internal */
     constructor(message: string) {
         super('PopoutBlocked', message);
-    }    
+    }
 }
 
 /** @public */
@@ -27,5 +27,13 @@ export class ApiError extends ExternalError {
     /** @internal */
     constructor(message: string) {
         super('API', message);
-    }    
+    }
+}
+
+/** @public */
+export class RegisterError extends ExternalError {
+    /** @internal */
+    constructor(message: string) {
+        super('Register', message);
+    }
 }

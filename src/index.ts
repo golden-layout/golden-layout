@@ -16,4 +16,5 @@ export { EventEmitter } from './ts/utils/event-emitter';
 export { EventHub } from './ts/utils/event-hub';
 export * from './ts/utils/i18n-strings';
 export * from './ts/utils/types';
+export { VirtualLayout } from './ts/virtual-layout';
 

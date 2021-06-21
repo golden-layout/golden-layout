@@ -56,6 +56,13 @@ export function setElementDisplayVisibility(element: HTMLElement, visible: boole
     }
 }
 
+/** @internal */
+export function ensureElementPositioned(element: HTMLElement): void {
+    if (element.style.position === 'static') {
+        element.style.position = 'relative';
+    }
+}
+
 /**
  * Replacement for JQuery $.extend(target, obj)
  * @internal
