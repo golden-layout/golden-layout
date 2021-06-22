@@ -298,14 +298,12 @@ export class App {
         }
 
         const containerBoundingClientRect = container.element.getBoundingClientRect();
-        if (containerBoundingClientRect.width > 0) {
-            const left = containerBoundingClientRect.left - this._goldenLayoutBoundingClientRect.left;
-            rootElement.style.left = this.numberToPixels(left);
-            const top = containerBoundingClientRect.top - this._goldenLayoutBoundingClientRect.top;
-            rootElement.style.top = this.numberToPixels(top);
-            rootElement.style.width = this.numberToPixels(width);
-            rootElement.style.height = this.numberToPixels(height);
-        }
+        const left = containerBoundingClientRect.left - this._goldenLayoutBoundingClientRect.left;
+        rootElement.style.left = this.numberToPixels(left);
+        const top = containerBoundingClientRect.top - this._goldenLayoutBoundingClientRect.top;
+        rootElement.style.top = this.numberToPixels(top);
+        rootElement.style.width = this.numberToPixels(width);
+        rootElement.style.height = this.numberToPixels(height);
     }
 
     private handleContainerVisibilityChangeRequiredEvent(container: ComponentContainer, visible: boolean) {
