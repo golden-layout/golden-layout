@@ -2,12 +2,31 @@
 <html>
     <head>
         <meta charset="UTF-8" />
-        <title>Golden-Layout Demo</title>
+        <title>Golden-Layout API Test</title>
     </head>
     <body>
         <section id="bodySection">
             <section id="controls">
-                <button id="registerExtraComponentTypesButton">Register extra Component Types</button>
+                <section id="registerSection">
+                    <section id="registerNotVirtualSection">
+                        <button id="registerNotVirtualButton">Register Component Types</button>
+                        <section id="registerNotVirtualRadioSection">
+                            <input id="registerNotVirtualAllRadio" type="radio" name="registerNotVirtualRadio">
+                            <label for="registerNotVirtualAllRadio">All</label>
+                            <input id="registerNotVirtualColorEventRadio" type="radio" name="registerNotVirtualRadio" checked>
+                            <label for="registerVirtualColorEventRadio">Color, Event</label>
+                        </section>
+                    </section>
+                    <section id="registerVirtualSection">
+                        <button id="registerVirtualButton">Register Component Types As Virtual</button>
+                        <section id="registerVirtualRadioSection">
+                            <input id="registerVirtualAllRadio" type="radio" name="registerVirtualRadio">
+                            <label for="registerVirtualAllRadio">All</label>
+                            <input id="registerVirtualTextBooleanRadio" type="radio" name="registerVirtualRadio" checked>
+                            <label for="registerVirtualTextBooleanRadio">Text, Boolean</label>
+                        </section>
+                    </section>
+                </section>
                 <section id="addComponentSection">
                     <select id="registeredComponentTypesForAddSelect" class="control"></select>
                     <button id="addComponentByDragButton" class="control">D</button>
@@ -27,6 +46,10 @@
                 <section id="saveAndReloadLayoutSection">
                     <button id="saveLayoutButton" class="control">Save Layout</button>
                     <button id="reloadSavedLayoutButton" class="control">Reload saved Layout</button>
+                </section>
+                <section id="lastVirtualRectingCountSection">
+                    <span>Last virtual recting count</span>
+                    <span id="lastVirtualRectingCountSpan"></span>
                 </section>
                 <section id="clickCount">
                     <span>Click count: Capture: </span>

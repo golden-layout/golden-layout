@@ -218,9 +218,14 @@ export class RowOrColumn extends ContentItem {
     /**
      * Called whenever the dimensions of this item or one of its parents change
      */
-    updateSize(): void {
-        this.updateNodeSize();
-        this.updateContentItemsSize();
+    override updateSize(): void {
+        this.layoutManager.beginVirtualSizedContainerAdding();
+        try {
+            this.updateNodeSize();
+            this.updateContentItemsSize();
+        } finally {
+            this.layoutManager.endVirtualSizedContainerAdding();
+        }
     }
 
     /**

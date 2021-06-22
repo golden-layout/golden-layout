@@ -161,6 +161,8 @@ export class DragProxy extends EventEmitter {
                 this.setDropPosition(x, y);
             }
         }
+
+        this._componentItem.drag();
     }
 
     /**

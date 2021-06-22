@@ -57,9 +57,10 @@ export function setElementDisplayVisibility(element: HTMLElement, visible: boole
 }
 
 /** @internal */
-export function ensureElementPositioned(element: HTMLElement): void {
-    if (element.style.position === 'static') {
-        element.style.position = 'relative';
+export function ensureElementPositionAbsolute(element: HTMLElement): void {
+    const absolutePosition = 'absolute';
+    if (element.style.position !== absolutePosition) {
+        element.style.position = absolutePosition;
     }
 }
 

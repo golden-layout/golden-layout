@@ -373,9 +373,6 @@ export abstract class ContentItem extends EventEmitter {
 
     /** @internal */
     protected hide(): void {
-        // Not sure why hideAllActiveContentItems() was called. GoldenLayout seems to work fine without it.  Left commented code
-        // in source in case a reason for it becomes apparent.
-        // this.layoutManager.hideAllActiveContentItems();
         setElementDisplayVisibility(this._element, false);
         this.layoutManager.updateSizeFromContainer();
     }

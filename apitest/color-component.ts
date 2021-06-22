@@ -1,6 +1,7 @@
-import { ComponentContainer, GoldenLayout, JsonValue } from '..';
+import { ComponentContainer, JsonValue, StyleConstants } from '..';
+import { ComponentBase } from './component-base';
 
-export class ColorComponent implements GoldenLayout.VirtuableComponent {
+export class ColorComponent extends ComponentBase {
     static readonly typeName = 'color';
     static readonly undefinedColor = 'MediumVioletRed';
 
@@ -17,8 +18,12 @@ export class ColorComponent implements GoldenLayout.VirtuableComponent {
     get rootHtmlElement(): HTMLElement { return this._rootElement; }
 
     constructor(private _container: ComponentContainer, state: JsonValue | undefined, virtual: boolean) {
+        super();
+
         if (virtual) {
             this._rootElement = document.createElement('div');
+            this._rootElement.style.position = 'absolute';
+            this._rootElement.style.zIndex = (StyleConstants.defaultDragProxyZIndex + 1).toString(10);
         } else {
             this._rootElement = this._container.element;
         }

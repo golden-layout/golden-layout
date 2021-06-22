@@ -18,6 +18,7 @@ body {
 }
 
 #layoutContainer {
+    position: relative;
     height: 100%;
     width: 100%;
 }
@@ -29,7 +30,22 @@ body {
 }
 
 .control {
-    margin: 2px;    
+    margin: 2px;
+}
+
+#registerSection {
+    display: flex;
+    flex-direction: column;
+}
+
+#registerNotVirtualRadioSection {
+    display: flex;
+    margin-left: 1em;
+}
+
+#registerVirtualRadioSection {
+    display: flex;
+    margin-left: 1em;
 }
 
 #addComponentSection {

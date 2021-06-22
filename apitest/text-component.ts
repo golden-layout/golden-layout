@@ -1,6 +1,7 @@
-import { ComponentContainer, JsonValue } from '..';
+import { ComponentContainer, JsonValue, StyleConstants } from '..';
+import { ComponentBase } from './component-base';
 
-export class TextComponent {
+export class TextComponent extends ComponentBase {
     private static readonly undefinedTextValue = '<undefined>';
     static readonly typeName = 'text';
 
@@ -13,8 +14,12 @@ export class TextComponent {
     get rootHtmlElement(): HTMLElement { return this._rootElement; }
 
     constructor(private _container: ComponentContainer, state: JsonValue | undefined, virtual: boolean) {
+        super();
+
         if (virtual) {
             this._rootElement = document.createElement('div');
+            this._rootElement.style.position = 'absolute';
+            this._rootElement.style.zIndex = (StyleConstants.defaultDragProxyZIndex + 1).toString(10);
         } else {
             this._rootElement = this._container.element;
         }

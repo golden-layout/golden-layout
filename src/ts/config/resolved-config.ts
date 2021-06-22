@@ -196,7 +196,6 @@ export interface ResolvedComponentItemConfig extends ResolvedHeaderedItemConfig 
 export namespace ResolvedComponentItemConfig {
     export const defaultReorderEnabled = true;
 
-    /** @internal */
     export function resolveComponentTypeName(itemConfig: ResolvedComponentItemConfig): string | undefined {
         const componentType = itemConfig.componentType;
         if (typeof componentType === 'string') {
@@ -318,7 +317,7 @@ export namespace ResolvedRowOrColumnItemConfig {
     }
 }
 
-/** 
+/**
  * RootItemConfig is the topmost ResolvedItemConfig specified by the user.
  * Note that it does not have a corresponding contentItem.  It specifies the one and only child of the Ground ContentItem
  * Note that RootItemConfig can be an ComponentItem itemConfig.  However when the Ground ContentItem's child is created

@@ -143,9 +143,15 @@ export class Stack extends ComponentParentableItem {
         this._header.updateClosability();
     }
 
-    updateSize(): void {
-        this.updateNodeSize();
-        this.updateContentItemsSize();
+    /** @internal */
+    override updateSize(): void {
+        this.layoutManager.beginVirtualSizedContainerAdding();
+        try {
+            this.updateNodeSize();
+            this.updateContentItemsSize();
+        } finally {
+            this.layoutManager.endVirtualSizedContainerAdding();
+        }
     }
 
     /** @internal */

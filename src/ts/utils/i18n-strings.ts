@@ -6,6 +6,7 @@ export const enum I18nStringId {
     PleaseRegisterAConstructorFunction,
     ComponentIsAlreadyRegistered,
     ComponentIsNotVirtuable,
+    VirtualComponentDoesNotHaveRootHtmlElement,
     ItemConfigIsNotTypeComponent,
 }
 
@@ -40,6 +41,10 @@ export namespace I18nStrings {
         ComponentIsNotVirtuable: {
             id: I18nStringId.ComponentIsNotVirtuable,
             default: 'Component is not virtuable. Requires rootHtmlElement field/getter',
+        },
+        VirtualComponentDoesNotHaveRootHtmlElement: {
+            id: I18nStringId.VirtualComponentDoesNotHaveRootHtmlElement,
+            default: 'Virtual component does not have getter "rootHtmlElement"',
         },
         ItemConfigIsNotTypeComponent: {
             id: I18nStringId.ItemConfigIsNotTypeComponent,

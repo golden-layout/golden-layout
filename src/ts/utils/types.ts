@@ -10,13 +10,13 @@ export namespace WidthOrHeightPropertyName {
 /** @internal */
 export interface WidthAndHeight {
     width: number;
-    height: number;    
+    height: number;
 }
 
 /** @internal */
 export interface LeftAndTop {
     left: number;
-    top: number;    
+    top: number;
 }
 
 /** @public */

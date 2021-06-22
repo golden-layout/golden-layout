@@ -64,6 +64,8 @@ export class ComponentContainer extends EventEmitter {
     get componentType(): JsonValue;
     // @internal (undocumented)
     destroy(): void;
+    // @internal (undocumented)
+    drag(): void;
     get element(): HTMLElement;
     // @deprecated
     extendState(state: Record<string, unknown>): void;
@@ -73,7 +75,7 @@ export class ComponentContainer extends EventEmitter {
     // @deprecated
     getState(): JsonValue | undefined;
     // (undocumented)
-    get height(): number | null;
+    get height(): number;
     hide(): void;
     get initialState(): JsonValue | undefined;
     // (undocumented)
@@ -81,7 +83,7 @@ export class ComponentContainer extends EventEmitter {
     // (undocumented)
     get layoutManager(): LayoutManager;
     // @internal (undocumented)
-    notifyVisibilityChanged(value: boolean): void;
+    notifyVirtualRectingRequired(): void;
     // (undocumented)
     get parent(): ComponentItem;
     replaceComponent(itemConfig: ComponentItemConfig): void;
@@ -90,15 +92,15 @@ export class ComponentContainer extends EventEmitter {
     // @internal
     setSize(width: number, height: number): boolean;
     // @internal
-    setSizeToNodeSize(width: number, height: number): void;
+    setSizeToNodeSize(width: number, height: number, force: boolean): void;
     // @deprecated
     setState(state: JsonValue): void;
     // @internal (undocumented)
     setTab(tab: Tab): void;
     setTitle(title: string): void;
+    // @internal (undocumented)
+    setVisibility(value: boolean): void;
     show(): void;
-    // (undocumented)
-    sizeChangedEvent: ComponentContainer.SizeChangedEvent | undefined;
     // (undocumented)
     get state(): JsonValue | undefined;
     // (undocumented)
@@ -110,9 +112,13 @@ export class ComponentContainer extends EventEmitter {
     // (undocumented)
     get virtual(): boolean;
     // (undocumented)
-    visibilityChangedEvent: ComponentContainer.VisibilityChangedEvent | undefined;
+    virtualRectingRequiredEvent: ComponentContainer.VirtualRectingRequiredEvent | undefined;
     // (undocumented)
-    get width(): number | null;
+    virtualVisibilityChangeRequiredEvent: ComponentContainer.VirtualVisibilityChangeRequiredEvent | undefined;
+    // (undocumented)
+    get visible(): boolean;
+    // (undocumented)
+    get width(): number;
     }
 
 // @public (undocumented)
@@ -135,13 +141,13 @@ export namespace ComponentContainer {
     // @internal (undocumented)
     export type ShowEventHandler = (this: void) => void;
     // (undocumented)
-    export type SizeChangedEvent = (this: void, container: ComponentContainer, width: number, height: number) => void;
-    // (undocumented)
     export type StateRequestEventHandler = (this: void) => JsonValue | undefined;
     // @internal (undocumented)
     export type UpdateItemConfigEventHandler = (itemConfig: ResolvedComponentItemConfig) => void;
     // (undocumented)
-    export type VisibilityChangedEvent = (this: void, container: ComponentContainer, visible: boolean) => void;
+    export type VirtualRectingRequiredEvent = (this: void, container: ComponentContainer, width: number, height: number) => void;
+    // (undocumented)
+    export type VirtualVisibilityChangeRequiredEvent = (this: void, container: ComponentContainer, visible: boolean) => void;
 }
 
 // @public (undocumented)
@@ -164,6 +170,8 @@ export class ComponentItem extends ContentItem {
     get container(): ComponentContainer;
     // @internal (undocumented)
     destroy(): void;
+    // @internal (undocumented)
+    drag(): void;
     focus(suppressEvent?: boolean): void;
     // (undocumented)
     get focused(): boolean;
@@ -567,6 +575,8 @@ export abstract class ExternalError extends Error {
 export class GoldenLayout extends VirtualLayout {
     // @internal (undocumented)
     bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BoundComponent;
+    // (undocumented)
+    fireBeforeVirtualRectingEvent(count: number): void;
     getComponentInstantiator(config: ResolvedComponentItemConfig): GoldenLayout.ComponentInstantiator | undefined;
     // (undocumented)
     getRegisteredComponentTypeNames(): string[];
@@ -771,11 +781,13 @@ export const enum I18nStringId {
     // (undocumented)
     ComponentIsNotVirtuable = 3,
     // (undocumented)
-    ItemConfigIsNotTypeComponent = 4,
+    ItemConfigIsNotTypeComponent = 5,
     // (undocumented)
     PleaseRegisterAConstructorFunction = 1,
     // (undocumented)
-    PopoutCannotBeCreatedWithGroundItemConfig = 0
+    PopoutCannotBeCreatedWithGroundItemConfig = 0,
+    // (undocumented)
+    VirtualComponentDoesNotHaveRootHtmlElement = 4
 }
 
 // @public (undocumented)
@@ -971,6 +983,14 @@ export abstract class LayoutManager extends EventEmitter {
     addItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig): LayoutManager.Location;
     addItemAtLocation(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig, locationSelectors?: readonly LayoutManager.LocationSelector[]): LayoutManager.Location | undefined;
     // @internal (undocumented)
+    addVirtualSizedContainer(container: ComponentContainer): void;
+    // (undocumented)
+    afterVirtualRectingEvent: LayoutManager.AfterVirtualRectingEvent | undefined;
+    // (undocumented)
+    beforeVirtualRectingEvent: LayoutManager.BeforeVirtualRectingEvent | undefined;
+    // @internal (undocumented)
+    beginVirtualSizedContainerAdding(): void;
+    // @internal (undocumented)
     abstract bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BoundComponent;
     // @internal (undocumented)
     calculateItemAreas(): void;
@@ -995,9 +1015,15 @@ export abstract class LayoutManager extends EventEmitter {
     //
     // @internal (undocumented)
     get dropTargetIndicator(): DropTargetIndicator | null;
+    // @internal (undocumented)
+    endVirtualSizedContainerAdding(): void;
     get eventHub(): EventHub;
     // (undocumented)
     findFirstComponentItemById(id: string): ComponentItem | undefined;
+    // @internal (undocumented)
+    fireAfterVirtualRectingEvent(): void;
+    // @internal (undocumented)
+    fireBeforeVirtualRectingEvent(count: number): void;
     focusComponent(item: ComponentItem, suppressEvent?: boolean): void;
     // (undocumented)
     get focusedComponentItem(): ComponentItem | undefined;
@@ -1067,9 +1093,9 @@ export abstract class LayoutManager extends EventEmitter {
 // @public (undocumented)
 export namespace LayoutManager {
     // (undocumented)
-    export type AfterUpdateSizeEvent = (this: void) => void;
+    export type AfterVirtualRectingEvent = (this: void) => void;
     // (undocumented)
-    export type BeforeUpdateSizeEvent = (this: void) => void;
+    export type BeforeVirtualRectingEvent = (this: void, count: number) => void;
     // @internal (undocumented)
     export interface ConstructorParameters {
         // (undocumented)
@@ -1079,9 +1105,9 @@ export namespace LayoutManager {
         // (undocumented)
         layoutConfig: ResolvedLayoutConfig | undefined;
     }
-    // (undocumented)
+    // @internal (undocumented)
     export function createMaximisePlaceElement(document: Document): HTMLElement;
-    // (undocumented)
+    // @internal (undocumented)
     export function createTabDropPlaceholderElement(document: Document): HTMLElement;
     export interface Location {
         // (undocumented)
@@ -1215,7 +1241,7 @@ export namespace ResolvedComponentItemConfig {
     export function createCopy(original: ResolvedComponentItemConfig): ResolvedComponentItemConfig;
     // (undocumented)
     export function createDefault(componentType?: JsonValue, componentState?: JsonValue, title?: string): ResolvedComponentItemConfig;
-    // @internal (undocumented)
+    // (undocumented)
     export function resolveComponentTypeName(itemConfig: ResolvedComponentItemConfig): string | undefined;
 }
 
@@ -1672,7 +1698,7 @@ export class Stack extends ComponentParentableItem {
     // (undocumented)
     toConfig(): ResolvedStackItemConfig;
     toggleMaximise(): void;
-    // (undocumented)
+    // @internal (undocumented)
     updateSize(): void;
 }
 
@@ -1725,6 +1751,12 @@ export namespace StackItemConfig {
     export function resolveContent(content: ComponentItemConfig[] | undefined): ResolvedComponentItemConfig[];
 }
 
+// @public (undocumented)
+export namespace StyleConstants {
+    const // (undocumented)
+    defaultDragProxyZIndex = 30;
+}
+
 // @public
 export class Tab {
     // @internal
@@ -1770,8 +1802,14 @@ export namespace Tab {
 }
 
 // @public (undocumented)
+export class VirtualError extends ExternalError {
+    // @internal
+    constructor(message: string);
+}
+
+// @public (undocumented)
 export class VirtualLayout extends LayoutManager {
-    constructor(container?: HTMLElement);
+    constructor(container?: HTMLElement, bindComponentEventHandler?: VirtualLayout.BindComponentEventHandler, unbindComponentEventHandler?: VirtualLayout.UnbindComponentEventHandler);
     // @deprecated
     constructor(config: LayoutConfig, container?: HTMLElement);
     // @internal (undocumented)
@@ -1795,11 +1833,11 @@ export class VirtualLayout extends LayoutManager {
 // @public (undocumented)
 export namespace VirtualLayout {
     // (undocumented)
-    export type BeforeVirtualSizingEvent = (this: void) => void;
+    export type BeforeVirtualRectingEvent = (this: void) => void;
     // (undocumented)
     export type BindComponentEventHandler = (this: void, container: ComponentContainer, itemConfig: ResolvedComponentItemConfig) => void;
     // @internal (undocumented)
-    export function createConfig(configOrOptionalContainer: LayoutConfig | HTMLElement | undefined, containerElement?: HTMLElement): LayoutManager.ConstructorParameters;
+    export function createLayoutManagerConstructorParameters(configOrOptionalContainer: LayoutConfig | HTMLElement | undefined, containerOrBindComponentEventHandler?: HTMLElement | VirtualLayout.BindComponentEventHandler): LayoutManager.ConstructorParameters;
     // @deprecated (undocumented)
     export type GetComponentEventHandler = (this: void, container: ComponentContainer, itemConfig: ResolvedComponentItemConfig) => ComponentContainer.Component;
     // @deprecated (undocumented)

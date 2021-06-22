@@ -87,6 +87,10 @@ export abstract class LayoutManager extends EventEmitter {
     private _height: number | null = null;
     /** @internal */
     private _focusedComponentItem: ComponentItem | undefined;
+    /** @internal */
+    private _virtualSizedContainers: ComponentContainer[] = [];
+    /** @internal */
+    private _virtualSizedContainerAddingBeginCount = 0;
 
     /** @internal */
     private _windowResizeListener = () => this.processResizeWithDebounce();
@@ -97,6 +101,9 @@ export abstract class LayoutManager extends EventEmitter {
 
     readonly isSubWindow: boolean;
     layoutConfig: ResolvedLayoutConfig;
+
+    beforeVirtualRectingEvent: LayoutManager.BeforeVirtualRectingEvent | undefined;
+    afterVirtualRectingEvent: LayoutManager.AfterVirtualRectingEvent | undefined;
 
     get container(): HTMLElement { return this._containerElement; }
     get isInitialised(): boolean { return this._isInitialised; }
@@ -735,6 +742,48 @@ export abstract class LayoutManager extends EventEmitter {
             } else {
                 return this.createPopoutFromItemConfig(itemConfig, window, parentId, indexInParent);
             }
+        }
+    }
+
+    /** @internal */
+    beginVirtualSizedContainerAdding(): void {
+        if (++this._virtualSizedContainerAddingBeginCount === 0) {
+            this._virtualSizedContainers.length = 0;
+        }
+    }
+
+    /** @internal */
+    addVirtualSizedContainer(container: ComponentContainer): void {
+        this._virtualSizedContainers.push(container);
+    }
+
+    /** @internal */
+    endVirtualSizedContainerAdding(): void {
+        if (--this._virtualSizedContainerAddingBeginCount === 0) {
+            const count = this._virtualSizedContainers.length;
+            if (count > 0) {
+                this.fireBeforeVirtualRectingEvent(count);
+                for (let i = 0; i < count; i++) {
+                    const container = this._virtualSizedContainers[i];
+                    container.notifyVirtualRectingRequired();
+                }
+                this.fireAfterVirtualRectingEvent();
+                this._virtualSizedContainers.length = 0;
+            }
+        }
+    }
+
+    /** @internal */
+    fireBeforeVirtualRectingEvent(count: number): void {
+        if (this.beforeVirtualRectingEvent !== undefined) {
+            this.beforeVirtualRectingEvent(count);
+        }
+    }
+
+    /** @internal */
+    fireAfterVirtualRectingEvent(): void {
+        if (this.afterVirtualRectingEvent !== undefined) {
+            this.afterVirtualRectingEvent();
         }
     }
 
@@ -1577,8 +1626,8 @@ export abstract class LayoutManager extends EventEmitter {
 
 /** @public */
 export namespace LayoutManager {
-    export type BeforeUpdateSizeEvent = (this: void) => void;
-    export type AfterUpdateSizeEvent = (this: void) => void;
+    export type BeforeVirtualRectingEvent = (this: void, count: number) => void;
+    export type AfterVirtualRectingEvent = (this: void) => void;
 
     /** @internal */
     export interface ConstructorParameters {
@@ -1587,12 +1636,14 @@ export namespace LayoutManager {
         containerElement: HTMLElement | undefined;
     }
 
+    /** @internal */
     export function createMaximisePlaceElement(document: Document): HTMLElement {
         const element = document.createElement('div');
         element.classList.add(DomConstants.ClassName.MaximisePlace);
         return element;
     }
 
+    /** @internal */
     export function createTabDropPlaceholderElement(document: Document): HTMLElement {
         const element = document.createElement('div');
         element.classList.add(DomConstants.ClassName.DropTabPlaceholder);

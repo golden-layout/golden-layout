@@ -15,6 +15,7 @@ export { LayoutManager } from './ts/layout-manager';
 export { EventEmitter } from './ts/utils/event-emitter';
 export { EventHub } from './ts/utils/event-hub';
 export * from './ts/utils/i18n-strings';
+export { StyleConstants } from './ts/utils/style-constants';
 export * from './ts/utils/types';
 export { VirtualLayout } from './ts/virtual-layout';
 

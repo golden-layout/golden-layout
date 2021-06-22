@@ -37,3 +37,11 @@ export class RegisterError extends ExternalError {
         super('Register', message);
     }
 }
+
+/** @public */
+export class VirtualError extends ExternalError {
+    /** @internal */
+    constructor(message: string) {
+        super('Virtual', message);
+    }
+}

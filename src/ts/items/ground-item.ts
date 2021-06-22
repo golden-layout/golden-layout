@@ -103,7 +103,7 @@ export class GroundItem extends ComponentParentableItem {
      * Adds a Root ContentItem.
      * Internal only.  To replace Root ContentItem with API, use {@link (LayoutManager:class).loadLayout}
      */
-     override addChild(contentItem: ContentItem, index?: number): number {
+    override addChild(contentItem: ContentItem, index?: number): number {
         if (this.contentItems.length > 0) {
             throw new Error('Ground node can only have a single child');
         } else {
@@ -157,9 +157,14 @@ export class GroundItem extends ComponentParentableItem {
      * Adds a Root ContentItem.
      * Internal only.  To replace Root ContentItem with API, use {@link (LayoutManager:class).updateRootSize}
      */
-    updateSize(): void {
-        this.updateNodeSize();
-        this.updateContentItemsSize();
+    override updateSize(): void {
+        this.layoutManager.beginVirtualSizedContainerAdding();
+        try {
+            this.updateNodeSize();
+            this.updateContentItemsSize();
+        } finally {
+            this.layoutManager.endVirtualSizedContainerAdding();
+        }
     }
 
     createSideAreas(): GroundItem.Area[] {

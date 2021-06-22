@@ -1,6 +1,7 @@
-import { ComponentContainer, EventEmitter, GoldenLayout, JsonValue } from '..';
+import { ComponentContainer, EventEmitter, JsonValue, StyleConstants } from '..';
+import { ComponentBase } from './component-base';
 
-export class EventComponent implements GoldenLayout.VirtuableComponent {
+export class EventComponent extends ComponentBase {
     static readonly typeName = 'event';
 
     private _rootElement: HTMLElement;
@@ -13,8 +14,12 @@ export class EventComponent implements GoldenLayout.VirtuableComponent {
     get rootHtmlElement(): HTMLElement { return this._rootElement; }
 
     constructor(private _container: ComponentContainer, state: JsonValue | undefined, virtual: boolean) {
+        super();
+
         if (virtual) {
             this._rootElement = document.createElement('div');
+            this._rootElement.style.position = 'absolute';
+            this._rootElement.style.zIndex = (StyleConstants.defaultDragProxyZIndex + 1).toString(10);
         } else {
             this._rootElement = this._container.element;
         }

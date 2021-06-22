@@ -31,12 +31,30 @@ export class VirtualLayout extends LayoutManager {
     /**
     * @param container - A Dom HTML element. Defaults to body
     */
-    constructor(container?: HTMLElement);
+    constructor(
+        container?: HTMLElement,
+        bindComponentEventHandler?: VirtualLayout.BindComponentEventHandler,
+        unbindComponentEventHandler?: VirtualLayout.UnbindComponentEventHandler,
+    );
     /** @deprecated specify layoutConfig in {@link (LayoutManager:class).loadLayout} */
     constructor(config: LayoutConfig, container?: HTMLElement);
     /** @internal */
-    constructor(configOrOptionalContainer: LayoutConfig | HTMLElement | undefined, container?: HTMLElement) {
-        super(VirtualLayout.createConfig(configOrOptionalContainer, container));
+    constructor(configOrOptionalContainer: LayoutConfig | HTMLElement | undefined,
+        containerOrBindComponentEventHandler?: HTMLElement | VirtualLayout.BindComponentEventHandler,
+        unbindComponentEventHandler?: VirtualLayout.UnbindComponentEventHandler,
+    ) {
+        super(VirtualLayout.createLayoutManagerConstructorParameters(configOrOptionalContainer, containerOrBindComponentEventHandler));
+
+        // More work needed to get popouts working with virtual.
+        if (containerOrBindComponentEventHandler !== undefined) {
+            if (typeof containerOrBindComponentEventHandler === 'function') {
+                this.bindComponentEvent = containerOrBindComponentEventHandler;
+
+                if (unbindComponentEventHandler !== undefined) {
+                    this.unbindComponentEvent = unbindComponentEventHandler;
+                }
+            }
+        }
 
         if (this.isSubWindow) {
             document.body.style.visibility = 'hidden';
@@ -48,8 +66,8 @@ export class VirtualLayout extends LayoutManager {
     }
 
     override destroy(): void {
-        this.getComponentEvent = undefined;
-        this.releaseComponentEvent = undefined;
+        this.bindComponentEvent = undefined;
+        this.unbindComponentEvent = undefined;
 
         super.destroy();
     }
@@ -231,7 +249,7 @@ export namespace VirtualLayout {
     export type UnbindComponentEventHandler =
         (this: void, container: ComponentContainer) => void;
 
-    export type BeforeVirtualSizingEvent = (this: void) => void;
+    export type BeforeVirtualRectingEvent = (this: void) => void;
 
     /** @internal
      * Veriable to hold the state whether we already checked if we are running in a sub window.
@@ -240,14 +258,15 @@ export namespace VirtualLayout {
     let subWindowChecked = false;
 
     /** @internal */
-    export function createConfig(configOrOptionalContainer: LayoutConfig | HTMLElement | undefined,
-        containerElement?: HTMLElement):
+    export function createLayoutManagerConstructorParameters(configOrOptionalContainer: LayoutConfig | HTMLElement | undefined,
+        containerOrBindComponentEventHandler?: HTMLElement |  VirtualLayout.BindComponentEventHandler):
         LayoutManager.ConstructorParameters
     {
         const windowConfigKey = subWindowChecked ? null : getQueryStringParam('gl-window');
         subWindowChecked = true;
         const isSubWindow = windowConfigKey !== null;
 
+        let containerElement: HTMLElement | undefined;
         let config: ResolvedLayoutConfig | undefined;
         if (windowConfigKey !== null) {
             const windowConfigStr = localStorage.getItem(windowConfigKey);
@@ -270,6 +289,12 @@ export namespace VirtualLayout {
                     } else {
                         config = LayoutConfig.resolve(configOrOptionalContainer);
                     }
+                }
+            }
+
+            if (containerElement === undefined) {
+                if (containerOrBindComponentEventHandler instanceof HTMLElement) {
+                    containerElement = containerOrBindComponentEventHandler;
                 }
             }
         }

@@ -121,10 +121,15 @@ export class ComponentItem extends ContentItem {
         this._container.setDragSize(width, height);
     }
 
+    // Used by Drag Proxy
     /** @internal */
-    updateSize(): void {
+    drag(): void {
+        this._container.drag();
+    }
+
+    /** @internal */
+    override updateSize(): void {
         this.updateNodeSize();
-        // ComponentItems do not have any ContentItems
     }
 
     /** @internal */
@@ -157,14 +162,14 @@ export class ComponentItem extends ContentItem {
 
     /** @internal */
     override hide(): void {
-        this._container.notifyVisibilityChanged(false);
         super.hide();
+        this._container.setVisibility(false);
     }
 
     /** @internal */
     override show(): void {
-        this._container.notifyVisibilityChanged(false);
         super.show();
+        this._container.setVisibility(true);
     }
 
     /**
@@ -216,8 +221,9 @@ export class ComponentItem extends ContentItem {
     private updateNodeSize(): void {
         if (this.element.style.display !== 'none') {
             // Do not update size of hidden components to prevent unwanted reflows
+
             const { width, height } = getElementWidthAndHeight(this.element);
-            this._container.setSizeToNodeSize(width, height);
+            this._container.setSizeToNodeSize(width, height, false);
         }
     }
 }
