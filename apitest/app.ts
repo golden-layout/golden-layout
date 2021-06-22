@@ -273,7 +273,7 @@ export class App {
 
         const componentRootElement = component.rootHtmlElement;
         if (componentRootElement === undefined) {
-            throw new Error('handleUnbindComponentEvent: Component not found');
+            throw new Error('handleUnbindComponentEvent: Component does not have a root HTML element');
         }
 
         this._layoutElement.removeChild(componentRootElement);
@@ -289,12 +289,12 @@ export class App {
     private handleContainerVirtualRectingRequiredEvent(container: ComponentContainer, width: number, height: number) {
         const component = this._boundComponentMap.get(container);
         if (component === undefined) {
-            throw new Error('handleContainerVisibilityChangeRequiredEvent: Component not found');
+            throw new Error('handleContainerVirtualRectingRequiredEvent: Component not found');
         }
 
         const rootElement = component.rootHtmlElement;
         if (rootElement === undefined) {
-            throw new Error('handleContainerVisibilityChangeRequiredEvent: Component not found');
+            throw new Error('handleContainerVirtualRectingRequiredEvent: Component does not have a root HTML element');
         }
 
         const containerBoundingClientRect = container.element.getBoundingClientRect();
@@ -311,10 +311,16 @@ export class App {
         if (component === undefined) {
             throw new Error('handleContainerVisibilityChangeRequiredEvent: Component not found');
         }
+
+        const componentRootElement = component.rootHtmlElement;
+        if (componentRootElement === undefined) {
+            throw new Error('handleContainerVisibilityChangeRequiredEvent: Component does not have a root HTML element');
+        }
+
         if (visible) {
-            component.rootHtmlElement.style.display = '';
+            componentRootElement.style.display = '';
         } else {
-            component.rootHtmlElement.style.display = 'none';
+            componentRootElement.style.display = 'none';
         }
     }
 
