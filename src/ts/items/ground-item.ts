@@ -58,6 +58,24 @@ export class GroundItem extends ComponentParentableItem {
         }
     }
 
+    clearRoot(): void {
+        // Remove existing root if it exists
+        const contentItems = this.contentItems;
+        switch (contentItems.length) {
+            case 0: {
+                return;
+            }
+            case 1: {
+                const existingRootContentItem = contentItems[0];
+                existingRootContentItem.remove();
+                return;
+            }
+            default: {
+                throw new AssertError('GILR07721');
+            }
+        }
+    }
+
     /**
      * Adds a ContentItem child to root ContentItem.
      * Internal only.  To load a add with API, use {@link (LayoutManager:class).addItem}
@@ -312,24 +330,6 @@ export class GroundItem extends ComponentParentableItem {
         if (this.contentItems.length > 0) {
             setElementWidth(this.contentItems[0].element, width);
             setElementHeight(this.contentItems[0].element, height);
-        }
-    }
-
-    private clearRoot() {
-        // Remove existing root if it exists
-        const contentItems = this.contentItems;
-        switch (contentItems.length) {
-            case 0: {
-                return;
-            }
-            case 1: {
-                const existingRootContentItem = contentItems[0];
-                existingRootContentItem.remove();
-                return;
-            }
-            default: {
-                throw new AssertError('GILR07721');
-            }
         }
     }
 

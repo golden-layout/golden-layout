@@ -20,6 +20,12 @@ export class App {
     private _registerTextBooleanAsVirtualRadio;
     private _registeredComponentTypesForAddSelect: HTMLSelectElement;
     private _registeredComponentTypesForAddSelectChangeListener = () => this.handleRegisteredComponentTypesForAddSelectChange();
+    private _eventBindingVirtualRadio;
+    private _eventBindingVirtualRadioClickListener = () => this.handleEventBindingVirtualRadioClick();
+    private _eventBindingEmbeddedRadio;
+    private _eventBindingEmbeddedRadioClickListener = () => this.handleEventBindingEmbeddedRadioClick();
+    private _clearButton: HTMLButtonElement;
+    private _clearButtonClickListener = () => this.handleClearButtonClick();
     private _addComponentButton: HTMLButtonElement;
     private _addComponentButtonClickListener = () => this.handleAddComponentButtonClick();
     private _layoutSelect: HTMLSelectElement;
@@ -48,6 +54,7 @@ export class App {
     private _boundComponentMap = new Map<ComponentContainer, ComponentBase>();
     private _allComponentsRegistered = false;
     private _savedLayout: ResolvedLayoutConfig | undefined;
+    private _useVirtualEventBinding = true;
 
     private _goldenLayoutBoundingClientRect: DOMRect = new DOMRect();
 
@@ -115,6 +122,29 @@ export class App {
             throw new Error('Could not find RegisterVirtualTextBooleanRadio');
         }
         this._registerTextBooleanAsVirtualRadio = registerVirtualTextBooleanRadio;
+
+        const eventBindingVirtualRadio = document.querySelector('#eventBindingVirtualRadio') as HTMLInputElement;
+        if (eventBindingVirtualRadio === null) {
+            throw new Error('Could not find EventBindingVirtualRadio');
+        }
+        this._eventBindingVirtualRadio = eventBindingVirtualRadio;
+        this._eventBindingVirtualRadio.addEventListener('click', this._eventBindingVirtualRadioClickListener, { passive: true });
+
+        const eventBindingEmbeddedRadio = document.querySelector('#eventBindingEmbeddedRadio') as HTMLInputElement;
+        if (eventBindingEmbeddedRadio === null) {
+            throw new Error('Could not find EventBindingEmbeddedRadio');
+        }
+        this._eventBindingEmbeddedRadio = eventBindingEmbeddedRadio;
+        this._eventBindingEmbeddedRadio.addEventListener('click', this._eventBindingEmbeddedRadioClickListener, { passive: true });
+
+        this._eventBindingVirtualRadio.checked = this._useVirtualEventBinding;
+
+        const clearButton = document.querySelector('#clearButton') as HTMLButtonElement;
+        if (clearButton === null) {
+            throw new Error('Could not find ClearButton');
+        }
+        this._clearButton = clearButton;
+        this._clearButton.addEventListener('click', this._clearButtonClickListener, { passive: true });
 
         const registeredComponentTypesForAddSelect = document.querySelector('#registeredComponentTypesForAddSelect') as HTMLSelectElement;
         if (registeredComponentTypesForAddSelect === null) {
@@ -241,12 +271,12 @@ export class App {
         this.loadLayoutSelect();
     }
 
-    private createVirtualComponent(container: ComponentContainer, componentTypeName: string, state: JsonValue | undefined) {
+    private createComponent(container: ComponentContainer, componentTypeName: string, state: JsonValue | undefined, virtual: boolean) {
         switch (componentTypeName) {
-            case ColorComponent.typeName: return new ColorComponent(container, state, true);
-            case TextComponent.typeName: return new TextComponent(container, state, true);
-            case BooleanComponent.typeName: return new BooleanComponent(container, state, true);
-            case EventComponent.typeName: return new EventComponent(container, state, true);
+            case ColorComponent.typeName: return new ColorComponent(container, state, virtual);
+            case TextComponent.typeName: return new TextComponent(container, state, virtual);
+            case BooleanComponent.typeName: return new BooleanComponent(container, state, virtual);
+            case EventComponent.typeName: return new EventComponent(container, state, virtual);
             default:
                 throw new Error('createComponent: Unexpected componentTypeName: ' + componentTypeName);
         }
@@ -257,17 +287,21 @@ export class App {
         if (componentTypeName === undefined) {
             throw new Error('handleBindComponentEvent: Undefined componentTypeName');
         }
-        const component = this.createVirtualComponent(container, componentTypeName, itemConfig.componentState);
-        const componentRootElement = component.rootHtmlElement;
-        this._layoutElement.appendChild(componentRootElement);
-        this._boundComponentMap.set(container, component);
-        container.virtualRectingRequiredEvent =
-            (container, width, height) => this.handleContainerVirtualRectingRequiredEvent(container, width, height);
-        container.virtualVisibilityChangeRequiredEvent =
-            (container, visible) => this.handleContainerVirtualVisibilityChangeRequiredEvent(container, visible);
-        container.virtualZIndexChangeRequiredEvent =
-            (container, logicalZIndex, defaultZIndex) =>
-                this.handleContainerVirtualZIndexChangeRequiredEvent(container, logicalZIndex, defaultZIndex);
+        const component = this.createComponent(container, componentTypeName, itemConfig.componentState, this._useVirtualEventBinding);
+        if (this._useVirtualEventBinding) {
+            const componentRootElement = component.rootHtmlElement;
+            this._layoutElement.appendChild(componentRootElement);
+            this._boundComponentMap.set(container, component);
+            container.virtualRectingRequiredEvent =
+                (container, width, height) => this.handleContainerVirtualRectingRequiredEvent(container, width, height);
+            container.virtualVisibilityChangeRequiredEvent =
+                (container, visible) => this.handleContainerVirtualVisibilityChangeRequiredEvent(container, visible);
+            container.virtualZIndexChangeRequiredEvent =
+                (container, logicalZIndex, defaultZIndex) =>
+                    this.handleContainerVirtualZIndexChangeRequiredEvent(container, logicalZIndex, defaultZIndex);
+        } else {
+            return component;
+        }
     }
 
     private handleUnbindComponentEvent(container: ComponentContainer) {
@@ -281,7 +315,9 @@ export class App {
             throw new Error('handleUnbindComponentEvent: Component does not have a root HTML element');
         }
 
-        this._layoutElement.removeChild(componentRootElement);
+        if (container.virtual) {
+            this._layoutElement.removeChild(componentRootElement);
+        }
         this._boundComponentMap.delete(container);
     }
 
@@ -406,12 +442,26 @@ export class App {
         this._registerAllRadio.disabled = true;
     }
 
+    private handleEventBindingVirtualRadioClick() {
+        this._goldenLayout.clear();
+        this._useVirtualEventBinding = true;
+    }
+
+    private handleEventBindingEmbeddedRadioClick() {
+        this._goldenLayout.clear();
+        this._useVirtualEventBinding = false;
+    }
+
     private handleRegisteredComponentTypesForAddSelectChange() {
         // nothing to do here
     }
 
     private handleLayoutSelectChange() {
         // nothing to do here
+    }
+
+    private handleClearButtonClick() {
+        this._goldenLayout.clear();
     }
 
     private handleStackHeaderClick(event: EventEmitter.ClickBubblingEvent) {

@@ -249,7 +249,7 @@ export namespace VirtualLayout {
         (this: void, container: ComponentContainer, component: ComponentContainer.Component) => void;
 
     export type BindComponentEventHandler =
-        (this: void, container: ComponentContainer, itemConfig: ResolvedComponentItemConfig) => ComponentContainer.Component | undefined;
+        (this: void, container: ComponentContainer, itemConfig: ResolvedComponentItemConfig) => ComponentContainer.Component | void;
     export type UnbindComponentEventHandler =
         (this: void, container: ComponentContainer) => void;
 

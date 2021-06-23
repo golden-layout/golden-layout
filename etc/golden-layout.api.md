@@ -1012,6 +1012,7 @@ export abstract class LayoutManager extends EventEmitter {
     calculateItemAreas(): void;
     // (undocumented)
     checkMinimiseMaximisedStack(): void;
+    clear(): void;
     clearComponentFocus(suppressEvent?: boolean): void;
     // @internal
     closeWindow(): void;
@@ -1852,7 +1853,7 @@ export namespace VirtualLayout {
     // (undocumented)
     export type BeforeVirtualRectingEvent = (this: void) => void;
     // (undocumented)
-    export type BindComponentEventHandler = (this: void, container: ComponentContainer, itemConfig: ResolvedComponentItemConfig) => ComponentContainer.Component | undefined;
+    export type BindComponentEventHandler = (this: void, container: ComponentContainer, itemConfig: ResolvedComponentItemConfig) => ComponentContainer.Component | void;
     // @internal (undocumented)
     export function createLayoutManagerConstructorParameters(configOrOptionalContainer: LayoutConfig | HTMLElement | undefined, containerOrBindComponentEventHandler?: HTMLElement | VirtualLayout.BindComponentEventHandler): LayoutManager.ConstructorParameters;
     // @deprecated (undocumented)

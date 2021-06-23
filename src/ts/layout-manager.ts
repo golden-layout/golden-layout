@@ -322,6 +322,18 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /**
+     * Removes any existing layout. Effectively, an empty layout will be loaded.
+     */
+
+     clear(): void {
+        if (this._groundItem === undefined) {
+            throw new UnexpectedUndefinedError('LMCL11129');
+        } else {
+            this._groundItem.clearRoot();
+        }
+    }
+
+    /**
      * @deprecated Use {@link (LayoutManager:class).saveLayout}
      */
     toConfig(): ResolvedLayoutConfig {
