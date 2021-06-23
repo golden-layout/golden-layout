@@ -17,7 +17,8 @@
 
 ## Features
 
-* ~~Full touch support~~
+* Virtual Components
+* Full touch support
 * Native popup windows
 * Completely themeable
 * Comprehensive API
@@ -446,13 +447,6 @@ As part of the port, the code base was significantly refactored.  A number of fe
 * [**Internal and Public API**](#public-and-internal-apis) - All classes, interfaces, functions and properties are marked as either `internal` or `public`. Only `public` APIs are generally available to applications.
 * **Legacy Browsers** - The library will now only target modern browsers (see package.json for browserlist configuration)
 * **No JQuery** - JQuery is no longer used in Golden Layout (many would consider this as an added feature)
-
-#### Features implemented but not ready for production
-
-Some features have been ported to TypeScript but are not yet ready for production.  These features are:
-
-* **Touch Support** - Improvements are required in accessing browser Touch/Drag APIs.  Also some conceptual aspects of the implementation need to be improved.  These will be carried out in a future release.
-* **Some API functions** - While most API functions have been ported, not all have been tested.  The APIs used in the Test Application (both apitest app and Angular example) have been tested and are ready for production.  Other API functions should work but please take this warning into account.
 
 ## Migration to v2
 Version 2 has been re-written in TypeScript. A general code cleanup has been carried out as part of this re-write.
