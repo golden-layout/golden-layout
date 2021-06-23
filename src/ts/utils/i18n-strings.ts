@@ -4,6 +4,7 @@ import { AssertError } from '../errors/internal-error';
 export const enum I18nStringId {
     PopoutCannotBeCreatedWithGroundItemConfig,
     PleaseRegisterAConstructorFunction,
+    ComponentTypeNotRegisteredAndBindComponentEventHandlerNotAssigned,
     ComponentIsAlreadyRegistered,
     ComponentIsNotVirtuable,
     VirtualComponentDoesNotHaveRootHtmlElement,
@@ -33,6 +34,10 @@ export namespace I18nStrings {
         PleaseRegisterAConstructorFunction: {
             id: I18nStringId.PleaseRegisterAConstructorFunction,
             default: 'Please register a constructor function'
+        },
+        ComponentTypeNotRegisteredAndBindComponentEventHandlerNotAssigned: {
+            id: I18nStringId.ComponentTypeNotRegisteredAndBindComponentEventHandlerNotAssigned,
+            default: 'Component type not registered and BindComponentEvent handler not assigned',
         },
         ComponentIsAlreadyRegistered: {
             id: I18nStringId.ComponentIsAlreadyRegistered,

@@ -1,9 +1,11 @@
 import { LayoutConfig } from './config/config';
 import { ResolvedComponentItemConfig, ResolvedLayoutConfig, ResolvedPopoutLayoutConfig } from './config/resolved-config';
 import { ComponentContainer } from './container/component-container';
-import { AssertError, UnexpectedUndefinedError } from './errors/internal-error';
+import { BindError } from './errors/external-error';
+import { UnexpectedUndefinedError } from './errors/internal-error';
 import { LayoutManager } from './layout-manager';
 import { DomConstants } from './utils/dom-constants';
+import { I18nStringId, i18nStrings } from './utils/i18n-strings';
 import { getQueryStringParam } from './utils/utils';
 
 /** @public */
@@ -126,10 +128,10 @@ export class VirtualLayout extends LayoutManager {
     /** @internal */
     override bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BoundComponent {
         if (this.bindComponentEvent !== undefined) {
-            this.bindComponentEvent(container, itemConfig);
+            const component = this.bindComponentEvent(container, itemConfig);
             return {
-                virtual: true,
-                component: undefined,
+                virtual: component === undefined,
+                component: component,
             };
         } else {
             if (this.getComponentEvent !== undefined) {
@@ -140,7 +142,9 @@ export class VirtualLayout extends LayoutManager {
             } else {
                 // There is no component registered for this type, and we don't have a getComponentEvent defined.
                 // This might happen when the user pops out a dialog and the component types are not registered upfront.
-                throw new AssertError('VLGC10009');
+                const text = i18nStrings[I18nStringId.ComponentTypeNotRegisteredAndBindComponentEventHandlerNotAssigned];
+                const message = `${text}: ${JSON.stringify(itemConfig)}`
+                throw new BindError(message);
             }
         }
     }
@@ -245,7 +249,7 @@ export namespace VirtualLayout {
         (this: void, container: ComponentContainer, component: ComponentContainer.Component) => void;
 
     export type BindComponentEventHandler =
-        (this: void, container: ComponentContainer, itemConfig: ResolvedComponentItemConfig) => void;
+        (this: void, container: ComponentContainer, itemConfig: ResolvedComponentItemConfig) => ComponentContainer.Component | undefined;
     export type UnbindComponentEventHandler =
         (this: void, container: ComponentContainer) => void;
 

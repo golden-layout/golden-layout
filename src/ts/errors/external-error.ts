@@ -31,17 +31,9 @@ export class ApiError extends ExternalError {
 }
 
 /** @public */
-export class RegisterError extends ExternalError {
+export class BindError extends ExternalError {
     /** @internal */
     constructor(message: string) {
-        super('Register', message);
-    }
-}
-
-/** @public */
-export class VirtualError extends ExternalError {
-    /** @internal */
-    constructor(message: string) {
-        super('Virtual', message);
+        super('Bind', message);
     }
 }

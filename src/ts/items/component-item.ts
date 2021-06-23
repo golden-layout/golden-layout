@@ -115,10 +115,15 @@ export class ComponentItem extends ContentItem {
 
     // Used by Drag Proxy
     /** @internal */
-    setDragSize(width: number, height: number): void {
+    enterDragMode(width: number, height: number): void {
         setElementWidth(this.element, width);
         setElementHeight(this.element, height);
-        this._container.setDragSize(width, height);
+        this._container.enterDragMode(width, height);
+    }
+
+    /** @internal */
+    exitDragMode(): void {
+        this._container.exitDragMode();
     }
 
     // Used by Drag Proxy

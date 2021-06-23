@@ -24,6 +24,12 @@ export interface AreaLinkedRect {
     y2: number;
 }
 
+// @public (undocumented)
+export class BindError extends ExternalError {
+    // @internal
+    constructor(message: string);
+}
+
 // @public
 export class BrowserPopout extends EventEmitter {
     // @internal
@@ -67,6 +73,10 @@ export class ComponentContainer extends EventEmitter {
     // @internal (undocumented)
     drag(): void;
     get element(): HTMLElement;
+    // @internal
+    enterDragMode(width: number, height: number): void;
+    // @internal (undocumented)
+    exitDragMode(): void;
     // @deprecated
     extendState(state: Record<string, unknown>): void;
     focus(suppressEvent?: boolean): void;
@@ -87,8 +97,6 @@ export class ComponentContainer extends EventEmitter {
     // (undocumented)
     get parent(): ComponentItem;
     replaceComponent(itemConfig: ComponentItemConfig): void;
-    // @internal
-    setDragSize(width: number, height: number): void;
     // @internal
     setSize(width: number, height: number): boolean;
     // @internal
@@ -115,6 +123,8 @@ export class ComponentContainer extends EventEmitter {
     virtualRectingRequiredEvent: ComponentContainer.VirtualRectingRequiredEvent | undefined;
     // (undocumented)
     virtualVisibilityChangeRequiredEvent: ComponentContainer.VirtualVisibilityChangeRequiredEvent | undefined;
+    // (undocumented)
+    virtualZIndexChangeRequiredEvent: ComponentContainer.VirtualZIndexChangeRequiredEvent | undefined;
     // (undocumented)
     get visible(): boolean;
     // (undocumented)
@@ -148,6 +158,8 @@ export namespace ComponentContainer {
     export type VirtualRectingRequiredEvent = (this: void, container: ComponentContainer, width: number, height: number) => void;
     // (undocumented)
     export type VirtualVisibilityChangeRequiredEvent = (this: void, container: ComponentContainer, visible: boolean) => void;
+    // (undocumented)
+    export type VirtualZIndexChangeRequiredEvent = (this: void, container: ComponentContainer, logicalZIndex: LogicalZIndex, defaultZIndex: string) => void;
 }
 
 // @public (undocumented)
@@ -172,6 +184,10 @@ export class ComponentItem extends ContentItem {
     destroy(): void;
     // @internal (undocumented)
     drag(): void;
+    // @internal (undocumented)
+    enterDragMode(width: number, height: number): void;
+    // @internal (undocumented)
+    exitDragMode(): void;
     focus(suppressEvent?: boolean): void;
     // (undocumented)
     get focused(): boolean;
@@ -191,8 +207,6 @@ export class ComponentItem extends ContentItem {
     get reorderEnabled(): boolean;
     // @internal (undocumented)
     setBlurred(suppressEvent: boolean): void;
-    // @internal (undocumented)
-    setDragSize(width: number, height: number): void;
     // @internal (undocumented)
     setFocused(suppressEvent: boolean): void;
     // @internal (undocumented)
@@ -777,17 +791,19 @@ export namespace HeaderedItemConfig {
 // @public (undocumented)
 export const enum I18nStringId {
     // (undocumented)
-    ComponentIsAlreadyRegistered = 2,
+    ComponentIsAlreadyRegistered = 3,
     // (undocumented)
-    ComponentIsNotVirtuable = 3,
+    ComponentIsNotVirtuable = 4,
     // (undocumented)
-    ItemConfigIsNotTypeComponent = 5,
+    ComponentTypeNotRegisteredAndBindComponentEventHandlerNotAssigned = 2,
+    // (undocumented)
+    ItemConfigIsNotTypeComponent = 6,
     // (undocumented)
     PleaseRegisterAConstructorFunction = 1,
     // (undocumented)
     PopoutCannotBeCreatedWithGroundItemConfig = 0,
     // (undocumented)
-    VirtualComponentDoesNotHaveRootHtmlElement = 4
+    VirtualComponentDoesNotHaveRootHtmlElement = 5
 }
 
 // @public (undocumented)
@@ -1148,6 +1164,17 @@ export interface LeftAndTop {
 }
 
 // @public (undocumented)
+export type LogicalZIndex = 'base' | 'drag';
+
+// @public (undocumented)
+export namespace LogicalZIndex {
+    const // (undocumented)
+    base = "base";
+    const // (undocumented)
+    drag = "drag";
+}
+
+// @public (undocumented)
 export class PopoutBlockedError extends ExternalError {
     // @internal
     constructor(message: string);
@@ -1208,12 +1235,6 @@ export interface Rect {
     top: number;
     // (undocumented)
     width: number;
-}
-
-// @public (undocumented)
-export class RegisterError extends ExternalError {
-    // @internal
-    constructor(message: string);
 }
 
 // @public (undocumented)
@@ -1754,7 +1775,9 @@ export namespace StackItemConfig {
 // @public (undocumented)
 export namespace StyleConstants {
     const // (undocumented)
-    defaultDragProxyZIndex = 30;
+    defaultComponentBaseZIndex = "auto";
+    const // (undocumented)
+    defaultComponentDragZIndex = "32";
 }
 
 // @public
@@ -1802,12 +1825,6 @@ export namespace Tab {
 }
 
 // @public (undocumented)
-export class VirtualError extends ExternalError {
-    // @internal
-    constructor(message: string);
-}
-
-// @public (undocumented)
 export class VirtualLayout extends LayoutManager {
     constructor(container?: HTMLElement, bindComponentEventHandler?: VirtualLayout.BindComponentEventHandler, unbindComponentEventHandler?: VirtualLayout.UnbindComponentEventHandler);
     // @deprecated
@@ -1835,7 +1852,7 @@ export namespace VirtualLayout {
     // (undocumented)
     export type BeforeVirtualRectingEvent = (this: void) => void;
     // (undocumented)
-    export type BindComponentEventHandler = (this: void, container: ComponentContainer, itemConfig: ResolvedComponentItemConfig) => void;
+    export type BindComponentEventHandler = (this: void, container: ComponentContainer, itemConfig: ResolvedComponentItemConfig) => ComponentContainer.Component | undefined;
     // @internal (undocumented)
     export function createLayoutManagerConstructorParameters(configOrOptionalContainer: LayoutConfig | HTMLElement | undefined, containerOrBindComponentEventHandler?: HTMLElement | VirtualLayout.BindComponentEventHandler): LayoutManager.ConstructorParameters;
     // @deprecated (undocumented)

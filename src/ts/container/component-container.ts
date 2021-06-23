@@ -6,7 +6,8 @@ import { ComponentItem } from '../items/component-item';
 import { ContentItem } from '../items/content-item';
 import { LayoutManager } from '../layout-manager';
 import { EventEmitter } from '../utils/event-emitter';
-import { JsonValue } from '../utils/types';
+import { StyleConstants } from '../utils/style-constants';
+import { JsonValue, LogicalZIndex } from '../utils/types';
 import { deepExtend, setElementHeight, setElementWidth } from '../utils/utils';
 
 /** @public */
@@ -35,6 +36,7 @@ export class ComponentContainer extends EventEmitter {
     stateRequestEvent: ComponentContainer.StateRequestEventHandler | undefined;
     virtualRectingRequiredEvent: ComponentContainer.VirtualRectingRequiredEvent | undefined;
     virtualVisibilityChangeRequiredEvent: ComponentContainer.VirtualVisibilityChangeRequiredEvent | undefined;
+    virtualZIndexChangeRequiredEvent: ComponentContainer.VirtualZIndexChangeRequiredEvent | undefined;
 
     get width(): number { return this._width; }
     get height(): number { return this._height; }
@@ -296,18 +298,31 @@ export class ComponentContainer extends EventEmitter {
         }
     }
 
+
+
     /**
      * Set the container's size, but considered temporary (for dragging)
      * so don't emit any events.
      * @internal
      */
-    setDragSize(width: number, height: number): void {
+    enterDragMode(width: number, height: number): void {
         this._width = width;
         this._height = height;
         setElementWidth(this._element, width);
         setElementHeight(this._element, height);
 
+        if (this.virtualZIndexChangeRequiredEvent !== undefined) {
+            this.virtualZIndexChangeRequiredEvent(this, LogicalZIndex.drag, StyleConstants.defaultComponentDragZIndex);
+        }
+
         this.drag();
+    }
+
+    /** @internal */
+    exitDragMode(): void {
+        if (this.virtualZIndexChangeRequiredEvent !== undefined) {
+            this.virtualZIndexChangeRequiredEvent(this, LogicalZIndex.base, StyleConstants.defaultComponentBaseZIndex);
+        }
     }
 
     /** @internal */
@@ -409,6 +424,8 @@ export namespace ComponentContainer {
     export type StateRequestEventHandler = (this: void) => JsonValue | undefined;
     export type VirtualRectingRequiredEvent = (this: void, container: ComponentContainer, width: number, height: number) => void;
     export type VirtualVisibilityChangeRequiredEvent = (this: void, container: ComponentContainer, visible: boolean) => void;
+    export type VirtualZIndexChangeRequiredEvent =
+        (this: void, container: ComponentContainer, logicalZIndex: LogicalZIndex, defaultZIndex: string) => void;
     /** @internal */
     export type ShowEventHandler = (this: void) => void;
     /** @internal */

@@ -1,4 +1,5 @@
 /** @public */
 export namespace StyleConstants {
-    export const defaultDragProxyZIndex = 30;
+    export const defaultComponentBaseZIndex = 'auto';
+    export const defaultComponentDragZIndex = '32';
 }

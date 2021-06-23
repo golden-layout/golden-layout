@@ -1,10 +1,9 @@
 import { ResolvedComponentItemConfig } from './config/resolved-config';
 import { ComponentContainer } from './container/component-container';
-import { ApiError, RegisterError, VirtualError } from './errors/external-error';
+import { ApiError, BindError } from './errors/external-error';
 import { AssertError, UnexpectedUndefinedError } from './errors/internal-error';
 import { I18nStringId, i18nStrings } from './utils/i18n-strings';
-import { StyleConstants } from './utils/style-constants';
-import { JsonValue } from './utils/types';
+import { JsonValue, LogicalZIndex } from './utils/types';
 import { deepExtendValue, ensureElementPositionAbsolute, numberToPixels, setElementDisplayVisibility, setElementHeight, setElementWidth } from './utils/utils';
 import { VirtualLayout } from './virtual-layout';
 
@@ -26,6 +25,10 @@ export class GoldenLayout extends VirtualLayout {
     /** @internal */
     private _containerVirtualVisibilityChangeRequiredEventListener =
         (container: ComponentContainer, visible: boolean) => this.handleContainerVirtualVisibilityChangeRequiredEvent(container, visible);
+    /** @internal */
+    private _containerVirtualZIndexChangeRequiredEventListener =
+        (container: ComponentContainer, logicalZIndex: LogicalZIndex, defaultZIndex: string) =>
+            this.handleContainerVirtualZIndexChangeRequiredEvent(container, logicalZIndex, defaultZIndex);
 
     /**
      * Register a new component type with the layout manager.
@@ -60,7 +63,7 @@ export class GoldenLayout extends VirtualLayout {
         }
 
         if (this._componentTypes[typeName] !== undefined) {
-            throw new RegisterError(`${i18nStrings[I18nStringId.ComponentIsAlreadyRegistered]}: ${typeName}`);
+            throw new BindError(`${i18nStrings[I18nStringId.ComponentIsAlreadyRegistered]}: ${typeName}`);
         }
 
         this._componentTypes[typeName] = {
@@ -75,11 +78,11 @@ export class GoldenLayout extends VirtualLayout {
      */
     registerComponentFactoryFunction(typeName: string, componentFactoryFunction: GoldenLayout.ComponentFactoryFunction, virtual = false): void {
         if (typeof componentFactoryFunction !== 'function') {
-            throw new RegisterError('Please register a constructor function');
+            throw new BindError('Please register a constructor function');
         }
 
         if (this._componentTypes[typeName] !== undefined) {
-            throw new RegisterError(`${i18nStrings[I18nStringId.ComponentIsAlreadyRegistered]}: ${typeName}`);
+            throw new BindError(`${i18nStrings[I18nStringId.ComponentIsAlreadyRegistered]}: ${typeName}`);
         }
 
         this._componentTypes[typeName] = {
@@ -203,18 +206,14 @@ export class GoldenLayout extends VirtualLayout {
                     const virtuableComponent = component as GoldenLayout.VirtuableComponent;
                     const componentRootElement = virtuableComponent.rootHtmlElement;
                     if (componentRootElement === undefined) {
-                        throw new VirtualError(`${i18nStrings[I18nStringId.VirtualComponentDoesNotHaveRootHtmlElement]}: ${typeName}`);
+                        throw new BindError(`${i18nStrings[I18nStringId.VirtualComponentDoesNotHaveRootHtmlElement]}: ${typeName}`);
                     } else {
                         ensureElementPositionAbsolute(componentRootElement);
-                        const zIndex = componentRootElement.style.zIndex;
-                        const zIndexAsNumber = parseFloat(zIndex);
-                        if (isNaN(zIndexAsNumber) || zIndexAsNumber < StyleConstants.defaultDragProxyZIndex) {
-                            componentRootElement.style.zIndex = (StyleConstants.defaultDragProxyZIndex + 1).toString(10);
-                        }
                         this.container.appendChild(componentRootElement);
                         this._virtuableComponentMap.set(container, virtuableComponent);
                         container.virtualRectingRequiredEvent = this._containerVirtualRectingRequiredEventListener;
                         container.virtualVisibilityChangeRequiredEvent = this._containerVirtualVisibilityChangeRequiredEventListener;
+                        container.virtualZIndexChangeRequiredEvent = this._containerVirtualZIndexChangeRequiredEventListener;
                         component = undefined; // Do not pass component to container. Container does not expect it as component is virtual
                     }
                 }
@@ -263,7 +262,7 @@ export class GoldenLayout extends VirtualLayout {
         } else {
             const rootElement = virtuableComponent.rootHtmlElement;
             if (rootElement === undefined) {
-                throw new RegisterError(i18nStrings[I18nStringId.ComponentIsNotVirtuable] + ' ' + container.title);
+                throw new BindError(i18nStrings[I18nStringId.ComponentIsNotVirtuable] + ' ' + container.title);
             } else {
                 const containerBoundingClientRect = container.element.getBoundingClientRect();
                 const left = containerBoundingClientRect.left - this._goldenLayoutBoundingClientRect.left;
@@ -280,13 +279,28 @@ export class GoldenLayout extends VirtualLayout {
     private handleContainerVirtualVisibilityChangeRequiredEvent(container: ComponentContainer, visible: boolean): void {
         const virtuableComponent = this._virtuableComponentMap.get(container);
         if (virtuableComponent === undefined) {
-            throw new UnexpectedUndefinedError('GLHCVCE55934');
+            throw new UnexpectedUndefinedError('GLHCVVCRE55934');
         } else {
             const rootElement = virtuableComponent.rootHtmlElement;
             if (rootElement === undefined) {
-                throw new RegisterError(i18nStrings[I18nStringId.ComponentIsNotVirtuable] + ' ' + container.title);
+                throw new BindError(i18nStrings[I18nStringId.ComponentIsNotVirtuable] + ' ' + container.title);
             } else {
-                setElementDisplayVisibility(virtuableComponent.rootHtmlElement, visible);
+                setElementDisplayVisibility(rootElement, visible);
+            }
+        }
+    }
+
+    /** @internal */
+    private handleContainerVirtualZIndexChangeRequiredEvent(container: ComponentContainer, logicalZIndex: LogicalZIndex, defaultZIndex: string) {
+        const virtuableComponent = this._virtuableComponentMap.get(container);
+        if (virtuableComponent === undefined) {
+            throw new UnexpectedUndefinedError('GLHCVZICRE55935');
+        } else {
+            const rootElement = virtuableComponent.rootHtmlElement;
+            if (rootElement === undefined) {
+                throw new BindError(i18nStrings[I18nStringId.ComponentIsNotVirtuable] + ' ' + container.title);
+            } else {
+                rootElement.style.zIndex = defaultZIndex;
             }
         }
     }

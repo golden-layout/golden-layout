@@ -1,5 +1,5 @@
 import { ComponentBase } from 'component-base';
-import { ComponentContainer, ComponentItemConfig, ContentItem, DragSource, EventEmitter, GoldenLayout, JsonValue, LayoutConfig, ResolvedComponentItemConfig, ResolvedLayoutConfig, Stack } from '..';
+import { ComponentContainer, ComponentItemConfig, ContentItem, DragSource, EventEmitter, GoldenLayout, JsonValue, LayoutConfig, LogicalZIndex, ResolvedComponentItemConfig, ResolvedLayoutConfig, Stack } from '..';
 import { BooleanComponent } from './boolean-component';
 import { ColorComponent } from './color-component';
 import { EventComponent } from './event-component';
@@ -261,8 +261,13 @@ export class App {
         const componentRootElement = component.rootHtmlElement;
         this._layoutElement.appendChild(componentRootElement);
         this._boundComponentMap.set(container, component);
-        container.virtualRectingRequiredEvent = (container, width, height) => this.handleContainerVirtualRectingRequiredEvent(container, width, height);
-        container.virtualVisibilityChangeRequiredEvent = (container, visible) => this.handleContainerVisibilityChangeRequiredEvent(container, visible);
+        container.virtualRectingRequiredEvent =
+            (container, width, height) => this.handleContainerVirtualRectingRequiredEvent(container, width, height);
+        container.virtualVisibilityChangeRequiredEvent =
+            (container, visible) => this.handleContainerVirtualVisibilityChangeRequiredEvent(container, visible);
+        container.virtualZIndexChangeRequiredEvent =
+            (container, logicalZIndex, defaultZIndex) =>
+                this.handleContainerVirtualZIndexChangeRequiredEvent(container, logicalZIndex, defaultZIndex);
     }
 
     private handleUnbindComponentEvent(container: ComponentContainer) {
@@ -306,7 +311,7 @@ export class App {
         rootElement.style.height = this.numberToPixels(height);
     }
 
-    private handleContainerVisibilityChangeRequiredEvent(container: ComponentContainer, visible: boolean) {
+    private handleContainerVirtualVisibilityChangeRequiredEvent(container: ComponentContainer, visible: boolean) {
         const component = this._boundComponentMap.get(container);
         if (component === undefined) {
             throw new Error('handleContainerVisibilityChangeRequiredEvent: Component not found');
@@ -322,6 +327,21 @@ export class App {
         } else {
             componentRootElement.style.display = 'none';
         }
+    }
+
+    /** @internal */
+    private handleContainerVirtualZIndexChangeRequiredEvent(container: ComponentContainer, logicalZIndex: LogicalZIndex, defaultZIndex: string) {
+        const component = this._boundComponentMap.get(container);
+        if (component === undefined) {
+            throw new Error('handleContainerVirtualZIndexChangeRequiredEvent: Component not found');
+        }
+
+        const componentRootElement = component.rootHtmlElement;
+        if (componentRootElement === undefined) {
+            throw new Error('handleContainerVirtualZIndexChangeRequiredEvent: Component does not have a root HTML element');
+        }
+
+        componentRootElement.style.zIndex = defaultZIndex;
     }
 
     private handleWindowResizeEvent() {

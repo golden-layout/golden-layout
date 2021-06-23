@@ -363,6 +363,10 @@ Fired when a component's position and/or size need to be changed. The handler is
 Fired when a component's visibility needs to be changed. The handler is passed the container and a boolean specifying visibility. Typically, the handler would:
     * find the component in the map using container as the key,
     * change its visibility using the `display` property in the component's top level HTML element.
+* `ComponentContainer.virtualZIndexChangeRequiredEvent`\
+Fired when a component's z-index needs to be changed. The handler is passed the container and a logical z-index and the default style z-index. Typically, the handler would:
+    * find the component in the map using container as the key,
+    * change its z-index to the default style z-index.
 
 The apitest application demonstrates how virtual components are implemented.
 

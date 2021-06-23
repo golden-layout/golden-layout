@@ -1,4 +1,4 @@
-import { ComponentContainer, JsonValue, StyleConstants } from '..';
+import { ComponentContainer, JsonValue } from '..';
 import { ComponentBase } from './component-base';
 
 export class TextComponent extends ComponentBase {
@@ -19,7 +19,6 @@ export class TextComponent extends ComponentBase {
         if (virtual) {
             this._rootElement = document.createElement('div');
             this._rootElement.style.position = 'absolute';
-            this._rootElement.style.zIndex = (StyleConstants.defaultDragProxyZIndex + 1).toString(10);
         } else {
             this._rootElement = this._container.element;
         }

@@ -29,6 +29,14 @@ export namespace Side {
     export const bottom = 'bottom';
 }
 
+/** @public */
+export type LogicalZIndex = 'base' | 'drag';
+/** @public */
+export namespace LogicalZIndex {
+    export const base = 'base';
+    export const drag = 'drag';
+}
+
 /** @internal */
 export interface Rect {
     left: number,
