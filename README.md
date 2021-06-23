@@ -337,7 +337,6 @@ Fired whenever a GoldenLayout wants to bind to a new component. The handler is p
     * create the component using the config,
     * get the the component's top level HTML component,
     * ensure this element has `absolute` position,
-    * ensure the element's z-index is greater than the z-index used by Golden Layout when dragging components,
     * make the element a child of Golden Layout's root HTML element,
     * store the component in a map using the container as a key,
     * add handlers to the container's `virtualRectingRequiredEvent` and `virtualVisibilityChangeRequiredEvent` events.
@@ -383,7 +382,7 @@ With these changes, applications can continue to use Golden Layout as they are n
 
 Please note there will be a couple of minor behaviour changes:
 * Golden Layout will ensure a component's root HTML element has position type `absolute`.
-* Golden Layout will ensure a component's root HTML element has a z-index property value greater than 30.
+* Golden Layout will modify the z-index of the component's root HTML element.
 
 #### Multiple binding methods
 
