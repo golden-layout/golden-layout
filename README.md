@@ -17,12 +17,12 @@
 
 ## Features
 
-* Virtual Components
-* Full touch support
 * Native popup windows
-* Completely themeable
+* Full touch support
+* Virtual components
 * Comprehensive API
 * Powerful persistence
+* Completely themeable
 * Works in modern browsers (Firefox, Chrome)
 * Reponsive design
 
@@ -80,13 +80,11 @@ An example Angular application using Golden Layout is available.  The source can
 
 After installing the source, the app can be built and started with the standard build and start scripts.
 
-*Needs to be updated to use Virtual Components*
-
 ### Vue
 
 The following snippets of code demonstrate how Golden Layout can be used in Vue.
 
-*Needs to be updated to use Virtual Components*
+These snippets use **embedding via events** binding. It may be preferable to use **virtual via events** binding (ie Virtual Components). A Pull Request from a Vue user demonstrating using Vue with virtual components would be appreciated.
 
 #### Composable Hook
 
@@ -109,7 +107,7 @@ export function useDocumentReady(func: () => void) {
 }
 
 export function useGoldenLayout(
-    createComponent: (type: string, container: HTMLElement) => void,
+    createComponent: (type: string, container: HTMLElement) => ComponentContainer.Component,
     destroyComponent: (container: HTMLElement) => void,
     config?: LayoutConfig
 ) {
@@ -121,12 +119,13 @@ export function useGoldenLayout(
         if (element.value == null) throw new Error('Element must be set.');
         const goldenLayout = new GoldenLayout(element.value);
 
-        goldenLayout.getComponentEvent = (container, itemConfig) => {
+        goldenLayout.bindComponentEvent = (container, itemConfig) => {
             const { componentType } = itemConfig;
             if (typeof componentType !== 'string') throw new Error('Invalid component type.');
-            createComponent(componentType, container.element);
+            const component = createComponent(componentType, container.element);
+            return component; // return component to specify embedded binding
         }
-        goldenLayout.releaseComponentEvent = container => {
+        goldenLayout.unbindComponentEvent = container => {
             destroyComponent(container.element);
         }
 
@@ -218,65 +217,35 @@ export default defineComponent({
 
 ### Other Frameworks
 
-**OUT OF DATE**
-*This documentation needs to be updated to reflect Virtual Components. Do NOT use `getComponentEvent` and `releaseComponentEvent` anymore. Use the Virtual Component events: `bindComponentEvent` and `unbindComponentEvent`*
-
-When attaching a component, all Golden Layout does is provide the HTML Element of a container: `Container.element`. Components can use this element to bind to that Golden Layout container.  For example, the component's top most HTML element could be attached as a child to this container element.
-
-The `LayoutManager.getComponentEvent` event will be fired whenever a container is created and needs a component. The `LayoutManager.releaseComponentEvent` event will be fired before a container is destroyed and gives the application a chance to tear-down the component.
+Other frameworks can use use the `bindComponentEvent` and `unbindComponentEvent` events to manage components bindings with Golden Layout.  The `VirtualLayout.bindComponentEvent` event will be fired whenever a component is needed. The `VirtualLayout.unbindComponentEvent` event will be fired when a component is no longer needed and gives the application a chance to tear-down the component.
 
 These events can be set up in an application's start up code as shown in the example code below.
 
 ```js
     this._goldenLayout = new GoldenLayout(goldenLayoutHostElement);
 
-    this._goldenLayout.getComponentEvent = (container, itemConfig) => {
+    this._goldenLayout.bindComponentEvent = (container, itemConfig) => {
         const component = this.createFrameworkComponent(itemConfig);
-        // component.element is the top most HTML element in the component
-        container.element.appendChild(component.element);
+        // component.rootHtmlElement is the top most HTML element in the component
+        container.element.appendChild(component.rootHtmlElement);
         this._containerMap.set(container, component);
+        return component; // Returning the component specifies that embedded binding is to be used
     }
 
-    this._goldenLayout.releaseComponentEvent = (container, component) => {
-        // do this if you need to dispose resources
+    this._goldenLayout.unbindComponentEvent = (container, component) => {
         const component = this._containerMap.get(container);
-        this.disposeFrameworkComponent(component);
+        container.element.removeChild(component.rootHtmlElement);
         this._containerMap.delete(container);
+        this.disposeFrameworkComponent(component);
     }
 ```
 
-Alternatively, `container.element` could be used as the top most HTML element in the component. Example code for this could look like:
-
-```js
-    this._goldenLayout = new GoldenLayout(goldenLayoutHostElement);
-
-    this._goldenLayout.getComponentEvent = (container, itemConfig) => {
-        const component = this.createFrameworkComponent(itemConfig, container.element);
-        this._containerMap.set(container, component);
-    }
-
-    this._goldenLayout.releaseComponentEvent = (container, component) => {
-        // do this if you need to dispose resources
-        const component = this._containerMap.get(container);
-        this.disposeFrameworkComponent(component);
-        this._containerMap.delete(container);
-    }
-```
-
-Once the `LayoutManager.getComponentEvent` and (optionally) `LayoutManager.releaseComponentEvent` events have been set up, functions that create components can be used.  For example:
+Once the `VirtualLayout.bindComponentEvent` and `VirtualLayout.unbindComponentEvent` events have been set up, functions that create components can be used.  For example:
 
 * `LayoutManager.loadLayout()`
 * `LayoutManager.addComponent()`
 
-Also note that if `LayoutManager.getComponentEvent` is set up, you should **not** register any components with the register functions:
-
-* `LayoutManager.registerComponent()`
-* `LayoutManager.registerComponentConstructor()`
-* `LayoutManager.registerComponentFactoryFunction()`
-* `LayoutManager.registerComponentFunction()`
-* `LayoutManager.registerGetComponentConstructorCallback()`
-
-`LayoutManager.getComponentEvent` is the recommended approach for binding components to Golden Layout. The above component register functions, were mainly included in Golden Layout for backwards compatibility.
+The above example uses 'embedding via events' binding. It is also possible to use these events with 'virtual via events' binding. For more information on binding, see the [Binding Components](#binding-components) section below.
 
 ## Notes
 
@@ -301,19 +270,22 @@ See event-component.ts in apitest for a complete example of broadcasting user me
 - The EventHub is restricted to `userBroadcast` events, other event types will not be broadcasted between windows.
 - This means the you have to take care of propagating state changes between windows yourself.
 
-### Virtual Components
+### Binding Components
 
 Golden Layout binds to components and then controls their position, size and visibility (positioning) so that they fit within a layout. There are 3 ways Golden Layout can bind to a component:
 
-1. Registering a component with positioning within Golden Layout DOM
-1. Registering a component with virtual positioning
-1. Virtual components where all positioning of components is done by the application in accordance with events fired by Golden Layout.
+1. **Embedding via Registration** (classic)\
+A component's constructor/factory is registered with Golden Layout. Golden Layout will instantiate an instance when required. The constructor/factory will add the component's root HTML element within Golden Layout's own DOM hierarchy sub-tree. This is the classic Golden Layout binding method. With this binding method an ancestor of the component's root HTML element could be reparented if the layout changes.
+1. **Embedding via Events**\
+Components are obtained on demand by events. An event handler will construct or otherwise fetch the component and return it. The event handler will also add the component's root HTML element within Golden Layout's own DOM hierarchy sub-tree. This is the binding method introduced in version 2.
+1. **Virtual via Registration**\
+A component's constructor/factory is registered with Golden Layout. Golden Layout will instantiate an instance when required. The component will use the same positioning as virtual components however Golden Layout will handle all the events internally.
+1. **Virtual via Events** (Virtual Components)\
+With virtual components, Golden Layout never interacts directly with components. The application controls the construction/allocation, destruction/deallocation and positioning of components. Golden Layout will advise the application when components are needed and no longer needed via events. It will also advise about components' positioning via events. This allows an application to control the placement of components in the DOM hierarchy and components' root HTML element's ancestors are not reparented when the layout is changed.
 
-(There is a 4th method using `getComponentEvent` and `releaseComponentEvent` however this has been deprecated and should no longer be used)
+#### Embedding via Registration
 
-#### Binding by registering a component and positioning within Golden Layout DOM
-
-Registering a component and specifying static positioning is the classic GoldenLayout approach to binding components. The components are registered with GoldenLayout and specify a constructor or callback function used to create a component whenever a new instance is needed in the layout. When the constructor or callback is invoked, it is passed a container object which includes a HTML element. The constructor or callback will create the object and make its top level HTML element a child of the container's HTML element. The component is then part of the Golden Layout's DOM hierarchy. Whenever the layout is re-arranged, the GoldenLayout DOM is adjusted to reflect the new layout hierarchy. Effectively this involves components being reparented (or their parents reparented) when a layout is changed.
+Registering a component and specifying static positioning is the classic GoldenLayout approach to binding components. The components are registered with GoldenLayout and specify a constructor or callback function used to create a component whenever a new instance is needed in the layout. When the constructor or callback is invoked, it is passed a container object which includes a HTML element. The constructor or callback will create the object and make its top level HTML element a child of the container's HTML element. The component is then part of the Golden Layout's DOM hierarchy. Whenever the layout is re-arranged, the GoldenLayout DOM is adjusted to reflect the new layout hierarchy. Effectively this involves the ancestors of components' root HTML elements being reparented when a layout is changed.
 
 The following functions can be used to register components.
 * `GoldenLayout.registerComponent()`
@@ -322,7 +294,18 @@ The following functions can be used to register components.
 * `GoldenLayout.registerComponentFunction()`
 * `GoldenLayout.registerGetComponentConstructorCallback()`
 
-#### Binding with Virtual Components
+#### Embedding via Events
+
+To give applications more control over the allocation of components, you can bind components with events instead of registration. If a handler is assigned to the event `VirtualComponent.bindComponentEvent` it will be fired whenever a new component is needed. The handler should:
+* create or fetch the component,
+* make sure its top level HTML elements are made children of `container.element`,
+* return the component.
+
+It is important that the handler returns the component. This signifies that the component should use embedded binding.
+
+When a component is removed from Golden Layout it will be necessary to remove the component's top level HTML elements as children of `container.element`. Other component 'tear-down' actions may also be required. These actions can be carried out in either the `VirtualComponent.unbindComponentEvent` event or the component container's `beforeComponentRelease` event (or both). Both these events will be fired (if handlers are assigned) when a component is no longer needed in Golden Layout.
+
+#### Virtual via Events
 
 With virtual components, Golden Layout knows nothing about components and does not include the component's HTML elements in its own DOM hierarchy. Instead, whenever a component needs its position, size or visibility changed, Golden Layout will fire events which allow the application to change a component's position, size or visibility.  This is analogous to virtual grids where strings and other content to be displayed in a grid, are not included within the grid. Instead the grid fires events whenever it needs to display content. The application will return the required content.
 
@@ -332,24 +315,25 @@ Virtual Components has the following advantages:
 * Applications typically bind a component's top level HTML element to the Golden Layout root element. Debugging becomes easier as the DOM hierarchy relevant to your application is a lot shallower.
 
 With Virtual Components the following events need to be handled:
-* `VirtualComponent.bindComponentEvent`\
+* `VirtualComponent.bindComponentEvent: (container, itemConfig) => ComponentContainer.Component | void;`\
 Fired whenever a GoldenLayout wants to bind to a new component. The handler is passed the container and the item's resolved config. Typically, the handler would:
-    * create the component using the config,
+    * create or fetch the component using `itemConfig`,
     * get the the component's top level HTML component,
     * ensure this element has `absolute` position,
     * make the element a child of Golden Layout's root HTML element,
-    * store the component in a map using the container as a key,
-    * add handlers to the container's `virtualRectingRequiredEvent` and `virtualVisibilityChangeRequiredEvent` events.
-* `VirtualComponent.unbindComponentEvent`\
+    * store the component in a map using `container` as the key,
+    * add handlers to the container's `virtualRectingRequiredEvent` and `virtualVisibilityChangeRequiredEvent` events,
+    * do **NOT** return the component in the event handler (this signifies virtual binding).
+* `VirtualComponent.unbindComponentEvent: (container) => void`\
 Fired when a component is removed from Golden Layout.  The handler is passed the container. Typically, the handler would:
-    * find the component in the map using container as the key,
+    * find the component in the map using `container` as the key,
     * remove it as a child from Golden Layout's root HTML element,
     * remove it from the map.
-* `LayoutManager.beforeVirtualRectingEvent`\
+* `LayoutManager.beforeVirtualRectingEvent: () => void`\
 This event does not need to be handled. However it can be used to optimise positioning of components. Whenever a layout is changed, it may be that several components need to be repositioned.  This event will be fired whenever one or more components need to be positioned as the result of one layout change.  Typically it is used to get the position of Golden Layout's root HTML element, using `getBoundingClientRect()`. This can then be cached for use when each component's position needs to be calculated.
-* `ComponentContainer.virtualRectingRequiredEvent`\
+* `ComponentContainer.virtualRectingRequiredEvent: (container, width, height) => void;`\
 Fired when a component's position and/or size need to be changed. The handler is passed the container and the component's required width and height. Typically, the handler would:
-    * find the component in the map using container as the key,
+    * find the component in the map using `container` as the key,
     * get the Golden Layout's root HTML element's position using `getBoundingClientRect()`, (Alternatively, it can used the position calculated by the handler for the `virtualRectingRequiredEvent` event.)
     * get the container's position using `getBoundingClientRect()`,
     * calculate the container's position relative to Golden Layout's root HTML element position.
@@ -358,18 +342,18 @@ Fired when a component's position and/or size need to be changed. The handler is
         * `top`
         * `width`
         * `height`
-* `ComponentContainer.virtualVisibilityChangeRequiredEvent`\
+* `ComponentContainer.virtualVisibilityChangeRequiredEvent: (container, visible) => void;`\
 Fired when a component's visibility needs to be changed. The handler is passed the container and a boolean specifying visibility. Typically, the handler would:
-    * find the component in the map using container as the key,
+    * find the component in the map using `container` as the key,
     * change its visibility using the `display` property in the component's top level HTML element.
-* `ComponentContainer.virtualZIndexChangeRequiredEvent`\
+* `ComponentContainer.virtualZIndexChangeRequiredEvent: (container, logicalZIndex, defaultZIndex) => void`\
 Fired when a component's z-index needs to be changed. The handler is passed the container and a logical z-index and the default style z-index. Typically, the handler would:
-    * find the component in the map using container as the key,
-    * change its z-index to the default style z-index.
+    * find the component in the map using `container` as the key,
+    * change its z-index to the default style z-index specified in `defaultZIndex`.
 
 The apitest application demonstrates how virtual components are implemented.
 
-#### Binding by registering a component but specifying virtual components
+#### Virtual via Registration
 
 These events give applications a lot of flexibility with positioning components in Golden Layout - but at the expense of more effort of integrating into Golden Layout. It is however, possible to get the same benefits of Virtual Components with just registering a component. In this case, a component will be registered as in classic approach to Golden Layout binding, however, within Golden Layout, the component will be handled like a virtual component. Golden Layout will internally handle the necessary events.
 
@@ -383,6 +367,8 @@ With these changes, applications can continue to use Golden Layout as they are n
 Please note there will be a couple of minor behaviour changes:
 * Golden Layout will ensure a component's root HTML element has position type `absolute`.
 * Golden Layout will modify the z-index of the component's root HTML element.
+
+Also note that 'virtual via registration' binding is not supported by the `GoldenLayout.registerGetComponentConstructorCallback()` registration function.
 
 #### Multiple binding methods
 
@@ -456,9 +442,6 @@ Version 2 has been re-written in TypeScript. A general code cleanup has been car
 
 Also, some changes have been made to the GoldenLayout API.  Where possible, backwards compatibility has been retained,however functions and properties kept for backwards compatibility have been marked as deprecated. It is strongly recommend applications be migrated to the new API.
 
-The API changes include 2 new events to support creation of components: `getComponentEvent` and `releaseComponentEvent`. With these events, it is far easier to integrate GoldenLayout into frameworks.  This example application demonstrates how to integrate GoldenLayout into Angular:
-  [https://github.com/golden-layout/golden-layout-ng-app](https://github.com/golden-layout/golden-layout-ng-app)
-
 ### Config
 Configs are now strongly typed. In addition, GoldenLayout now has "Configs" and "Resolved Configs"
 1. Configs\
@@ -478,9 +461,9 @@ This specifies the config for a layout.
 The (optional) `ItemConfig.id` property now has type `string` (instead of its previous `string | string[]` type).  For backwards compatibility, when `ItemConfig.id` is resolved, it will still accept an `id` with of type string array. This will allow handling of legacy saved configs in which `id` contains an array of strings (including possibly the legacy maximise indicator). When such an `id` is resolved, the array is first checked for the legacy maximise indicator and then the first element becomes the `id` string value.  The remaining elements are discarded.
 
 The `ComponentItemConfig.componentName` property has now been replaced by property `ComponentItemConfig.componentType`.  `componentType` is of type `JsonValue`.  While a component type can now be specified by values that can be serialised by JSON, `componentType` must be of type `string` if it is registered with one of the following functions:
-1. `LayoutManager.registerComponent()` (deprecated)
-1. `LayoutManager.registerComponentConstructor()`
-1. `LayoutManager.registerComponentFactoryFunction()`
+1. `GoldenLayout.registerComponent()` (deprecated)
+1. `GoldenLayout.registerComponentConstructor()`
+1. `GoldenLayout.registerComponentFactoryFunction()`
 
 A `LayoutConfig` has a `root` property which specifies the ItemConfig of root content item of the layout.  `root` is not optional and must always be specified.
 
@@ -494,25 +477,26 @@ For examples of how to create LayoutConfigs, please refer to the `apitest` progr
 
 Many of the Config properties have been deprecated as they overlapped or were moved to more appropriate locations. Please refer to the `config.ts` source file for more information about these deprecations.
 
-### GoldenLayout class
+### GoldenLayout class and Virtual Layout class
 
-GoldenLayout is now a distinct class which is a descendant of the LayoutManager class.  Your application should always create an instance of this class.
+`GoldenLayout` is now a distinct class which is a descendant of the `VirtualLayout` class, which in turn is a descendant of the `LayoutManager` class.  Your application should always create an instance of either `GoldenLayout` or `VirtualLayout`.
 
-The GoldenLayout constructor takes one optional parameter: the HTML element which contains the GoldenLayout instance.  If this is not specified, GoldenLayout will be placed under `body`.
+The `GoldenLayout` and `VirtualLayout` constructors takes 3 optionals parameters:
+1. The HTML element which contains the GoldenLayout instance.  If this is not specified, GoldenLayout will be placed under `body`.
+2. The `bindComponentEvent` event handler.
+3. The `unbindComponentEvent` event handler.
 
-Note that the initial Layout is no longer specified in this constructor. Instead it is loaded with `LayoutManage.loadLayout()` (see below).
+Note that the initial Layout is no longer specified in this constructor. Instead it is loaded with `LayoutManager.loadLayout()` (see below).
 
-### LayoutManager changes
-1. Do not construct an instance of LayoutManager.  Construct an instance of GoldenLayout (see above).
+The GoldenLayout class now handles component registration. LayoutManager no longer includes any component registration functions. The following changes to registration functions have been made:
 1. `registerComponentConstructor()` (new function)\
 Same as previous `registerComponent()` however only used when registering a component constructor.
 1. `registerComponentFactoryFunction` (new function)\
-Same as previous `registerComponent()` however only used when registering a call back function (closure) for creating components.
+Same as previous `LayoutManager.registerComponent()` however only used when registering a call back function (closure) for creating components.
 1. Do not use `registerComponent()`. Use the new `registerComponentConstructor()` or `registerComponentFactoryFunction()` instead.
-1. `getComponentEvent` (new event)\
-Generate a component needed by GoldenLayout. The parameters specify its container and `ItemConfig`. Use this event instead of `registerComponentConstructor()` or `registerComponentFactoryFunction` if you want to control the disposal of the component.
-1. `releaseComponentEvent` (new event)\
-Use in conjunction with `getComponentEvent` to release/dispose any component created for GoldenLayout
+
+### LayoutManager changes
+1. Do not construct an instance of LayoutManager.  Construct an instance of GoldenLayout (see above).
 1. Do not call `init()`. Call `LayoutManager.loadLayout()` instead.
 1. `loadLayout()` (new function)\
 Will load the new layout specified in its `LayoutConfig` parameter.  This can also be subsequently called whenever the GoldenLayout layout is to be replaced.
@@ -528,6 +512,13 @@ Specifies the root content item of the layout (not the Ground content item).
 1. Do not use `root`. This has been replaced with the internal property `groundItem`. You probably want to use the new `rootItem` instead.
 1. `focusComponent()` will focus the specified component item. Only one component item can have focus. If previously, another component item had focus, then it will lose focus (become blurred). `focus` or `blur` events will be emitted as appropriate unless the `suppressEvent` parameter is set to true.
 1. `clearComponentFocus()` which removes any existing component item focus. If focus is removed, a `blur` event will be emitted unless the `suppressEvent` parameter is set to true.
+
+### VirtualLayout
+1. `getComponentEvent`
+Now implemented in the VirtualLayout class but has been deprecated. Use `VirtualLayout.bindComponentEvent` instead.
+1. `releaseComponentEvent` (new event)\
+Now implemented in the VirtualLayout class but has been deprecated. Use `VirtualLayout.unbindComponentEvent` instead.
+1. See [Binding Components](#binding-components) section for more information about new events related to binding components.
 
 ### Content Items
 1. `AbstractContentItem` has been renamed to `ContentItem`
@@ -555,6 +546,7 @@ If set, `stateRequestEvent` is fired whenever GoldenLayout wants the latest stat
 1. Do not use `getState()` unless you are using the deprecated `setState()`. Use `ComponentContainer.initialState` getter if you have migrated to the new `ComponentContainer.stateRequestEvent`.
 1. `setState()` has been marked as deprecated. If possible, use the new `stateRequestEvent` event instead.
 1. `replaceComponent()` allows you to replace a component in a container without otherwise affecting the layout.
+1. See [Binding Components](#binding-components) section for more information about new events related to binding components.
 
 ### Header and Tab
 Several properties and functions have been renamed in `header.ts` and `tab.ts`. Please search for "@deprecated" in these files for these changes.

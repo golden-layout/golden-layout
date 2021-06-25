@@ -300,6 +300,7 @@ export class App {
                 (container, logicalZIndex, defaultZIndex) =>
                     this.handleContainerVirtualZIndexChangeRequiredEvent(container, logicalZIndex, defaultZIndex);
         } else {
+            // Note that container.element is used as the root element in the component. This is set up in the component constructor
             return component;
         }
     }
@@ -317,6 +318,8 @@ export class App {
 
         if (container.virtual) {
             this._layoutElement.removeChild(componentRootElement);
+        } else {
+            // If embedded, then component handles unbinding of component elements from content.element
         }
         this._boundComponentMap.delete(container);
     }
