@@ -483,6 +483,8 @@ An application can use multiple methods of binding components for different comp
 1. Check whether there is a `getComponentEvent` handler. If so, this  event will be used to bind the component statically within the Golden Layout DOM. This method is deprecated.
 1. If none of the above, then an exception will be raised.
 
+If you use both 'Virtual via Events' and 'Embedding via Events', then the `unbindComponentEvent` handler can use the `ComponentContainer.virtual` field to determine which of these binding methods was used for a component.
+
 #### VirtualLayout class
 
 The inheritance hierarchy for the Golden Layout class is: `LayoutManager` -> `VirtualLayout` -> `GoldenLayout`.
@@ -498,7 +500,7 @@ If your existing application uses the Golden Layout registration functions, then
 * **Deprecated `getComponentEvent`**\
 To quickly get rid of this deprecation, use 'Embedding via Events'.
 * **Maximum design flexibility**\
-Use 'Virtual via Events` (Virtual Components).
+Use 'Virtual via Events' (Virtual Components).
 
 ### Understanding Focus
 
