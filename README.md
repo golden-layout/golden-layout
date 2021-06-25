@@ -492,7 +492,7 @@ The `VirtualLayout` class implements all the Golden Layout functionality except 
 #### Usage Scenarios
 
 * **Quick and easy**\
-Use 'Virtual via Registration`. Nearly as easy 'Embedding via Registration' but gives you many of the advantages of virtual binding.
+Use 'Virtual via Registration`. Nearly as easy as 'Embedding via Registration' but gives you many of the advantages of virtual binding.
 * **Backwards compatibility**\
 If your existing application uses the Golden Layout registration functions, then it will automatically use 'Embedding via Registration` without any changes.
 * **Deprecated `getComponentEvent`**\
