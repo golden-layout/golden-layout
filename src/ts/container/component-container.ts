@@ -91,6 +91,8 @@ export class ComponentContainer extends EventEmitter {
         this._state = this._initialState;
 
         this._boundComponent = this.layoutManager.bindComponent(this, _config);
+
+        this.updateElementPositionPropertyFromBoundComponent();
     }
 
     /** @internal */
@@ -220,6 +222,7 @@ export class ComponentContainer extends EventEmitter {
             this._updateItemConfigEvent(config);
 
             this._boundComponent = this.layoutManager.bindComponent(this, config);
+            this.updateElementPositionPropertyFromBoundComponent();
             this.emit('stateChanged');
         }
     }
@@ -370,6 +373,15 @@ export class ComponentContainer extends EventEmitter {
             this.virtualRectingRequiredEvent(this, this._width, this._height);
             this.emit('resize');
             this.checkShownFromZeroDimensions();
+        }
+    }
+
+    /** @internal */
+    private updateElementPositionPropertyFromBoundComponent() {
+        if (this._boundComponent.virtual) {
+            this._element.style.position = 'static';
+        } else {
+            this._element.style.position = ''; // set it back to attribute value
         }
     }
 

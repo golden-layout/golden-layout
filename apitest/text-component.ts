@@ -5,23 +5,14 @@ export class TextComponent extends ComponentBase {
     private static readonly undefinedTextValue = '<undefined>';
     static readonly typeName = 'text';
 
-    private _rootElement: HTMLElement;
     private _inputElement: HTMLInputElement;
 
     private _containerClickListener = () => this.handleClickFocusEvent();
     private _containerFocusinListener = () => this.handleClickFocusEvent();
 
-    get rootHtmlElement(): HTMLElement { return this._rootElement; }
 
-    constructor(private _container: ComponentContainer, state: JsonValue | undefined, virtual: boolean) {
-        super();
-
-        if (virtual) {
-            this._rootElement = document.createElement('div');
-            this._rootElement.style.position = 'absolute';
-        } else {
-            this._rootElement = this._container.element;
-        }
+    constructor(container: ComponentContainer, state: JsonValue | undefined, virtual: boolean) {
+        super(container, virtual);
 
         let textValue: string;
         if (state === undefined) {
@@ -39,12 +30,12 @@ export class TextComponent extends ComponentBase {
         this._inputElement.type = "text";
         this._inputElement.value = textValue;
         this._inputElement.style.display = "block";
-        this._rootElement.appendChild(this._inputElement);
+        this.rootHtmlElement.appendChild(this._inputElement);
 
-        this._container.stateRequestEvent = () => this.handleContainerStateRequestEvent();
+        this.container.stateRequestEvent = () => this.handleContainerStateRequestEvent();
 
-        this._rootElement.addEventListener('click', this._containerClickListener);
-        this._rootElement.addEventListener('focusin', this._containerFocusinListener);
+        this.rootHtmlElement.addEventListener('click', this._containerClickListener);
+        this.rootHtmlElement.addEventListener('focusin', this._containerFocusinListener);
     }
 
     handleContainerStateRequestEvent(): TextComponent.State | undefined {
@@ -59,7 +50,7 @@ export class TextComponent extends ComponentBase {
     }
 
     private handleClickFocusEvent(): void {
-        this._container.focus();
+        this.container.focus();
     }
 }
 

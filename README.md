@@ -465,6 +465,7 @@ These events give applications a lot of flexibility with positioning components 
 Existing applications using register functions in Golden Layout can easily be updated to use virtual binding by:
 1. The register functions have a new parameter `virtual`. By default, this is `false`, specifying the classic binding in Golden Layout. Set this to `true` to specify that components of that type should be implemented internally as virtual components.
 1. Components need to have a getter: `rootHtmlElement` which returns the component's root HTML element. Components written in TypeScript should implement the `GoldenLayout.VirtuableComponent` interface.
+1. Components' `rootHtmlElement` element need to have its `overflow` CSS property set to hidden.
 1. Ensure that the Golden Layout container HTML element is positioned (ie. its position property is not `static`).
 
 With these changes, applications can continue to use Golden Layout as they are now however Golden Layout will internally use virtual component binding.
@@ -595,7 +596,7 @@ For examples of how to create LayoutConfigs, please refer to the `apitest` progr
 
 Many of the Config properties have been deprecated as they overlapped or were moved to more appropriate locations. Please refer to the `config.ts` source file for more information about these deprecations.
 
-### GoldenLayout class and Virtual Layout class
+### GoldenLayout class and VirtualLayout class
 
 `GoldenLayout` is now a distinct class which is a descendant of the `VirtualLayout` class, which in turn is a descendant of the `LayoutManager` class.  Your application should always create an instance of either `GoldenLayout` or `VirtualLayout`.
 

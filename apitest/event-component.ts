@@ -4,53 +4,43 @@ import { ComponentBase } from './component-base';
 export class EventComponent extends ComponentBase {
     static readonly typeName = 'event';
 
-    private _rootElement: HTMLElement;
     private _inputElement: HTMLInputElement;
     private _sendElement: HTMLButtonElement;
 
     private _containerClickListener = () => this.handleClickFocusEvent();
     private _containerFocusinListener = () => this.handleClickFocusEvent();
 
-    get rootHtmlElement(): HTMLElement { return this._rootElement; }
-
-    constructor(private _container: ComponentContainer, state: JsonValue | undefined, virtual: boolean) {
-        super();
-
-        if (virtual) {
-            this._rootElement = document.createElement('div');
-            this._rootElement.style.position = 'absolute';
-        } else {
-            this._rootElement = this._container.element;
-        }
+    constructor(container: ComponentContainer, state: JsonValue | undefined, virtual: boolean) {
+        super(container, virtual);
 
         this._inputElement = document.createElement('input');
         this._inputElement.type = "text";
         this._inputElement.style.display = "block";
-        this._rootElement.appendChild(this._inputElement);
+        this.rootHtmlElement.appendChild(this._inputElement);
 
         this._sendElement = document.createElement('button');
         this._sendElement.innerText = "SEND EVENT";
         this._sendElement.addEventListener('click', () => {
-            this._container.layoutManager.eventHub.emitUserBroadcast('foo', this._inputElement.value);
+            this.container.layoutManager.eventHub.emitUserBroadcast('foo', this._inputElement.value);
         });
-        this._rootElement.appendChild(this._sendElement);
+        this.rootHtmlElement.appendChild(this._sendElement);
 
         const cb = (...ev: EventEmitter.UnknownParams) => {
             const evt = document.createElement('span');
             evt.innerText = `Received: ${ev}`
-            this._rootElement.appendChild(evt);
+            this.rootHtmlElement.appendChild(evt);
         };
 
-        this._container.layoutManager.eventHub.on('userBroadcast', cb);
-        this._container.on('beforeComponentRelease', () => {
-            this._container.layoutManager.eventHub.off('userBroadcast', cb);
+        this.container.layoutManager.eventHub.on('userBroadcast', cb);
+        this.container.on('beforeComponentRelease', () => {
+            this.container.layoutManager.eventHub.off('userBroadcast', cb);
         })
 
-        this._rootElement.addEventListener('click', this._containerClickListener);
-        this._rootElement.addEventListener('focusin', this._containerFocusinListener);
+        this.rootHtmlElement.addEventListener('click', this._containerClickListener);
+        this.rootHtmlElement.addEventListener('focusin', this._containerFocusinListener);
     }
 
     private handleClickFocusEvent(): void {
-        this._container.focus();
+        this.container.focus();
     }
 }
