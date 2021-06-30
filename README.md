@@ -84,7 +84,7 @@ After installing the source, the app can be built and started with the standard 
 
 The following snippets of code demonstrate how Golden Layout can be used in Vue.
 
-These snippets use **embedding via events** binding. It may be preferable to use **virtual via events** binding (ie Virtual Components). A Pull Request from a Vue user demonstrating using Vue with virtual components would be appreciated.
+These snippets use [**embedding via events**](#embedding-via-events) binding. It may be preferable to use [**virtual via events**](#virtual-via-events) binding (ie Virtual Components). A Pull Request from a Vue user demonstrating using Vue with virtual components would be appreciated.
 
 #### Composable Hook
 

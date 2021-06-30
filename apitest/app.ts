@@ -1,5 +1,18 @@
 import { ComponentBase } from 'component-base';
-import { ComponentContainer, ComponentItemConfig, ContentItem, DragSource, EventEmitter, GoldenLayout, JsonValue, LayoutConfig, LogicalZIndex, ResolvedComponentItemConfig, ResolvedLayoutConfig, Stack } from '..';
+import {
+    ComponentContainer,
+    ComponentItemConfig,
+    ContentItem,
+    DragSource,
+    EventEmitter,
+    GoldenLayout,
+    JsonValue,
+    LayoutConfig,
+    LogicalZIndex,
+    ResolvedComponentItemConfig,
+    ResolvedLayoutConfig,
+    Stack
+} from "..";
 import { BooleanComponent } from './boolean-component';
 import { ColorComponent } from './color-component';
 import { EventComponent } from './event-component';

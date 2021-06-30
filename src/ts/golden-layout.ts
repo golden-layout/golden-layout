@@ -10,7 +10,7 @@ import { VirtualLayout } from './virtual-layout';
 /** @public */
 export class GoldenLayout extends VirtualLayout {
     /** @internal */
-    private _componentTypes: Record<string, GoldenLayout.ComponentInstantiator> = {};
+    private _componentTypesMap = new Map<string, GoldenLayout.ComponentInstantiator>();
     /** @internal */
     private _getComponentConstructorFtn: GoldenLayout.GetComponentConstructorCallback;
 
@@ -62,15 +62,18 @@ export class GoldenLayout extends VirtualLayout {
             throw new Error(i18nStrings[I18nStringId.PleaseRegisterAConstructorFunction]);
         }
 
-        if (this._componentTypes[typeName] !== undefined) {
+        const existingComponentType = this._componentTypesMap.get(typeName);
+
+        if (existingComponentType !== undefined) {
             throw new BindError(`${i18nStrings[I18nStringId.ComponentIsAlreadyRegistered]}: ${typeName}`);
         }
 
-        this._componentTypes[typeName] = {
-            constructor: componentConstructor,
-            factoryFunction: undefined,
-            virtual,
-        };
+        this._componentTypesMap.set(typeName, {
+                constructor: componentConstructor,
+                factoryFunction: undefined,
+                virtual,
+            }
+        );
     }
 
     /**
@@ -81,15 +84,18 @@ export class GoldenLayout extends VirtualLayout {
             throw new BindError('Please register a constructor function');
         }
 
-        if (this._componentTypes[typeName] !== undefined) {
+        const existingComponentType = this._componentTypesMap.get(typeName);
+
+        if (existingComponentType !== undefined) {
             throw new BindError(`${i18nStrings[I18nStringId.ComponentIsAlreadyRegistered]}: ${typeName}`);
         }
 
-        this._componentTypes[typeName] = {
-            constructor: undefined,
-            factoryFunction: componentFactoryFunction,
-            virtual,
-        };
+        this._componentTypesMap.set(typeName, {
+                constructor: undefined,
+                factoryFunction: componentFactoryFunction,
+                virtual,
+            }
+        );
     }
 
     /**
@@ -124,7 +130,8 @@ export class GoldenLayout extends VirtualLayout {
     }
 
     getRegisteredComponentTypeNames(): string[] {
-        return Object.keys(this._componentTypes);
+        const typeNamesIterableIterator = this._componentTypesMap.keys();
+        return Array.from(typeNamesIterableIterator);
     }
 
     /**
@@ -141,7 +148,7 @@ export class GoldenLayout extends VirtualLayout {
 
         const typeName = ResolvedComponentItemConfig.resolveComponentTypeName(config)
         if (typeName !== undefined) {
-            instantiator = this._componentTypes[typeName];
+            instantiator = this._componentTypesMap.get(typeName);
         }
         if (instantiator === undefined) {
             if (this._getComponentConstructorFtn !== undefined) {
@@ -162,7 +169,7 @@ export class GoldenLayout extends VirtualLayout {
 
         const typeName = ResolvedComponentItemConfig.resolveComponentTypeName(itemConfig);
         if (typeName !== undefined) {
-            instantiator = this._componentTypes[typeName];
+            instantiator = this._componentTypesMap.get(typeName);
         }
         if (instantiator === undefined) {
             if (this._getComponentConstructorFtn !== undefined) {
