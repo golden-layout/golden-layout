@@ -71,8 +71,9 @@ lm.utils.copy( lm.controls.Tab.prototype, {
 	 * @param {String} title can contain html
 	 */
 	setTitle: function( title ) {
-		this.element.attr( 'title', lm.utils.stripTags( title ) );
-		this.titleElement.html( title );
+		var safeTitle = lm.utils.stripTags( title );
+		this.titleElement.html( safeTitle );
+		this.element.attr( 'title', this.titleElement.text() );
 	},
 
 	/**
