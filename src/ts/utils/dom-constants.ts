@@ -38,6 +38,7 @@ export namespace DomConstants {
         Bg = 'lm_bg',
         DropTargetIndicator = 'lm_dropTargetIndicator',
         Inner = 'lm_inner',
+        /** @deprecated */
         TransitionIndicator = 'lm_transition_indicator',
     }
 }

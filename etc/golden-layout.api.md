@@ -1092,7 +1092,7 @@ export abstract class LayoutManager extends EventEmitter {
     toConfig(): ResolvedLayoutConfig;
     // Warning: (ae-forgotten-export) The symbol "TransitionIndicator" needs to be exported by the entry point index.d.ts
     //
-    // @internal (undocumented)
+    // @internal @deprecated (undocumented)
     get transitionIndicator(): TransitionIndicator | null;
     // @internal (undocumented)
     abstract unbindComponent(container: ComponentContainer, virtual: boolean, component: ComponentContainer.Component | undefined): void;

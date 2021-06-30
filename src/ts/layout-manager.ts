@@ -114,7 +114,7 @@ export abstract class LayoutManager extends EventEmitter {
     get openPopouts(): BrowserPopout[] { return this._openPopouts; }
     /** @internal */
     get dropTargetIndicator(): DropTargetIndicator | null { return this._dropTargetIndicator; }
-    /** @internal */
+    /** @internal @deprecated To be removed */
     get transitionIndicator(): TransitionIndicator | null { return this._transitionIndicator; }
     get width(): number | null { return this._width; }
     get height(): number | null { return this._height; }
