@@ -295,7 +295,7 @@ export class App {
         }
     }
 
-    private handleBindComponentEvent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig) {
+    private handleBindComponentEvent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BindableComponent {
         const componentTypeName = ResolvedComponentItemConfig.resolveComponentTypeName(itemConfig);
         if (componentTypeName === undefined) {
             throw new Error('handleBindComponentEvent: Undefined componentTypeName');
@@ -312,9 +312,16 @@ export class App {
             container.virtualZIndexChangeRequiredEvent =
                 (container, logicalZIndex, defaultZIndex) =>
                     this.handleContainerVirtualZIndexChangeRequiredEvent(container, logicalZIndex, defaultZIndex);
+            return {
+                component,
+                virtual: true,
+            }
         } else {
             // Note that container.element is used as the root element in the component. This is set up in the component constructor
-            return component;
+            return {
+                component,
+                virtual: false,
+            }
         }
     }
 

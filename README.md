@@ -123,7 +123,10 @@ export function useGoldenLayout(
             const { componentType } = itemConfig;
             if (typeof componentType !== 'string') throw new Error('Invalid component type.');
             const component = createComponent(componentType, container.element);
-            return component; // return component to specify embedded binding
+            return {
+                component,
+                virtual: false,
+            }
         }
         goldenLayout.unbindComponentEvent = container => {
             destroyComponent(container.element);
@@ -229,7 +232,10 @@ These events can be set up in an application's start up code as shown in the exa
         // component.rootHtmlElement is the top most HTML element in the component
         container.element.appendChild(component.rootHtmlElement);
         this._containerMap.set(container, component);
-        return component; // Returning the component specifies that embedded binding is to be used
+        return {
+            component,
+            virtual: false,
+        }
     }
 
     this._goldenLayout.unbindComponentEvent = (container, component) => {
@@ -299,9 +305,7 @@ The following functions can be used to register components.
 To give applications more control over the allocation of components, you can bind components with events instead of registration. If a handler is assigned to the event `VirtualComponent.bindComponentEvent` it will be fired whenever a new component is needed. The handler should:
 * create or fetch the component,
 * make sure its top level HTML elements are made children of `container.element`,
-* return the component.
-
-It is important that the handler returns the component. This signifies that the component should use embedded binding.
+* return the component inside a `BindableComponent` interface with `virtual: false`.
 
 When a component is removed from Golden Layout it will be necessary to remove the component's top level HTML elements as children of `container.element`. Other component 'tear-down' actions may also be required. These actions can be carried out in either the `VirtualComponent.unbindComponentEvent` event or the component container's `beforeComponentRelease` event (or both). Both these events will be fired (if handlers are assigned) when a component is no longer needed in Golden Layout.
 
@@ -315,7 +319,7 @@ Virtual Components has the following advantages:
 * Applications typically bind a component's top level HTML element to the Golden Layout root element. Debugging becomes easier as the DOM hierarchy relevant to your application is a lot shallower.
 
 With Virtual Components the following events need to be handled:
-* `VirtualComponent.bindComponentEvent: (container, itemConfig) => ComponentContainer.Component | void;`\
+* `VirtualComponent.bindComponentEvent: (container, itemConfig) => ComponentContainer.BindableComponent`\
     Fired whenever a GoldenLayout wants to bind to a new component. The handler is passed the container and the item's resolved config. Typically, the handler would:
     * create or fetch the component using `itemConfig`,
     * get the the component's top level HTML component,
@@ -323,7 +327,7 @@ With Virtual Components the following events need to be handled:
     * make the element a child of Golden Layout's root HTML element,
     * store the component in a map using `container` as the key,
     * add handlers to the container's `virtualRectingRequiredEvent` and `virtualVisibilityChangeRequiredEvent` events,
-    * do **NOT** return the component in the event handler (this signifies virtual binding).
+    * return the component in an `BindableComponent` interface with `virtual: true`.
 
     Example:
     ~~~
@@ -339,6 +343,10 @@ With Virtual Components the following events need to be handled:
         this._boundComponentMap.set(container, component);
         container.virtualRectingRequiredEvent = (container, width, height) => this.handleContainerVirtualRectingRequiredEvent(container, width, height);
         container.virtualVisibilityChangeRequiredEvent = (container, visible) => this.handleContainerVisibilityChangeRequiredEvent(container, visible);
+        return {
+            component,
+            virtual: true,
+        };
     }
     ~~~
 * `VirtualComponent.unbindComponentEvent: (container) => void`\

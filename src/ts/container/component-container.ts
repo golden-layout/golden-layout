@@ -15,7 +15,7 @@ export class ComponentContainer extends EventEmitter {
     /** @internal */
     private _componentType: JsonValue;
     /** @internal */
-    private _boundComponent: ComponentContainer.BoundComponent;
+    private _boundComponent: ComponentContainer.BindableComponent;
     /** @internal */
     private _width: number;
     /** @internal */
@@ -45,7 +45,7 @@ export class ComponentContainer extends EventEmitter {
     get componentName(): JsonValue { return this._componentType; }
     get componentType(): JsonValue { return this._componentType; }
     get virtual(): boolean { return this._boundComponent.virtual; }
-    get component(): ComponentContainer.Component | undefined { return this._boundComponent.component; }
+    get component(): ComponentContainer.Component { return this._boundComponent.component; }
     get tab(): Tab { return this._tab; }
     get title(): string { return this._parent.title; }
     get layoutManager(): LayoutManager { return this._layoutManager; }
@@ -428,9 +428,9 @@ export type ItemContainer = ComponentContainer;
 export namespace ComponentContainer {
     export type Component = unknown;
 
-    export interface BoundComponent {
+    export interface BindableComponent {
+        component: Component;
         virtual: boolean;
-        component: Component | undefined;
     }
 
     export type StateRequestEventHandler = (this: void) => JsonValue | undefined;

@@ -126,13 +126,10 @@ export class VirtualLayout extends LayoutManager {
 
 
     /** @internal */
-    override bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BoundComponent {
+    override bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BindableComponent {
         if (this.bindComponentEvent !== undefined) {
-            const component = this.bindComponentEvent(container, itemConfig);
-            return {
-                virtual: component === undefined,
-                component: component,
-            };
+            const bindableComponent = this.bindComponentEvent(container, itemConfig);
+            return bindableComponent;
         } else {
             if (this.getComponentEvent !== undefined) {
                 return {
@@ -249,7 +246,7 @@ export namespace VirtualLayout {
         (this: void, container: ComponentContainer, component: ComponentContainer.Component) => void;
 
     export type BindComponentEventHandler =
-        (this: void, container: ComponentContainer, itemConfig: ResolvedComponentItemConfig) => ComponentContainer.Component | void;
+        (this: void, container: ComponentContainer, itemConfig: ResolvedComponentItemConfig) => ComponentContainer.BindableComponent;
     export type UnbindComponentEventHandler =
         (this: void, container: ComponentContainer) => void;
 

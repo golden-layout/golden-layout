@@ -164,7 +164,7 @@ export class GoldenLayout extends VirtualLayout {
     }
 
     /** @internal */
-    override bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BoundComponent {
+    override bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BindableComponent {
         let instantiator: GoldenLayout.ComponentInstantiator | undefined;
 
         const typeName = ResolvedComponentItemConfig.resolveComponentTypeName(itemConfig);
@@ -181,7 +181,7 @@ export class GoldenLayout extends VirtualLayout {
             }
         }
 
-        let result: ComponentContainer.BoundComponent;
+        let result: ComponentContainer.BindableComponent;
         if (instantiator !== undefined) {
             const virtual = instantiator.virtual;
             // handle case where component is obtained by name or component constructor callback
@@ -221,7 +221,6 @@ export class GoldenLayout extends VirtualLayout {
                         container.virtualRectingRequiredEvent = this._containerVirtualRectingRequiredEventListener;
                         container.virtualVisibilityChangeRequiredEvent = this._containerVirtualVisibilityChangeRequiredEventListener;
                         container.virtualZIndexChangeRequiredEvent = this._containerVirtualZIndexChangeRequiredEventListener;
-                        component = undefined; // Do not pass component to container. Container does not expect it as component is virtual
                     }
                 }
             }

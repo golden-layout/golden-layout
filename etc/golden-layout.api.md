@@ -63,7 +63,7 @@ export class ComponentContainer extends EventEmitter {
     blur(suppressEvent?: boolean): void;
     close(): void;
     // (undocumented)
-    get component(): ComponentContainer.Component | undefined;
+    get component(): ComponentContainer.Component;
     // @internal @deprecated (undocumented)
     get componentName(): JsonValue;
     // (undocumented)
@@ -133,15 +133,15 @@ export class ComponentContainer extends EventEmitter {
 
 // @public (undocumented)
 export namespace ComponentContainer {
-    // @internal (undocumented)
-    export type BlurEventHandler = (this: void, suppressEvent: boolean) => void;
     // (undocumented)
-    export interface BoundComponent {
+    export interface BindableComponent {
         // (undocumented)
-        component: Component | undefined;
+        component: Component;
         // (undocumented)
         virtual: boolean;
     }
+    // @internal (undocumented)
+    export type BlurEventHandler = (this: void, suppressEvent: boolean) => void;
     // (undocumented)
     export type Component = unknown;
     // @internal (undocumented)
@@ -588,7 +588,7 @@ export abstract class ExternalError extends Error {
 // @public (undocumented)
 export class GoldenLayout extends VirtualLayout {
     // @internal (undocumented)
-    bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BoundComponent;
+    bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BindableComponent;
     // (undocumented)
     fireBeforeVirtualRectingEvent(count: number): void;
     getComponentInstantiator(config: ResolvedComponentItemConfig): GoldenLayout.ComponentInstantiator | undefined;
@@ -1007,7 +1007,7 @@ export abstract class LayoutManager extends EventEmitter {
     // @internal (undocumented)
     beginVirtualSizedContainerAdding(): void;
     // @internal (undocumented)
-    abstract bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BoundComponent;
+    abstract bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BindableComponent;
     // @internal (undocumented)
     calculateItemAreas(): void;
     // (undocumented)
@@ -1831,7 +1831,7 @@ export class VirtualLayout extends LayoutManager {
     // @deprecated
     constructor(config: LayoutConfig, container?: HTMLElement);
     // @internal (undocumented)
-    bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BoundComponent;
+    bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BindableComponent;
     // (undocumented)
     bindComponentEvent: VirtualLayout.BindComponentEventHandler | undefined;
     // (undocumented)
@@ -1853,7 +1853,7 @@ export namespace VirtualLayout {
     // (undocumented)
     export type BeforeVirtualRectingEvent = (this: void) => void;
     // (undocumented)
-    export type BindComponentEventHandler = (this: void, container: ComponentContainer, itemConfig: ResolvedComponentItemConfig) => ComponentContainer.Component | void;
+    export type BindComponentEventHandler = (this: void, container: ComponentContainer, itemConfig: ResolvedComponentItemConfig) => ComponentContainer.BindableComponent;
     // @internal (undocumented)
     export function createLayoutManagerConstructorParameters(configOrOptionalContainer: LayoutConfig | HTMLElement | undefined, containerOrBindComponentEventHandler?: HTMLElement | VirtualLayout.BindComponentEventHandler): LayoutManager.ConstructorParameters;
     // @deprecated (undocumented)
