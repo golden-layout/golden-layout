@@ -302,12 +302,12 @@ The following functions can be used to register components.
 
 #### Embedding via Events
 
-To give applications more control over the allocation of components, you can bind components with events instead of registration. If a handler is assigned to the event `VirtualComponent.bindComponentEvent` it will be fired whenever a new component is needed. The handler should:
+To give applications more control over the allocation of components, you can bind components with events instead of registration. If a handler is assigned to the event `VirtualLayout.bindComponentEvent` it will be fired whenever a new component is needed. The handler should:
 * create or fetch the component,
 * make sure its top level HTML elements are made children of `container.element`,
 * return the component inside a `BindableComponent` interface with `virtual: false`.
 
-When a component is removed from Golden Layout it will be necessary to remove the component's top level HTML elements as children of `container.element`. Other component 'tear-down' actions may also be required. These actions can be carried out in either the `VirtualComponent.unbindComponentEvent` event or the component container's `beforeComponentRelease` event (or both). Both these events will be fired (if handlers are assigned) when a component is no longer needed in Golden Layout.
+When a component is removed from Golden Layout it will be necessary to remove the component's top level HTML elements as children of `container.element`. Other component 'tear-down' actions may also be required. These actions can be carried out in either the `VirtualLayout.unbindComponentEvent` event or the component container's `beforeComponentRelease` event (or both). Both these events will be fired (if handlers are assigned) when a component is no longer needed in Golden Layout.
 
 #### Virtual via Events
 
@@ -319,7 +319,7 @@ Virtual Components has the following advantages:
 * Applications typically bind a component's top level HTML element to the Golden Layout root element. Debugging becomes easier as the DOM hierarchy relevant to your application is a lot shallower.
 
 With Virtual Components the following events need to be handled:
-* `VirtualComponent.bindComponentEvent: (container, itemConfig) => ComponentContainer.BindableComponent`\
+* `VirtualLayout.bindComponentEvent: (container, itemConfig) => ComponentContainer.BindableComponent`\
     Fired whenever a GoldenLayout wants to bind to a new component. The handler is passed the container and the item's resolved config. Typically, the handler would:
     * create or fetch the component using `itemConfig`,
     * get the the component's top level HTML component,
@@ -349,7 +349,7 @@ With Virtual Components the following events need to be handled:
         };
     }
     ~~~
-* `VirtualComponent.unbindComponentEvent: (container) => void`\
+* `VirtualLayout.unbindComponentEvent: (container) => void`\
 Fired when a component is removed from Golden Layout.  The handler is passed the container. Typically, the handler would:
     * find the component in the map using `container` as the key,
     * remove it as a child from Golden Layout's root HTML element,
