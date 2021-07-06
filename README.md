@@ -65,11 +65,12 @@ Bundles are not built by default and are not included in the NPM package, we rec
 The `apitest` app can be used to debug the Golden Layout library.  Its `webpack` configuration will import the Golden Layout library source map, allowing debuggers to step through the library source code and place break points.
 
 If you wish to test the library with other applications, you can link to the Golden Layout repository without having to install it into the application from NPM.  This is done with the `npm link` command.  Use the following steps:
-1. Make sure that the `golden-layout` package is **not** included as a dependency in the application's package
 1. Run the `npm link` from a shell in the golden-layout source repository top level folder.
 1. Run `npm link golden-layout` from a shell in your application's top level folder.
 
 Your application will then use the distribution in the Golden Layout repository `dist` subfolder. If you wish to make changes to the Golden Layout library, you will need to run the `build:api` to regenerate the `dist` folder.
+
+Run `npm install` to remove the npm link.
 
 ## Code Examples
 
@@ -480,6 +481,7 @@ With these changes, applications can continue to use Golden Layout as they are n
 
 Please note there will be a couple of minor behaviour changes:
 * Golden Layout will ensure a component's root HTML element has position type `absolute`.
+* Golden Layout will modify the height and width of the root HTML element. In embedding bindings, Golden Layout modified the height and width of the container element - not the component's root HTML Element. If your application also sets the height or width of a components root HTML element, you will need to modify your design. This can easily be done by giving the current root HTML element a new parent element and making this parent the new root HTML element for the component. Your component logic can continue to use the existing element while Golden Layout uses the new root HTML element.
 * Golden Layout will modify the z-index of the component's root HTML element.
 
 Also note that 'virtual via registration' binding is not supported by the `GoldenLayout.registerGetComponentConstructorCallback()` registration function.
