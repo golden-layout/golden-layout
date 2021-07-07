@@ -161,6 +161,8 @@ export class DragProxy extends EventEmitter {
                 this.setDropPosition(x, y);
             }
         }
+
+        this._componentItem.drag();
     }
 
     /**
@@ -194,6 +196,8 @@ export class DragProxy extends EventEmitter {
         } else {
             dropTargetIndicator.hide();
         }
+
+        this._componentItem.exitDragMode();
 
         /*
          * Valid drop area found
@@ -262,7 +266,7 @@ export class DragProxy extends EventEmitter {
         height -= (!this._sided ? headerHeight : 0);
         this._proxyContainerElement.style.width = numberToPixels(width);
         this._proxyContainerElement.style.height = numberToPixels(height);
-        this._componentItem.setDragSize(width, height);
+        this._componentItem.enterDragMode(width, height);
         this._componentItem.show();
     }
 }

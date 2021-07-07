@@ -1,6 +1,7 @@
-import { ComponentContainer, EventEmitter } from '..';
+import { ComponentContainer, EventEmitter, JsonValue } from '..';
+import { ComponentBase } from './component-base';
 
-export class EventComponent {
+export class EventComponent extends ComponentBase {
     static readonly typeName = 'event';
 
     private _inputElement: HTMLInputElement;
@@ -9,36 +10,37 @@ export class EventComponent {
     private _containerClickListener = () => this.handleClickFocusEvent();
     private _containerFocusinListener = () => this.handleClickFocusEvent();
 
-    constructor(private _container: ComponentContainer) {
+    constructor(container: ComponentContainer, state: JsonValue | undefined, virtual: boolean) {
+        super(container, virtual);
+
         this._inputElement = document.createElement('input');
         this._inputElement.type = "text";
         this._inputElement.style.display = "block";
-        this._container.element.appendChild(this._inputElement);
+        this.rootHtmlElement.appendChild(this._inputElement);
 
         this._sendElement = document.createElement('button');
         this._sendElement.innerText = "SEND EVENT";
         this._sendElement.addEventListener('click', () => {
-            this._container.layoutManager.eventHub.emitUserBroadcast('foo', this._inputElement.value);
+            this.container.layoutManager.eventHub.emitUserBroadcast('foo', this._inputElement.value);
         });
-        this._container.element.appendChild(this._sendElement);
+        this.rootHtmlElement.appendChild(this._sendElement);
 
         const cb = (...ev: EventEmitter.UnknownParams) => {
             const evt = document.createElement('span');
             evt.innerText = `Received: ${ev}`
-            this._container.element.appendChild(evt);
+            this.rootHtmlElement.appendChild(evt);
         };
 
-        this._container.layoutManager.eventHub.on('userBroadcast', cb);
-        this._container.on('beforeComponentRelease', () => {
-            this._container.layoutManager.eventHub.off('userBroadcast', cb);
+        this.container.layoutManager.eventHub.on('userBroadcast', cb);
+        this.container.on('beforeComponentRelease', () => {
+            this.container.layoutManager.eventHub.off('userBroadcast', cb);
         })
 
-        this._container.element.addEventListener('click', this._containerClickListener);
-        this._container.element.addEventListener('focusin', this._containerFocusinListener);
-
+        this.rootHtmlElement.addEventListener('click', this._containerClickListener);
+        this.rootHtmlElement.addEventListener('focusin', this._containerFocusinListener);
     }
 
     private handleClickFocusEvent(): void {
-        this._container.focus();
+        this.container.focus();
     }
 }

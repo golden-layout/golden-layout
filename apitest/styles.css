@@ -18,6 +18,7 @@ body {
 }
 
 #layoutContainer {
+    position: relative;
     height: 100%;
     width: 100%;
 }
@@ -29,7 +30,58 @@ body {
 }
 
 .control {
-    margin: 2px;    
+    margin: 2px;
+}
+
+.radioLine {
+    display: flex;
+    flex-wrap: nowrap;
+}
+
+.radioLine > *:not(:first-child) {
+    margin-left: 0.4em;
+}
+
+.labelledRadio {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+}
+
+.labelledRadio > input {
+    margin: 0;
+}
+
+.labelledRadio > label {
+    margin-left: 0.2em;
+}
+
+#registerSection {
+    display: flex;
+    flex-direction: column;
+}
+
+#registerNotVirtualRadioSection {
+    display: flex;
+    margin-left: 1em;
+}
+
+#registerVirtualRadioSection {
+    display: flex;
+    margin-left: 1em;
+}
+
+#eventBindingSection {
+    display: flex;
+}
+
+#eventBindingSpan {
+    white-space: nowrap;
+}
+
+#eventBindingRadios {
+    display: flex;
+    margin-left: 0.5em;
 }
 
 #addComponentSection {

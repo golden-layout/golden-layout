@@ -14,7 +14,7 @@ import { DragProxy } from './controls/drag-proxy';
 import { DragSource } from './controls/drag-source';
 import { DropTargetIndicator } from './controls/drop-target-indicator';
 import { TransitionIndicator } from './controls/transition-indicator';
-import { ApiError, ConfigurationError } from './errors/external-error';
+import { ConfigurationError } from './errors/external-error';
 import { AssertError, UnexpectedNullError, UnexpectedUndefinedError, UnreachableCaseError } from './errors/internal-error';
 import { ComponentItem } from './items/component-item';
 import { ComponentParentableItem } from './items/component-parentable-item';
@@ -30,7 +30,6 @@ import { EventHub } from './utils/event-hub';
 import { I18nStringId, I18nStrings, i18nStrings } from './utils/i18n-strings';
 import { ItemType, JsonValue, Rect, ResponsiveMode } from './utils/types';
 import {
-    deepExtendValue,
     getElementWidthAndHeight,
     removeFromArray,
     setElementHeight,
@@ -67,8 +66,6 @@ export abstract class LayoutManager extends EventEmitter {
     /** @internal */
     private _resizeTimeoutId: ReturnType<typeof setTimeout> | undefined;
     /** @internal */
-    private _componentTypes: Record<string, LayoutManager.ComponentInstantiator> = {};
-    /** @internal */
     private _itemAreas: ContentItem.Area[] = [];
     /** @internal */
     private _maximisedStack: Stack | undefined;
@@ -90,9 +87,10 @@ export abstract class LayoutManager extends EventEmitter {
     private _height: number | null = null;
     /** @internal */
     private _focusedComponentItem: ComponentItem | undefined;
-
     /** @internal */
-    private _getComponentConstructorFtn: LayoutManager.GetComponentConstructorCallback;
+    private _virtualSizedContainers: ComponentContainer[] = [];
+    /** @internal */
+    private _virtualSizedContainerAddingBeginCount = 0;
 
     /** @internal */
     private _windowResizeListener = () => this.processResizeWithDebounce();
@@ -104,17 +102,8 @@ export abstract class LayoutManager extends EventEmitter {
     readonly isSubWindow: boolean;
     layoutConfig: ResolvedLayoutConfig;
 
-    /**
-     * If a new component is required and:
-     * 1. a component type with corresponding name is not registered, and
-     * 2. a  
-     * This callback should return a constructor for a component based on a config.
-     * This function will be called if a component type with the required name is not already registered.
-     * It is recommended that applications use the {@link (LayoutManager:class).getComponentEvent} and
-     * {@link (LayoutManager:class).releaseComponentEvent} instead of registering a constructor callback
-     */
-    getComponentEvent: LayoutManager.GetComponentEventHandler | undefined;
-    releaseComponentEvent: LayoutManager.ReleaseComponentEventHandler | undefined;
+    beforeVirtualRectingEvent: LayoutManager.BeforeVirtualRectingEvent | undefined;
+    afterVirtualRectingEvent: LayoutManager.AfterVirtualRectingEvent | undefined;
 
     get container(): HTMLElement { return this._containerElement; }
     get isInitialised(): boolean { return this._isInitialised; }
@@ -125,14 +114,14 @@ export abstract class LayoutManager extends EventEmitter {
     get openPopouts(): BrowserPopout[] { return this._openPopouts; }
     /** @internal */
     get dropTargetIndicator(): DropTargetIndicator | null { return this._dropTargetIndicator; }
-    /** @internal */
+    /** @internal @deprecated To be removed */
     get transitionIndicator(): TransitionIndicator | null { return this._transitionIndicator; }
     get width(): number | null { return this._width; }
     get height(): number | null { return this._height; }
-    /** 
+    /**
      * Retrieves the {@link (EventHub:class)} instance associated with this layout manager.
      * This can be used to propagate events between the windows
-     * @public 
+     * @public
      */
     get eventHub(): EventHub { return this._eventHub; }
     get rootItem(): ContentItem | undefined {
@@ -157,7 +146,7 @@ export abstract class LayoutManager extends EventEmitter {
     * @param container - A Dom HTML element. Defaults to body
     * @internal
     */
-    constructor(parameters: LayoutManager.ConstructorParameters) {        
+    constructor(parameters: LayoutManager.ConstructorParameters) {
         super();
 
         let layoutConfig = parameters.layoutConfig;
@@ -209,9 +198,6 @@ export abstract class LayoutManager extends EventEmitter {
             }
             this._dragSources = [];
 
-            this.getComponentEvent = undefined;
-            this.releaseComponentEvent = undefined;
-
             this._isInitialised = false;
         }
     }
@@ -235,193 +221,10 @@ export abstract class LayoutManager extends EventEmitter {
         return ResolvedLayoutConfig.unminifyConfig(config);
     }
 
-    /**
-     * Register a new component type with the layout manager.
-     *
-     * @deprecated See {@link https://stackoverflow.com/questions/40922531/how-to-check-if-a-javascript-function-is-a-constructor}
-     * instead use {@link (LayoutManager:class).registerComponentConstructor}
-     * or {@link (LayoutManager:class).registerComponentFactoryFunction}
-     */
-    registerComponent(name: string,
-        componentConstructorOrFactoryFtn: LayoutManager.ComponentConstructor | LayoutManager.ComponentFactoryFunction
-    ): void {
-        if (typeof componentConstructorOrFactoryFtn !== 'function') {
-            throw new ApiError('registerComponent() componentConstructorOrFactoryFtn parameter is not a function')
-        } else {
-            if (componentConstructorOrFactoryFtn.hasOwnProperty('prototype')) {
-                const componentConstructor = componentConstructorOrFactoryFtn as LayoutManager.ComponentConstructor;
-                this.registerComponentConstructor(name, componentConstructor);   
-            } else {
-                const componentFactoryFtn = componentConstructorOrFactoryFtn as LayoutManager.ComponentFactoryFunction;
-                this.registerComponentFactoryFunction(name, componentFactoryFtn);   
-            }
-        }
-    }
-
-    /**
-     * Register a new component type with the layout manager.
-     */
-    registerComponentConstructor(typeName: string, componentConstructor: LayoutManager.ComponentConstructor): void {
-        if (typeof componentConstructor !== 'function') {
-            throw new Error(i18nStrings[I18nStringId.PleaseRegisterAConstructorFunction]);
-        }
-
-        if (this._componentTypes[typeName] !== undefined) {
-            throw new Error(`${i18nStrings[I18nStringId.ComponentIsAlreadyRegistered]}: ${typeName}`);
-        }
-
-        this._componentTypes[typeName] = {
-            constructor: componentConstructor,
-            factoryFunction: undefined,
-        }
-    }
-
-    /**
-     * Register a new component with the layout manager.
-     */
-    registerComponentFactoryFunction(typeName: string, componentFactoryFunction: LayoutManager.ComponentFactoryFunction): void {
-        if (typeof componentFactoryFunction !== 'function') {
-            throw new Error('Please register a constructor function');
-        }
-
-        if (this._componentTypes[typeName] !== undefined) {
-            throw new Error('Component ' + typeName + ' is already registered');
-        }
-
-        this._componentTypes[typeName] = {
-            constructor: undefined,
-            factoryFunction: componentFactoryFunction,
-        }
-    }
-
-    /**
-     * Register a component function with the layout manager. This function should
-     * return a constructor for a component based on a config.
-     * This function will be called if a component type with the required name is not already registered.
-     * It is recommended that applications use the {@link (LayoutManager:class).getComponentEvent} and
-     * {@link (LayoutManager:class).releaseComponentEvent} instead of registering a constructor callback
-     * @deprecated use {@link (LayoutManager:class).registerGetComponentConstructorCallback}
-     */
-    registerComponentFunction(callback: LayoutManager.GetComponentConstructorCallback): void {
-        this.registerGetComponentConstructorCallback(callback);
-    }
-
-    /**
-     * Register a callback closure with the layout manager which supplies a Component Constructor.
-     * This callback should return a constructor for a component based on a config.
-     * This function will be called if a component type with the required name is not already registered.
-     * It is recommended that applications use the {@link (LayoutManager:class).getComponentEvent} and
-     * {@link (LayoutManager:class).releaseComponentEvent} instead of registering a constructor callback
-     */
-    registerGetComponentConstructorCallback(callback: LayoutManager.GetComponentConstructorCallback): void {
-        if (typeof callback !== 'function') {
-            throw new Error('Please register a callback function');
-        }
-
-        if (this._getComponentConstructorFtn !== undefined) {
-            console.warn('Multiple component functions are being registered.  Only the final registered function will be used.')
-        }
-
-        this._getComponentConstructorFtn = callback;
-    }
-
-    getRegisteredComponentTypeNames(): string[] {
-        return Object.keys(this._componentTypes);
-    }
-
-    /**
-     * Returns a previously registered component instantiator.  Attempts to utilize registered 
-     * component type by first, then falls back to the component constructor callback function (if registered).
-     * If neither gets an instantiator, then returns `undefined`.
-     * Note that `undefined` will return if config.componentType is not a string
-     *
-     * @param config - The item config
-     * @public
-     */
-    getComponentInstantiator(config: ResolvedComponentItemConfig): LayoutManager.ComponentInstantiator | undefined {
-        let instantiator: LayoutManager.ComponentInstantiator | undefined;
-
-        const typeName = ResolvedComponentItemConfig.resolveComponentTypeName(config)
-        if (typeName !== undefined) {
-            instantiator = this._componentTypes[typeName];
-        }
-        if (instantiator === undefined) {
-            if (this._getComponentConstructorFtn !== undefined) {
-                instantiator = {
-                    constructor: this._getComponentConstructorFtn(config),
-                    factoryFunction: undefined,
-                }
-            }
-        }
-
-        return instantiator;
-    }
-
     /** @internal */
-    getComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentItem.Component {
-        let instantiator: LayoutManager.ComponentInstantiator | undefined;
-
-        const typeName = ResolvedComponentItemConfig.resolveComponentTypeName(itemConfig);
-        if (typeName !== undefined) {
-            instantiator = this._componentTypes[typeName];
-        }
-        if (instantiator === undefined) {
-            if (this._getComponentConstructorFtn !== undefined) {
-                instantiator = {
-                    constructor: this._getComponentConstructorFtn(itemConfig),
-                    factoryFunction: undefined,
-                }
-            }
-        }
-
-        let component: ComponentItem.Component;
-        if (instantiator !== undefined) {
-            // handle case where component is obtained by name or component constructor callback
-            let componentState: JsonValue | undefined;
-            if (itemConfig.componentState === undefined) {
-                componentState = undefined;
-            } else {
-                // make copy
-                componentState = deepExtendValue({}, itemConfig.componentState) as JsonValue;
-            }
-
-            // This next (commented out) if statement is a bad hack. Looks like someone wanted the component name passed
-            // to the component's constructor.  The application really should have put this into the state itself.
-            // If an application needs this information in the constructor, it should now use the getComponentEvent.
-            // if (typeof componentState === 'object' && componentState !== null) {
-            //     (componentState as Record<string, unknown>).componentName = itemConfig.componentName;
-            // }
-
-            const componentConstructor = instantiator.constructor;
-            if (componentConstructor !== undefined) {
-                component = new componentConstructor(container, componentState);
-            } else {
-                const factoryFunction = instantiator.factoryFunction;
-                if (factoryFunction !== undefined) {
-                    component = factoryFunction(container, componentState);
-                } else {
-                    throw new AssertError('LMGC10008');
-                }
-            }
-        } else {
-            if (this.getComponentEvent !== undefined) {
-                component = this.getComponentEvent(container, itemConfig);
-            } else {
-                // There is no component registered for this type, and we don't have a getComponentEvent defined.
-                // This might happen when the user pops out a dialog and the component types are not registered upfront.
-                throw new AssertError('LMGC10009');
-            }
-        }
-
-        return component;
-    }
-
+    abstract bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BindableComponent;
     /** @internal */
-    releaseComponent(container: ComponentContainer, component: ComponentItem.Component): void {
-        if (this.releaseComponentEvent !== undefined) {
-            this.releaseComponentEvent(container, component);
-        }
-    }
+    abstract unbindComponent(container: ComponentContainer, virtual: boolean, component: ComponentContainer.Component | undefined): void;
 
     /**
      * Called from GoldenLayout class. Finishes of init
@@ -493,7 +296,7 @@ export abstract class LayoutManager extends EventEmitter {
                     rootItemConfig = undefined;
                 } else {
                     rootItemConfig = groundContent[0];
-                }                
+                }
 
                 /*
                 * Retrieve config for subwindows
@@ -512,9 +315,21 @@ export abstract class LayoutManager extends EventEmitter {
                     header: ResolvedLayoutConfig.Header.createCopy(this.layoutConfig.header),
                     resolved: true,
                 }
-        
+
                 return config;
             }
+        }
+    }
+
+    /**
+     * Removes any existing layout. Effectively, an empty layout will be loaded.
+     */
+
+     clear(): void {
+        if (this._groundItem === undefined) {
+            throw new UnexpectedUndefinedError('LMCL11129');
+        } else {
+            this._groundItem.clearRoot();
         }
     }
 
@@ -604,7 +419,7 @@ export abstract class LayoutManager extends EventEmitter {
             componentState,
             title,
         };
-        
+
         return this.addItemAtLocation(itemConfig, locationSelectors);
     }
 
@@ -614,7 +429,7 @@ export abstract class LayoutManager extends EventEmitter {
      * @param itemConfig - ResolvedItemConfig of child to be added.
      * @returns New ContentItem created.
     */
-   newItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig): ContentItem {
+    newItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig): ContentItem {
         const contentItem = this.newItemAtLocation(itemConfig);
         if (contentItem === undefined) {
             throw new AssertError('LMNC65588');
@@ -943,6 +758,48 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /** @internal */
+    beginVirtualSizedContainerAdding(): void {
+        if (++this._virtualSizedContainerAddingBeginCount === 0) {
+            this._virtualSizedContainers.length = 0;
+        }
+    }
+
+    /** @internal */
+    addVirtualSizedContainer(container: ComponentContainer): void {
+        this._virtualSizedContainers.push(container);
+    }
+
+    /** @internal */
+    endVirtualSizedContainerAdding(): void {
+        if (--this._virtualSizedContainerAddingBeginCount === 0) {
+            const count = this._virtualSizedContainers.length;
+            if (count > 0) {
+                this.fireBeforeVirtualRectingEvent(count);
+                for (let i = 0; i < count; i++) {
+                    const container = this._virtualSizedContainers[i];
+                    container.notifyVirtualRectingRequired();
+                }
+                this.fireAfterVirtualRectingEvent();
+                this._virtualSizedContainers.length = 0;
+            }
+        }
+    }
+
+    /** @internal */
+    fireBeforeVirtualRectingEvent(count: number): void {
+        if (this.beforeVirtualRectingEvent !== undefined) {
+            this.beforeVirtualRectingEvent(count);
+        }
+    }
+
+    /** @internal */
+    fireAfterVirtualRectingEvent(): void {
+        if (this.afterVirtualRectingEvent !== undefined) {
+            this.afterVirtualRectingEvent();
+        }
+    }
+
+    /** @internal */
     private createPopoutFromItemConfig(rootItemConfig: ResolvedRootItemConfig,
         window: ResolvedPopoutLayoutConfig.Window,
         parentId: string | null,
@@ -968,7 +825,7 @@ export abstract class LayoutManager extends EventEmitter {
     /** @internal */
     createPopoutFromPopoutLayoutConfig(config: ResolvedPopoutLayoutConfig): BrowserPopout {
         const configWindow = config.window;
-        const initialWindow: Rect = { 
+        const initialWindow: Rect = {
             left: configWindow.left ?? (globalThis.screenX || globalThis.screenLeft + 20),
             top: configWindow.top ?? (globalThis.screenY || globalThis.screenTop + 20),
             width: configWindow.width ?? 500,
@@ -1018,7 +875,7 @@ export abstract class LayoutManager extends EventEmitter {
 		removeFromArray(dragSource, this._dragSources );
 		dragSource.destroy();
     }
-    
+
     /** @internal */
     startComponentDrag(x: number, y: number, dragListener: DragListener, componentItem: ComponentItem, stack: Stack): void {
         new DragProxy(
@@ -1106,7 +963,7 @@ export abstract class LayoutManager extends EventEmitter {
         }
     }
 
-    /** 
+    /**
      * This should only be called from stack component.
      * Stack will look after docking processing associated with maximise/minimise
      * @internal
@@ -1184,7 +1041,7 @@ export abstract class LayoutManager extends EventEmitter {
 			this._maximisedStack = undefined;
 		}
     }
-    
+
     /**
      * This method is used to get around sandboxed iframe restrictions.
      * If 'allow-top-navigation' is not specified in the iframe's 'sandbox' attribute
@@ -1781,13 +1638,8 @@ export abstract class LayoutManager extends EventEmitter {
 
 /** @public */
 export namespace LayoutManager {
-    export type ComponentConstructor = new(container: ComponentContainer, state: JsonValue | undefined) => ComponentItem.Component;
-    export type ComponentFactoryFunction = (container: ComponentContainer, state: JsonValue | undefined) => ComponentItem.Component;
-    export type GetComponentConstructorCallback = (this: void, config: ResolvedComponentItemConfig) => ComponentConstructor
-    export type GetComponentEventHandler =
-        (this: void, container: ComponentContainer, itemConfig: ResolvedComponentItemConfig) => ComponentItem.Component;
-    export type ReleaseComponentEventHandler =
-        (this: void, container: ComponentContainer, component: ComponentItem.Component) => void;
+    export type BeforeVirtualRectingEvent = (this: void, count: number) => void;
+    export type AfterVirtualRectingEvent = (this: void) => void;
 
     /** @internal */
     export interface ConstructorParameters {
@@ -1796,25 +1648,21 @@ export namespace LayoutManager {
         containerElement: HTMLElement | undefined;
     }
 
+    /** @internal */
     export function createMaximisePlaceElement(document: Document): HTMLElement {
         const element = document.createElement('div');
         element.classList.add(DomConstants.ClassName.MaximisePlace);
         return element;
     }
 
+    /** @internal */
     export function createTabDropPlaceholderElement(document: Document): HTMLElement {
         const element = document.createElement('div');
         element.classList.add(DomConstants.ClassName.DropTabPlaceholder);
         return element;
     }
 
-    /** @public */
-    export interface ComponentInstantiator {
-        constructor: ComponentConstructor | undefined;
-        factoryFunction: ComponentFactoryFunction | undefined;
-    }
-
-    /** 
+    /**
      * Specifies a location of a ContentItem without referencing the content item.
      * Used to specify where a new item is to be added
      * @public

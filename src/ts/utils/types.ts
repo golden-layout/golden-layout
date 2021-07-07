@@ -10,13 +10,13 @@ export namespace WidthOrHeightPropertyName {
 /** @internal */
 export interface WidthAndHeight {
     width: number;
-    height: number;    
+    height: number;
 }
 
 /** @internal */
 export interface LeftAndTop {
     left: number;
-    top: number;    
+    top: number;
 }
 
 /** @public */
@@ -27,6 +27,14 @@ export namespace Side {
     export const left = 'left';
     export const right = 'right';
     export const bottom = 'bottom';
+}
+
+/** @public */
+export type LogicalZIndex = 'base' | 'drag';
+/** @public */
+export namespace LogicalZIndex {
+    export const base = 'base';
+    export const drag = 'drag';
 }
 
 /** @internal */

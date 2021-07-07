@@ -122,7 +122,7 @@ export class RowOrColumn extends ContentItem {
      *
      * @returns
      */
-    addChild(contentItem: ContentItem, index?: number, suspendResize?: boolean): number {
+    override addChild(contentItem: ContentItem, index?: number, suspendResize?: boolean): number {
 
         // contentItem = this.layoutManager._$normalizeContentItem(contentItem, this);
 
@@ -175,7 +175,7 @@ export class RowOrColumn extends ContentItem {
      * @param keepChild - If true the child will be removed, but not destroyed
      *
      */
-    removeChild(contentItem: ContentItem, keepChild: boolean): void {
+    override removeChild(contentItem: ContentItem, keepChild: boolean): void {
         const index = this.contentItems.indexOf(contentItem);
         const splitterIndex = Math.max(index - 1, 0);
 
@@ -207,7 +207,7 @@ export class RowOrColumn extends ContentItem {
     /**
      * Replaces a child of this Row or Column with another contentItem
      */
-    replaceChild(oldChild: ContentItem, newChild: ContentItem): void {
+    override replaceChild(oldChild: ContentItem, newChild: ContentItem): void {
         const size = oldChild[this._dimension];
         super.replaceChild(oldChild, newChild);
         newChild[this._dimension] = size;
@@ -218,9 +218,14 @@ export class RowOrColumn extends ContentItem {
     /**
      * Called whenever the dimensions of this item or one of its parents change
      */
-    updateSize(): void {
-        this.updateNodeSize();
-        this.updateContentItemsSize();
+    override updateSize(): void {
+        this.layoutManager.beginVirtualSizedContainerAdding();
+        try {
+            this.updateNodeSize();
+            this.updateContentItemsSize();
+        } finally {
+            this.layoutManager.endVirtualSizedContainerAdding();
+        }
     }
 
     /**
@@ -229,7 +234,7 @@ export class RowOrColumn extends ContentItem {
      * in between them
      * @internal
      */
-    init(): void {
+    override init(): void {
         if (this.isInitialised === true) return;
 
         this.updateNodeSize();
@@ -262,7 +267,7 @@ export class RowOrColumn extends ContentItem {
     }
 
     /** @internal */
-    protected setParent(parent: ContentItem): void {
+    protected override setParent(parent: ContentItem): void {
         this._rowOrColumnParent = parent;
         super.setParent(parent);
     }
@@ -597,7 +602,7 @@ export class RowOrColumn extends ContentItem {
             splitter.element.style.top = offsetPixels;
         } else {
             splitter.element.style.left = offsetPixels;
-        }        
+        }
     }
 
     /**

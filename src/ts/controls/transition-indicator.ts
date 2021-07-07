@@ -1,7 +1,7 @@
 import { DomConstants } from '../utils/dom-constants';
 import { Rect } from '../utils/types';
 
-/** @internal */
+/** @internal @deprecated To be removed */
 export class TransitionIndicator {
     private _element: HTMLElement;
     private _toElement: HTMLElement | null;

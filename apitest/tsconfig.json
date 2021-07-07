@@ -1,21 +1,22 @@
 {
 	"compilerOptions": {
-	   "lib": [
+        "lib": [
             "dom",
-		    "es2018"
-	   ],
-	   "target": "es2018",
-	   "module": "es2020",
-	   "moduleResolution": "node",
-	   "outDir": "./out-tsc",
-	   "emitDecoratorMetadata": true,
-	   "experimentalDecorators": true,
-	   "sourceMap": true,
-	   "strict": true,
-	   "noUnusedLocals":true,
-	   "strictPropertyInitialization": true,
-	   "noImplicitAny": true,
-	   "downlevelIteration": true,
-       "baseUrl": "./",
+            "es2018"
+        ],
+        "target": "es2018",
+        "module": "es2020",
+        "moduleResolution": "node",
+        "outDir": "./out-tsc",
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "sourceMap": true,
+        "strict": true,
+        "noUnusedLocals":true,
+        "strictPropertyInitialization": true,
+        "noImplicitAny": true,
+        "noImplicitOverride": true,
+        "downlevelIteration": true,
+        "baseUrl": "./",
 	},
 }

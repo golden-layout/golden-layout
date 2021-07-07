@@ -32,7 +32,7 @@ export class ComponentItem extends ContentItem {
     get reorderEnabled(): boolean { return this._reorderEnabled; }
     /** @internal */
     get initialWantMaximise(): boolean { return this._initialWantMaximise; }
-    get component(): ComponentItem.Component { return this._container.component; }
+    get component(): ComponentContainer.Component | undefined { return this._container.component; }
     get container(): ComponentContainer { return this._container; }
     get parentItem(): ComponentParentableItem { return this._parentItem; }
 
@@ -71,7 +71,7 @@ export class ComponentItem extends ContentItem {
     }
 
     /** @internal */
-    destroy(): void {
+    override destroy(): void {
         this._container.destroy()
         super.destroy();
     }
@@ -115,20 +115,30 @@ export class ComponentItem extends ContentItem {
 
     // Used by Drag Proxy
     /** @internal */
-    setDragSize(width: number, height: number): void {
+    enterDragMode(width: number, height: number): void {
         setElementWidth(this.element, width);
         setElementHeight(this.element, height);
-        this._container.setDragSize(width, height);
+        this._container.enterDragMode(width, height);
     }
 
     /** @internal */
-    updateSize(): void {
+    exitDragMode(): void {
+        this._container.exitDragMode();
+    }
+
+    // Used by Drag Proxy
+    /** @internal */
+    drag(): void {
+        this._container.drag();
+    }
+
+    /** @internal */
+    override updateSize(): void {
         this.updateNodeSize();
-        // ComponentItems do not have any ContentItems
     }
 
     /** @internal */
-    init(): void {
+    override init(): void {
         this.updateNodeSize();
 
         super.init();
@@ -156,15 +166,15 @@ export class ComponentItem extends ContentItem {
     }
 
     /** @internal */
-    hide(): void {
-        this._container.checkEmitHide();
+    override hide(): void {
         super.hide();
+        this._container.setVisibility(false);
     }
 
     /** @internal */
-    show(): void {
-        this._container.checkEmitShow();
+    override show(): void {
         super.show();
+        this._container.setVisibility(true);
     }
 
     /**
@@ -202,7 +212,7 @@ export class ComponentItem extends ContentItem {
     }
 
     /** @internal */
-    protected setParent(parent: ContentItem): void {
+    protected override setParent(parent: ContentItem): void {
         this._parentItem = parent as ComponentParentableItem;
         super.setParent(parent);
     }
@@ -216,8 +226,9 @@ export class ComponentItem extends ContentItem {
     private updateNodeSize(): void {
         if (this.element.style.display !== 'none') {
             // Do not update size of hidden components to prevent unwanted reflows
+
             const { width, height } = getElementWidthAndHeight(this.element);
-            this._container.setSizeToNodeSize(width, height);
+            this._container.setSizeToNodeSize(width, height, false);
         }
     }
 }
@@ -227,5 +238,5 @@ export type Component = ComponentItem;
 
 /** @public */
 export namespace ComponentItem {
-    export type Component = unknown;
+    export type Component = ComponentContainer.Component;
 }
