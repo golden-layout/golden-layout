@@ -76,7 +76,11 @@ export class ComponentContainer extends EventEmitter {
     // @internal
     enterDragMode(width: number, height: number): void;
     // @internal (undocumented)
+    enterStackMaximised(): void;
+    // @internal (undocumented)
     exitDragMode(): void;
+    // @internal (undocumented)
+    exitStackMaximised(): void;
     // @deprecated
     extendState(state: Record<string, unknown>): void;
     focus(suppressEvent?: boolean): void;
@@ -187,7 +191,11 @@ export class ComponentItem extends ContentItem {
     // @internal (undocumented)
     enterDragMode(width: number, height: number): void;
     // @internal (undocumented)
+    enterStackMaximised(): void;
+    // @internal (undocumented)
     exitDragMode(): void;
+    // @internal (undocumented)
+    exitStackMaximised(): void;
     focus(suppressEvent?: boolean): void;
     // (undocumented)
     get focused(): boolean;
@@ -1165,7 +1173,7 @@ export interface LeftAndTop {
 }
 
 // @public (undocumented)
-export type LogicalZIndex = 'base' | 'drag';
+export type LogicalZIndex = 'base' | 'drag' | 'stackMaximised';
 
 // @public (undocumented)
 export namespace LogicalZIndex {
@@ -1173,6 +1181,8 @@ export namespace LogicalZIndex {
     base = "base";
     const // (undocumented)
     drag = "drag";
+    const // (undocumented)
+    stackMaximised = "stackMaximised";
 }
 
 // @public (undocumented)
@@ -1779,6 +1789,8 @@ export namespace StyleConstants {
     defaultComponentBaseZIndex = "auto";
     const // (undocumented)
     defaultComponentDragZIndex = "32";
+    const // (undocumented)
+    defaultComponentStackMaximisedZIndex = "41";
 }
 
 // @public

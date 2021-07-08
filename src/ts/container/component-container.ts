@@ -32,6 +32,8 @@ export class ComponentContainer extends EventEmitter {
     private _isShownWithZeroDimensions;
     /** @internal */
     private _tab: Tab;
+    /** @internal */
+    private _stackMaximised = false;
 
     stateRequestEvent: ComponentContainer.StateRequestEventHandler | undefined;
     virtualRectingRequiredEvent: ComponentContainer.VirtualRectingRequiredEvent | undefined;
@@ -329,6 +331,22 @@ export class ComponentContainer extends EventEmitter {
     }
 
     /** @internal */
+    enterStackMaximised(): void {
+        this._stackMaximised = true;
+        if (this.virtualZIndexChangeRequiredEvent !== undefined) {
+            this.virtualZIndexChangeRequiredEvent(this, LogicalZIndex.stackMaximised, StyleConstants.defaultComponentStackMaximisedZIndex);
+        }
+    }
+
+    /** @internal */
+    exitStackMaximised(): void {
+        if (this.virtualZIndexChangeRequiredEvent !== undefined) {
+            this.virtualZIndexChangeRequiredEvent(this, LogicalZIndex.base, StyleConstants.defaultComponentBaseZIndex);
+        }
+        this._stackMaximised = false;
+    }
+
+    /** @internal */
     drag(): void {
         if (this._boundComponent.virtual) {
             if (this.virtualRectingRequiredEvent !== undefined) {
@@ -416,6 +434,9 @@ export class ComponentContainer extends EventEmitter {
 
     /** @internal */
     private releaseComponent() {
+        if (this._stackMaximised) {
+            this.exitStackMaximised();
+        }
         this.emit('beforeComponentRelease', this._boundComponent.component);
         this.layoutManager.unbindComponent(this, this._boundComponent.virtual, this._boundComponent.component);
     }

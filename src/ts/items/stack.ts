@@ -345,6 +345,16 @@ export class Stack extends ComponentParentableItem {
     maximise(): void {
         if (!this.isMaximised) {
             this.layoutManager.setMaximisedStack(this);
+            const contentItems = this.contentItems;
+            const contentItemCount = contentItems.length;
+            for (let i = 0; i < contentItemCount; i++) {
+                const contentItem = contentItems[i];
+                if (contentItem instanceof ComponentItem) {
+                    contentItem.enterStackMaximised();
+                } else {
+                    throw new AssertError('SMAXI87773');
+                }
+            }
             this.emitStateChangedEvent();
         }
     }
@@ -352,6 +362,16 @@ export class Stack extends ComponentParentableItem {
     minimise(): void {
         if (this.isMaximised) {
             this.layoutManager.setMaximisedStack(undefined);
+            const contentItems = this.contentItems;
+            const contentItemCount = contentItems.length;
+            for (let i = 0; i < contentItemCount; i++) {
+                const contentItem = contentItems[i];
+                if (contentItem instanceof ComponentItem) {
+                    contentItem.exitStackMaximised();
+                } else {
+                    throw new AssertError('SMINI87773');
+                }
+            }
             this.emitStateChangedEvent();
         }
     }
