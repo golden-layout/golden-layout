@@ -316,7 +316,8 @@ With virtual components, Golden Layout knows nothing about components and does n
 
 Virtual Components has the following advantages:
 * Components and their ancestors are not reparented when a layout is changed. This avoids breaking iframe, sockets, etc.
-* It is no longer necessary to extract the top level HTML element from a component. This makes GoldenLayout a lot easier to use in frameworks such as Angular and Vue.
+* It is no longer necessary to extract the top level HTML element from a component.
+* Applications using frameworks with their own component hierarchy, such as Angular and Vue, no longer have to break their component hierarchy to insert Golden Layout. The framework's methodology for handling parent/child relationships can be maintained even with the components which Golden Layout is positioning. (Teleporting component's HTML elements is no longer necessary)
 * Applications typically bind a component's top level HTML element to the Golden Layout root element. Debugging becomes easier as the DOM hierarchy relevant to your application is a lot shallower.
 
 With Virtual Components the following events need to be handled:
