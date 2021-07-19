@@ -30,11 +30,12 @@ export namespace Side {
 }
 
 /** @public */
-export type LogicalZIndex = 'base' | 'drag';
+export type LogicalZIndex = 'base' | 'drag' | 'stackMaximised';
 /** @public */
 export namespace LogicalZIndex {
     export const base = 'base';
     export const drag = 'drag';
+    export const stackMaximised = 'stackMaximised';
 }
 
 /** @internal */

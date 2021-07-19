@@ -126,6 +126,16 @@ export class ComponentItem extends ContentItem {
         this._container.exitDragMode();
     }
 
+    /** @internal */
+    enterStackMaximised(): void {
+        this._container.enterStackMaximised();
+    }
+
+    /** @internal */
+    exitStackMaximised(): void {
+        this._container.exitStackMaximised();
+    }
+
     // Used by Drag Proxy
     /** @internal */
     drag(): void {
