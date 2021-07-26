@@ -140,7 +140,7 @@ export class Header extends EventEmitter {
             (x, y, dragListener, item) => this.handleTabInitiatedDragStartEvent(x, y, dragListener, item),
             () => this.processTabDropdownActiveChanged(),
         );
-        
+
         this._show = settings.show;
         this._popoutEnabled = settings.popoutEnabled;
         this._popoutLabel = settings.popoutLabel;
@@ -172,9 +172,11 @@ export class Header extends EventEmitter {
 
         this._tabControlOffset = this._layoutManager.layoutConfig.settings.tabControlOffset;
 
-        this._tabDropdownButton = new HeaderButton(this, this._tabDropdownLabel, DomConstants.ClassName.TabDropdown,
-            () => this._tabsContainer.showAdditionalTabsDropdown()
-        );
+        if (this._tabDropdownEnabled) {
+            this._tabDropdownButton = new HeaderButton(this, this._tabDropdownLabel, DomConstants.ClassName.TabDropdown,
+                () => this._tabsContainer.showAdditionalTabsDropdown()
+            );
+        }
 
         if (this._popoutEnabled) {
             this._popoutButton = new HeaderButton(this, this._popoutLabel, DomConstants.ClassName.Popout, () => this.handleButtonPopoutEvent());
@@ -386,7 +388,9 @@ export class Header extends EventEmitter {
 
     /** @internal */
     private processTabDropdownActiveChanged() {
-        setElementDisplayVisibility(this._tabDropdownButton.element, this._tabsContainer.dropdownActive);
+        if (this._tabDropdownButton !== undefined) {
+            setElementDisplayVisibility(this._tabDropdownButton.element, this._tabsContainer.dropdownActive);
+        }
     }
 
     /** @internal */

@@ -477,7 +477,7 @@ export namespace ResolvedLayoutConfig {
         readonly maximise: false | string;
         readonly minimise: string;
         readonly close: false | string;
-        readonly tabDropdown: string;
+        readonly tabDropdown: false | string;
     }
 
     export namespace Header {
