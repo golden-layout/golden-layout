@@ -940,7 +940,7 @@ export namespace LayoutConfig {
         popin?: string;
         popout?: false | string;
         show?: false | Side;
-        tabDropdown?: string;
+        tabDropdown?: false | string;
     }
     // (undocumented)
     export namespace Header {
@@ -1439,7 +1439,7 @@ export namespace ResolvedLayoutConfig {
         // (undocumented)
         readonly show: false | Side;
         // (undocumented)
-        readonly tabDropdown: string;
+        readonly tabDropdown: false | string;
     }
     // (undocumented)
     export namespace Header {

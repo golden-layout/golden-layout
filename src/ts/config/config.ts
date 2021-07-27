@@ -688,7 +688,7 @@ export namespace LayoutConfig {
          *
          * Default: 'additional tabs'
          */
-        tabDropdown?: string;
+        tabDropdown?: false | string;
     }
 
     export namespace Header {

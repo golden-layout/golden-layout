@@ -1,7 +1,7 @@
-import { EventComponent } from './event-component';
 import { ComponentItemConfig, ItemType, LayoutConfig, StackItemConfig } from '..';
 import { BooleanComponent } from './boolean-component';
 import { ColorComponent } from './color-component';
+import { EventComponent } from './event-component';
 import { TextComponent } from './text-component';
 
 export interface Layout {
