@@ -96,6 +96,14 @@ export class DragSource {
 
         const itemConfig: ComponentItemConfig = {
             type: 'component',
+            /**
+             * This id addition, allows each new component to be set as a drag source, to have
+             * an id automatically created if needed by passing a function, otherwise assigin a
+             * passed id falling back to a empty string.
+             * Looks for the the id properrty at the componentState object, assigned if
+             * found or creating one if passed as a function else set it as empty string.
+             */
+            id: (typeof componentState['id'] === 'function') ? componentState['id']() : componentState['id'] || '',
             componentType,
             componentState,
             title,
