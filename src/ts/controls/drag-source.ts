@@ -42,7 +42,11 @@ export class DragSource {
         // Does this need to be regenerated with each drag operation?
         this._dummyGroundContainer = document.createElement('div');
 
-        this._dummyGroundContentItem = new GroundItem(this._layoutManager, this._layoutManager.layoutConfig.root, this._dummyGroundContainer);
+        if (this._layoutManager.groundItem) {
+            this._dummyGroundContentItem = this._layoutManager.groundItem;
+        } else {
+            this._dummyGroundContentItem = new GroundItem(this._layoutManager, this._layoutManager.layoutConfig.root, this._dummyGroundContainer);
+        }
  
         this.createDragListener();
     }
