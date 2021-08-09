@@ -149,13 +149,17 @@ export abstract class LayoutManager extends EventEmitter {
     constructor(parameters: LayoutManager.ConstructorParameters) {
         super();
 
-        let layoutConfig = parameters.layoutConfig;
+        this.isSubWindow = parameters.isSubWindow;
+
+        let layoutConfig: ResolvedLayoutConfig | undefined;
+        if (!this.isSubWindow) {
+            layoutConfig = parameters.layoutConfig; // backwards compatibility - remove in future
+        }
         if (layoutConfig === undefined) {
             layoutConfig = ResolvedLayoutConfig.createDefault();
         }
 
         this.layoutConfig = layoutConfig;
-        this.isSubWindow = parameters.isSubWindow;
 
         I18nStrings.checkInitialise();
         ConfigMinifier.checkInitialise();

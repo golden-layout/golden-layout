@@ -595,6 +595,9 @@ export abstract class ExternalError extends Error {
 
 // @public (undocumented)
 export class GoldenLayout extends VirtualLayout {
+    constructor(container?: HTMLElement, bindComponentEventHandler?: VirtualLayout.BindComponentEventHandler, unbindComponentEventHandler?: VirtualLayout.UnbindComponentEventHandler);
+    // @deprecated
+    constructor(config: LayoutConfig, container?: HTMLElement);
     // @internal (undocumented)
     bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BindableComponent;
     // (undocumented)
@@ -1842,10 +1845,13 @@ export class VirtualLayout extends LayoutManager {
     constructor(container?: HTMLElement, bindComponentEventHandler?: VirtualLayout.BindComponentEventHandler, unbindComponentEventHandler?: VirtualLayout.UnbindComponentEventHandler);
     // @deprecated
     constructor(config: LayoutConfig, container?: HTMLElement);
+    // @internal
+    constructor(configOrOptionalContainer: LayoutConfig | HTMLElement | undefined, containerOrBindComponentEventHandler: HTMLElement | VirtualLayout.BindComponentEventHandler | undefined, unbindComponentEventHandler: VirtualLayout.UnbindComponentEventHandler | undefined, skipInit: true);
     // @internal (undocumented)
     bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BindableComponent;
     // (undocumented)
     bindComponentEvent: VirtualLayout.BindComponentEventHandler | undefined;
+    checkAddDefaultPopinButton(): boolean;
     // (undocumented)
     destroy(): void;
     // @deprecated (undocumented)

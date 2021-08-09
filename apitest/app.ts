@@ -84,6 +84,7 @@ export class App {
             throw new Error('controlsElement not found');
         }
         this._controlsElement = controlsElement;
+
         const layoutElement = document.querySelector('#layoutContainer') as HTMLElement;
         if (layoutElement === null) {
             throw new Error('layoutContainerElement not found');
@@ -92,7 +93,7 @@ export class App {
         this._goldenLayout = new GoldenLayout(this._layoutElement, this._bindComponentEventListener, this._unbindComponentEventListener);
 
         this._goldenLayout.addEventListener('stackHeaderClick', (event) => this.handleStackHeaderClick(event));
-        this._goldenLayout.beforeVirtualRectingEvent = (count) => this.handleBeforeVirtualRectingEvent(count)
+        this._goldenLayout.beforeVirtualRectingEvent = (count) => this.handleBeforeVirtualRectingEvent(count);
 
         const registerNotVirtualComponentTypesButton = document.querySelector('#registerNotVirtualButton') as HTMLButtonElement;
         if (registerNotVirtualComponentTypesButton === null) {
@@ -270,11 +271,14 @@ export class App {
         globalThis.addEventListener('click', this._globalBubbleClickListener, { passive: true });
         globalThis.addEventListener('click', this._globalCaptureClickListener, { capture: true, passive: true });
 
-        // If you are running in a child window, register all known component types!
-        // This is required when a popout is created.
-        // There are several ways to check whether we're running in a child window, for the sake of simplicity, we check for window.opener.
         if (this._goldenLayout.isSubWindow) {
-            this.registerComponentTypes();
+            this._controlsElement.style.display = 'none';
+            this._goldenLayout.checkAddDefaultPopinButton();
+
+            const subWindowUsesRegistrationBindings = false;
+            if (subWindowUsesRegistrationBindings) {
+                this.registerComponentTypes();
+            }
         }
     }
 

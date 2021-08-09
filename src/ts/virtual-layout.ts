@@ -42,8 +42,15 @@ export class VirtualLayout extends LayoutManager {
     constructor(config: LayoutConfig, container?: HTMLElement);
     /** @internal */
     constructor(configOrOptionalContainer: LayoutConfig | HTMLElement | undefined,
+        containerOrBindComponentEventHandler: HTMLElement | VirtualLayout.BindComponentEventHandler | undefined,
+        unbindComponentEventHandler: VirtualLayout.UnbindComponentEventHandler | undefined,
+        skipInit: true,
+    );
+    /** @internal */
+    constructor(configOrOptionalContainer: LayoutConfig | HTMLElement | undefined,
         containerOrBindComponentEventHandler?: HTMLElement | VirtualLayout.BindComponentEventHandler,
         unbindComponentEventHandler?: VirtualLayout.UnbindComponentEventHandler,
+        skipInit?: true,
     ) {
         super(VirtualLayout.createLayoutManagerConstructorParameters(configOrOptionalContainer, containerOrBindComponentEventHandler));
 
@@ -58,12 +65,25 @@ export class VirtualLayout extends LayoutManager {
             }
         }
 
-        if (this.isSubWindow) {
-            document.body.style.visibility = 'hidden';
+        if (this.bindComponentEvent === undefined) {
+            // backward compatibility
+
+            if (this.isSubWindow) {
+                document.body.style.visibility = 'hidden';
+                // this.layoutConfig.root has not been assigned yet
+                // Should this be left undefined and modify init to load component with loadLayout()?
+                // Or should we
+            }
+        } else {
+            if (this.isSubWindow) {
+                // this.layoutConfig.root has not been assigned yet. Need to figure out.
+            }
         }
 
-        if (this.layoutConfig.root === undefined || this.isSubWindow) {
-            this.init();
+        if (skipInit !== true) {
+            if (this.layoutConfig.root === undefined || this.isSubWindow) {
+                this.init();
+            }
         }
     }
 
@@ -101,7 +121,7 @@ export class VirtualLayout extends LayoutManager {
         /**
          * If the document isn't ready yet, wait for it.
          */
-        if (document.readyState === 'loading' || document.body === null) {
+        if (this.bindComponentEvent === undefined && (document.readyState === 'loading' || document.body === null)) {
             document.addEventListener('DOMContentLoaded', () => this.init(), { passive: true });
             return;
         }
@@ -111,19 +131,46 @@ export class VirtualLayout extends LayoutManager {
          * page's js calls to be executed, then replace the bodies content
          * with GoldenLayout
          */
-        if (this.isSubWindow === true && this._creationTimeoutPassed === false) {
+        if (this.bindComponentEvent === undefined && this.isSubWindow === true && !this._creationTimeoutPassed) {
             setTimeout(() => this.init(), 7);
             this._creationTimeoutPassed = true;
             return;
         }
 
         if (this.isSubWindow === true) {
-            this.adjustToWindowMode();
+            if (this.bindComponentEvent === undefined) {
+                this.adjustToWindowMode();
+            }
+
+            // Expose this instance on the window object to allow the opening window to interact with it
+            window.__glInstance = this;
         }
 
         super.init();
     }
 
+    /**
+     * Will add button if not popinOnClose specified in settings
+     * @returns true if added otherwise false
+     */
+    checkAddDefaultPopinButton(): boolean {
+        if (this.layoutConfig.settings.popInOnClose) {
+            return false;
+        } else {
+            const popInButtonElement = document.createElement('div');
+            popInButtonElement.classList.add(DomConstants.ClassName.Popin);
+            popInButtonElement.setAttribute('title', this.layoutConfig.header.dock);
+            const iconElement = document.createElement('div');
+            iconElement.classList.add(DomConstants.ClassName.Icon);
+            const bgElement = document.createElement('div');
+            bgElement.classList.add(DomConstants.ClassName.Bg);
+            popInButtonElement.appendChild(iconElement);
+            popInButtonElement.appendChild(bgElement);
+            popInButtonElement.addEventListener('click', () => this.emit('popIn'));
+            document.body.appendChild(popInButtonElement);
+            return true;
+        }
+    }
 
     /** @internal */
     override bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BindableComponent {
@@ -200,19 +247,7 @@ export class VirtualLayout extends LayoutManager {
         const bodyElement = document.body;
         bodyElement.innerHTML = '';
         bodyElement.style.visibility = 'visible';
-        if (!this.layoutConfig.settings.popInOnClose) {
-            const popInButtonElement = document.createElement('div');
-            popInButtonElement.classList.add(DomConstants.ClassName.Popin);
-            popInButtonElement.setAttribute('title', this.layoutConfig.header.dock);
-            const iconElement = document.createElement('div');
-            iconElement.classList.add(DomConstants.ClassName.Icon);
-            const bgElement = document.createElement('div');
-            bgElement.classList.add(DomConstants.ClassName.Bg);
-            popInButtonElement.appendChild(iconElement);
-            popInButtonElement.appendChild(bgElement);
-            popInButtonElement.addEventListener('click', () => this.emit('popIn'));
-            bodyElement.appendChild(popInButtonElement);
-        }
+        this.checkAddDefaultPopinButton();
 
         /*
         * This seems a bit pointless, but actually causes a reflow/re-evaluation getting around
@@ -220,13 +255,6 @@ export class VirtualLayout extends LayoutManager {
         */
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const x = document.body.offsetHeight;
-
-        /*
-        * Expose this instance on the window object
-        * to allow the opening window to interact with
-        * it
-        */
-        window.__glInstance = this;
     }
 }
 

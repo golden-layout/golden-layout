@@ -1,3 +1,4 @@
+import { LayoutConfig } from './config/config';
 import { ResolvedComponentItemConfig } from './config/resolved-config';
 import { ComponentContainer } from './container/component-container';
 import { ApiError, BindError } from './errors/external-error';
@@ -29,6 +30,23 @@ export class GoldenLayout extends VirtualLayout {
     private _containerVirtualZIndexChangeRequiredEventListener =
         (container: ComponentContainer, logicalZIndex: LogicalZIndex, defaultZIndex: string) =>
             this.handleContainerVirtualZIndexChangeRequiredEvent(container, logicalZIndex, defaultZIndex);
+
+    constructor(
+        container?: HTMLElement,
+        bindComponentEventHandler?: VirtualLayout.BindComponentEventHandler,
+        unbindComponentEventHandler?: VirtualLayout.UnbindComponentEventHandler,
+    );
+    /** @deprecated specify layoutConfig in {@link (LayoutManager:class).loadLayout} */
+    constructor(config: LayoutConfig, container?: HTMLElement);
+    /** @internal */
+    constructor(configOrOptionalContainer: LayoutConfig | HTMLElement | undefined,
+        containerOrBindComponentEventHandler?: HTMLElement | VirtualLayout.BindComponentEventHandler,
+        unbindComponentEventHandler?: VirtualLayout.UnbindComponentEventHandler,
+    ) {
+        super(configOrOptionalContainer, containerOrBindComponentEventHandler, unbindComponentEventHandler, true);
+        // we told VirtualLayout to not call init() (skipInit set to false) so that Golden Layout can initialise its properties before init is called
+        this.init();
+    }
 
     /**
      * Register a new component type with the layout manager.
