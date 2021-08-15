@@ -42,7 +42,8 @@ export class DragProxy extends EventEmitter {
         private readonly _dragListener: DragListener,
         private readonly _layoutManager: LayoutManager,
         private readonly _componentItem: ComponentItem,
-        private readonly _originalParent: ContentItem) {
+        private readonly _originalParent: ContentItem,
+        private readonly rootContainer?: HTMLElement) {
 
         super();
 
@@ -64,7 +65,11 @@ export class DragProxy extends EventEmitter {
 
         this.setDimensions();
 
-        document.body.appendChild(this._element);
+        if (rootContainer) {
+            rootContainer.appendChild(this._element);
+        } else {
+            document.body.appendChild(this._element);
+        }
 
         this.determineMinMaxXY();
         if (this._layoutManager.layoutConfig.settings.constrainDragToContainer) {

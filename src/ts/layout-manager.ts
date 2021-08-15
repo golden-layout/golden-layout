@@ -232,8 +232,8 @@ export abstract class LayoutManager extends EventEmitter {
      */
     init(): void {
         this.setContainer();
-        this._dropTargetIndicator = new DropTargetIndicator(/*this.container*/);
-        this._transitionIndicator = new TransitionIndicator();
+        this._dropTargetIndicator = new DropTargetIndicator(this.container);
+        this._transitionIndicator = new TransitionIndicator(this.container);
         this.updateSizeFromContainer();
 
         const layoutConfig = this.layoutConfig;

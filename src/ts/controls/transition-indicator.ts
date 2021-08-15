@@ -9,10 +9,15 @@ export class TransitionIndicator {
     private _totalAnimationDuration: number;
     private _animationStartTime: number | null;
 
-    constructor() {
+    constructor(rootContainer?: HTMLElement) {
         this._element = document.createElement('div');
         this._element.classList.add(DomConstants.ClassName.TransitionIndicator);
-        document.body.appendChild(this._element);
+
+        if (rootContainer) {
+            rootContainer.appendChild(this._element);
+        } else {
+            document.body.appendChild(this._element);
+        }
 
         this._toElement = null;
         this._fromDimensions = null;
