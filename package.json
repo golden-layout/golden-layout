@@ -50,8 +50,7 @@
     "doc:typeddocfull": "npx del-cli doc/full && typedoc --options ./typedoc.full.json",
     "doc:typeddocstrip": "npx del-cli doc/strip && typedoc --options ./typedoc.stripInternal.json",
     "apitest:build": "webpack --mode development --config ./apitest/webpack.config.js",
-    "apitest:serve": "webpack serve --mode development --config ./apitest/webpack.config.js",
-    "prepare": "npm run build"
+    "apitest:serve": "webpack serve --mode development --config ./apitest/webpack.config.js"
   },
   "devDependencies": {
     "@microsoft/api-documenter": "^7.12.7",
