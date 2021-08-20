@@ -884,7 +884,8 @@ export abstract class LayoutManager extends EventEmitter {
             dragListener,
             this,
             componentItem,
-            stack
+            stack,
+            this.container
         );
     }
 
