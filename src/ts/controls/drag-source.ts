@@ -35,6 +35,8 @@ export class DragSource {
         private _componentState: JsonValue | undefined,
         /** @internal */
         private _title: string | undefined,
+        /** @internal */
+        private readonly _rootContainer?: HTMLElement
     ) {
         this._dragListener = null;
 
@@ -107,7 +109,7 @@ export class DragSource {
         if (this._dragListener === null) {
             throw new UnexpectedNullError('DSODSD66746');
         } else {
-            const dragProxy = new DragProxy(x, y, this._dragListener, this._layoutManager, componentItem , this._dummyGroundContentItem);
+            const dragProxy = new DragProxy(x, y, this._dragListener, this._layoutManager, componentItem , this._dummyGroundContentItem, this._rootContainer);
 
             const transitionIndicator = this._layoutManager.transitionIndicator;
             if (transitionIndicator === null) {
