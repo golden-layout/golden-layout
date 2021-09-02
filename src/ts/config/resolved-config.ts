@@ -98,7 +98,6 @@ export namespace ResolvedHeaderedItemConfig {
         // undefined means get property value from LayoutConfig
         readonly show: false | Side | undefined;
         readonly popout: false | string | undefined;
-        readonly dock: false | string | undefined;
         readonly maximise: false | string | undefined;
         readonly close: string | undefined;
         readonly minimise: string | undefined;
@@ -113,7 +112,6 @@ export namespace ResolvedHeaderedItemConfig {
                 return {
                     show: show ?? original.show,
                     popout: original.popout,
-                    dock: original.dock,
                     close: original.close,
                     maximise: original.maximise,
                     minimise: original.minimise,
@@ -198,7 +196,6 @@ export interface ResolvedComponentItemConfig extends ResolvedHeaderedItemConfig 
 export namespace ResolvedComponentItemConfig {
     export const defaultReorderEnabled = true;
 
-    /** @internal */
     export function resolveComponentTypeName(itemConfig: ResolvedComponentItemConfig): string | undefined {
         const componentType = itemConfig.componentType;
         if (typeof componentType === 'string') {
@@ -320,7 +317,7 @@ export namespace ResolvedRowOrColumnItemConfig {
     }
 }
 
-/** 
+/**
  * RootItemConfig is the topmost ResolvedItemConfig specified by the user.
  * Note that it does not have a corresponding contentItem.  It specifies the one and only child of the Ground ContentItem
  * Note that RootItemConfig can be an ComponentItem itemConfig.  However when the Ground ContentItem's child is created
@@ -480,7 +477,7 @@ export namespace ResolvedLayoutConfig {
         readonly maximise: false | string;
         readonly minimise: string;
         readonly close: false | string;
-        readonly tabDropdown: string;
+        readonly tabDropdown: false | string;
     }
 
     export namespace Header {

@@ -1,24 +1,28 @@
 import { ComponentContainer, JsonValue } from '..';
+import { ComponentBase } from './component-base';
 
-export class BooleanComponent {
+export class BooleanComponent extends ComponentBase {
     static readonly typeName = 'boolean';
 
     private _inputElement: HTMLInputElement;
-    
+
     private _containerClickListener = () => this.handleClickFocusEvent();
     private _containerFocusinListener = () => this.handleClickFocusEvent();
 
-    constructor(private _container: ComponentContainer, state: JsonValue | undefined) {
+    constructor(container: ComponentContainer, state: JsonValue | undefined, virtual: boolean) {
+        super(container, virtual);
+
         this._inputElement = document.createElement('input');
         this._inputElement.type = "checkbox";
         this._inputElement.checked = (state as boolean) ?? true;
         this._inputElement.style.display = "block";
-        this._container.element.appendChild(this._inputElement);
 
-        this._container.stateRequestEvent = () => this.handleContainerStateRequestEvent();
+        this.rootHtmlElement.appendChild(this._inputElement);
 
-        this._container.element.addEventListener('click', this._containerClickListener);
-        this._container.element.addEventListener('focusin', this._containerFocusinListener);
+        this.container.stateRequestEvent = () => this.handleContainerStateRequestEvent();
+
+        this.rootHtmlElement.addEventListener('click', this._containerClickListener);
+        this.rootHtmlElement.addEventListener('focusin', this._containerFocusinListener);
     }
 
     handleContainerStateRequestEvent(): boolean {
@@ -26,6 +30,6 @@ export class BooleanComponent {
     }
 
     private handleClickFocusEvent(): void {
-        this._container.focus();
+        this.container.focus();
     }
 }

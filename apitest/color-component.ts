@@ -1,6 +1,7 @@
 import { ComponentContainer, JsonValue } from '..';
+import { ComponentBase } from './component-base';
 
-export class ColorComponent {
+export class ColorComponent extends ComponentBase {
     static readonly typeName = 'color';
     static readonly undefinedColor = 'MediumVioletRed';
 
@@ -13,7 +14,9 @@ export class ColorComponent {
     private _inputChangeListener = () => this.handleInputChangeEvent();
     private _showEventListener = () => this.handleShowEvent();
 
-    constructor(private _container: ComponentContainer, state: JsonValue | undefined) {
+    constructor(container: ComponentContainer, state: JsonValue | undefined, virtual: boolean) {
+        super(container, virtual);
+
         let color: string;
         if (state === undefined) {
             color = ColorComponent.undefinedColor;
@@ -28,9 +31,9 @@ export class ColorComponent {
         this._paraElement = document.createElement("p");
         this._paraElement.style.textAlign = "left";
         this._paraElement.style.color = color;
-        const title = this._container.title;
+        const title = this.container.title;
         this._paraElement.innerText = (title ?? "unknown") + " component";
-        this._container.element.appendChild(this._paraElement);
+        this.rootHtmlElement.appendChild(this._paraElement);
 
         this._inputElement = document.createElement('input');
         this._inputElement.type = "text";
@@ -38,14 +41,14 @@ export class ColorComponent {
         this._inputElement.style.display = "block";
 
         this._inputElement.addEventListener('input', this._inputChangeListener, { passive: true });
-        this._container.element.appendChild(this._inputElement);
+        this.rootHtmlElement.appendChild(this._inputElement);
 
-        this._container.stateRequestEvent = () => this.handleContainerStateRequestEvent();
-        this._container.addEventListener('beforeComponentRelease', this._beforeComponentReleaseEventListener);
-        this._container.addEventListener('show', this._showEventListener);
+        this.container.stateRequestEvent = () => this.handleContainerStateRequestEvent();
+        this.container.addEventListener('beforeComponentRelease', this._beforeComponentReleaseEventListener);
+        this.container.addEventListener('show', this._showEventListener);
 
-        this._container.element.addEventListener('click', this._containerClickListener);
-        this._container.element.addEventListener('focusin', this._containerFocusinListener);
+        this.rootHtmlElement.addEventListener('click', this._containerClickListener);
+        this.rootHtmlElement.addEventListener('focusin', this._containerFocusinListener);
     }
 
     private handleInputChangeEvent() {
@@ -63,22 +66,22 @@ export class ColorComponent {
 
     private handleBeforeComponentReleaseEvent(): void {
         this._inputElement.removeEventListener('change', this._inputChangeListener);
-        this._container.element.removeChild(this._inputElement);
-        this._container.element.removeChild(this._paraElement);
-        this._container.removeEventListener('show', this._showEventListener);
-        this._container.removeEventListener('beforeComponentRelease', this._beforeComponentReleaseEventListener);
-        this._container.element.removeEventListener('click', this._containerClickListener);
-        this._container.element.removeEventListener('focusin', this._containerFocusinListener);
+        this.rootHtmlElement.removeChild(this._inputElement);
+        this.rootHtmlElement.removeChild(this._paraElement);
+        this.container.removeEventListener('show', this._showEventListener);
+        this.container.removeEventListener('beforeComponentRelease', this._beforeComponentReleaseEventListener);
+        this.rootHtmlElement.removeEventListener('click', this._containerClickListener);
+        this.rootHtmlElement.removeEventListener('focusin', this._containerFocusinListener);
     }
 
     private handleShowEvent(): void {
         this._paraElement.style.backgroundColor = 'purple';
-        setTimeout(() => { 
+        setTimeout(() => {
             this._paraElement.style.backgroundColor = ''
         }, 1000);
     }
 
     private handleClickFocusEvent(): void {
-        this._container.focus();
+        this.container.focus();
     }
 }

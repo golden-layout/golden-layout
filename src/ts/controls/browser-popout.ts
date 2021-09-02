@@ -41,7 +41,7 @@ export class BrowserPopout extends EventEmitter {
         private _layoutManager: LayoutManager,
     ) {
         super();
-        
+
         this._isInitialised = false;
         this._popoutWindow = null;
         this.createWindow();
@@ -54,7 +54,7 @@ export class BrowserPopout extends EventEmitter {
 
         const glInstance = this.getGlInstance();
         const glInstanceConfig = glInstance.saveLayout();
-        
+
         let left: number | null;
         let top: number | null;
         if (this._popoutWindow === null) {
@@ -94,7 +94,11 @@ export class BrowserPopout extends EventEmitter {
         return this._popoutWindow.__glInstance;
     }
 
-    /** @internal */
+    /**
+     * Retrieves the native BrowserWindow backing this popout.
+     * Might throw an UnexpectedNullError exception when the window is not initialized yet.
+     * @public
+     */
     getWindow(): Window {
         if (this._popoutWindow === null) {
             throw new UnexpectedNullError('BPGW087215');

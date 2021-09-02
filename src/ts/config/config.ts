@@ -166,7 +166,6 @@ export namespace HeaderedItemConfig {
                 const result: ResolvedHeaderedItemConfig.Header = {
                     show: header?.show ?? (hasHeaders === undefined ? undefined : hasHeaders ? ResolvedLayoutConfig.Header.defaults.show : false),
                     popout: header?.popout,
-                    dock: header?.dock,
                     maximise: header?.maximise,
                     close: header?.close,
                     minimise: header?.minimise,
@@ -273,9 +272,9 @@ export interface ComponentItemConfig extends HeaderedItemConfig {
     /**
      * The type of the component.
      * `componentType` must be of type `string` if it is registered with any of the following functions:
-     * * {@link (LayoutManager:class).registerComponent} (deprecated)
-     * * {@link (LayoutManager:class).registerComponentConstructor}
-     * * {@link (LayoutManager:class).registerComponentFactoryFunction}
+     * * {@link (GoldenLayout:class).registerComponent} (deprecated)
+     * * {@link (GoldenLayout:class).registerComponentConstructor}
+     * * {@link (GoldenLayout:class).registerComponentFactoryFunction}
      */
     componentType: JsonValue;
     /**
@@ -526,7 +525,7 @@ export namespace LayoutConfig {
         tabOverlapAllowance?: number;
 
         /**
-         * 
+         *
          * Default: true
          */
         reorderOnTabMenuClick?: boolean;
@@ -686,10 +685,10 @@ export namespace LayoutConfig {
          */
         minimise?: string;
         /**
-         * 
+         *
          * Default: 'additional tabs'
          */
-        tabDropdown?: string;
+        tabDropdown?: false | string;
     }
 
     export namespace Header {
@@ -747,7 +746,7 @@ export namespace LayoutConfig {
                 dimensions: LayoutConfig.Dimensions.resolve(layoutConfig.dimensions),
                 settings: LayoutConfig.Settings.resolve(layoutConfig.settings),
                 header: LayoutConfig.Header.resolve(layoutConfig.header, layoutConfig.settings, layoutConfig.labels),
-            } 
+            }
             return config;
         }
     }
@@ -785,8 +784,8 @@ export namespace LayoutConfig {
 
 /** @public */
 export interface PopoutLayoutConfig extends LayoutConfig {
-    /** The id of the element the item will be appended to on popIn 
-    * If null, append to topmost layout element 
+    /** The id of the element the item will be appended to on popIn
+    * If null, append to topmost layout element
     */
     parentId: string | null | undefined;
     /** The position of this element within its parent
@@ -867,7 +866,7 @@ export namespace PopoutLayoutConfig {
             indexInParent: popoutConfig.indexInParent ?? null,
             window: PopoutLayoutConfig.Window.resolve(popoutConfig.window, popoutConfig.dimensions),
             resolved: true,
-        } 
+        }
         return config;
     }
 }

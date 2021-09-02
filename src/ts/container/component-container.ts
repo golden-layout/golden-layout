@@ -6,7 +6,8 @@ import { ComponentItem } from '../items/component-item';
 import { ContentItem } from '../items/content-item';
 import { LayoutManager } from '../layout-manager';
 import { EventEmitter } from '../utils/event-emitter';
-import { JsonValue } from '../utils/types';
+import { StyleConstants } from '../utils/style-constants';
+import { JsonValue, LogicalZIndex } from '../utils/types';
 import { deepExtend, setElementHeight, setElementWidth } from '../utils/utils';
 
 /** @public */
@@ -14,11 +15,11 @@ export class ComponentContainer extends EventEmitter {
     /** @internal */
     private _componentType: JsonValue;
     /** @internal */
-    private _component: ComponentItem.Component;
+    private _boundComponent: ComponentContainer.BindableComponent;
     /** @internal */
-    private _width: number | null;
+    private _width: number;
     /** @internal */
-    private _height: number | null;
+    private _height: number;
     /** @internal */
     private _isClosable;
     /** @internal */
@@ -26,25 +27,32 @@ export class ComponentContainer extends EventEmitter {
     /** @internal */
     private _state: JsonValue | undefined;
     /** @internal */
-    private _isHidden;
+    private _visible;
     /** @internal */
     private _isShownWithZeroDimensions;
     /** @internal */
     private _tab: Tab;
+    /** @internal */
+    private _stackMaximised = false;
 
     stateRequestEvent: ComponentContainer.StateRequestEventHandler | undefined;
+    virtualRectingRequiredEvent: ComponentContainer.VirtualRectingRequiredEvent | undefined;
+    virtualVisibilityChangeRequiredEvent: ComponentContainer.VirtualVisibilityChangeRequiredEvent | undefined;
+    virtualZIndexChangeRequiredEvent: ComponentContainer.VirtualZIndexChangeRequiredEvent | undefined;
 
-    get width(): number | null { return this._width; }
-    get height(): number | null { return this._height; }
+    get width(): number { return this._width; }
+    get height(): number { return this._height; }
     get parent(): ComponentItem { return this._parent; }
     /** @internal @deprecated use {@link (ComponentContainer:class).componentType} */
     get componentName(): JsonValue { return this._componentType; }
     get componentType(): JsonValue { return this._componentType; }
-    get component(): ComponentItem.Component { return this._component; }
+    get virtual(): boolean { return this._boundComponent.virtual; }
+    get component(): ComponentContainer.Component { return this._boundComponent.component; }
     get tab(): Tab { return this._tab; }
     get title(): string { return this._parent.title; }
     get layoutManager(): LayoutManager { return this._layoutManager; }
-    get isHidden(): boolean { return this._isHidden; }
+    get isHidden(): boolean { return !this._visible; }
+    get visible(): boolean { return this._visible; }
     get state(): JsonValue | undefined { return this._state; }
     /** Return the initial component state */
     get initialState(): JsonValue | undefined { return this._initialState; }
@@ -74,17 +82,19 @@ export class ComponentContainer extends EventEmitter {
     ) {
         super();
 
-        this._width = null;
-        this._height = null;
-        this._isHidden = false;
-        this._isShownWithZeroDimensions = false;
+        this._width = 0;
+        this._height = 0;
+        this._visible = true;
+        this._isShownWithZeroDimensions = true;
 
         this._componentType = _config.componentType;
         this._isClosable = _config.isClosable;
         this._initialState = _config.componentState;
         this._state = this._initialState;
 
-        this._component = this.layoutManager.getComponent(this, _config);
+        this._boundComponent = this.layoutManager.bindComponent(this, _config);
+
+        this.updateElementPositionPropertyFromBoundComponent();
     }
 
     /** @internal */
@@ -105,15 +115,6 @@ export class ComponentContainer extends EventEmitter {
      */
     hide(): void {
         this._hideEvent();
-    }
-
-    /** @internal */
-    checkEmitHide(): void {
-        if (!this._isHidden) {
-            this.emit('hide');
-            this._isHidden = true;
-            this._isShownWithZeroDimensions = false;
-        }
     }
 
     /**
@@ -138,27 +139,6 @@ export class ComponentContainer extends EventEmitter {
         this._blurEvent(suppressEvent);
     }
 
-    /** @internal */
-    checkEmitShow(): void {
-        // emit 'show' only if the container has a valid size
-        if (this._isHidden) {
-            this._isHidden = false;
-            if (this._height === 0 && this._width === 0) {
-                this._isShownWithZeroDimensions = true;
-            } else {
-                this._isShownWithZeroDimensions = false;
-                this.emit('shown');
-                this.emit('show');
-            }
-        } else {
-            if (this._isShownWithZeroDimensions && (this._height !== 0 || this._width !== 0)) {
-                this._isShownWithZeroDimensions = false;
-                this.emit('shown');
-                this.emit('show');
-            }
-        }
-    }
-
     /**
      * Set the size from within the container. Traverses up
      * the item tree until it finds a row or column element
@@ -170,6 +150,8 @@ export class ComponentContainer extends EventEmitter {
      * @param height - The new height in pixel
      *
      * @returns resizeSuccesful
+     *
+     * @internal
      */
     setSize(width: number, height: number): boolean {
         let ancestorItem: ContentItem | null = this._parent;
@@ -241,7 +223,8 @@ export class ComponentContainer extends EventEmitter {
 
             this._updateItemConfigEvent(config);
 
-            this._component = this.layoutManager.getComponent(this, config);
+            this._boundComponent = this.layoutManager.bindComponent(this, config);
+            this.updateElementPositionPropertyFromBoundComponent();
             this.emit('stateChanged');
         }
     }
@@ -286,15 +269,95 @@ export class ComponentContainer extends EventEmitter {
         this.emit('tab', tab)
     }
 
+    /** @internal */
+    setVisibility(value: boolean): void {
+        if (this._boundComponent.virtual) {
+            if (this.virtualVisibilityChangeRequiredEvent !== undefined) {
+                this.virtualVisibilityChangeRequiredEvent(this, value);
+            }
+        }
+
+        if (value) {
+            if (!this._visible) {
+                this._visible = true;
+                if (this._height === 0 && this._width === 0) {
+                    this._isShownWithZeroDimensions = true;
+                } else {
+                    this._isShownWithZeroDimensions = false;
+                    this.setSizeToNodeSize(this._width, this._height, true);
+                    this.emitShow();
+                }
+            } else {
+                if (this._isShownWithZeroDimensions && (this._height !== 0 || this._width !== 0)) {
+                    this._isShownWithZeroDimensions = false;
+                    this.setSizeToNodeSize(this._width, this._height, true);
+                    this.emitShow();
+                }
+            }
+        } else {
+            if (this._visible) {
+                this._visible = false;
+                this._isShownWithZeroDimensions = false;
+                this.emitHide();
+            }
+        }
+    }
+
+
+
     /**
      * Set the container's size, but considered temporary (for dragging)
-     * so don't emit any events. 
-     * @internal */
-    setDragSize(width: number, height: number): void {
+     * so don't emit any events.
+     * @internal
+     */
+    enterDragMode(width: number, height: number): void {
         this._width = width;
         this._height = height;
         setElementWidth(this._element, width);
         setElementHeight(this._element, height);
+
+        if (this.virtualZIndexChangeRequiredEvent !== undefined) {
+            this.virtualZIndexChangeRequiredEvent(this, LogicalZIndex.drag, StyleConstants.defaultComponentDragZIndex);
+        }
+
+        this.drag();
+    }
+
+    /** @internal */
+    exitDragMode(): void {
+        if (this.virtualZIndexChangeRequiredEvent !== undefined) {
+            this.virtualZIndexChangeRequiredEvent(this, LogicalZIndex.base, StyleConstants.defaultComponentBaseZIndex);
+        }
+    }
+
+    /** @internal */
+    enterStackMaximised(): void {
+        this._stackMaximised = true;
+        if (this.virtualZIndexChangeRequiredEvent !== undefined) {
+            this.virtualZIndexChangeRequiredEvent(this, LogicalZIndex.stackMaximised, StyleConstants.defaultComponentStackMaximisedZIndex);
+        }
+    }
+
+    /** @internal */
+    exitStackMaximised(): void {
+        if (this.virtualZIndexChangeRequiredEvent !== undefined) {
+            this.virtualZIndexChangeRequiredEvent(this, LogicalZIndex.base, StyleConstants.defaultComponentBaseZIndex);
+        }
+        this._stackMaximised = false;
+    }
+
+    /** @internal */
+    drag(): void {
+        if (this._boundComponent.virtual) {
+            if (this.virtualRectingRequiredEvent !== undefined) {
+                this._layoutManager.fireBeforeVirtualRectingEvent(1);
+                try {
+                    this.virtualRectingRequiredEvent(this, this._width, this._height);
+                } finally {
+                    this._layoutManager.fireAfterVirtualRectingEvent();
+                }
+            }
+        }
     }
 
     /**
@@ -303,27 +366,79 @@ export class ComponentContainer extends EventEmitter {
      * use the public setSize method
      * @param width - in px
      * @param height - in px
+     * @param force - set even if no change
      * @internal
      */
-    setSizeToNodeSize(width: number, height: number): void {
-        if (width !== this._width || height !== this._height) {
+    setSizeToNodeSize(width: number, height: number, force: boolean): void {
+        if (width !== this._width || height !== this._height || force) {
             this._width = width;
             this._height = height;
             setElementWidth(this._element, width);
             setElementHeight(this._element, height);
-            this.emit('resize');
-            if (this._isShownWithZeroDimensions && (this._height !== 0 || this._width !== 0)) {
-                this._isShownWithZeroDimensions = false;
-                this.emit('shown');
-                this.emit('show');
+
+            if (this._boundComponent.virtual) {
+                this.addVirtualSizedContainerToLayoutManager();
+            } else {
+                this.emit('resize');
+                this.checkShownFromZeroDimensions();
             }
         }
     }
 
     /** @internal */
+    notifyVirtualRectingRequired(): void {
+        if (this.virtualRectingRequiredEvent !== undefined) {
+            this.virtualRectingRequiredEvent(this, this._width, this._height);
+            this.emit('resize');
+            this.checkShownFromZeroDimensions();
+        }
+    }
+
+    /** @internal */
+    private updateElementPositionPropertyFromBoundComponent() {
+        if (this._boundComponent.virtual) {
+            this._element.style.position = 'static';
+        } else {
+            this._element.style.position = ''; // set it back to attribute value
+        }
+    }
+
+    /** @internal */
+    private addVirtualSizedContainerToLayoutManager() {
+        this._layoutManager.beginVirtualSizedContainerAdding();
+        try {
+            this._layoutManager.addVirtualSizedContainer(this);
+        } finally {
+            this._layoutManager.endVirtualSizedContainerAdding();
+        }
+    }
+
+    /** @internal */
+    private checkShownFromZeroDimensions() {
+        if (this._isShownWithZeroDimensions && (this._height !== 0 || this._width !== 0)) {
+            this._isShownWithZeroDimensions = false;
+            this.emitShow();
+        }
+    }
+
+    /** @internal */
+    private emitShow(): void {
+        this.emit('shown');
+        this.emit('show');
+    }
+
+    /** @internal */
+    private emitHide(): void {
+        this.emit('hide');
+    }
+
+    /** @internal */
     private releaseComponent() {
-        this.emit('beforeComponentRelease', this._component);
-        this.layoutManager.releaseComponent(this, this._component);
+        if (this._stackMaximised) {
+            this.exitStackMaximised();
+        }
+        this.emit('beforeComponentRelease', this._boundComponent.component);
+        this.layoutManager.unbindComponent(this, this._boundComponent.virtual, this._boundComponent.component);
     }
 }
 
@@ -332,7 +447,18 @@ export type ItemContainer = ComponentContainer;
 
 /** @public */
 export namespace ComponentContainer {
+    export type Component = unknown;
+
+    export interface BindableComponent {
+        component: Component;
+        virtual: boolean;
+    }
+
     export type StateRequestEventHandler = (this: void) => JsonValue | undefined;
+    export type VirtualRectingRequiredEvent = (this: void, container: ComponentContainer, width: number, height: number) => void;
+    export type VirtualVisibilityChangeRequiredEvent = (this: void, container: ComponentContainer, visible: boolean) => void;
+    export type VirtualZIndexChangeRequiredEvent =
+        (this: void, container: ComponentContainer, logicalZIndex: LogicalZIndex, defaultZIndex: string) => void;
     /** @internal */
     export type ShowEventHandler = (this: void) => void;
     /** @internal */

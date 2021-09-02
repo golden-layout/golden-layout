@@ -1,4 +1,4 @@
-import { GoldenLayout, ComponentContainer, LayoutConfig } from '../..';
+import { ComponentContainer, GoldenLayout, LayoutConfig } from '../..';
 
 describe('component creation', function () {
 
@@ -12,6 +12,7 @@ describe('component creation', function () {
 			const span = document.createElement('span');
 			span.innerText = 'that worked';
 			container.element.appendChild(span);
+            return;
 		}
 
 		layout.registerComponentFactoryFunction('testComponent', Recorder);

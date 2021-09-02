@@ -21,7 +21,6 @@ export namespace DomConstants {
         TabDropdown = 'lm_tabdropdown',
         TabDropdownList = 'lm_tabdropdown_list',
         Title = 'lm_title',
-        Dock = 'lm_dock',
         Popout = 'lm_popout',
         Popin = 'lm_popin',
         Maximise = 'lm_maximise',
@@ -32,7 +31,6 @@ export namespace DomConstants {
         Left = 'lm_left',
         Right = 'lm_right',
         Bottom = 'lm_bottom',
-        Docked = 'lm_docked',
         Column = 'lm_column',
         Row = 'lm_row',
         Root = 'lm_root',
@@ -40,6 +38,7 @@ export namespace DomConstants {
         Bg = 'lm_bg',
         DropTargetIndicator = 'lm_dropTargetIndicator',
         Inner = 'lm_inner',
+        /** @deprecated */
         TransitionIndicator = 'lm_transition_indicator',
     }
 }

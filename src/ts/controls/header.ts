@@ -31,10 +31,6 @@ export class Header extends EventEmitter {
     /** @internal */
     private readonly _popoutLabel: string;
     /** @internal */
-    private readonly _dockEnabled: boolean;
-    /** @internal */
-    private readonly _dockLabel: string;
-    /** @internal */
     private readonly _maximiseEnabled: boolean;
     /** @internal */
     private readonly _maximiseLabel: string;
@@ -72,8 +68,6 @@ export class Header extends EventEmitter {
     /** @internal */
     private readonly _closeButton: HeaderButton | null = null;
     /** @internal */
-    private readonly _dockButton: HeaderButton | null = null;
-    /** @internal */
     private readonly _popoutButton: HeaderButton | null = null;
     /** @internal */
     private readonly _tabDropdownButton: HeaderButton;
@@ -88,12 +82,11 @@ export class Header extends EventEmitter {
     get side(): Side { return this._side; }
     /** @internal */
     get leftRightSided(): boolean { return this._leftRightSided; }
-    /** @internal */
-    get dockEnabled(): boolean { return this._dockEnabled; }
 
     get layoutManager(): LayoutManager { return this._layoutManager; }
     get parent(): Stack { return this._parent; }
     get tabs(): Tab[] { return this._tabsContainer.tabs; }
+    get lastVisibleTabIndex(): number { return this._tabsContainer.lastVisibleTabIndex; }
     /**
      * @deprecated use {@link (Stack:class).getActiveComponentItem} */
     get activeContentItem(): ContentItem | null {
@@ -125,8 +118,6 @@ export class Header extends EventEmitter {
         private _getActiveComponentItemEvent: Header.GetActiveComponentItemEvent,
         closeEvent: Header.CloseEvent,
         /** @internal */
-        private _dockEvent: Header.DockEvent | undefined,
-        /** @internal */
         private _popoutEvent: Header.PopoutEvent | undefined,
         /** @internal */
         private _maximiseToggleEvent: Header.MaximiseToggleEvent | undefined,
@@ -149,12 +140,10 @@ export class Header extends EventEmitter {
             (x, y, dragListener, item) => this.handleTabInitiatedDragStartEvent(x, y, dragListener, item),
             () => this.processTabDropdownActiveChanged(),
         );
-        
+
         this._show = settings.show;
         this._popoutEnabled = settings.popoutEnabled;
         this._popoutLabel = settings.popoutLabel;
-        this._dockEnabled = settings.dockEnabled;
-        this._dockLabel = settings.dockLabel;
         this._maximiseEnabled = settings.maximiseEnabled;
         this._maximiseLabel = settings.maximiseLabel;
         this._minimiseEnabled = settings.minimiseEnabled;
@@ -183,12 +172,10 @@ export class Header extends EventEmitter {
 
         this._tabControlOffset = this._layoutManager.layoutConfig.settings.tabControlOffset;
 
-        this._tabDropdownButton = new HeaderButton(this, this._tabDropdownLabel, DomConstants.ClassName.TabDropdown,
-            () => this._tabsContainer.showAdditionalTabsDropdown()
-        );
-
-        if (this._dockEnabled) {
-            this._dockButton = new HeaderButton(this, this._dockLabel, DomConstants.ClassName.Dock, () => this.handleButtonDockEvent());
+        if (this._tabDropdownEnabled) {
+            this._tabDropdownButton = new HeaderButton(this, this._tabDropdownLabel, DomConstants.ClassName.TabDropdown,
+                () => this._tabsContainer.showAdditionalTabsDropdown()
+            );
         }
 
         if (this._popoutEnabled) {
@@ -221,7 +208,6 @@ export class Header extends EventEmitter {
     destroy(): void {
         this.emit('destroy');
 
-        this._dockEvent = undefined;
         this._popoutEvent = undefined;
         this._maximiseToggleEvent = undefined;
         this._clickEvent = undefined;
@@ -314,21 +300,6 @@ export class Header extends EventEmitter {
         this._canRemoveComponent = isClosable || this._tabsContainer.tabCount > 1;
     }
 
-
-    /**
-     * Programmatically set ability to dock.
-     * @param isDockable - Whether to enable/disable ability to dock.
-     * @returns Whether the action was successful
-     * @internal
-     */
-    setDockable(isDockable: boolean): boolean {
-        if (this._dockButton !== null && this._dockEnabled) {
-            setElementDisplayVisibility(this._dockButton.element, isDockable);
-            return true;
-        }
-        return false;
-    }
-
     /** @internal */
     applyFocusedValue(value: boolean): void {
         if (value) {
@@ -417,15 +388,8 @@ export class Header extends EventEmitter {
 
     /** @internal */
     private processTabDropdownActiveChanged() {
-        setElementDisplayVisibility(this._tabDropdownButton.element, this._tabsContainer.dropdownActive);
-    }
-
-    /** @internal */
-    private handleButtonDockEvent() {
-        if (this._dockEvent === undefined) {
-            throw new UnexpectedUndefinedError('HHBDE17834');
-        } else {
-            this._dockEvent();
+        if (this._tabDropdownButton !== undefined) {
+            setElementDisplayVisibility(this._tabDropdownButton.element, this._tabsContainer.dropdownActive);
         }
     }
 
@@ -502,8 +466,6 @@ export namespace Header {
     /** @internal */
     export type CloseEvent = (this: void) => void;
     /** @internal */
-    export type DockEvent = (this: void) => void;
-    /** @internal */
     export type PopoutEvent = (this: void) => void;
     /** @internal */
     export type MaximiseToggleEvent = (this: void) => void;
@@ -526,8 +488,6 @@ export namespace Header {
         side: Side;
         popoutEnabled: boolean;
         popoutLabel: string;
-        dockEnabled: boolean;
-        dockLabel: string;
         maximiseEnabled: boolean;
         maximiseLabel: string;
         minimiseEnabled: boolean;

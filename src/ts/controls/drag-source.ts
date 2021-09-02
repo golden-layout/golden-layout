@@ -6,6 +6,7 @@ import { LayoutManager } from '../layout-manager';
 import { DragListener } from '../utils/drag-listener';
 import { JsonValue } from '../utils/types';
 import { DragProxy } from './drag-proxy';
+import { ResolvedRowOrColumnItemConfig } from "../config/resolved-config";
 
 /**
  * Allows for any DOM item to create a component on drag
@@ -37,12 +38,10 @@ export class DragSource {
     ) {
         this._dragListener = null;
 
-        // Need to review dummyGroundContainer
-        // Should this part of a fragment or template?
-        // Does this need to be regenerated with each drag operation?
         this._dummyGroundContainer = document.createElement('div');
 
-        this._dummyGroundContentItem = new GroundItem(this._layoutManager, this._layoutManager.layoutConfig.root, this._dummyGroundContainer);
+        const dummyRootItemConfig = ResolvedRowOrColumnItemConfig.createDefault('row');
+        this._dummyGroundContentItem = new GroundItem(this._layoutManager, dummyRootItemConfig, this._dummyGroundContainer);
  
         this.createDragListener();
     }

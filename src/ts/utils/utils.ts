@@ -56,6 +56,14 @@ export function setElementDisplayVisibility(element: HTMLElement, visible: boole
     }
 }
 
+/** @internal */
+export function ensureElementPositionAbsolute(element: HTMLElement): void {
+    const absolutePosition = 'absolute';
+    if (element.style.position !== absolutePosition) {
+        element.style.position = absolutePosition;
+    }
+}
+
 /**
  * Replacement for JQuery $.extend(target, obj)
  * @internal
