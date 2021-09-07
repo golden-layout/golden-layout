@@ -1,12 +1,6 @@
 import { WidthAndHeight } from './types';
 
 /** @internal */
-export function getQueryStringParam(key: string): string | null {
-    let url = new URL(document.location.href);
-    return url.searchParams.get(key);
-}
-
-/** @internal */
 export function numberToPixels(value: number): string {
     return value.toString(10) + 'px';
 }
