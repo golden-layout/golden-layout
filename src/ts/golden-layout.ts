@@ -44,7 +44,7 @@ export class GoldenLayout extends VirtualLayout {
         unbindComponentEventHandler?: VirtualLayout.UnbindComponentEventHandler,
     ) {
         super(configOrOptionalContainer, containerOrBindComponentEventHandler, unbindComponentEventHandler, true);
-        // we told VirtualLayout to not call init() (skipInit set to false) so that Golden Layout can initialise its properties before init is called
+        // we told VirtualLayout to not call init() (skipInit set to true) so that Golden Layout can initialise its properties before init is called
         this.init();
     }
 

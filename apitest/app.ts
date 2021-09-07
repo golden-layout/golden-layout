@@ -275,7 +275,7 @@ export class App {
             this._controlsElement.style.display = 'none';
             this._goldenLayout.checkAddDefaultPopinButton();
 
-            const subWindowUsesRegistrationBindings = false;
+            const subWindowUsesRegistrationBindings = false; // change to true if you want to test sub windows with registration bindings
             if (subWindowUsesRegistrationBindings) {
                 this.registerComponentTypes();
             }

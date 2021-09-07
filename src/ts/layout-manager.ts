@@ -329,7 +329,7 @@ export abstract class LayoutManager extends EventEmitter {
      * Removes any existing layout. Effectively, an empty layout will be loaded.
      */
 
-     clear(): void {
+    clear(): void {
         if (this._groundItem === undefined) {
             throw new UnexpectedUndefinedError('LMCL11129');
         } else {
@@ -852,20 +852,23 @@ export abstract class LayoutManager extends EventEmitter {
      * and turns it into a way of creating new ComponentItems
      * by 'dragging' the DOM element into the layout
      *
-     * @param element -
-     * @param componentTypeOrFtn - Type of component to be created, or a function which will provide both component type and state
-     * @param componentState - Optional initial state of component.  This will be ignored if componentTypeOrFtn is a function
+     * @param element - The HTML element which will be listened to for commencement of drag.
+     * @param componentTypeOrItemConfigCallback - Type of component to be created, or a callback which will provide the ItemConfig
+     * to be used to create the component.
+     * @param componentState - Optional initial state of component.  This will be ignored if componentTypeOrFtn is a function.
      *
      * @returns an opaque object that identifies the DOM element
 	 *          and the attached itemConfig. This can be used in
 	 *          removeDragSource() later to get rid of the drag listeners.
      */
+    newDragSource(element: HTMLElement, itemConfigCallback: () => DragSource.ComponentItemConfig): DragSource;
+    newDragSource(element: HTMLElement, componentType: JsonValue, componentState?: JsonValue, title?: JsonValue): DragSource;
     newDragSource(element: HTMLElement,
-        componentTypeOrFtn: JsonValue | (() => DragSource.ComponentItemConfig),
+        componentTypeOrItemConfigCallback: JsonValue | (() => DragSource.ComponentItemConfig),
         componentState?: JsonValue,
         title?: string,
     ): DragSource {
-        const dragSource = new DragSource(this, element, [], componentTypeOrFtn, componentState, title);
+        const dragSource = new DragSource(this, element, [], componentTypeOrItemConfigCallback, componentState, title);
         this._dragSources.push(dragSource);
 
         return dragSource;
