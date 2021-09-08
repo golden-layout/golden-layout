@@ -53,6 +53,7 @@ export abstract class ContentItem extends EventEmitter {
 
     get type(): ItemType { return this._type; }
     get id(): string { return this._id; }
+    set id(value: string) { this._id = value; }
     /** @internal */
     get popInParentIds(): string[] { return this._popInParentIds; }
     get parent(): ContentItem | null { return this._parent; }
