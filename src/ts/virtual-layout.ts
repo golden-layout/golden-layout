@@ -10,11 +10,6 @@ import { getQueryStringParam } from './utils/utils';
 
 /** @public */
 export class VirtualLayout extends LayoutManager {
-    /** @internal */
-    private _subWindowsCreated = false;
-    /** @internal */
-    private _creationTimeoutPassed = false;
-
     /**
      * @deprecated Use {@link (VirtualLayout:class).bindComponentEvent} and
      * {@link (VirtualLayout:class).unbindComponentEvent} with virtual components
@@ -29,10 +24,19 @@ export class VirtualLayout extends LayoutManager {
     bindComponentEvent: VirtualLayout.BindComponentEventHandler | undefined;
     unbindComponentEvent: VirtualLayout.UnbindComponentEventHandler | undefined;
 
+    /** @internal @deprecated use while constructor is not determinate */
+    private _bindComponentEventHanlderPassedInConstructor = false; // remove when constructor is determinate
+    /** @internal  @deprecated use while constructor is not determinate */
+    private _creationTimeoutPassed = false; // remove when constructor is determinate
 
     /**
-    * @param container - A Dom HTML element. Defaults to body
-    */
+     * @param container - A Dom HTML element. Defaults to body
+     * @param bindComponentEventHandler - Event handler to bind components
+     * @param bindComponentEventHandler - Event handler to unbind components
+     * If bindComponentEventHandler is defined, then constructor will be determinate. It will always call the init()
+     * function and the init() function will always complete. This means that the bindComponentEventHandler will be called
+     * if constructor is for a popout window. Make sure bindComponentEventHandler is ready for events.
+     */
     constructor(
         container?: HTMLElement,
         bindComponentEventHandler?: VirtualLayout.BindComponentEventHandler,
@@ -54,10 +58,10 @@ export class VirtualLayout extends LayoutManager {
     ) {
         super(VirtualLayout.createLayoutManagerConstructorParameters(configOrOptionalContainer, containerOrBindComponentEventHandler));
 
-        // More work needed to get popouts working with virtual.
         if (containerOrBindComponentEventHandler !== undefined) {
             if (typeof containerOrBindComponentEventHandler === 'function') {
                 this.bindComponentEvent = containerOrBindComponentEventHandler;
+                this._bindComponentEventHanlderPassedInConstructor = true;
 
                 if (unbindComponentEventHandler !== undefined) {
                     this.unbindComponentEvent = unbindComponentEventHandler;
@@ -65,23 +69,29 @@ export class VirtualLayout extends LayoutManager {
             }
         }
 
-        if (this.bindComponentEvent === undefined) {
+        if (!this._bindComponentEventHanlderPassedInConstructor) {
             // backward compatibility
 
             if (this.isSubWindow) {
-                document.body.style.visibility = 'hidden';
-                // this.layoutConfig.root has not been assigned yet
-                // Should this be left undefined and modify init to load component with loadLayout()?
-                // Or should we
-            }
-        } else {
-            if (this.isSubWindow) {
-                // this.layoutConfig.root has not been assigned yet. Need to figure out.
+                // document.body.style.visibility = 'hidden';
+                // Set up layoutConfig since constructor is not determinate and may exit early. Other functions may need
+                // this.layoutConfig. this.layoutConfig is again calculated in the same way when init() completes.
+                // Remove this when constructor is determinate.
+                if (this._constructorOrSubWindowLayoutConfig === undefined) {
+                    throw new UnexpectedUndefinedError('VLC98823');
+                } else {
+                    const resolvedLayoutConfig = LayoutConfig.resolve(this._constructorOrSubWindowLayoutConfig);
+                    // remove root from layoutConfig
+                    this.layoutConfig = {
+                        ...resolvedLayoutConfig,
+                        root: undefined,
+                    }
+                }
             }
         }
 
         if (skipInit !== true) {
-            if (this.layoutConfig.root === undefined || this.isSubWindow) {
+            if (!this.deprecatedConstructor) {
                 this.init();
             }
         }
@@ -107,21 +117,11 @@ export class VirtualLayout extends LayoutManager {
      * then init() will be automatically called internally and should not be called externally.
      */
     override init(): void {
-        /**
-         * Create the popout windows straight away. If popouts are blocked
-         * an error is thrown on the same 'thread' rather than a timeout and can
-         * be caught. This also prevents any further initilisation from taking place.
-         */
-        if (this._subWindowsCreated === false) {
-            this.createSubWindows();
-            this._subWindowsCreated = true;
-        }
-
 
         /**
          * If the document isn't ready yet, wait for it.
          */
-        if (this.bindComponentEvent === undefined && (document.readyState === 'loading' || document.body === null)) {
+        if (!this._bindComponentEventHanlderPassedInConstructor && (document.readyState === 'loading' || document.body === null)) {
             document.addEventListener('DOMContentLoaded', () => this.init(), { passive: true });
             return;
         }
@@ -131,15 +131,15 @@ export class VirtualLayout extends LayoutManager {
          * page's js calls to be executed, then replace the bodies content
          * with GoldenLayout
          */
-        if (this.bindComponentEvent === undefined && this.isSubWindow === true && !this._creationTimeoutPassed) {
+        if (!this._bindComponentEventHanlderPassedInConstructor && this.isSubWindow === true && !this._creationTimeoutPassed) {
             setTimeout(() => this.init(), 7);
             this._creationTimeoutPassed = true;
             return;
         }
 
         if (this.isSubWindow === true) {
-            if (this.bindComponentEvent === undefined) {
-                this.adjustToWindowMode();
+            if (!this._bindComponentEventHanlderPassedInConstructor) {
+                this.clearHtmlAndAdjustStylesForSubWindow();
             }
 
             // Expose this instance on the window object to allow the opening window to interact with it
@@ -149,6 +149,45 @@ export class VirtualLayout extends LayoutManager {
         super.init();
     }
 
+    /**
+     * Clears existing HTML and adjusts style to make window suitable to be a popout sub window
+     * Curently is automatically called when window is a subWindow and bindComponentEvent is not passed in the constructor
+     * If bindComponentEvent is not passed in the constructor, the application must either call this function explicitly or
+     * (preferably) make the window suitable as a subwindow.
+     * In the future, it is planned that this function is NOT automatically called in any circumstances.  Applications will
+     * need to determine whether a window is a Golden Layout popout window and either call this function explicitly or
+     * hide HTML not relevant to the popout.
+     * See apitest for an example of how HTML is hidden when popout windows are displayed
+     */
+    clearHtmlAndAdjustStylesForSubWindow(): void {
+        const headElement = document.head;
+
+        const appendNodeLists = new Array<NodeListOf<Element>>(4);
+        appendNodeLists[0] = document.querySelectorAll('body link');
+        appendNodeLists[1] = document.querySelectorAll('body style');
+        appendNodeLists[2] = document.querySelectorAll('template');
+        appendNodeLists[3] = document.querySelectorAll('.gl_keep');
+
+        for (let listIdx = 0; listIdx < appendNodeLists.length; listIdx++) {
+            const appendNodeList = appendNodeLists[listIdx];
+            for (let nodeIdx = 0; nodeIdx < appendNodeList.length; nodeIdx++) {
+                const node = appendNodeList[nodeIdx];
+                headElement.appendChild(node);
+            }
+        }
+
+        const bodyElement = document.body;
+        bodyElement.innerHTML = '';
+        bodyElement.style.visibility = 'visible';
+        this.checkAddDefaultPopinButton();
+
+        /*
+        * This seems a bit pointless, but actually causes a reflow/re-evaluation getting around
+        * slickgrid's "Cannot find stylesheet." bug in chrome
+        */
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const x = document.body.offsetHeight;
+    }
     /**
      * Will add button if not popinOnClose specified in settings
      * @returns true if added otherwise false
@@ -209,53 +248,6 @@ export class VirtualLayout extends LayoutManager {
             }
         }
     }
-
-    /**
-     * Creates Subwindows (if there are any). Throws an error
-     * if popouts are blocked.
-     * @internal
-     */
-    private createSubWindows() {
-        for (let i = 0; i < this.layoutConfig.openPopouts.length; i++) {
-            const popoutConfig = this.layoutConfig.openPopouts[i];
-            this.createPopoutFromPopoutLayoutConfig(popoutConfig);
-        }
-    }
-
-    /**
-     * This is executed when GoldenLayout detects that it is run
-     * within a previously opened popout window.
-     * @internal
-     */
-    private adjustToWindowMode() {
-        const headElement = document.head;
-
-        const appendNodeLists = new Array<NodeListOf<Element>>(4);
-        appendNodeLists[0] = document.querySelectorAll('body link');
-        appendNodeLists[1] = document.querySelectorAll('body style');
-        appendNodeLists[2] = document.querySelectorAll('template');
-        appendNodeLists[3] = document.querySelectorAll('.gl_keep');
-
-        for (let listIdx = 0; listIdx < appendNodeLists.length; listIdx++) {
-            const appendNodeList = appendNodeLists[listIdx];
-            for (let nodeIdx = 0; nodeIdx < appendNodeList.length; nodeIdx++) {
-                const node = appendNodeList[nodeIdx];
-                headElement.appendChild(node);
-            }
-        }
-
-        const bodyElement = document.body;
-        bodyElement.innerHTML = '';
-        bodyElement.style.visibility = 'visible';
-        this.checkAddDefaultPopinButton();
-
-        /*
-        * This seems a bit pointless, but actually causes a reflow/re-evaluation getting around
-        * slickgrid's "Cannot find stylesheet." bug in chrome
-        */
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const x = document.body.offsetHeight;
-    }
 }
 
 /** @public */
@@ -296,7 +288,7 @@ export namespace VirtualLayout {
         const isSubWindow = windowConfigKey !== null;
 
         let containerElement: HTMLElement | undefined;
-        let config: ResolvedLayoutConfig | undefined;
+        let config: LayoutConfig | undefined;
         if (windowConfigKey !== null) {
             const windowConfigStr = localStorage.getItem(windowConfigKey);
             if (windowConfigStr === null) {
@@ -304,7 +296,12 @@ export namespace VirtualLayout {
             }
             localStorage.removeItem(windowConfigKey);
             const minifiedWindowConfig = JSON.parse(windowConfigStr) as ResolvedPopoutLayoutConfig;
-            config = ResolvedLayoutConfig.unminifyConfig(minifiedWindowConfig);
+            const resolvedConfig = ResolvedLayoutConfig.unminifyConfig(minifiedWindowConfig);
+            config = LayoutConfig.fromResolved(resolvedConfig)
+
+            if (configOrOptionalContainer instanceof HTMLElement) {
+                containerElement = configOrOptionalContainer;
+            }
         } else {
             if (configOrOptionalContainer === undefined) {
                 config = undefined;
@@ -313,11 +310,8 @@ export namespace VirtualLayout {
                     config = undefined;
                     containerElement = configOrOptionalContainer;
                 } else {
-                    if (LayoutConfig.isResolved(configOrOptionalContainer)) {
-                        config = configOrOptionalContainer as ResolvedLayoutConfig;
-                    } else {
-                        config = LayoutConfig.resolve(configOrOptionalContainer);
-                    }
+                    // backwards compatibility
+                    config = configOrOptionalContainer;
                 }
             }
 
@@ -329,7 +323,7 @@ export namespace VirtualLayout {
         }
 
         return {
-            layoutConfig: config,
+            constructorOrSubWindowLayoutConfig: config,
             isSubWindow,
             containerElement,
         };

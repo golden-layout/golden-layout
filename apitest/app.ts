@@ -20,63 +20,65 @@ import { prefinedLayouts } from './predefined-layouts';
 import { TextComponent } from './text-component';
 
 export class App {
-    private _layoutElement: HTMLElement;
-    private _controlsElement: HTMLElement;
-    private _goldenLayout: GoldenLayout;
-    private _registerComponentTypesButton;
-    private _registerComponentTypesButtonClickListener = () => this.registerComponentTypes();
-    private _registerAllRadio;
-    private _registerColorEventRadio;
-    private _registerComponentTypesAsVirtualButton;
-    private _registerComponentTypesAsVirtualButtonClickListener = () => this.registerComponentTypesAsVirtual();
-    private _registerAllAsVirtualRadio;
-    private _registerTextBooleanAsVirtualRadio;
-    private _registeredComponentTypesForAddSelect: HTMLSelectElement;
-    private _registeredComponentTypesForAddSelectChangeListener = () => this.handleRegisteredComponentTypesForAddSelectChange();
-    private _eventBindingVirtualRadio;
-    private _eventBindingVirtualRadioClickListener = () => this.handleEventBindingVirtualRadioClick();
-    private _eventBindingEmbeddedRadio;
-    private _eventBindingEmbeddedRadioClickListener = () => this.handleEventBindingEmbeddedRadioClick();
-    private _clearButton: HTMLButtonElement;
-    private _clearButtonClickListener = () => this.handleClearButtonClick();
-    private _addComponentButton: HTMLButtonElement;
-    private _addComponentButtonClickListener = () => this.handleAddComponentButtonClick();
-    private _layoutSelect: HTMLSelectElement;
-    private _layoutSelectChangeListener = () => this.handleLayoutSelectChange();
-    private _loadLayoutButton: HTMLButtonElement;
-    private _loadLayoutButtonClickListener = () => this.handleLoadLayoutButtonClick();
-    private _loadComponentAsRootButton: HTMLButtonElement;
-    private _loadComponentAsRootClickListener = () => this.handleLoadComponentAsRootButtonClick();
-    private _registeredComponentTypesForReplaceSelect: HTMLSelectElement;
-    private _registeredComponentTypesForReplaceSelectChangeListener = () => this.handleRegisteredComponentTypesForReplaceSelectChange();
-    private _replaceComponentButton: HTMLButtonElement;
-    private _replaceComponentButtonClickListener = () => this.handleReplaceComponentButtonClick();
-    private _saveLayoutButton: HTMLButtonElement;
-    private _saveLayoutButtonClickListener = () => this.handleSaveLayoutButtonClick();
-    private _reloadSavedLayoutButton: HTMLButtonElement;
-    private _reloadSavedLayoutButtonClickListener = () => this.handleReloadSavedLayoutButtonClick();
-    private _lastVirtualRectingCount = 0;
-    private _lastVirtualRectingCountSpan: HTMLSpanElement;
-    private _bubbleClickCount = 0;
-    private _bubbleClickCountSpan: HTMLSpanElement;
-    private _captureClickCount = 0;
-    private _captureClickCountSpan: HTMLSpanElement;
-    private _stackHeaderClickedDiv: HTMLDivElement;
-    private _stackHeaderClickedItemCountSpan: HTMLSpanElement;
+    private readonly _layoutElement: HTMLElement;
+    private readonly _controlsElement: HTMLElement;
+    private readonly _goldenLayout: GoldenLayout;
+    private readonly _registerComponentTypesButton;
+    private readonly _registerComponentTypesButtonClickListener = () => this.registerComponentTypes();
+    private readonly _registerAllRadio;
+    private readonly _registerColorEventRadio;
+    private readonly _registerComponentTypesAsVirtualButton;
+    private readonly _registerComponentTypesAsVirtualButtonClickListener = () => this.registerComponentTypesAsVirtual();
+    private readonly _registerAllAsVirtualRadio;
+    private readonly _registerTextBooleanAsVirtualRadio;
+    private readonly _registeredComponentTypesForAddSelect: HTMLSelectElement;
+    private readonly _registeredComponentTypesForAddSelectChangeListener = () => this.handleRegisteredComponentTypesForAddSelectChange();
+    private readonly _eventBindingVirtualRadio;
+    private readonly _eventBindingVirtualRadioClickListener = () => this.handleEventBindingVirtualRadioClick();
+    private readonly _eventBindingEmbeddedRadio;
+    private readonly _eventBindingEmbeddedRadioClickListener = () => this.handleEventBindingEmbeddedRadioClick();
+    private readonly _clearButton: HTMLButtonElement;
+    private readonly _clearButtonClickListener = () => this.handleClearButtonClick();
+    private readonly _addComponentButton: HTMLButtonElement;
+    private readonly _addComponentButtonClickListener = () => this.handleAddComponentButtonClick();
+    private readonly _layoutSelect: HTMLSelectElement;
+    private readonly _layoutSelectChangeListener = () => this.handleLayoutSelectChange();
+    private readonly _loadLayoutButton: HTMLButtonElement;
+    private readonly _loadLayoutButtonClickListener = () => this.handleLoadLayoutButtonClick();
+    private readonly _loadComponentAsRootButton: HTMLButtonElement;
+    private readonly _loadComponentAsRootClickListener = () => this.handleLoadComponentAsRootButtonClick();
+    private readonly _registeredComponentTypesForReplaceSelect: HTMLSelectElement;
+    private readonly _registeredComponentTypesForReplaceSelectChangeListener = () => this.handleRegisteredComponentTypesForReplaceSelectChange();
+    private readonly _replaceComponentButton: HTMLButtonElement;
+    private readonly _replaceComponentButtonClickListener = () => this.handleReplaceComponentButtonClick();
+    private readonly _saveLayoutButton: HTMLButtonElement;
+    private readonly _saveLayoutButtonClickListener = () => this.handleSaveLayoutButtonClick();
+    private readonly _reloadSavedLayoutButton: HTMLButtonElement;
+    private readonly _reloadSavedLayoutButtonClickListener = () => this.handleReloadSavedLayoutButtonClick();
+    private readonly _lastVirtualRectingCountSpan: HTMLSpanElement;
+    private readonly _bubbleClickCountSpan: HTMLSpanElement;
+    private readonly _captureClickCountSpan: HTMLSpanElement;
+    private readonly _stackHeaderClickedDiv: HTMLDivElement;
+    private readonly _stackHeaderClickedItemCountSpan: HTMLSpanElement;
 
-    private _boundComponentMap = new Map<ComponentContainer, ComponentBase>();
+    private readonly _boundComponentMap = new Map<ComponentContainer, ComponentBase>();
+
+    private _bubbleClickCount = 0;
+    private _captureClickCount = 0;
+    private _lastVirtualRectingCount = 0;
+
     private _allComponentsRegistered = false;
     private _savedLayout: ResolvedLayoutConfig | undefined;
     private _useVirtualEventBinding = true;
 
     private _goldenLayoutBoundingClientRect: DOMRect = new DOMRect();
 
-    private _windowResizeListener = () => this.handleWindowResizeEvent();
-    private _globalBubbleClickListener = () => this.handleGlobalBubbleClickEvent();
-    private _globalCaptureClickListener = () => this.handleGlobalCaptureClickEvent();
-    private _bindComponentEventListener =
+    private readonly _windowResizeListener = () => this.handleWindowResizeEvent();
+    private readonly _globalBubbleClickListener = () => this.handleGlobalBubbleClickEvent();
+    private readonly _globalCaptureClickListener = () => this.handleGlobalCaptureClickEvent();
+    private readonly _bindComponentEventListener =
         (container: ComponentContainer, itemConfig: ResolvedComponentItemConfig) => this.handleBindComponentEvent(container, itemConfig);
-    private _unbindComponentEventListener = (container: ComponentContainer) => this.handleUnbindComponentEvent(container);
+    private readonly _unbindComponentEventListener = (container: ComponentContainer) => this.handleUnbindComponentEvent(container);
 
     constructor() {
         const controlsElement = document.querySelector('#controls') as HTMLElement;
@@ -92,8 +94,8 @@ export class App {
         this._layoutElement = layoutElement;
         this._goldenLayout = new GoldenLayout(this._layoutElement, this._bindComponentEventListener, this._unbindComponentEventListener);
 
-        this._goldenLayout.addEventListener('stackHeaderClick', (event) => this.handleStackHeaderClick(event));
         this._goldenLayout.beforeVirtualRectingEvent = (count) => this.handleBeforeVirtualRectingEvent(count);
+        this._goldenLayout.addEventListener('stackHeaderClick', (event) => this.handleStackHeaderClick(event));
 
         const registerNotVirtualComponentTypesButton = document.querySelector('#registerNotVirtualButton') as HTMLButtonElement;
         if (registerNotVirtualComponentTypesButton === null) {
@@ -267,10 +269,6 @@ export class App {
         }
         this._stackHeaderClickedItemCountSpan = stackHeaderClickedItemCountSpan;
 
-        globalThis.addEventListener('resize', this._windowResizeListener, { passive: true });
-        globalThis.addEventListener('click', this._globalBubbleClickListener, { passive: true });
-        globalThis.addEventListener('click', this._globalCaptureClickListener, { capture: true, passive: true });
-
         if (this._goldenLayout.isSubWindow) {
             this._controlsElement.style.display = 'none';
             this._goldenLayout.checkAddDefaultPopinButton();
@@ -280,6 +278,10 @@ export class App {
                 this.registerComponentTypes();
             }
         }
+
+        globalThis.addEventListener('click', this._globalBubbleClickListener, { passive: true });
+        globalThis.addEventListener('click', this._globalCaptureClickListener, { capture: true, passive: true });
+        globalThis.addEventListener('resize', this._windowResizeListener, { passive: true });
     }
 
     start(): void {
