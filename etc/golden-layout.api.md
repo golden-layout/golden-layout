@@ -378,7 +378,8 @@ export class DragSource {
     _extraAllowableChildTargets: HTMLElement[],
     _componentTypeOrFtn: JsonValue | (() => DragSource.ComponentItemConfig),
     _componentState: JsonValue | undefined,
-    _title: string | undefined);
+    _title: string | undefined,
+    _id: string | undefined);
     // @internal
     destroy(): void;
     }
@@ -387,6 +388,8 @@ export class DragSource {
 export namespace DragSource {
     // (undocumented)
     export interface ComponentItemConfig {
+        // (undocumented)
+        id?: string;
         // (undocumented)
         state?: JsonValue;
         // (undocumented)
@@ -1076,7 +1079,7 @@ export abstract class LayoutManager extends EventEmitter {
     minifyConfig(config: ResolvedLayoutConfig): ResolvedLayoutConfig;
     newComponent(componentType: JsonValue, componentState?: JsonValue, title?: string): ComponentItem;
     newComponentAtLocation(componentType: JsonValue, componentState?: JsonValue, title?: string, locationSelectors?: LayoutManager.LocationSelector[]): ComponentItem | undefined;
-    newDragSource(element: HTMLElement, componentTypeOrFtn: JsonValue | (() => DragSource.ComponentItemConfig), componentState?: JsonValue, title?: string): DragSource;
+    newDragSource(element: HTMLElement, componentTypeOrFtn: JsonValue | (() => DragSource.ComponentItemConfig), componentState?: JsonValue, title?: string, id?: string): DragSource;
     newItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig): ContentItem;
     newItemAtLocation(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig, locationSelectors?: readonly LayoutManager.LocationSelector[]): ContentItem | undefined;
     // (undocumented)

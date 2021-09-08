@@ -1,11 +1,11 @@
-import { ComponentItemConfig } from '../config/config';
-import { UnexpectedNullError } from '../errors/internal-error';
-import { ComponentItem } from '../items/component-item';
-import { GroundItem } from '../items/ground-item';
-import { LayoutManager } from '../layout-manager';
-import { DragListener } from '../utils/drag-listener';
-import { JsonValue } from '../utils/types';
-import { DragProxy } from './drag-proxy';
+import { ComponentItemConfig } from "../config/config";
+import { UnexpectedNullError } from "../errors/internal-error";
+import { ComponentItem } from "../items/component-item";
+import { GroundItem } from "../items/ground-item";
+import { LayoutManager } from "../layout-manager";
+import { DragListener } from "../utils/drag-listener";
+import { JsonValue } from "../utils/types";
+import { DragProxy } from "./drag-proxy";
 import { ResolvedRowOrColumnItemConfig } from "../config/resolved-config";
 
 /**
@@ -20,7 +20,7 @@ export class DragSource {
     private _dummyGroundContainer: HTMLElement;
     /** @internal */
     private _dummyGroundContentItem: GroundItem;
- 
+
     /** @internal */
     constructor(
         /** @internal */
@@ -30,30 +30,39 @@ export class DragSource {
         /** @internal */
         private readonly _extraAllowableChildTargets: HTMLElement[],
         /** @internal */
-        private _componentTypeOrFtn: JsonValue | (() => DragSource.ComponentItemConfig),
+        private _componentTypeOrFtn:
+            | JsonValue
+            | (() => DragSource.ComponentItemConfig),
         /** @internal */
         private _componentState: JsonValue | undefined,
         /** @internal */
         private _title: string | undefined,
+        /** @internal  **/
+        private _id: string | undefined
     ) {
         this._dragListener = null;
 
-        this._dummyGroundContainer = document.createElement('div');
+        this._dummyGroundContainer = document.createElement("div");
 
-        const dummyRootItemConfig = ResolvedRowOrColumnItemConfig.createDefault('row');
-        this._dummyGroundContentItem = new GroundItem(this._layoutManager, dummyRootItemConfig, this._dummyGroundContainer);
- 
+        const dummyRootItemConfig =
+            ResolvedRowOrColumnItemConfig.createDefault("row");
+        this._dummyGroundContentItem = new GroundItem(
+            this._layoutManager,
+            dummyRootItemConfig,
+            this._dummyGroundContainer
+        );
+
         this.createDragListener();
     }
 
-	/**
-	 * Disposes of the drag listeners so the drag source is not usable any more.
+    /**
+     * Disposes of the drag listeners so the drag source is not usable any more.
      * @internal
-	 */
-	destroy(): void {
-		this.removeDragListener();
+     */
+    destroy(): void {
+        this.removeDragListener();
     }
-    
+
     /**
      * Called initially and after every drag
      * @internal
@@ -61,9 +70,12 @@ export class DragSource {
     private createDragListener() {
         this.removeDragListener();
 
-        this._dragListener = new DragListener(this._element, this._extraAllowableChildTargets);
-        this._dragListener.on('dragStart', (x, y) => this.onDragStart(x, y));
-        this._dragListener.on('dragStop', () => this.onDragStop());
+        this._dragListener = new DragListener(
+            this._element,
+            this._extraAllowableChildTargets
+        );
+        this._dragListener.on("dragStart", (x, y) => this.onDragStart(x, y));
+        this._dragListener.on("dragStop", () => this.onDragStop());
     }
 
     /**
@@ -77,15 +89,19 @@ export class DragSource {
         let componentType: JsonValue;
         let componentState: JsonValue | undefined;
         let title: string | undefined;
+        let id: string | undefined;
         if (typeof this._componentTypeOrFtn === "function") {
-            const dragSourceItemConfig: DragSource.ComponentItemConfig = this._componentTypeOrFtn();
+            const dragSourceItemConfig: DragSource.ComponentItemConfig =
+                this._componentTypeOrFtn();
             componentType = dragSourceItemConfig.type;
             componentState = dragSourceItemConfig.state;
             title = dragSourceItemConfig.title;
+            id = dragSourceItemConfig.id;
         } else {
             componentType = this._componentTypeOrFtn;
             componentState = this._componentState;
             title = this._title;
+            id = this._id;
         }
 
         // Create a dummy ContentItem only for drag purposes
@@ -94,26 +110,41 @@ export class DragSource {
         // If this does not work, need to create alternative GroundItem class
 
         const itemConfig: ComponentItemConfig = {
-            type: 'component',
+            type: "component",
             componentType,
             componentState,
             title,
-        }
+            id,
+        };
         const resolvedItemConfig = ComponentItemConfig.resolve(itemConfig);
 
-        const componentItem = new ComponentItem(this._layoutManager, resolvedItemConfig, this._dummyGroundContentItem)
+        const componentItem = new ComponentItem(
+            this._layoutManager,
+            resolvedItemConfig,
+            this._dummyGroundContentItem
+        );
         this._dummyGroundContentItem.contentItems.push(componentItem);
 
         if (this._dragListener === null) {
-            throw new UnexpectedNullError('DSODSD66746');
+            throw new UnexpectedNullError("DSODSD66746");
         } else {
-            const dragProxy = new DragProxy(x, y, this._dragListener, this._layoutManager, componentItem , this._dummyGroundContentItem);
+            const dragProxy = new DragProxy(
+                x,
+                y,
+                this._dragListener,
+                this._layoutManager,
+                componentItem,
+                this._dummyGroundContentItem
+            );
 
             const transitionIndicator = this._layoutManager.transitionIndicator;
             if (transitionIndicator === null) {
-                throw new UnexpectedNullError('DSODST66746');
+                throw new UnexpectedNullError("DSODST66746");
             } else {
-                transitionIndicator.transitionElements(this._element, dragProxy.element);
+                transitionIndicator.transitionElements(
+                    this._element,
+                    dragProxy.element
+                );
             }
         }
     }
@@ -130,22 +161,23 @@ export class DragSource {
     }
 
     /**
-	 * Called after every drag and when the drag source is being disposed of.
+     * Called after every drag and when the drag source is being disposed of.
      * @internal
-	 */
-	private removeDragListener() {
-		if (this._dragListener !== null ) {
+     */
+    private removeDragListener() {
+        if (this._dragListener !== null) {
             this._dragListener.destroy();
             this._dragListener = null;
-		}
-	}
+        }
+    }
 }
 
 /** @public */
 export namespace DragSource {
     export interface ComponentItemConfig {
-        type: JsonValue,
-        state?: JsonValue,
-        title?: string,
+        type: JsonValue;
+        state?: JsonValue;
+        title?: string;
+        id?: string;
     }
 }
