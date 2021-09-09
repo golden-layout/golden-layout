@@ -1,12 +1,6 @@
 import { WidthAndHeight } from './types';
 
 /** @internal */
-export function getQueryStringParam(key: string): string | null {
-    const matches = location.search.match(new RegExp(key + '=([^&]*)'));
-    return matches ? matches[1] : null;
-}
-
-/** @internal */
 export function numberToPixels(value: number): string {
     return value.toString(10) + 'px';
 }

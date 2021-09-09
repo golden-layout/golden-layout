@@ -6,7 +6,6 @@ import { UnexpectedUndefinedError } from './errors/internal-error';
 import { LayoutManager } from './layout-manager';
 import { DomConstants } from './utils/dom-constants';
 import { I18nStringId, i18nStrings } from './utils/i18n-strings';
-import { getQueryStringParam } from './utils/utils';
 
 /** @public */
 export class VirtualLayout extends LayoutManager {
@@ -263,7 +262,7 @@ export namespace VirtualLayout {
         containerOrBindComponentEventHandler?: HTMLElement |  VirtualLayout.BindComponentEventHandler):
         LayoutManager.ConstructorParameters
     {
-        const windowConfigKey = subWindowChecked ? null : getQueryStringParam('gl-window');
+        const windowConfigKey = subWindowChecked ? null : new URL(document.location.href).searchParams.get('gl-window');
         subWindowChecked = true;
         const isSubWindow = windowConfigKey !== null;
 

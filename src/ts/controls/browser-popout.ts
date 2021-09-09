@@ -285,16 +285,9 @@ export class BrowserPopout extends EventEmitter {
             throw new Error('Error while writing to localStorage ' + e.toString());
         }
 
-        const urlParts = document.location.href.split('?');
-
-        // URL doesn't contain GET-parameters
-        if (urlParts.length === 1) {
-            return urlParts[0] + '?gl-window=' + storageKey;
-
-            // URL contains GET-parameters
-        } else {
-            return document.location.href + '&gl-window=' + storageKey;
-        }
+        const url = new URL(location.href);
+        url.searchParams.set('gl-window', storageKey);
+        return url.toString();
     }
 
     /**
