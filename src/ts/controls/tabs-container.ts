@@ -163,7 +163,7 @@ export class TabsContainer {
             for (let i = 0; i < this._tabs.length; i++) {
                 const tab = this._tabs[i];
                 const tabElement = tab.element;
-                let longTitle = this._tabs[i].longTitleElement;
+                const longTitle = this._tabs[i].longTitleElement;
                 if (longTitle) {
                     if (dropdownActive) {
                         tab.titleElement.style.display = '';
@@ -178,7 +178,7 @@ export class TabsContainer {
             for (let i = 0; i < this._tabs.length; i++) {
                 const tab = this._tabs[i];
                 const tabElement = tab.element;
-                let longTitle = this._tabs[i].longTitleElement;
+                const longTitle = this._tabs[i].longTitleElement;
                 tabElement.style.display = '';
 
                 //Put the tab in the tabContainer so its true width can be checked

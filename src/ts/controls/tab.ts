@@ -128,7 +128,7 @@ export class Tab {
         if (longTitle
             && ! (longTitle instanceof HTMLSpanElement
                   && longTitle.classList.contains(DomConstants.ClassName.Title))){
-            let lt = document.createElement('span');
+            const lt = document.createElement('span');
             lt.classList.add(DomConstants.ClassName.Title);
             lt.appendChild(longTitle);
             longTitle = lt;
