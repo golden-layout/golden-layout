@@ -197,7 +197,8 @@ export namespace EventEmitter {
         "stateChanged": NoParams;
         "tab": TabParam;
         "tabCreated": TabParam;
-        "titleChanged": StringParam;
+        "titleChanged": TitleParam;
+        "titleExtendedChanged": TitleExtendedParam;
         "windowClosed": PopoutParam;
         "windowOpened": PopoutParam;
         "beforeComponentRelease": BeforeComponentReleaseParams;
@@ -219,6 +220,9 @@ export namespace EventEmitter {
     export type TabParam = [Tab];
     export type BubblingEventParam = [EventEmitter.BubblingEvent]
     export type StringParam = [string];
+    // Perhaps combine following 2 as (string|HTMLElement|undefined)[] ?
+    export type TitleParam = [string];
+    export type TitleExtendedParam = [string, HTMLElement | undefined];
     export type DragStartParams = [originalX: number, originalY: number];
     export type DragStopParams = [event: PointerEvent | undefined];
     export type DragParams = [offsetX: number, offsetY: number, event: PointerEvent];

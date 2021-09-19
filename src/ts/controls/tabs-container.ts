@@ -156,9 +156,30 @@ export class TabsContainer {
             const activeIndex = this._tabs.indexOf(activeComponentItem.tab);
             const activeTab = this._tabs[activeIndex];
             this._lastVisibleTabIndex = -1;
+            while (dropdownActive && this._dropdownElement.firstChild) {
+                this._dropdownElement.removeChild(this._dropdownElement.firstChild);
+            }
 
             for (let i = 0; i < this._tabs.length; i++) {
-                const tabElement = this._tabs[i].element;
+                const tab = this._tabs[i];
+                const tabElement = tab.element;
+                let longTitle = this._tabs[i].longTitleElement;
+                if (longTitle) {
+                    if (dropdownActive) {
+                        tab.titleElement.style.display = '';
+                        if (longTitle.parentNode === tabElement)
+                            tabElement.removeChild(longTitle);
+                    } else{
+                        tabElement.insertBefore(longTitle, tab.titleElement);
+                        tab.titleElement.style.display = 'none';
+                    }
+                }
+            }
+            for (let i = 0; i < this._tabs.length; i++) {
+                const tab = this._tabs[i];
+                const tabElement = tab.element;
+                let longTitle = this._tabs[i].longTitleElement;
+                tabElement.style.display = '';
 
                 //Put the tab in the tabContainer so its true width can be checked
                 if (tabElement.parentElement !== this._element) {
@@ -179,6 +200,19 @@ export class TabsContainer {
                     const activeTabMarginRightPixels = getComputedStyle(activeTab.element).marginRight;
                     const activeTabMarginRight = pixelsToNumber(activeTabMarginRightPixels);
                     visibleTabWidth = cumulativeTabWidth + activeTab.element.offsetWidth + activeTabMarginRight;
+                }
+
+                if (dropdownActive) {
+                    let el = longTitle;
+                    if (longTitle) {
+                        if (longTitle.parentElement !== this._dropdownElement) {
+                            this._dropdownElement.appendChild(longTitle);
+                        }
+                    } else {
+                        el = this._tabs[i].titleElement.cloneNode(true) as HTMLElement;
+                        this._dropdownElement.appendChild(el);
+                    }
+                    el?.addEventListener('click', tab.tabClickListener, { passive: true });
                 }
 
                 // If the tabs won't fit, check the overlap allowance.
@@ -219,19 +253,16 @@ export class TabsContainer {
                             this._element.appendChild(tabElement);
                         }
                     }
-
-                    if (tabOverlapAllowanceExceeded && i !== activeIndex) {
-                        if (dropdownActive) {
+                    if (tabOverlapAllowanceExceeded) {
+                        if (! dropdownActive) {
+                            //We now know the tab menu must be shown, so we have to recalculate everything.
+                            return false;
+                        }
+                        if (i !== activeIndex) {
                             //Tab menu already shown, so we just add to it.
                             tabElement.style.zIndex = 'auto';
                             tabElement.style.marginLeft = '';
-                            
-                            if (tabElement.parentElement !== this._dropdownElement) {
-                                this._dropdownElement.appendChild(tabElement);
-                            }
-                        } else {
-                            //We now know the tab menu must be shown, so we have to recalculate everything.
-                            return false;
+                            tabElement.style.display = 'none';
                         }
                     }
 

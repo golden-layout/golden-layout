@@ -109,7 +109,7 @@ export class ComponentContainer extends EventEmitter {
     setState(state: JsonValue): void;
     // @internal (undocumented)
     setTab(tab: Tab): void;
-    setTitle(title: string): void;
+    setTitle(title: string, longTitle?: HTMLElement): void;
     // @internal (undocumented)
     setVisibility(value: boolean): void;
     show(): void;
@@ -207,6 +207,8 @@ export class ComponentItem extends ContentItem {
     init(): void;
     // @internal (undocumented)
     get initialWantMaximise(): boolean;
+    // (undocumented)
+    get longTitle(): HTMLElement | undefined;
     // Warning: (ae-forgotten-export) The symbol "ComponentParentableItem" needs to be exported by the entry point index.d.ts
     //
     // (undocumented)
@@ -221,7 +223,7 @@ export class ComponentItem extends ContentItem {
     protected setParent(parent: ContentItem): void;
     // (undocumented)
     setTab(tab: Tab): void;
-    setTitle(title: string): void;
+    setTitle(title: string, longTitle?: HTMLElement): void;
     // @internal (undocumented)
     show(): void;
     // (undocumented)
@@ -526,7 +528,9 @@ export namespace EventEmitter {
         // (undocumented)
         "tabCreated": TabParam;
         // (undocumented)
-        "titleChanged": StringParam;
+        "titleChanged": TitleParam;
+        // (undocumented)
+        "titleExtendedChanged": TitleExtendedParam;
         // (undocumented)
         "userBroadcast": UnknownParams;
         // (undocumented)
@@ -542,6 +546,10 @@ export namespace EventEmitter {
     export type StringParam = [string];
     // (undocumented)
     export type TabParam = [Tab];
+    // (undocumented)
+    export type TitleExtendedParam = [string, HTMLElement | undefined];
+    // (undocumented)
+    export type TitleParam = [string];
     // (undocumented)
     export class TouchStartBubblingEvent extends BubblingEvent {
         // @internal
@@ -1732,6 +1740,8 @@ export class Stack extends ComponentParentableItem {
     toggleMaximise(): void;
     // @internal (undocumented)
     updateSize(): void;
+    // (undocumented)
+    updateTabSizes(): void;
 }
 
 // @public (undocumented)
@@ -1815,6 +1825,8 @@ export class Tab {
     // (undocumented)
     get isActive(): boolean;
     // (undocumented)
+    get longTitleElement(): HTMLElement | undefined;
+    // (undocumented)
     get reorderEnabled(): boolean;
     set reorderEnabled(value: boolean);
     setActive(isActive: boolean): void;
@@ -1822,7 +1834,9 @@ export class Tab {
     setBlurred(): void;
     // @internal (undocumented)
     setFocused(): void;
-    setTitle(title: string): void;
+    setTitle(title: string, longTitle?: HTMLElement): void;
+    // (undocumented)
+    readonly tabClickListener: (ev: MouseEvent) => void;
     // (undocumented)
     get titleElement(): HTMLElement;
     }

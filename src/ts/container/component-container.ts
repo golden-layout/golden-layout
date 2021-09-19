@@ -259,8 +259,8 @@ export class ComponentContainer extends EventEmitter {
     /**
      * Set's the components title
      */
-    setTitle(title: string): void {
-        this._parent.setTitle(title);
+    setTitle(title: string, longTitle?: HTMLElement): void {
+        this._parent.setTitle(title, longTitle);
     }
 
     /** @internal */

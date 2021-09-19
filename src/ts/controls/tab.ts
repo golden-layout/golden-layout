@@ -1,5 +1,6 @@
 import { UnexpectedUndefinedError } from '../errors/internal-error';
 import { ComponentItem } from '../items/component-item';
+import { Stack } from '../items/stack'
 import { LayoutManager } from '../layout-manager';
 import { DomConstants } from '../utils/dom-constants';
 import { DragListener } from '../utils/drag-listener';
@@ -14,6 +15,8 @@ export class Tab {
     /** @internal */
     private readonly _titleElement: HTMLSpanElement;
     /** @internal */
+    private _longTitleElement?: HTMLSpanElement;
+    /** @internal */
     private readonly _closeElement: HTMLDivElement | undefined;
 
     /** @internal */
@@ -21,8 +24,6 @@ export class Tab {
     /** @internal */
     private _isActive = false;
 
-    /** @internal */
-    private readonly _tabClickListener = (ev: MouseEvent) => this.onTabClickDown(ev);
     /** @internal */
     private readonly _tabTouchStartListener = (ev: TouchEvent) => this.onTabTouchStart(ev);
     /** @internal */
@@ -36,8 +37,9 @@ export class Tab {
     /** @internal */
     private readonly _contentItemDestroyListener = () => this.onContentItemDestroy();
     /** @internal */
-    private readonly _tabTitleChangedListener = (title: string) => this.setTitle(title)
+    private readonly _tabTitleChangedListener = (title: string, longTitle?: HTMLElement) => this.setTitle(title, longTitle);
 
+    readonly tabClickListener = (ev: MouseEvent) => this.onTabClickDown(ev);
     get isActive(): boolean { return this._isActive; }
     // get header(): Header { return this._header; }
     get componentItem(): ComponentItem { return this._componentItem; }
@@ -45,6 +47,7 @@ export class Tab {
     get contentItem(): ComponentItem { return this._componentItem; }
     get element(): HTMLElement { return this._element; }
     get titleElement(): HTMLElement { return this._titleElement; }
+    get longTitleElement(): HTMLElement | undefined { return this._longTitleElement; }
     get closeElement(): HTMLElement | undefined { return this._closeElement; }
     get reorderEnabled(): boolean { return this._dragListener !== undefined; }
     set reorderEnabled(value: boolean) {
@@ -85,8 +88,9 @@ export class Tab {
             this._closeElement.style.display = 'none';
         }
 
-        this.setTitle(_componentItem.title);
+        this.setTitle(_componentItem.title, _componentItem.longTitle);
         this._componentItem.on('titleChanged', this._tabTitleChangedListener);
+        this._componentItem.on('titleExtendedChanged', this._tabTitleChangedListener);
 
         const reorderEnabled = _componentItem.reorderEnabled ?? this._layoutManager.layoutConfig.settings.reorderEnabled;
 
@@ -94,7 +98,7 @@ export class Tab {
             this.enableReorder();
         }
 
-        this._element.addEventListener('click', this._tabClickListener, { passive: true });
+        this._element.addEventListener('click', this.tabClickListener, { passive: true });
         this._element.addEventListener('touchstart', this._tabTouchStartListener, { passive: true });
 
         if (this._componentItem.isClosable) {
@@ -115,9 +119,22 @@ export class Tab {
      * its title attribute to a pure text representation (without
      * html tags) of the same string.
      */
-    setTitle(title: string): void {
+    setTitle(title: string, longTitle?: HTMLElement): void {
         this._titleElement.innerText = title;
         this._element.title = title;
+        if (this._longTitleElement && this._longTitleElement.parentNode) {
+            this._longTitleElement.parentNode.removeChild(this._longTitleElement);
+        }
+        if (longTitle
+            && ! (longTitle instanceof HTMLSpanElement
+                  && longTitle.classList.contains(DomConstants.ClassName.Title))){
+            let lt = document.createElement('span');
+            lt.classList.add(DomConstants.ClassName.Title);
+            lt.appendChild(longTitle);
+            longTitle = lt;
+        }
+        this._longTitleElement = longTitle;
+        (this.componentItem.parent as Stack).updateTabSizes();
     }
 
     /**
@@ -145,7 +162,7 @@ export class Tab {
         this._closeEvent = undefined;
         this._focusEvent = undefined;
         this._dragStartEvent = undefined;
-        this._element.removeEventListener('click', this._tabClickListener);
+        this._element.removeEventListener('click', this.tabClickListener);
         this._element.removeEventListener('touchstart', this._tabTouchStartListener);
         this._closeElement?.removeEventListener('click', this._closeClickListener);
         this._closeElement?.removeEventListener('touchstart', this._closeTouchStartListener);
@@ -201,18 +218,26 @@ export class Tab {
      * @internal
      */
     private onTabClickDown(event: MouseEvent) {
-        const target = event.target;
-        if (target === this._element || target === this._titleElement) {
-            // left mouse button
-            if (event.button === 0) {
-                // event.stopPropagation();
-                this.notifyFocus();
+        const target = event.target as HTMLElement;
 
-                // middle mouse button
-            } else if (event.button === 1 && this._componentItem.isClosable) {
-                // event.stopPropagation();
-                this.notifyClose();
+        // return if clicking child of tab unless inside an lm_title
+        if (target !== this._element) {
+            for (let p = target; ! p.classList.contains("lm_title");
+                 p = p.parentNode as HTMLElement) {
+                if (p == this._element || p == document.body)
+                    return;
             }
+        }
+
+        // left mouse button
+        if (event.button === 0) {
+            // event.stopPropagation();
+            this.notifyFocus();
+
+            // middle mouse button
+        } else if (event.button === 1 && this._componentItem.isClosable) {
+            // event.stopPropagation();
+            this.notifyClose();
         }
     }
 

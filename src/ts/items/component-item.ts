@@ -18,6 +18,8 @@ export class ComponentItem extends ContentItem {
     /** @internal */
     private _title: string;
     /** @internal */
+    private _longTitle?: HTMLElement; // useful?
+    /** @internal */
     private readonly _initialWantMaximise: boolean;
     /** @internal */
     private _container: ComponentContainer;
@@ -38,6 +40,7 @@ export class ComponentItem extends ContentItem {
 
     get headerConfig(): ResolvedHeaderedItemConfig.Header | undefined { return this._headerConfig; }
     get title(): string { return this._title; }
+    get longTitle(): HTMLElement | undefined { return this._longTitle; }
     get tab(): Tab { return this._tab; }
     get focused(): boolean { return this._focused; }
 
@@ -163,9 +166,10 @@ export class ComponentItem extends ContentItem {
      * @param title -
      */
 
-    setTitle(title: string): void {
+    setTitle(title: string, longTitle?: HTMLElement): void {
         this._title = title;
-        this.emit('titleChanged', title);
+        this._longTitle = longTitle;
+        this.emit('titleExtendedChanged', title, longTitle);
         this.emit('stateChanged');
     }
 
