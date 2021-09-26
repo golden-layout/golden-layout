@@ -1700,6 +1700,8 @@ export class Stack extends ComponentParentableItem {
     // @internal (undocumented)
     getArea(): ContentItem.Area | null;
     // (undocumented)
+    get header(): Header;
+    // (undocumented)
     get headerLeftRightSided(): boolean;
     // (undocumented)
     get headerShow(): boolean;
