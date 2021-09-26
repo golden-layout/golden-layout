@@ -656,12 +656,8 @@ export class Header extends EventEmitter {
     _componentRemoveEvent: Header.ComponentRemoveEvent | undefined,
     _componentFocusEvent: Header.ComponentFocusEvent | undefined,
     _componentDragStartEvent: Header.ComponentDragStartEvent | undefined);
-    // @deprecated (undocumented)
-    get activeContentItem(): ContentItem | null;
     // @internal (undocumented)
     applyFocusedValue(value: boolean): void;
-    // @deprecated (undocumented)
-    get controlsContainer(): HTMLElement;
     // (undocumented)
     get controlsContainerElement(): HTMLElement;
     // @internal
@@ -674,7 +670,7 @@ export class Header extends EventEmitter {
     get lastVisibleTabIndex(): number;
     // (undocumented)
     get layoutManager(): LayoutManager;
-    // @internal (undocumented)
+    // (undocumented)
     get leftRightSided(): boolean;
     // (undocumented)
     get parent(): Stack;
@@ -690,14 +686,12 @@ export class Header extends EventEmitter {
     setRowColumnClosable(value: boolean): void;
     // @internal (undocumented)
     setSide(value: Side): void;
-    // @internal (undocumented)
+    // (undocumented)
     get show(): boolean;
-    // @internal (undocumented)
+    // (undocumented)
     get side(): Side;
     // (undocumented)
     get tabs(): Tab[];
-    // @deprecated (undocumented)
-    get tabsContainer(): HTMLElement;
     // (undocumented)
     get tabsContainerElement(): HTMLElement;
     // @internal
