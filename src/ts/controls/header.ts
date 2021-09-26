@@ -76,11 +76,8 @@ export class Header extends EventEmitter {
     // /** @internal */
     // private _activeComponentItem: ComponentItem | null = null; // only used to identify active tab
 
-    /** @internal */
     get show(): boolean { return this._show; }
-    /** @internal */
     get side(): Side { return this._side; }
-    /** @internal */
     get leftRightSided(): boolean { return this._leftRightSided; }
 
     get layoutManager(): LayoutManager { return this._layoutManager; }
