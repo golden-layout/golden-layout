@@ -65,29 +65,4 @@ describe('Validate Golden Layout Application', () => {
         $("div[title='comp 2']").waitForExist({ reverse: true });
         $("div[title='comp 3']").waitForExist({ reverse: true });
     });
-
-    it('Should Load Component Layout And Validate Components Are Not Present', () => {
-        const layoutDropdown = $('#layoutSelect');
-        layoutDropdown.selectByVisibleText('component');
-        const loadLayoutButton = $('#loadLayoutButton');
-        loadLayoutButton.click();
-    });
-
-    it('Should Restore Saved Layout And Send Event', () => {
-        const restoreSavedLayoutButton = $("#reloadSavedLayoutButton");
-        restoreSavedLayoutButton.click();
-        const eventComponentTab = $("div[title='event'] span[class='lm_title']");
-        eventComponentTab.click();
-        $("(//input[@type='text'])[8]").setValue('Test event Maneesh');
-        const sendEventButton = $("(//button[contains(text(),'SEND EVENT')])[2]");
-        sendEventButton.click();
-        const eventMessage = $("(//span[contains(text(),'Received: foo,Test event Maneesh')])[2]");
-        expect(eventMessage.getText()).includes('Test event Maneesh');
-    });
-
-    it('Should Drag And Drop Comp1', () => {
-        const sourceEle = $("div[title='comp 1']");
-        const targetEle = $("div[title='LexCorp plc.']");
-        sourceEle.dragAndDrop(targetEle);
-    })
 })
