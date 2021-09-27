@@ -49,6 +49,7 @@
     "lint:ts": "eslint -c .eslintrc.js --ext .ts src/ts test",
     "test:watch": "karma start",
     "test": "karma start --single-run --browsers ChromeHeadless",
+    "test:wdio": "wdio run wdio.conf.js",
     "coverage": "karma start --single-run --no-auto-watch --coverage=true || echo done",
     "doc": "npm run build && npx copyfiles -f temp/golden-layout.api.json doc/input && cd doc && npx api-documenter markdown",
     "doc:typeddocfull": "npx del-cli doc/full && typedoc --options ./typedoc.full.json",
@@ -59,10 +60,19 @@
   "devDependencies": {
     "@microsoft/api-documenter": "^7.12.7",
     "@microsoft/api-extractor": "^7.13.1",
+    "@rpii/wdio-html-reporter": "^7.7.1",
     "@types/karma-jasmine": "^4.0.0",
     "@typescript-eslint/eslint-plugin": "^4.15.2",
     "@typescript-eslint/parser": "^4.15.2",
+    "@wdio/allure-reporter": "^7.13.0",
+    "@wdio/local-runner": "^7.13.1",
+    "@wdio/mocha-framework": "^7.13.1",
+    "@wdio/selenium-standalone-service": "^7.13.0",
+    "@wdio/spec-reporter": "^7.13.0",
+    "@wdio/sync": "^7.13.1",
     "autoprefixer": "^10.2.4",
+    "chai": "^4.3.4",
+    "chai-webdriverio": "^1.0.0",
     "copyfiles": "^2.4.1",
     "cross-env": "^7.0.3",
     "css-loader": "^5.0.2",
@@ -83,6 +93,7 @@
     "less": "^4.1.1",
     "less-loader": "^10.0.0",
     "less2sass": "^1.0.3",
+    "local-runner": "^0.1.1-alpha",
     "npm-run-all": "^4.0.1",
     "postcss": "^8.2.6",
     "source-map-loader": "^3.0.0",
@@ -90,6 +101,7 @@
     "ts-loader": "^9.2.3",
     "typedoc": "^0.21.0",
     "typescript": "^4.3.4",
+    "webdriverio": "^7.13.1",
     "webpack": "^5.38.1",
     "webpack-cli": "^4.5.0",
     "webpack-dev-server": "^3.11.2"
@@ -101,5 +113,8 @@
     "last 2 Safari major versions",
     "last 2 iOS major versions",
     "Firefox ESR"
-  ]
+  ],
+  "dependencies": {
+    "@wdio/cli": "^7.13.1"
+  }
 }
