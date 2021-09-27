@@ -32,7 +32,7 @@ export class DragSource {
         /** @internal */
         private _componentTypeOrFtn:
             | JsonValue
-            | (() => DragSource.ComponentItemConfig),
+            | (() => DragSource.ComponentItemConfig | ComponentItemConfig),
         /** @internal */
         private _componentState: JsonValue | undefined,
         /** @internal */
@@ -86,37 +86,39 @@ export class DragSource {
      * @internal
      */
     private onDragStart(x: number, y: number) {
-        let componentType: JsonValue;
-        let componentState: JsonValue | undefined;
-        let title: string | undefined;
-        let id: string | undefined;
+        const type = "component";
+        let dragSourceItemConfig:
+            | ComponentItemConfig
+            | DragSource.ComponentItemConfig;
         if (typeof this._componentTypeOrFtn === "function") {
-            const dragSourceItemConfig: DragSource.ComponentItemConfig =
-                this._componentTypeOrFtn();
-            componentType = dragSourceItemConfig.type;
-            componentState = dragSourceItemConfig.state;
-            title = dragSourceItemConfig.title;
-            id = dragSourceItemConfig.id;
+            dragSourceItemConfig = this._componentTypeOrFtn();
+            // If the componentType property exists, then it is already a ComponentItemConfig so nothing to do
+            if (!("componentType" in dragSourceItemConfig)) {
+                dragSourceItemConfig = {
+                    type,
+                    componentState: dragSourceItemConfig.state,
+                    componentType: dragSourceItemConfig.type,
+                    title: dragSourceItemConfig.title ?? this._title,
+                    id: dragSourceItemConfig.id ?? this._id,
+                };
+            }
         } else {
-            componentType = this._componentTypeOrFtn;
-            componentState = this._componentState;
-            title = this._title;
-            id = this._id;
+            dragSourceItemConfig = {
+                type,
+                componentState: this._componentState,
+                componentType: this._componentTypeOrFtn,
+                title: this._title,
+                id: this._id,
+            };
         }
-
         // Create a dummy ContentItem only for drag purposes
         // All ContentItems (except for GroundItem) need a parent.  When dragging, the parent is not used.
         // Instead of allowing null parents (as Javascript version did), use a temporary dummy GroundItem parent and add ContentItem to that
         // If this does not work, need to create alternative GroundItem class
 
-        const itemConfig: ComponentItemConfig = {
-            type: "component",
-            componentType,
-            componentState,
-            title,
-            id,
-        };
-        const resolvedItemConfig = ComponentItemConfig.resolve(itemConfig);
+        const resolvedItemConfig = ComponentItemConfig.resolve(
+            dragSourceItemConfig as ComponentItemConfig
+        );
 
         const componentItem = new ComponentItem(
             this._layoutManager,
@@ -174,6 +176,9 @@ export class DragSource {
 
 /** @public */
 export namespace DragSource {
+    /**
+     * @deprecated  use {@link(ComponentItemConfig:interface)}
+     */
     export interface ComponentItemConfig {
         type: JsonValue;
         state?: JsonValue;

@@ -1041,7 +1041,9 @@ export abstract class LayoutManager extends EventEmitter {
      */
     newDragSource(
         element: HTMLElement,
-        componentTypeOrFtn: JsonValue | (() => DragSource.ComponentItemConfig),
+        componentTypeOrFtn:
+            | JsonValue
+            | (() => DragSource.ComponentItemConfig | ComponentItemConfig),
         componentState?: JsonValue,
         title?: string,
         id?: string
