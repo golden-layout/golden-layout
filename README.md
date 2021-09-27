@@ -706,3 +706,21 @@ The library distribution includes 2 TypeScript declaration (typing) files:
 1. `golden-layout-untrimmed.d.ts` which contains all (public and internal) API elements.  Use this declaration file if you wish to access any API element in the library however please take the above warning into account.
 
 Note that the allocation of API elements to either public or internal has not been finalised.  However any element used in either the `apitest` application or the example Angular application will remain labelled as public.
+
+# WebdriverIO Test Configuration
+Requirements:
+1) Java
+2) Node.Js
+3) npm package manager
+
+Commands to run
+1) npm init --> To generate the package.json file
+2) npm install webdriverio --save-dev
+3) npm install @wdio/cli
+4) npm install chai --save-dev
+5) npm install chai-webdriverio --save-dev
+6) npm install local-runner
+7) npm install --save-dev @wdio/sync
+
+Exeution:
+Run the command npm run test:wdio (configured in scripts under package.json)
