@@ -1,11 +1,9 @@
 {
     "tsconfig": "./tsconfig.module.strip.json",
-    "inputFiles": ["./src"],
-    "mode": "modules",
-    "stripInternal": true,
+    "entryPoints": ["./src/index.ts"],
+    "excludeInternal": true,
     "out": "doc/strip",
     "readme": "README.md",
-    "excludeNotExported": true,
     "excludePrivate": true,
     "excludeProtected": true,
     "exclude": [
