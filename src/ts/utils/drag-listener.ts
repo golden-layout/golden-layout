@@ -67,7 +67,7 @@ export class DragListener extends EventEmitter {
         for (let target = oEvent.target; ; target = target.parentNode) {
             if (! (target instanceof HTMLElement))
                 return;
-            let draggable = target.getAttribute('draggable');
+            const draggable = target.getAttribute('draggable');
             if (draggable === 'yes')
                 break;
             if (draggable !== null)
