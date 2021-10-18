@@ -377,7 +377,6 @@ export class DragSource {
     constructor(
     _layoutManager: LayoutManager,
     _element: HTMLElement,
-    _extraAllowableChildTargets: HTMLElement[],
     _componentTypeOrFtn: JsonValue | (() => DragSource.ComponentItemConfig),
     _componentState: JsonValue | undefined,
     _title: string | undefined);

@@ -28,8 +28,6 @@ export class DragSource {
         /** @internal */
         private readonly _element: HTMLElement,
         /** @internal */
-        private readonly _extraAllowableChildTargets: HTMLElement[],
-        /** @internal */
         private _componentTypeOrFtn: JsonValue | (() => DragSource.ComponentItemConfig),
         /** @internal */
         private _componentState: JsonValue | undefined,
@@ -61,7 +59,7 @@ export class DragSource {
     private createDragListener() {
         this.removeDragListener();
 
-        this._dragListener = new DragListener(this._element, this._extraAllowableChildTargets);
+        this._dragListener = new DragListener(this._element);
         this._dragListener.on('dragStart', (x, y) => this.onDragStart(x, y));
         this._dragListener.on('dragStop', () => this.onDragStop());
     }
