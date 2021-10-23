@@ -52,6 +52,7 @@ export class Stack extends ComponentParentableItem {
     private _minimisedListener = () => this.handleMinimised();
 
     get childElementContainer(): HTMLElement { return this._childElementContainer; }
+    get header(): Header { return this._header; }
     get headerShow(): boolean { return this._header.show; }
     get headerSide(): Side { return this._header.side; }
     get headerLeftRightSided(): boolean { return this._header.leftRightSided; }
