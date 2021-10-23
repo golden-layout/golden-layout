@@ -1,6 +1,6 @@
 # Using Vue with 'embedding via events' component binding
 
-The following snippets of code demonstrate how Golden Layout can be used in Vue using [**embedding via events**](#embedding-via-events) component binding. Note that it is recommended to use [**virtual via events**](#virtual-via-events) binding (ie Virtual Components) however some users may prefer this approach as less events are involved.
+The following snippets of code demonstrate how Golden Layout can be used in Vue using [**embedding via events**](../../binding-components.md#embedding-via-events) component binding. Note that it is recommended to use [**virtual via events**](../../binding-components.md#virtual-via-events) binding (ie Virtual Components) however some users may prefer this approach as less events are involved.
 
 ### Composable Hook
 
