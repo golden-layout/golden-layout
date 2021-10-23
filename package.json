@@ -10,6 +10,10 @@
     "layout manager",
     "popouts"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/golden-layout/golden-layout.git"
+  },
   "homepage": "https://github.com/golden-layout/golden-layout",
   "bugs": {
     "url": "https://github.com/golden-layout/golden-layout/issues"
