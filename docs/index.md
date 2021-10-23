@@ -94,7 +94,7 @@ A basic example showing how Golden Layout is set up and how to add a new item to
 
 Golden Layout binds to components and then controls their position, size and visibility (positioning) so that they fit within a layout. There are several different ways in which Golden Layout can bind to components. The easiest method is to register a component type and then specify that component type in a component's configuration.
 
-See [Binding Components](/binding-components) for a full description of how Golden Layout component binding works.
+See [Binding Components](./binding-components.md) for a full description of how Golden Layout component binding works.
 
 # Frameworks
 
