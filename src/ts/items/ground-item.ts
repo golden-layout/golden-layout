@@ -31,7 +31,7 @@ export class GroundItem extends ComponentParentableItem {
         // insert before any pre-existing content elements
         let before = null;
         for (;;) {
-            let prev : ChildNode | null =
+            const prev : ChildNode | null =
                 before ? before.previousSibling : this._containerElement.lastChild;
             if (prev instanceof Element
                 && prev.classList.contains(DomConstants.ClassName.Content))
