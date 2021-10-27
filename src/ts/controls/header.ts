@@ -1,6 +1,5 @@
 import { UnexpectedUndefinedError } from '../errors/internal-error';
 import { ComponentItem } from '../items/component-item';
-import { ContentItem } from '../items/content-item';
 import { Stack } from '../items/stack';
 import { LayoutManager } from '../layout-manager';
 import { DomConstants } from '../utils/dom-constants';
@@ -76,34 +75,18 @@ export class Header extends EventEmitter {
     // /** @internal */
     // private _activeComponentItem: ComponentItem | null = null; // only used to identify active tab
 
-    /** @internal */
     get show(): boolean { return this._show; }
-    /** @internal */
     get side(): Side { return this._side; }
-    /** @internal */
     get leftRightSided(): boolean { return this._leftRightSided; }
 
     get layoutManager(): LayoutManager { return this._layoutManager; }
     get parent(): Stack { return this._parent; }
     get tabs(): Tab[] { return this._tabsContainer.tabs; }
     get lastVisibleTabIndex(): number { return this._tabsContainer.lastVisibleTabIndex; }
-    /**
-     * @deprecated use {@link (Stack:class).getActiveComponentItem} */
-    get activeContentItem(): ContentItem | null {
-        const activeComponentItem = this._getActiveComponentItemEvent();
-        if (activeComponentItem === undefined) {
-            return null;
-        } else {
-            return activeComponentItem;
-        }
-    }
+
     get element(): HTMLElement { return this._element; }
-    /** @deprecated use {@link (Header:class).tabsContainerElement} */
-    get tabsContainer(): HTMLElement { return this._tabsContainer.element; }
     get tabsContainerElement(): HTMLElement { return this._tabsContainer.element; }
     get controlsContainerElement(): HTMLElement { return this._controlsContainerElement; }
-    /** @deprecated use {@link (Header:class).controlsContainerElement} */
-    get controlsContainer(): HTMLElement { return this._controlsContainerElement; }
 
     /** @internal */
     constructor(

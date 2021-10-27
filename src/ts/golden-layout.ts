@@ -1,3 +1,4 @@
+import { LayoutConfig } from './config/config';
 import { ResolvedComponentItemConfig } from './config/resolved-config';
 import { ComponentContainer } from './container/component-container';
 import { ApiError, BindError } from './errors/external-error';
@@ -29,6 +30,33 @@ export class GoldenLayout extends VirtualLayout {
     private _containerVirtualZIndexChangeRequiredEventListener =
         (container: ComponentContainer, logicalZIndex: LogicalZIndex, defaultZIndex: string) =>
             this.handleContainerVirtualZIndexChangeRequiredEvent(container, logicalZIndex, defaultZIndex);
+
+    /**
+     * @param container - A Dom HTML element. Defaults to body
+     * @param bindComponentEventHandler - Event handler to bind components
+     * @param bindComponentEventHandler - Event handler to unbind components
+     * If bindComponentEventHandler is defined, then constructor will be determinate. It will always call the init()
+     * function and the init() function will always complete. This means that the bindComponentEventHandler will be called
+     * if constructor is for a popout window. Make sure bindComponentEventHandler is ready for events.
+     */
+    constructor(
+        container?: HTMLElement,
+        bindComponentEventHandler?: VirtualLayout.BindComponentEventHandler,
+        unbindComponentEventHandler?: VirtualLayout.UnbindComponentEventHandler,
+    );
+    /** @deprecated specify layoutConfig in {@link (LayoutManager:class).loadLayout} */
+    constructor(config: LayoutConfig, container?: HTMLElement);
+    /** @internal */
+    constructor(configOrOptionalContainer: LayoutConfig | HTMLElement | undefined,
+        containerOrBindComponentEventHandler?: HTMLElement | VirtualLayout.BindComponentEventHandler,
+        unbindComponentEventHandler?: VirtualLayout.UnbindComponentEventHandler,
+    ) {
+        super(configOrOptionalContainer, containerOrBindComponentEventHandler, unbindComponentEventHandler, true);
+        // we told VirtualLayout to not call init() (skipInit set to true) so that Golden Layout can initialise its properties before init is called
+        if (!this.deprecatedConstructor) {
+            this.init();
+        }
+    }
 
     /**
      * Register a new component type with the layout manager.

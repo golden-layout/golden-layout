@@ -225,6 +225,24 @@ export class ComponentContainer extends EventEmitter {
 
             this._boundComponent = this.layoutManager.bindComponent(this, config);
             this.updateElementPositionPropertyFromBoundComponent();
+
+            if (this._boundComponent.virtual) {
+                if (this.virtualVisibilityChangeRequiredEvent !== undefined) {
+                    this.virtualVisibilityChangeRequiredEvent(this, this._visible);
+                }
+                if (this.virtualRectingRequiredEvent !== undefined) {
+                    this._layoutManager.fireBeforeVirtualRectingEvent(1);
+                    try {
+                        this.virtualRectingRequiredEvent(this, this._width, this._height);
+                    } finally {
+                        this._layoutManager.fireAfterVirtualRectingEvent();
+                    }
+                }
+                if (this.virtualZIndexChangeRequiredEvent !== undefined) {
+                    this.virtualZIndexChangeRequiredEvent(this, LogicalZIndex.base, StyleConstants.defaultComponentBaseZIndex);
+                }
+            }
+
             this.emit('stateChanged');
         }
     }
