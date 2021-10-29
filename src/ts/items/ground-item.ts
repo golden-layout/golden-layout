@@ -27,7 +27,20 @@ export class GroundItem extends ComponentParentableItem {
         this.isGround = true;
         this._childElementContainer = this.element;
         this._containerElement = containerElement;
-        this._containerElement.appendChild(this.element);
+
+        // insert before any pre-existing content elements
+        let before = null;
+        while (true) {
+            const prev: ChildNode | null =
+                before ? before.previousSibling : this._containerElement.lastChild;
+            if (prev instanceof Element
+                && prev.classList.contains(DomConstants.ClassName.Content)) {
+                before = prev;
+            } else {
+                break;
+            }
+        }
+        this._containerElement.insertBefore(this.element, before);
     }
 
     override init(): void {
