@@ -4,7 +4,6 @@ import { EventEmitter } from './event-emitter';
 /** @internal */
 export class DragListener extends EventEmitter {
     private _timeout: ReturnType<typeof setTimeout> | undefined;
-    private _allowableTargets: HTMLElement[];
     private _oDocument: Document;
     private _eBody: HTMLElement;
     private _nDelay: number;
@@ -20,12 +19,11 @@ export class DragListener extends EventEmitter {
     private _pointerMoveEventListener = (ev: PointerEvent) => this.onPointerMove(ev);
     private _pointerUpEventListener = (ev: PointerEvent) => this.onPointerUp(ev);
 
-    constructor(private _eElement: HTMLElement, extraAllowableChildTargets: HTMLElement[]) {
+    constructor(private _eElement: HTMLElement) {
         super();
 
         this._timeout = undefined;
 
-        this._allowableTargets = [_eElement, ...extraAllowableChildTargets];
         this._oDocument = document;
         this._eBody = document.body;
 
@@ -65,11 +63,20 @@ export class DragListener extends EventEmitter {
         this.processDragStop(undefined);
     }
 
-    private onPointerDown(oEvent: PointerEvent) {
-        if (this._allowableTargets.includes(oEvent.target as HTMLElement) && oEvent.isPrimary) {
-            const coordinates = this.getPointerCoordinates(oEvent);
-            this.processPointerDown(coordinates);
+    private allowableTarget(target: EventTarget | null): boolean {
+        for (; target instanceof HTMLElement; target = target.parentNode) {
+            const draggable = target.getAttribute('draggable');
+            if (draggable === 'yes')
+                return true;
+            if (draggable !== null)
+                break;
         }
+        return false;
+    }
+
+    private onPointerDown(oEvent: PointerEvent) {
+        if (this.allowableTarget(oEvent.target))
+            this.processPointerDown(this.getPointerCoordinates(oEvent));
     }
 
     private processPointerDown(coordinates: DragListener.PointerCoordinates) {
