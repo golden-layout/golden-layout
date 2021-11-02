@@ -730,6 +730,8 @@ export class Stack extends ComponentParentableItem {
                 y1: headerOffset.top + elementHeight - 20,
                 y2: headerOffset.top + elementHeight,
             };
+
+            this._dropIndex = 0;
         } else {
             let tabIndex = 0;
             // This indicates whether our cursor is exactly over a tab
