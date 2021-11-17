@@ -2,9 +2,9 @@
 
 Typically frameworks wrap HTML elements with their own components. Instead of an application being a tree of HTML elements, it is a tree of framework components, each of which wrap an HTML element.
 
-With the traditional [**embedding via events**](../binding-components.md#embedding-via-events) component binding, Golden Layout injects itself into this the tree of HTML elements. However with frameworks, this interferes with the tree of components. Advanced framework techniques are required to work around this problem.
+With the traditional [**embedding via events**](../binding-components/index.md#embedding-via-events) component binding, Golden Layout injects itself into this the tree of HTML elements. However with frameworks, this interferes with the tree of components. Advanced framework techniques are required to work around this problem.
 
-[**Virtual via events**](../binding-components.md#virtual-via-events) component binding allows Golden Layout to be used within framework applications without interfering with the tree of components. This is the recommended approach to binding components to Golden Layout in framework applications.
+[**Virtual via events**](../binding-components/index.md#virtual-via-events) component binding allows Golden Layout to be used within framework applications without interfering with the tree of components. This is the recommended approach to binding components to Golden Layout in framework applications.
 
 ## Angular
 
@@ -13,7 +13,7 @@ An example Angular application using Golden Layout is available.  The source can
 
 After installing the source, the app can be built and started with the standard build and start scripts.
 
-This example demonstrates how Golden Layout can be used with Angular using either [**embedding via events**](../binding-components.md#embedding-via-events) or [**virtual via events**](../binding-components.md#virtual-via-events) component binding.
+This example demonstrates how Golden Layout can be used with Angular using either [**embedding via events**](../binding-components/index.md#embedding-via-events) or [**virtual via events**](../binding-components/index.md#virtual-via-events) component binding.
 
 ## Vue
 
@@ -35,8 +35,7 @@ While we recommend using 'virtual via events' component binding when integrating
 
 ## Other Frameworks
 
-For other frameworks, use [**Virtual via events**](../binding-components.md#virtual-via-events) component binding and set up the handlers using the guide in this section. Once this is done, functions that create components can be used.  For example:
+For other frameworks, use [**Virtual via events**](../binding-components/index.md#virtual-via-events) component binding and set up the handlers using the guide in this section. Once this is done, functions that create components can be used.  For example:
 
 * `LayoutManager.loadLayout()`
 * `LayoutManager.addComponent()`
-
