@@ -52,7 +52,7 @@
     "coverage": "karma start --single-run --no-auto-watch --coverage=true || echo done",
     "doc": "npm run build && npx copyfiles -f temp/golden-layout.api.json doc/input && cd doc && npx api-documenter markdown",
     "doc:typeddocfull": "npx del-cli doc/full && typedoc --options ./typedoc.full.json",
-    "doc:typeddocstrip": "npx del-cli doc/strip && typedoc --options ./typedoc.stripInternal.json",
+    "doc:reference": "npx del-cli docs/reference && typedoc --options ./typedoc.stripInternal.json",
     "apitest:build": "webpack --mode development --config ./apitest/webpack.config.js",
     "apitest:serve": "webpack serve --mode development --config ./apitest/webpack.config.js"
   },
@@ -88,7 +88,7 @@
     "source-map-loader": "^3.0.0",
     "style-loader": "^2.0.0",
     "ts-loader": "^9.2.3",
-    "typedoc": "^0.21.0",
+    "typedoc": "^0.22.10",
     "typescript": "^4.3.4",
     "webpack": "^5.38.1",
     "webpack-cli": "^4.5.0",

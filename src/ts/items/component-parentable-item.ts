@@ -1,6 +1,7 @@
 import { ComponentItem } from './component-item';
 import { ContentItem } from './content-item';
 
+/** @public */
 export abstract class ComponentParentableItem extends ContentItem {
     /** @internal */
     private _focused = false;
