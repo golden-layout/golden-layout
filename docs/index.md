@@ -91,9 +91,6 @@ Can be used to learn about features introduced in Version 2. It also describes t
     * [Angular example application](https://github.com/golden-layout/golden-layout-ng-app)
     * [Vue Example](https://github.com/chyj4747/vue3-golden-layout-virtualcomponent)
 
-
-
-
 # Binding Components
 
 Golden Layout binds to components and then controls their position, size and visibility (positioning) so that they fit within a layout. There are several different ways in which Golden Layout can bind to components. The easiest method is to register a component type and then specify that component type in a component's configuration.
