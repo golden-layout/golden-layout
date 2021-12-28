@@ -180,6 +180,7 @@ export class Stack extends ComponentParentableItem {
                     } else {
                         this._header.createTab(contentItem, i);
                         contentItem.hide();
+                        contentItem.container.setBaseLogicalZIndex();
                     }
                 }
 
@@ -297,6 +298,7 @@ export class Stack extends ComponentParentableItem {
             this.setActiveComponentItem(contentItem, focus);
             this._header.updateTabSizes();
             this.updateSize();
+            contentItem.container.setBaseLogicalZIndex();
             this._header.updateClosability();
             this.emitStateChangedEvent();
             return index;
