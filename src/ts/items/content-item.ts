@@ -291,14 +291,19 @@ export abstract class ContentItem extends EventEmitter {
 
     /** @internal */
     show(): void {
-        // Not sure why showAllActiveContentItems() was called. GoldenLayout seems to work fine without it.  Left commented code
-        // in source in case a reason for it becomes apparent.
-        // this.layoutManager.showAllActiveContentItems();
-        setElementDisplayVisibility(this._element, true);
-        this.layoutManager.updateSizeFromContainer();
+        this.layoutManager.beginSizeInvalidation();
+        try {
+            // Not sure why showAllActiveContentItems() was called. GoldenLayout seems to work fine without it.  Left commented code
+            // in source in case a reason for it becomes apparent.
+            // this.layoutManager.showAllActiveContentItems();
+            setElementDisplayVisibility(this._element, true);
+            // this.layoutManager.updateSizeFromContainer();
 
-        for (let i = 0; i < this._contentItems.length; i++) {
-            this._contentItems[i].show();
+            for (let i = 0; i < this._contentItems.length; i++) {
+                this._contentItems[i].show();
+            }
+        } finally {
+            this.layoutManager.endSizeInvalidation();
         }
     }
 
@@ -374,8 +379,13 @@ export abstract class ContentItem extends EventEmitter {
 
     /** @internal */
     protected hide(): void {
-        setElementDisplayVisibility(this._element, false);
-        this.layoutManager.updateSizeFromContainer();
+        this.layoutManager.beginSizeInvalidation();
+        try {
+            setElementDisplayVisibility(this._element, false);
+            // this.layoutManager.updateSizeFromContainer();
+        } finally {
+            this.layoutManager.endSizeInvalidation();
+        }
     }
 
     /** @internal */

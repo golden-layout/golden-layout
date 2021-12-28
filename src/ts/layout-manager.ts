@@ -92,6 +92,8 @@ export abstract class LayoutManager extends EventEmitter {
     /** @internal */
     private _virtualSizedContainerAddingBeginCount = 0;
     /** @internal */
+    private _sizeInvalidationBeginCount = 0;
+    /** @internal */
     protected _constructorOrSubWindowLayoutConfig: LayoutConfig | undefined; // protected for backwards compatibility
 
     /** @internal */
@@ -626,6 +628,18 @@ export abstract class LayoutManager extends EventEmitter {
 
                 this.adjustColumnsResponsive();
             }
+        }
+    }
+
+    /** @internal */
+    beginSizeInvalidation(): void {
+        this._sizeInvalidationBeginCount++;
+    }
+
+    /** @internal */
+    endSizeInvalidation(): void {
+        if (--this._sizeInvalidationBeginCount === 0) {
+            this.updateSizeFromContainer();
         }
     }
 
@@ -1324,7 +1338,14 @@ export abstract class LayoutManager extends EventEmitter {
         if (this._resizeTimeoutId !== undefined) {
             clearTimeout(this._resizeTimeoutId);
         }
-        this._resizeTimeoutId = setTimeout(() => this.updateSizeFromContainer(), 100);
+
+        this._resizeTimeoutId = setTimeout(
+            () => {
+                this.beginSizeInvalidation();
+                this.endSizeInvalidation();
+            },
+            100
+        );
     }
 
     /**

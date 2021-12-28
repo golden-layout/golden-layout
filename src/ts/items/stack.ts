@@ -208,12 +208,18 @@ export class Stack extends ComponentParentableItem {
             if (this.contentItems.indexOf(componentItem) === -1) {
                 throw new Error('componentItem is not a child of this stack');
             } else {
-                if (this._activeComponentItem !== undefined) {
-                    this._activeComponentItem.hide();
+                this.layoutManager.beginSizeInvalidation();
+                try {
+                    if (this._activeComponentItem !== undefined) {
+                        this._activeComponentItem.hide();
+                    }
+                    this._activeComponentItem = componentItem;
+                    this._header.processActiveComponentChanged(componentItem);
+                    componentItem.show();
+                } finally {
+                    this.layoutManager.endSizeInvalidation();
                 }
-                this._activeComponentItem = componentItem;
-                this._header.processActiveComponentChanged(componentItem);
-                componentItem.show();
+
                 this.emit('activeContentItemChanged', componentItem);
                 this.layoutManager.emit('activeContentItemChanged', componentItem);
                 this.emitStateChangedEvent();

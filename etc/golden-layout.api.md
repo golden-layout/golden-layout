@@ -1015,6 +1015,8 @@ export abstract class LayoutManager extends EventEmitter {
     // (undocumented)
     beforeVirtualRectingEvent: LayoutManager.BeforeVirtualRectingEvent | undefined;
     // @internal (undocumented)
+    beginSizeInvalidation(): void;
+    // @internal (undocumented)
     beginVirtualSizedContainerAdding(): void;
     // @internal (undocumented)
     abstract bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BindableComponent;
@@ -1046,6 +1048,8 @@ export abstract class LayoutManager extends EventEmitter {
     //
     // @internal (undocumented)
     get dropTargetIndicator(): DropTargetIndicator | null;
+    // @internal (undocumented)
+    endSizeInvalidation(): void;
     // @internal (undocumented)
     endVirtualSizedContainerAdding(): void;
     get eventHub(): EventHub;
