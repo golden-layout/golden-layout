@@ -307,10 +307,11 @@ export class App {
             throw new Error('handleBindComponentEvent: Undefined componentTypeName');
         }
         const component = this.createComponent(container, componentTypeName, itemConfig.componentState, this._useVirtualEventBinding);
+        this._boundComponentMap.set(container, component);
+
         if (this._useVirtualEventBinding) {
             const componentRootElement = component.rootHtmlElement;
             this._layoutElement.appendChild(componentRootElement);
-            this._boundComponentMap.set(container, component);
             container.virtualRectingRequiredEvent =
                 (container, width, height) => this.handleContainerVirtualRectingRequiredEvent(container, width, height);
             container.virtualVisibilityChangeRequiredEvent =
