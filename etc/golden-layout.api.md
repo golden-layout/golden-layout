@@ -101,6 +101,10 @@ export class ComponentContainer extends EventEmitter {
     // (undocumented)
     get parent(): ComponentItem;
     replaceComponent(itemConfig: ComponentItemConfig): void;
+    // (undocumented)
+    setBaseLogicalZIndex(): void;
+    // (undocumented)
+    setLogicalZIndex(logicalZIndex: LogicalZIndex): void;
     // @internal
     setSize(width: number, height: number): boolean;
     // @internal
@@ -1188,6 +1192,13 @@ export namespace LogicalZIndex {
     const // (undocumented)
     stackMaximised = "stackMaximised";
 }
+
+// @public (undocumented)
+export const LogicalZIndexToDefaultMap: {
+    base: string;
+    drag: string;
+    stackMaximised: string;
+};
 
 // @public (undocumented)
 export class PopoutBlockedError extends ExternalError {

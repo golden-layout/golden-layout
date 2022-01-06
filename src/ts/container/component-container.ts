@@ -6,8 +6,7 @@ import { ComponentItem } from '../items/component-item';
 import { ContentItem } from '../items/content-item';
 import { LayoutManager } from '../layout-manager';
 import { EventEmitter } from '../utils/event-emitter';
-import { StyleConstants } from '../utils/style-constants';
-import { JsonValue, LogicalZIndex } from '../utils/types';
+import { JsonValue, LogicalZIndex, LogicalZIndexToDefaultMap } from '../utils/types';
 import { deepExtend, setElementHeight, setElementWidth } from '../utils/utils';
 
 /** @public */
@@ -34,6 +33,8 @@ export class ComponentContainer extends EventEmitter {
     private _tab: Tab;
     /** @internal */
     private _stackMaximised = false;
+    /** @internal */
+    private _logicalZIndex: LogicalZIndex;
 
     stateRequestEvent: ComponentContainer.StateRequestEventHandler | undefined;
     virtualRectingRequiredEvent: ComponentContainer.VirtualRectingRequiredEvent | undefined;
@@ -196,7 +197,6 @@ export class ComponentContainer extends EventEmitter {
         }
     }
 
-
     /**
      * Closes the container if it is closable. Can be called by
      * both the component within at as well as the contentItem containing
@@ -238,9 +238,7 @@ export class ComponentContainer extends EventEmitter {
                         this._layoutManager.fireAfterVirtualRectingEvent();
                     }
                 }
-                if (this.virtualZIndexChangeRequiredEvent !== undefined) {
-                    this.virtualZIndexChangeRequiredEvent(this, LogicalZIndex.base, StyleConstants.defaultComponentBaseZIndex);
-                }
+                this.setBaseLogicalZIndex();
             }
 
             this.emit('stateChanged');
@@ -321,7 +319,17 @@ export class ComponentContainer extends EventEmitter {
         }
     }
 
+    setBaseLogicalZIndex(): void {
+        this.setLogicalZIndex(LogicalZIndex.base);
+    }
 
+    setLogicalZIndex(logicalZIndex: LogicalZIndex): void {
+        if (logicalZIndex !== this._logicalZIndex) {
+            this._logicalZIndex = logicalZIndex;
+
+            this.notifyVirtualZIndexChangeRequired();
+        }
+    }
 
     /**
      * Set the container's size, but considered temporary (for dragging)
@@ -334,33 +342,25 @@ export class ComponentContainer extends EventEmitter {
         setElementWidth(this._element, width);
         setElementHeight(this._element, height);
 
-        if (this.virtualZIndexChangeRequiredEvent !== undefined) {
-            this.virtualZIndexChangeRequiredEvent(this, LogicalZIndex.drag, StyleConstants.defaultComponentDragZIndex);
-        }
+        this.setLogicalZIndex(LogicalZIndex.drag);
 
         this.drag();
     }
 
     /** @internal */
     exitDragMode(): void {
-        if (this.virtualZIndexChangeRequiredEvent !== undefined) {
-            this.virtualZIndexChangeRequiredEvent(this, LogicalZIndex.base, StyleConstants.defaultComponentBaseZIndex);
-        }
+        this.setBaseLogicalZIndex();
     }
 
     /** @internal */
     enterStackMaximised(): void {
         this._stackMaximised = true;
-        if (this.virtualZIndexChangeRequiredEvent !== undefined) {
-            this.virtualZIndexChangeRequiredEvent(this, LogicalZIndex.stackMaximised, StyleConstants.defaultComponentStackMaximisedZIndex);
-        }
+        this.setLogicalZIndex(LogicalZIndex.stackMaximised);
     }
 
     /** @internal */
     exitStackMaximised(): void {
-        if (this.virtualZIndexChangeRequiredEvent !== undefined) {
-            this.virtualZIndexChangeRequiredEvent(this, LogicalZIndex.base, StyleConstants.defaultComponentBaseZIndex);
-        }
+        this.setBaseLogicalZIndex();
         this._stackMaximised = false;
     }
 
@@ -409,6 +409,15 @@ export class ComponentContainer extends EventEmitter {
             this.virtualRectingRequiredEvent(this, this._width, this._height);
             this.emit('resize');
             this.checkShownFromZeroDimensions();
+        }
+    }
+
+    /** @internal */
+    private notifyVirtualZIndexChangeRequired(): void {
+        if (this.virtualZIndexChangeRequiredEvent !== undefined) {
+            const logicalZIndex = this._logicalZIndex;
+            const defaultZIndex = LogicalZIndexToDefaultMap[logicalZIndex];
+            this.virtualZIndexChangeRequiredEvent(this, logicalZIndex, defaultZIndex);
         }
     }
 
