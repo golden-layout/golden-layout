@@ -623,7 +623,7 @@ export abstract class LayoutManager extends EventEmitter {
                     const { width, height } = getElementWidthAndHeight(this._containerElement);
                     setElementWidth(this._maximisedStack.element, width);
                     setElementHeight(this._maximisedStack.element, height);
-                    this._maximisedStack.updateSize();
+                    this._maximisedStack.updateSize(false);
                 }
 
                 this.adjustColumnsResponsive();
@@ -651,12 +651,16 @@ export abstract class LayoutManager extends EventEmitter {
 
     /**
      * Update the size of the root ContentItem.  This will update the size of all contentItems in the tree
+     * @param force - In some cases the size is not updated if it has not changed. In this case, events
+     * (such as ComponentContainer.virtualRectingRequiredEvent) are not fired. Setting force to true, ensures the size is updated regardless, and
+     * the respective events are fired. This is sometimes necessary when a component's size has not changed but it has become visible, and the
+     * relevant events need to be fired.
      */
-    updateRootSize(): void {
+    updateRootSize(force = false): void {
         if (this._groundItem === undefined) {
             throw new UnexpectedUndefinedError('LMURS28881');
         } else {
-            this._groundItem.updateSize();
+            this._groundItem.updateSize(force);
         }
     }
 
@@ -1241,7 +1245,7 @@ export abstract class LayoutManager extends EventEmitter {
             const { width, height } = getElementWidthAndHeight(this._containerElement);
             setElementWidth(stack.element, width);
             setElementHeight(stack.element, height);
-            stack.updateSize();
+            stack.updateSize(true);
             stack.focusActiveContentItem();
             this._maximisedStack.emit('maximised');
             this.emit('stateChanged');
@@ -1260,7 +1264,7 @@ export abstract class LayoutManager extends EventEmitter {
                 stack.element.classList.remove(DomConstants.ClassName.Maximised);
                 this._maximisePlaceholder.insertAdjacentElement('afterend', stack.element);
                 this._maximisePlaceholder.remove();
-                stack.parent.updateSize();
+                this.updateRootSize(true);
                 this._maximisedStack = undefined;
                 stack.off('beforeItemDestroyed', this._maximisedStackBeforeDestroyedListener);
                 stack.emit('minimised');

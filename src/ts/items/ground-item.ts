@@ -142,7 +142,7 @@ export class GroundItem extends ComponentParentableItem {
             this._childElementContainer.appendChild(contentItem.element);
             index = super.addChild(contentItem, index);
 
-            this.updateSize();
+            this.updateSize(false);
             this.emitBaseBubblingEvent('stateChanged');
 
             return index;
@@ -169,7 +169,7 @@ export class GroundItem extends ComponentParentableItem {
     /** @internal */
     setSize(width: number, height: number): void {
         if (width === undefined || height === undefined) {
-            this.updateSize(); // For backwards compatibility with v1.x API
+            this.updateSize(false); // For backwards compatibility with v1.x API
         } else {
             setElementWidth(this.element, width);
             setElementHeight(this.element, height);
@@ -180,7 +180,7 @@ export class GroundItem extends ComponentParentableItem {
                 setElementHeight(this.contentItems[0].element, height);
             }
 
-            this.updateContentItemsSize();
+            this.updateContentItemsSize(false);
         }
     }
 
@@ -188,11 +188,11 @@ export class GroundItem extends ComponentParentableItem {
      * Adds a Root ContentItem.
      * Internal only.  To replace Root ContentItem with API, use {@link (LayoutManager:class).updateRootSize}
      */
-    override updateSize(): void {
+    override updateSize(force: boolean): void {
         this.layoutManager.beginVirtualSizedContainerAdding();
         try {
             this.updateNodeSize();
-            this.updateContentItemsSize();
+            this.updateContentItemsSize(force);
         } finally {
             this.layoutManager.endVirtualSizedContainerAdding();
         }
@@ -268,13 +268,13 @@ export class GroundItem extends ComponentParentableItem {
                 rowOrColumn.addChild(column, insertBefore ? undefined : 0, true);
                 column[dimension] = 50;
                 contentItem[dimension] = 50;
-                rowOrColumn.updateSize();
+                rowOrColumn.updateSize(false);
             } else {
                 const sibling = column.contentItems[insertBefore ? 0 : column.contentItems.length - 1]
                 column.addChild(contentItem, insertBefore ? 0 : undefined, true);
                 sibling[dimension] *= 0.5;
                 contentItem[dimension] = sibling[dimension];
-                column.updateSize();
+                column.updateSize(false);
             }
         }
     }

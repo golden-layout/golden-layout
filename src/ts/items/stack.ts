@@ -145,11 +145,11 @@ export class Stack extends ComponentParentableItem {
     }
 
     /** @internal */
-    override updateSize(): void {
+    override updateSize(force: boolean): void {
         this.layoutManager.beginVirtualSizedContainerAdding();
         try {
             this.updateNodeSize();
-            this.updateContentItemsSize();
+            this.updateContentItemsSize(force);
         } finally {
             this.layoutManager.endVirtualSizedContainerAdding();
         }
@@ -303,7 +303,7 @@ export class Stack extends ComponentParentableItem {
             this._header.createTab(contentItem, index);
             this.setActiveComponentItem(contentItem, focus);
             this._header.updateTabSizes();
-            this.updateSize();
+            this.updateSize(false);
             contentItem.container.setBaseLogicalZIndex();
             this._header.updateClosability();
             this.emitStateChangedEvent();
@@ -514,7 +514,7 @@ export class Stack extends ComponentParentableItem {
             this.stackParent.addChild(contentItem, insertBefore ? index : index + 1, true);
             this[dimension] *= 0.5;
             contentItem[dimension] = this[dimension];
-            this.stackParent.updateSize();
+            this.stackParent.updateSize(false);
             /*
              * This handles items that are dropped on top or bottom of a row or left / right of a column. We need
              * to create the appropriate contentItem for them to live in
@@ -530,7 +530,7 @@ export class Stack extends ComponentParentableItem {
 
             this[dimension] = 50;
             contentItem[dimension] = 50;
-            rowOrColumn.updateSize();
+            rowOrColumn.updateSize(false);
         }
     }
 
@@ -826,7 +826,7 @@ export class Stack extends ComponentParentableItem {
         //    // move the header behind the content.
         //    this.element.appendChild(this._header.element);
         //}
-        this.updateSize();
+        this.updateSize(false);
     }
 
     /** @internal */

@@ -162,7 +162,7 @@ export class RowOrColumn extends ContentItem {
             }
         }
 
-        this.updateSize();
+        this.updateSize(false);
         this.emitBaseBubblingEvent('stateChanged');
 
         return index;
@@ -199,7 +199,7 @@ export class RowOrColumn extends ContentItem {
             this.contentItems.length = 0;
             this._rowOrColumnParent.replaceChild(this, childItem, true);
         } else {
-            this.updateSize();
+            this.updateSize(false);
             this.emitBaseBubblingEvent('stateChanged');
         }
     }
@@ -211,18 +211,18 @@ export class RowOrColumn extends ContentItem {
         const size = oldChild[this._dimension];
         super.replaceChild(oldChild, newChild);
         newChild[this._dimension] = size;
-        this.updateSize();
+        this.updateSize(false);
         this.emitBaseBubblingEvent('stateChanged');
     }
 
     /**
      * Called whenever the dimensions of this item or one of its parents change
      */
-    override updateSize(): void {
+    override updateSize(force: boolean): void {
         this.layoutManager.beginVirtualSizedContainerAdding();
         try {
             this.updateNodeSize();
-            this.updateContentItemsSize();
+            this.updateContentItemsSize(force);
         } finally {
             this.layoutManager.endVirtualSizedContainerAdding();
         }
@@ -627,7 +627,7 @@ export class RowOrColumn extends ContentItem {
             splitter.element.style.top = numberToPixels(0);
             splitter.element.style.left = numberToPixels(0);
 
-            globalThis.requestAnimationFrame(() => this.updateSize());
+            globalThis.requestAnimationFrame(() => this.updateSize(false));
         }
     }
 }

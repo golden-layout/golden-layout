@@ -189,7 +189,7 @@ export class ComponentContainer extends EventEmitter {
                         }
                     }
 
-                    ancestorItem.updateSize();
+                    ancestorItem.updateSize(false);
 
                     return true;
                 }
