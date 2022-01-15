@@ -1,3 +1,4 @@
+import { LayoutConfig } from './config/config';
 import { ResolvedComponentItemConfig } from './config/resolved-config';
 import { ComponentContainer } from './container/component-container';
 import { ApiError, BindError } from './errors/external-error';
@@ -15,6 +16,8 @@ export class GoldenLayout extends VirtualLayout {
     private _getComponentConstructorFtn: GoldenLayout.GetComponentConstructorCallback;
 
     /** @internal */
+    private _registeredComponentMap = new Map<ComponentContainer, ComponentContainer.Component>();
+    /** @internal */
     private _virtuableComponentMap = new Map<ComponentContainer, GoldenLayout.VirtuableComponent>();
     /** @internal */
     private _goldenLayoutBoundingClientRect: DOMRect;
@@ -29,6 +32,33 @@ export class GoldenLayout extends VirtualLayout {
     private _containerVirtualZIndexChangeRequiredEventListener =
         (container: ComponentContainer, logicalZIndex: LogicalZIndex, defaultZIndex: string) =>
             this.handleContainerVirtualZIndexChangeRequiredEvent(container, logicalZIndex, defaultZIndex);
+
+    /**
+     * @param container - A Dom HTML element. Defaults to body
+     * @param bindComponentEventHandler - Event handler to bind components
+     * @param bindComponentEventHandler - Event handler to unbind components
+     * If bindComponentEventHandler is defined, then constructor will be determinate. It will always call the init()
+     * function and the init() function will always complete. This means that the bindComponentEventHandler will be called
+     * if constructor is for a popout window. Make sure bindComponentEventHandler is ready for events.
+     */
+    constructor(
+        container?: HTMLElement,
+        bindComponentEventHandler?: VirtualLayout.BindComponentEventHandler,
+        unbindComponentEventHandler?: VirtualLayout.UnbindComponentEventHandler,
+    );
+    /** @deprecated specify layoutConfig in {@link (LayoutManager:class).loadLayout} */
+    constructor(config: LayoutConfig, container?: HTMLElement);
+    /** @internal */
+    constructor(configOrOptionalContainer: LayoutConfig | HTMLElement | undefined,
+        containerOrBindComponentEventHandler?: HTMLElement | VirtualLayout.BindComponentEventHandler,
+        unbindComponentEventHandler?: VirtualLayout.UnbindComponentEventHandler,
+    ) {
+        super(configOrOptionalContainer, containerOrBindComponentEventHandler, unbindComponentEventHandler, true);
+        // we told VirtualLayout to not call init() (skipInit set to true) so that Golden Layout can initialise its properties before init is called
+        if (!this.deprecatedConstructor) {
+            this.init();
+        }
+    }
 
     /**
      * Register a new component type with the layout manager.
@@ -225,6 +255,8 @@ export class GoldenLayout extends VirtualLayout {
                 }
             }
 
+            this._registeredComponentMap.set(container, component);
+
             result = {
                 virtual: instantiator.virtual,
                 component,
@@ -240,16 +272,19 @@ export class GoldenLayout extends VirtualLayout {
 
     /** @internal */
     override unbindComponent(container: ComponentContainer, virtual: boolean, component: ComponentContainer.Component | undefined): void {
-        const virtuableComponent = this._virtuableComponentMap.get(container);
-        if (virtuableComponent === undefined) {
-            super.unbindComponent(container, virtual, component)
+        const registeredComponent = this._registeredComponentMap.get(container);
+        if (registeredComponent === undefined) {
+            super.unbindComponent(container, virtual, component); // was not created from registration so use virtual unbind events
         } else {
-            const componentRootElement = virtuableComponent.rootHtmlElement;
-            if (componentRootElement === undefined) {
-                throw new AssertError('GLUC77743', container.title);
-            } else {
-                this.container.removeChild(componentRootElement);
-                this._virtuableComponentMap.delete(container);
+            const virtuableComponent = this._virtuableComponentMap.get(container);
+            if (virtuableComponent !== undefined) {
+                const componentRootElement = virtuableComponent.rootHtmlElement;
+                if (componentRootElement === undefined) {
+                    throw new AssertError('GLUC77743', container.title);
+                } else {
+                    this.container.removeChild(componentRootElement);
+                    this._virtuableComponentMap.delete(container);
+                }
             }
         }
     }

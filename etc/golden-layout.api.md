@@ -101,6 +101,10 @@ export class ComponentContainer extends EventEmitter {
     // (undocumented)
     get parent(): ComponentItem;
     replaceComponent(itemConfig: ComponentItemConfig): void;
+    // (undocumented)
+    setBaseLogicalZIndex(): void;
+    // (undocumented)
+    setLogicalZIndex(logicalZIndex: LogicalZIndex): void;
     // @internal
     setSize(width: number, height: number): boolean;
     // @internal
@@ -301,6 +305,7 @@ export abstract class ContentItem extends EventEmitter {
     highlightDropZone(x: number, y: number, area: AreaLinkedRect): void;
     // (undocumented)
     get id(): string;
+    set id(value: string);
     // @internal
     init(): void;
     // @internal (undocumented)
@@ -602,6 +607,9 @@ export abstract class ExternalError extends Error {
 
 // @public (undocumented)
 export class GoldenLayout extends VirtualLayout {
+    constructor(container?: HTMLElement, bindComponentEventHandler?: VirtualLayout.BindComponentEventHandler, unbindComponentEventHandler?: VirtualLayout.UnbindComponentEventHandler);
+    // @deprecated
+    constructor(config: LayoutConfig, container?: HTMLElement);
     // @internal (undocumented)
     bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BindableComponent;
     // (undocumented)
@@ -659,12 +667,8 @@ export class Header extends EventEmitter {
     _componentRemoveEvent: Header.ComponentRemoveEvent | undefined,
     _componentFocusEvent: Header.ComponentFocusEvent | undefined,
     _componentDragStartEvent: Header.ComponentDragStartEvent | undefined);
-    // @deprecated (undocumented)
-    get activeContentItem(): ContentItem | null;
     // @internal (undocumented)
     applyFocusedValue(value: boolean): void;
-    // @deprecated (undocumented)
-    get controlsContainer(): HTMLElement;
     // (undocumented)
     get controlsContainerElement(): HTMLElement;
     // @internal
@@ -677,7 +681,7 @@ export class Header extends EventEmitter {
     get lastVisibleTabIndex(): number;
     // (undocumented)
     get layoutManager(): LayoutManager;
-    // @internal (undocumented)
+    // (undocumented)
     get leftRightSided(): boolean;
     // (undocumented)
     get parent(): Stack;
@@ -693,14 +697,12 @@ export class Header extends EventEmitter {
     setRowColumnClosable(value: boolean): void;
     // @internal (undocumented)
     setSide(value: Side): void;
-    // @internal (undocumented)
+    // (undocumented)
     get show(): boolean;
-    // @internal (undocumented)
+    // (undocumented)
     get side(): Side;
     // (undocumented)
     get tabs(): Tab[];
-    // @deprecated (undocumented)
-    get tabsContainer(): HTMLElement;
     // (undocumented)
     get tabsContainerElement(): HTMLElement;
     // @internal
@@ -1031,6 +1033,8 @@ export abstract class LayoutManager extends EventEmitter {
     clearComponentFocus(suppressEvent?: boolean): void;
     // @internal
     closeWindow(): void;
+    // @internal (undocumented)
+    protected _constructorOrSubWindowLayoutConfig: LayoutConfig | undefined;
     // (undocumented)
     get container(): HTMLElement;
     // (undocumented)
@@ -1042,6 +1046,8 @@ export abstract class LayoutManager extends EventEmitter {
     createPopoutFromContentItem(item: ContentItem, window: ResolvedPopoutLayoutConfig.Window | undefined, parentId: string | null, indexInParent: number | null | undefined): BrowserPopout;
     // @internal (undocumented)
     createPopoutFromPopoutLayoutConfig(config: ResolvedPopoutLayoutConfig): BrowserPopout;
+    // @deprecated (undocumented)
+    get deprecatedConstructor(): boolean;
     destroy(): void;
     // Warning: (ae-forgotten-export) The symbol "DropTargetIndicator" needs to be exported by the entry point index.d.ts
     //
@@ -1083,7 +1089,9 @@ export abstract class LayoutManager extends EventEmitter {
     minifyConfig(config: ResolvedLayoutConfig): ResolvedLayoutConfig;
     newComponent(componentType: JsonValue, componentState?: JsonValue, title?: string): ComponentItem;
     newComponentAtLocation(componentType: JsonValue, componentState?: JsonValue, title?: string, locationSelectors?: LayoutManager.LocationSelector[]): ComponentItem | undefined;
-    newDragSource(element: HTMLElement, componentTypeOrFtn: JsonValue | (() => DragSource.ComponentItemConfig), componentState?: JsonValue, title?: string): DragSource;
+    newDragSource(element: HTMLElement, itemConfigCallback: () => DragSource.ComponentItemConfig): DragSource;
+    // (undocumented)
+    newDragSource(element: HTMLElement, componentType: JsonValue, componentState?: JsonValue, title?: JsonValue): DragSource;
     newItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig): ContentItem;
     newItemAtLocation(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig, locationSelectors?: readonly LayoutManager.LocationSelector[]): ContentItem | undefined;
     // (undocumented)
@@ -1131,11 +1139,11 @@ export namespace LayoutManager {
     // @internal (undocumented)
     export interface ConstructorParameters {
         // (undocumented)
+        constructorOrSubWindowLayoutConfig: LayoutConfig | undefined;
+        // (undocumented)
         containerElement: HTMLElement | undefined;
         // (undocumented)
         isSubWindow: boolean;
-        // (undocumented)
-        layoutConfig: ResolvedLayoutConfig | undefined;
     }
     // @internal (undocumented)
     export function createMaximisePlaceElement(document: Document): HTMLElement;
@@ -1191,6 +1199,13 @@ export namespace LogicalZIndex {
     const // (undocumented)
     stackMaximised = "stackMaximised";
 }
+
+// @public (undocumented)
+export const LogicalZIndexToDefaultMap: {
+    base: string;
+    drag: string;
+    stackMaximised: string;
+};
 
 // @public (undocumented)
 export class PopoutBlockedError extends ExternalError {
@@ -1697,6 +1712,8 @@ export class Stack extends ComponentParentableItem {
     // @internal (undocumented)
     getArea(): ContentItem.Area | null;
     // (undocumented)
+    get header(): Header;
+    // (undocumented)
     get headerLeftRightSided(): boolean;
     // (undocumented)
     get headerShow(): boolean;
@@ -1855,10 +1872,14 @@ export class VirtualLayout extends LayoutManager {
     constructor(container?: HTMLElement, bindComponentEventHandler?: VirtualLayout.BindComponentEventHandler, unbindComponentEventHandler?: VirtualLayout.UnbindComponentEventHandler);
     // @deprecated
     constructor(config: LayoutConfig, container?: HTMLElement);
+    // @internal
+    constructor(configOrOptionalContainer: LayoutConfig | HTMLElement | undefined, containerOrBindComponentEventHandler: HTMLElement | VirtualLayout.BindComponentEventHandler | undefined, unbindComponentEventHandler: VirtualLayout.UnbindComponentEventHandler | undefined, skipInit: true);
     // @internal (undocumented)
     bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BindableComponent;
     // (undocumented)
     bindComponentEvent: VirtualLayout.BindComponentEventHandler | undefined;
+    checkAddDefaultPopinButton(): boolean;
+    clearHtmlAndAdjustStylesForSubWindow(): void;
     // (undocumented)
     destroy(): void;
     // @deprecated (undocumented)
