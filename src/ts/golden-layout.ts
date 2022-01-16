@@ -16,6 +16,8 @@ export class GoldenLayout extends VirtualLayout {
     private _getComponentConstructorFtn: GoldenLayout.GetComponentConstructorCallback;
 
     /** @internal */
+    private _registeredComponentMap = new Map<ComponentContainer, ComponentContainer.Component>();
+    /** @internal */
     private _virtuableComponentMap = new Map<ComponentContainer, GoldenLayout.VirtuableComponent>();
     /** @internal */
     private _goldenLayoutBoundingClientRect: DOMRect;
@@ -253,6 +255,8 @@ export class GoldenLayout extends VirtualLayout {
                 }
             }
 
+            this._registeredComponentMap.set(container, component);
+
             result = {
                 virtual: instantiator.virtual,
                 component,
@@ -268,16 +272,19 @@ export class GoldenLayout extends VirtualLayout {
 
     /** @internal */
     override unbindComponent(container: ComponentContainer, virtual: boolean, component: ComponentContainer.Component | undefined): void {
-        const virtuableComponent = this._virtuableComponentMap.get(container);
-        if (virtuableComponent === undefined) {
-            super.unbindComponent(container, virtual, component)
+        const registeredComponent = this._registeredComponentMap.get(container);
+        if (registeredComponent === undefined) {
+            super.unbindComponent(container, virtual, component); // was not created from registration so use virtual unbind events
         } else {
-            const componentRootElement = virtuableComponent.rootHtmlElement;
-            if (componentRootElement === undefined) {
-                throw new AssertError('GLUC77743', container.title);
-            } else {
-                this.container.removeChild(componentRootElement);
-                this._virtuableComponentMap.delete(container);
+            const virtuableComponent = this._virtuableComponentMap.get(container);
+            if (virtuableComponent !== undefined) {
+                const componentRootElement = virtuableComponent.rootHtmlElement;
+                if (componentRootElement === undefined) {
+                    throw new AssertError('GLUC77743', container.title);
+                } else {
+                    this.container.removeChild(componentRootElement);
+                    this._virtuableComponentMap.delete(container);
+                }
             }
         }
     }

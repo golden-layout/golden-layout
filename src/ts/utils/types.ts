@@ -1,3 +1,5 @@
+import { StyleConstants } from './style-constants';
+
 /** @internal */
 export type WidthOrHeightPropertyName = 'width' | 'height';
 
@@ -36,6 +38,13 @@ export namespace LogicalZIndex {
     export const base = 'base';
     export const drag = 'drag';
     export const stackMaximised = 'stackMaximised';
+}
+
+/** @public */
+export const LogicalZIndexToDefaultMap = {
+    base: StyleConstants.defaultComponentBaseZIndex,
+    drag: StyleConstants.defaultComponentDragZIndex,
+    stackMaximised: StyleConstants.defaultComponentDragZIndex,
 }
 
 /** @internal */

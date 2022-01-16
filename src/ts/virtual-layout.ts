@@ -233,12 +233,10 @@ export class VirtualLayout extends LayoutManager {
 
     /** @internal */
     override unbindComponent(container: ComponentContainer, virtual: boolean, component: ComponentContainer.Component | undefined): void {
-        if (virtual) {
-            if (this.unbindComponentEvent !== undefined) {
-                this.unbindComponentEvent(container);
-            }
+        if (this.unbindComponentEvent !== undefined) {
+            this.unbindComponentEvent(container);
         } else {
-            if (this.releaseComponentEvent !== undefined) {
+            if (!virtual && this.releaseComponentEvent !== undefined) {
                 if (component === undefined) {
                     throw new UnexpectedUndefinedError('VCUCRCU333998');
                 } else {
