@@ -63,20 +63,18 @@ export class DragListener extends EventEmitter {
         this.processDragStop(undefined);
     }
 
-    private allowableTarget(target: EventTarget | null): boolean {
-        for (; target instanceof HTMLElement; target = target.parentNode) {
+    private onPointerDown(oEvent: PointerEvent) {
+        for (let target = oEvent.target; ; target = target.parentNode) {
+            if (! (target instanceof HTMLElement))
+                return;
             const draggable = target.getAttribute('draggable');
             if (draggable === 'yes')
-                return true;
-            if (draggable !== null)
                 break;
+            if (draggable !== null)
+                return;
         }
-        return false;
-    }
 
-    private onPointerDown(oEvent: PointerEvent) {
-        if (this.allowableTarget(oEvent.target))
-            this.processPointerDown(this.getPointerCoordinates(oEvent));
+        this.processPointerDown(this.getPointerCoordinates(oEvent));
     }
 
     private processPointerDown(coordinates: DragListener.PointerCoordinates) {

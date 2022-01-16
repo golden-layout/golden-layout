@@ -279,6 +279,10 @@ export class ComponentContainer extends EventEmitter {
         this._parent.setTitle(title);
     }
 
+    setTitleRenderer(renderer: Tab.TitleRenderer | undefined): void {
+        this._parent.setTitleRenderer(renderer);
+    }
+
     /** @internal */
     setTab(tab: Tab): void {
         this._tab = tab;

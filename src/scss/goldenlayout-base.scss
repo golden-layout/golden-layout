@@ -3,7 +3,7 @@
 // can also be developed using SCSS.
 // All changes to base style should be done in goldenlayout-base.scss.
 // Do NOT make changes directly in goldenlayout-base.scss.  goldenlayout-base.scss should only be updated by
-// running the npm script "update-scss"
+// running the npm script "update:scss"
 // Make sure that less code in goldenlayout.base.scss can be correctly correctly converted to scss with less2sass (ie keep it basic)
 
 // Width variables (appears count calculates by raw css)
@@ -101,6 +101,7 @@ $height6: 15px; // Appears 1 time
   // Pane controls (popout, maximize, minimize, close)
   .lm_controls {
     position: absolute;
+    top: 0px;
     right: 3px;
     display: flex;
 
@@ -114,8 +115,14 @@ $height6: 15px; // Appears 1 time
   }
 
   .lm_tabs {
-    position: absolute;
     display: flex;
+  }
+
+  .lm_title {
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: pre;
   }
 
   // Single Tab container. A single Tab is set for each pane, a group of Tabs are contained in ".lm_header"
@@ -143,12 +150,6 @@ $height6: 15px; // Appears 1 time
         top: 0;
         right: -2px;
       }
-    }
-
-    .lm_title {
-      display: inline-block;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
 
     // Close Tab Icon
@@ -331,6 +332,10 @@ $height6: 15px; // Appears 1 time
     right: 0;
     z-index: 5;
     overflow: hidden;
+    .lm_title {
+        display: block;
+        padding: 1px;
+    }
 
     .lm_tab {
       clear: both;

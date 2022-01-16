@@ -156,29 +156,65 @@ export class TabsContainer {
             const activeIndex = this._tabs.indexOf(activeComponentItem.tab);
             const activeTab = this._tabs[activeIndex];
             this._lastVisibleTabIndex = -1;
+            while (dropdownActive && this._dropdownElement.firstChild) {
+                this._dropdownElement.removeChild(this._dropdownElement.firstChild);
+            }
 
-            for (let i = 0; i < this._tabs.length; i++) {
-                const tabElement = this._tabs[i].element;
+            const tabMarginRightPixels = getComputedStyle(activeTab.element).marginRight;
+            const tabMarginRight = pixelsToNumber(tabMarginRightPixels);
 
+            let tabAvail, activeTabAvail;
+            const numTabs = this._tabs.length;
+            if (! dropdownActive || numTabs <= 1) {
+                tabAvail = availableWidth - tabMarginRight;
+                activeTabAvail = tabAvail;
+            } else {
+                // the active tab gets a double share of the available width.
+                tabAvail = (availableWidth - numTabs * tabMarginRight)
+                    / (numTabs + 1);
+                activeTabAvail = 2 * tabAvail;
+            }
+
+            for (let i = 0; i < numTabs; i++) {
+                const tab = this._tabs[i];
+                const tabElement = tab.element;
+                const isActiveTab = activeIndex === i;
+                tabElement.style.display = '';
+
+                const component = tab.componentItem;
+                const renderer: Tab.TitleRenderer =
+                    component.titleRenderer ? component.titleRenderer :
+                      (container, el, width, dropdownActive) => {
+                          while (el.lastChild) { el.removeChild(el.lastChild); }
+                          el.appendChild(document.createTextNode(component.title));
+                      };
                 //Put the tab in the tabContainer so its true width can be checked
                 if (tabElement.parentElement !== this._element) {
                     this._element.appendChild(tabElement);
                 }
-                const tabMarginRightPixels = getComputedStyle(activeTab.element).marginRight;
-                const tabMarginRight = pixelsToNumber(tabMarginRightPixels);
+                renderer(component.container,
+                         tab.titleElement,
+                         isActiveTab ? activeTabAvail : tabAvail,
+                         (isActiveTab ? Tab.RenderFlags.IsActiveTab : 0) |
+                         (dropdownActive ? Tab.RenderFlags.DropdownActive : 0));
                 const tabWidth = tabElement.offsetWidth + tabMarginRight;
 
                 cumulativeTabWidth += tabWidth;
 
                 //Include the active tab's width if it isn't already
                 //This is to ensure there is room to show the active tab
-                let visibleTabWidth = 0;
-                if (activeIndex <= i) {
-                    visibleTabWidth = cumulativeTabWidth;
-                } else {
-                    const activeTabMarginRightPixels = getComputedStyle(activeTab.element).marginRight;
-                    const activeTabMarginRight = pixelsToNumber(activeTabMarginRightPixels);
-                    visibleTabWidth = cumulativeTabWidth + activeTab.element.offsetWidth + activeTabMarginRight;
+                let visibleTabWidth = cumulativeTabWidth;
+
+                if (dropdownActive) {
+                    let el = document.createElement('span');
+                    el.classList.add(DomConstants.ClassName.Title);
+                    const w = availableWidth * 0.9;
+                    renderer(component.container, el, w,
+                             (isActiveTab ? Tab.RenderFlags.IsActiveTab : 0) |
+                             Tab.RenderFlags.DropdownActive |
+                             Tab.RenderFlags.InDropdownMenu);
+                    this._dropdownElement.appendChild(el);
+                    el?.addEventListener('click', tab.tabClickListener, { passive: true });
                 }
 
                 // If the tabs won't fit, check the overlap allowance.
@@ -219,19 +255,16 @@ export class TabsContainer {
                             this._element.appendChild(tabElement);
                         }
                     }
-
-                    if (tabOverlapAllowanceExceeded && i !== activeIndex) {
-                        if (dropdownActive) {
+                    if (tabOverlapAllowanceExceeded) {
+                        if (! dropdownActive) {
+                            //We now know the tab menu must be shown, so we have to recalculate everything.
+                            return false;
+                        }
+                        if (i !== activeIndex) {
                             //Tab menu already shown, so we just add to it.
                             tabElement.style.zIndex = 'auto';
                             tabElement.style.marginLeft = '';
-                            
-                            if (tabElement.parentElement !== this._dropdownElement) {
-                                this._dropdownElement.appendChild(tabElement);
-                            }
-                        } else {
-                            //We now know the tab menu must be shown, so we have to recalculate everything.
-                            return false;
+                            tabElement.style.display = 'none';
                         }
                     }
 

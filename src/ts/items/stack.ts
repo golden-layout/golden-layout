@@ -45,7 +45,7 @@ export class Stack extends ComponentParentableItem {
     private _initialActiveItemIndex: number;
 
     /** @internal */
-    private _resizeListener = () => this.handleResize();
+    private _resizeListener = () => this.updateTabSizes();
     /** @internal */
     private _maximisedListener = () => this.handleMaximised();
     /** @internal */
@@ -186,7 +186,7 @@ export class Stack extends ComponentParentableItem {
 
                 this.setActiveComponentItem(contentItems[this._initialActiveItemIndex] as ComponentItem, false);
 
-                this._header.updateTabSizes();
+                this.updateTabSizes();
             }
         }
 
@@ -839,9 +839,9 @@ export class Stack extends ComponentParentableItem {
         }
     }
 
-    /** @internal */
-    private handleResize() {
-        this._header.updateTabSizes()
+    updateTabSizes(): void {
+        if (this._header)
+            this._header.updateTabSizes();
     }
 
     /** @internal */
