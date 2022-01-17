@@ -1734,13 +1734,6 @@ export namespace LayoutManager {
     }
 
     /** @public */
-    export enum RenderFlags {
-        DropdownActive = 1,
-        InDropdownManu = 2,
-        IsActiveTab = 4,
-    };
-
-    /** @public */
     export namespace LocationSelector {
         export const enum TypeId {
             /** Stack with focused Item. Index specifies offset from index of focused item (eg 1 is the position after focused item) */

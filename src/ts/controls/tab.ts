@@ -37,7 +37,7 @@ export class Tab {
     private readonly _contentItemDestroyListener = () => this.onContentItemDestroy();
     /** @internal */
     private readonly _tabTitleChangedListener = (title: string) => this.setTitle(title);
-    readonly tabClickListener = (ev: MouseEvent) => this.onTabClickDown(ev);
+    readonly tabClickListener = (ev: MouseEvent): void => this.onTabClickDown(ev);
     get isActive(): boolean { return this._isActive; }
     // get header(): Header { return this._header; }
     get componentItem(): ComponentItem { return this._componentItem; }
@@ -299,7 +299,7 @@ export namespace Tab {
         DropdownActive = 1,
         InDropdownMenu = 2,
         IsActiveTab = 4,
-    };
+    }
     export type TitleRenderer = (component: ComponentContainer, target: HTMLElement, availableWidth: number, flags: RenderFlags)=>void;
     /** @internal */
     export type CloseEvent = (componentItem: ComponentItem) => void;

@@ -182,12 +182,14 @@ export class TabsContainer {
                 tabElement.style.display = '';
 
                 const component = tab.componentItem;
-                const renderer: Tab.TitleRenderer =
-                    component.titleRenderer ? component.titleRenderer :
-                      (container, el, width, dropdownActive) => {
-                          while (el.lastChild) { el.removeChild(el.lastChild); }
-                          el.appendChild(document.createTextNode(component.title));
-                      };
+                const renderer: Tab.TitleRenderer = (container, el, width, flags)  => {
+                    if (component.titleRenderer) {
+                        component.titleRenderer(container, el, width, flags);
+                    } else {
+                        while (el.lastChild) { el.removeChild(el.lastChild); }
+                        el.appendChild(document.createTextNode(component.title));
+                    }
+                };
                 //Put the tab in the tabContainer so its true width can be checked
                 if (tabElement.parentElement !== this._element) {
                     this._element.appendChild(tabElement);
@@ -203,10 +205,10 @@ export class TabsContainer {
 
                 //Include the active tab's width if it isn't already
                 //This is to ensure there is room to show the active tab
-                let visibleTabWidth = cumulativeTabWidth;
+                const visibleTabWidth = cumulativeTabWidth;
 
                 if (dropdownActive) {
-                    let el = document.createElement('span');
+                    const el = document.createElement('span');
                     el.classList.add(DomConstants.ClassName.Title);
                     const w = availableWidth * 0.9;
                     renderer(component.container, el, w,
