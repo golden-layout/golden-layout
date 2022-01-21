@@ -116,6 +116,7 @@
 
   .lm_tabs {
     display: flex;
+    overflow: hidden;
   }
 
   .lm_title {
@@ -131,7 +132,7 @@
     float: left;
     height: @height2;
     margin-top: 1px;
-    padding: 0px 10px 5px;
+    padding: 0px 6px 5px;
     padding-right: 25px;
     position: relative;
     touch-action: none;
@@ -162,6 +163,25 @@
       text-align: center;
     }
   }
+}
+
+.lm_header.lm_tight_mode {
+    .lm_tabs {
+        .lm_tab {
+            padding-left: 2px;
+            padding-right: 2px;
+            .lm_close_tab {
+                display: none;
+            }
+        }
+        .lm_tab.lm_active {
+            display: inherit;
+            padding-right: 22px;
+            .lm_close_tab {
+                display: inherit;
+            }
+        }
+    }
 }
 
 // Change stack style to absolute positioning for docking transition ability

@@ -5,6 +5,7 @@ import { DomConstants } from '../utils/dom-constants';
 import { DragListener } from '../utils/drag-listener';
 import { numberToPixels, pixelsToNumber } from '../utils/utils';
 import { Tab } from './tab';
+import { Header } from './header';
 
 /** @internal */
 export class TabsContainer {
@@ -129,13 +130,13 @@ export class TabsContainer {
     /**
      * Pushes the tabs to the tab dropdown if the available space is not sufficient
      */
-    updateTabSizes(availableWidth: number, activeComponentItem: ComponentItem | undefined): void {
+    updateTabSizes(header: Header, activeComponentItem: ComponentItem | undefined): void {
         let dropDownActive = false;
-        const success = this.tryUpdateTabSizes(dropDownActive, availableWidth, activeComponentItem);
+        const success = this.tryUpdateTabSizes(dropDownActive, header, activeComponentItem);
         if (!success) {
             dropDownActive = true;
             // this will always succeed
-            this.tryUpdateTabSizes(dropDownActive, availableWidth, activeComponentItem)
+            this.tryUpdateTabSizes(dropDownActive, header, activeComponentItem)
         }
 
         if (dropDownActive !== this._dropdownActive) {
@@ -144,14 +145,18 @@ export class TabsContainer {
         }
     }
 
-    tryUpdateTabSizes(dropdownActive: boolean, availableWidth: number, activeComponentItem: ComponentItem | undefined): boolean {
+    tryUpdateTabSizes(dropdownActive: boolean, header: Header, activeComponentItem: ComponentItem | undefined): boolean {
+        const headerNode = this.element.parentNode as HTMLElement;
+        headerNode.classList.remove("lm_tight_mode");
+        let availableWidth: number = header.availableTabsSize();
+        this.element.style.width = numberToPixels(availableWidth);
         if (this._tabs.length > 0) {
             if (activeComponentItem === undefined) {
                 throw new Error('non-empty tabs must have active component item');
             }
 
             let cumulativeTabWidth = 0;
-            let tabOverlapAllowanceExceeded = false;
+            //let tabOverlapAllowanceExceeded = false;
             const tabOverlapAllowance = this._layoutManager.layoutConfig.settings.tabOverlapAllowance;
             const activeIndex = this._tabs.indexOf(activeComponentItem.tab);
             const activeTab = this._tabs[activeIndex];
@@ -174,12 +179,14 @@ export class TabsContainer {
                     / (numTabs + 1);
                 activeTabAvail = 2 * tabAvail;
             }
+            let tight_mode = false;
 
             for (let i = 0; i < numTabs; i++) {
                 const tab = this._tabs[i];
                 const tabElement = tab.element;
                 const isActiveTab = activeIndex === i;
-                tabElement.style.display = '';
+                tabElement.style.marginLeft = '';
+                tabElement.style.zIndex = '';
 
                 const component = tab.componentItem;
                 const renderer: Tab.TitleRenderer = (container, el, width, flags)  => {
@@ -199,13 +206,8 @@ export class TabsContainer {
                          isActiveTab ? activeTabAvail : tabAvail,
                          (isActiveTab ? Tab.RenderFlags.IsActiveTab : 0) |
                          (dropdownActive ? Tab.RenderFlags.DropdownActive : 0));
-                const tabWidth = tabElement.offsetWidth + tabMarginRight;
 
-                cumulativeTabWidth += tabWidth;
-
-                //Include the active tab's width if it isn't already
-                //This is to ensure there is room to show the active tab
-                const visibleTabWidth = cumulativeTabWidth;
+                cumulativeTabWidth = tabElement.offsetLeft + tabElement.offsetWidth + tabMarginRight;
 
                 if (dropdownActive) {
                     const el = document.createElement('span');
@@ -218,69 +220,54 @@ export class TabsContainer {
                     this._dropdownElement.appendChild(el);
                     el?.addEventListener('click', tab.tabClickListener, { passive: true });
                 }
+                if (cumulativeTabWidth > availableWidth && numTabs > 1
+                    && ! tight_mode) {
+                    tight_mode = true;
+                    headerNode.classList.add("lm_tight_mode");
+                    // If tight-mode makes the controls (header buttons)
+                    // take less space, we should have more available space.
+                    availableWidth = header.availableTabsSize();
+                    this.element.style.width = numberToPixels(availableWidth);
+                    cumulativeTabWidth = tabElement.offsetLeft + tabElement.offsetWidth + tabMarginRight;
+                }
+            }
 
-                // If the tabs won't fit, check the overlap allowance.
-                if (visibleTabWidth > availableWidth) {
-
-                    //Once allowance is exceeded, all remaining tabs go to menu.
-                    if (!tabOverlapAllowanceExceeded) {
-
-                        //No overlap for first tab or active tab
-                        //Overlap spreads among non-active, non-first tabs
-                        let overlap: number;
-                        if (activeIndex > 0 && activeIndex <= i) {
-                            overlap = (visibleTabWidth - availableWidth) / (i - 1);
-                        } else {
-                            overlap = (visibleTabWidth - availableWidth) / i;
-                        }
-
-                        //Check overlap against allowance.
-                        if (overlap < tabOverlapAllowance) {
-                            for (let j = 0; j <= i; j++) {
-                                const marginLeft = (j !== activeIndex && j !== 0) ? '-' + numberToPixels(overlap) : '';
-                                this._tabs[j].element.style.zIndex = numberToPixels(i - j);
-                                this._tabs[j].element.style.marginLeft = marginLeft;
+            if (cumulativeTabWidth > availableWidth) {
+                const overlap = (cumulativeTabWidth - availableWidth)
+                      / (numTabs - 1);
+                //Check overlap against allowance.
+                if ((overlap >= tabOverlapAllowance && ! dropdownActive)
+                    || numTabs <= 1) {
+                    //We now know the tab menu must be shown, so we have to recalculate everything.
+                    return false;
+                }
+                for (let j = 0; j < numTabs; j++) {
+                    const marginLeft = j === 0 ? ''
+                          : '-' + numberToPixels(overlap);
+                    this._tabs[j].element.style.zIndex =
+                        '' + ((j <= activeIndex ? j - activeIndex
+                               : activeIndex - j) + numTabs);
+                    this._tabs[j].element.style.marginLeft = marginLeft;
+                }
+                const activeElement = activeTab.element;
+                if (activeElement.offsetLeft + activeElement.clientWidth
+                    > availableWidth) {
+                    if (! dropdownActive)
+                        return false;
+                    if (activeIndex > 0) {
+                        // If active tab isn't fully visible, shift it and
+                        // earlier elements left as needed (and possible)
+                        const maxPrior = Math.max((availableWidth - activeElement.clientWidth) / activeIndex, 0);
+                        for (let j = 1; j <= activeIndex; j++) {
+                            const rightExcess = this._tabs[j].element.offsetLeft - j * maxPrior;
+                            if (rightExcess > 0) {
+                                this._tabs[j].element.style.marginLeft = '-' + numberToPixels(overlap + rightExcess);
                             }
-                            this._lastVisibleTabIndex = i;
-                            if (tabElement.parentElement !== this._element) {
-                                this._element.appendChild(tabElement);
-                            }
-                        } else {
-                            tabOverlapAllowanceExceeded = true;
                         }
-
-                    } else if (i === activeIndex) {
-                        //Active tab should show even if allowance exceeded. (We left room.)
-                        tabElement.style.zIndex = 'auto';
-                        tabElement.style.marginLeft = '';
-                        if (tabElement.parentElement !== this._element) {
-                            this._element.appendChild(tabElement);
-                        }
-                    }
-                    if (tabOverlapAllowanceExceeded) {
-                        if (! dropdownActive) {
-                            //We now know the tab menu must be shown, so we have to recalculate everything.
-                            return false;
-                        }
-                        if (i !== activeIndex) {
-                            //Tab menu already shown, so we just add to it.
-                            tabElement.style.zIndex = 'auto';
-                            tabElement.style.marginLeft = '';
-                            tabElement.style.display = 'none';
-                        }
-                    }
-
-                } else {
-                    this._lastVisibleTabIndex = i;
-                    tabElement.style.zIndex = 'auto';
-                    tabElement.style.marginLeft = '';
-                    if (tabElement.parentElement !== this._element) {
-                        this._element.appendChild(tabElement);
                     }
                 }
             }
         }
-
         return true;
     }
 

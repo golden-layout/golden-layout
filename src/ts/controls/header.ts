@@ -325,14 +325,15 @@ export class Header extends EventEmitter {
                 this._element.style.width = '';
                 this._element.style.height = numberToPixels(headerHeight);
             }
-            let availableWidth: number;
-            if (this._leftRightSided) {
-                availableWidth = this._element.offsetHeight - this._controlsContainerElement.offsetHeight - this._tabControlOffset;
-            } else {
-                availableWidth = this._element.offsetWidth - this._controlsContainerElement.offsetWidth - this._tabControlOffset;
-            }
+            this._tabsContainer.updateTabSizes(this, this._getActiveComponentItemEvent());
+        }
+    }
 
-            this._tabsContainer.updateTabSizes(availableWidth, this._getActiveComponentItemEvent());
+    availableTabsSize(): number {
+        if (this._leftRightSided) {
+            return this._element.offsetHeight - this._controlsContainerElement.offsetHeight - this._tabControlOffset;
+        } else {
+            return this._element.offsetWidth - this._controlsContainerElement.offsetWidth - this._tabControlOffset;
         }
     }
 
