@@ -72,6 +72,8 @@ export class Header extends EventEmitter {
     private readonly _tabDropdownButton: HeaderButton;
     /** @internal */
     private readonly _maximiseButton: HeaderButton | undefined;
+    /** @internal */
+    private _updateRequested: number = 0;
     // /** @internal */
     // private _activeComponentItem: ComponentItem | null = null; // only used to identify active tab
 
@@ -315,18 +317,24 @@ export class Header extends EventEmitter {
      * @internal
      */
     updateTabSizes(): void {
-        if (this._tabsContainer.tabCount > 0) {
-            const headerHeight = this._show ? this._layoutManager.layoutConfig.dimensions.headerHeight : 0;
+        if (this._updateRequested)
+            return;
+        this._updateRequested = window.requestAnimationFrame((now) => {
+            this._updateRequested = 0;
 
-            if (this._leftRightSided) {
-                this._element.style.height = '';
-                this._element.style.width = numberToPixels(headerHeight);
-            } else {
-                this._element.style.width = '';
-                this._element.style.height = numberToPixels(headerHeight);
+            if (this._tabsContainer.tabCount > 0) {
+                const headerHeight = this._show ? this._layoutManager.layoutConfig.dimensions.headerHeight : 0;
+
+                if (this._leftRightSided) {
+                    this._element.style.height = '';
+                    this._element.style.width = numberToPixels(headerHeight);
+                } else {
+                    this._element.style.width = '';
+                    this._element.style.height = numberToPixels(headerHeight);
+                }
+                this._tabsContainer.updateTabSizes(this, this._getActiveComponentItemEvent());
             }
-            this._tabsContainer.updateTabSizes(this, this._getActiveComponentItemEvent());
-        }
+        });
     }
 
     availableTabsSize(): number {

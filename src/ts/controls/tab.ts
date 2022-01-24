@@ -118,9 +118,10 @@ export class Tab {
      * html tags) of the same string.
      */
     setTitle(title: string): void {
-        this._titleElement.innerText = title;
         this._element.title = title;
-        (this.componentItem.parent as Stack).updateTabSizes();
+        const parent = this.componentItem.parent;
+        if (parent instanceof Stack)
+            parent.header.updateTabSizes();
     }
 
     /**
