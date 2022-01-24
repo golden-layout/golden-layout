@@ -73,7 +73,7 @@ export class Header extends EventEmitter {
     /** @internal */
     private readonly _maximiseButton: HeaderButton | undefined;
     /** @internal */
-    private _updateRequested: number = 0;
+    private _updateRequested = 0;
     // /** @internal */
     // private _activeComponentItem: ComponentItem | null = null; // only used to identify active tab
 
@@ -319,7 +319,7 @@ export class Header extends EventEmitter {
     updateTabSizes(): void {
         if (this._updateRequested)
             return;
-        this._updateRequested = window.requestAnimationFrame((now) => {
+        this._updateRequested = window.requestAnimationFrame(() => {
             this._updateRequested = 0;
 
             if (this._tabsContainer.tabCount > 0) {
