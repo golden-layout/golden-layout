@@ -49,10 +49,21 @@ declare global {
 
 /** @public */
 export abstract class LayoutManager extends EventEmitter {
+    /** Whether the layout will be automatically be resized to container whenever the container's size is changed
+     * Default is true if <body> is the container otherwise false
+     * Default will be changed to true for any container in the future
+     */
+    resizeWithContainerAutomatically = false;
+    /** The debounce interval (in milliseconds) used whenever a layout is automatically resized.  0 means next tick */
+    resizeDebounceInterval = 100;
+    /** Extend the current debounce delay time period if it is triggered during the delay.
+     * If this is true, the layout will only resize when its container has stopped being resized.
+     * If it is false, the layout will resize at intervals while its container is being resized.
+     */
+    resizeDebounceExtendedWhenPossible = true;
+
     /** @internal */
     private _containerElement: HTMLElement;
-    /** @internal */
-    private _isFullPage = false;
     /** @internal */
     private _isInitialised = false;
     /** @internal */
@@ -97,7 +108,7 @@ export abstract class LayoutManager extends EventEmitter {
     protected _constructorOrSubWindowLayoutConfig: LayoutConfig | undefined; // protected for backwards compatibility
 
     /** @internal */
-    private _windowResizeListener = () => this.processResizeWithDebounce();
+    private _resizeObserver = new ResizeObserver(() => this.handleContainerResize());
     /** @internal */
     private _windowUnloadListener = () => this.onUnload();
     /** @internal */
@@ -179,11 +190,12 @@ export abstract class LayoutManager extends EventEmitter {
                     this._openPopouts[i].close();
                 }
             }
-            if (this._isFullPage) {
-                globalThis.removeEventListener('resize', this._windowResizeListener);
-            }
+
+            this._resizeObserver.disconnect();
+            this.checkClearResizeTimeout();
             globalThis.removeEventListener('unload', this._windowUnloadListener);
             globalThis.removeEventListener('beforeunload', this._windowUnloadListener);
+
             if (this._groundItem !== undefined) {
                 this._groundItem.destroy();
             }
@@ -1315,9 +1327,7 @@ export abstract class LayoutManager extends EventEmitter {
      * @internal
      */
     private bindEvents() {
-        if (this._isFullPage) {
-            globalThis.addEventListener('resize', this._windowResizeListener, { passive: true });
-        }
+        this._resizeObserver.observe(this._containerElement);
         globalThis.addEventListener('unload', this._windowUnloadListener, { passive: true });
         globalThis.addEventListener('beforeunload', this._windowUnloadListener, { passive: true });
     }
@@ -1338,18 +1348,38 @@ export abstract class LayoutManager extends EventEmitter {
      * Debounces resize events
      * @internal
      */
+    private handleContainerResize(): void {
+        if (this.resizeWithContainerAutomatically) {
+            this.processResizeWithDebounce();
+        }
+    }
+
+    /**
+     * Debounces resize events
+     * @internal
+     */
     private processResizeWithDebounce(): void {
-        if (this._resizeTimeoutId !== undefined) {
-            clearTimeout(this._resizeTimeoutId);
+        if (this.resizeDebounceExtendedWhenPossible) {
+            this.checkClearResizeTimeout();
         }
 
-        this._resizeTimeoutId = setTimeout(
-            () => {
-                this.beginSizeInvalidation();
-                this.endSizeInvalidation();
-            },
-            100
-        );
+        if (this._resizeTimeoutId === undefined) {
+            this._resizeTimeoutId = setTimeout(
+                () => {
+                    this._resizeTimeoutId = undefined;
+                    this.beginSizeInvalidation();
+                    this.endSizeInvalidation();
+                },
+                this.resizeDebounceInterval,
+            );
+        }
+    }
+
+    private checkClearResizeTimeout() {
+        if (this._resizeTimeoutId !== undefined) {
+            clearTimeout(this._resizeTimeoutId);
+            this._resizeTimeoutId = undefined;
+        }
     }
 
     /**
@@ -1361,17 +1391,17 @@ export abstract class LayoutManager extends EventEmitter {
         const containerElement = this._containerElement ?? bodyElement;
 
         if (containerElement === bodyElement) {
-            this._isFullPage = true;
+            this.resizeWithContainerAutomatically = true;
 
             const documentElement = document.documentElement;
             documentElement.style.height = '100%';
             documentElement.style.margin = '0';
             documentElement.style.padding = '0';
-            documentElement.style.overflow = 'hidden';
+            documentElement.style.overflow = 'clip';
             bodyElement.style.height = '100%';
             bodyElement.style.margin = '0';
             bodyElement.style.padding = '0';
-            bodyElement.style.overflow = 'hidden';
+            bodyElement.style.overflow = 'clip';
         }
 
         this._containerElement = containerElement;

@@ -73,7 +73,6 @@ export class App {
 
     private _goldenLayoutBoundingClientRect: DOMRect = new DOMRect();
 
-    private readonly _windowResizeListener = () => this.handleWindowResizeEvent();
     private readonly _globalBubbleClickListener = () => this.handleGlobalBubbleClickEvent();
     private readonly _globalCaptureClickListener = () => this.handleGlobalCaptureClickEvent();
     private readonly _bindComponentEventListener =
@@ -94,6 +93,7 @@ export class App {
         this._layoutElement = layoutElement;
         this._goldenLayout = new GoldenLayout(this._layoutElement, this._bindComponentEventListener, this._unbindComponentEventListener);
 
+        this._goldenLayout.resizeWithContainerAutomatically = true;
         this._goldenLayout.beforeVirtualRectingEvent = (count) => this.handleBeforeVirtualRectingEvent(count);
         this._goldenLayout.addEventListener('stackHeaderClick', (event) => this.handleStackHeaderClick(event));
 
@@ -281,7 +281,6 @@ export class App {
 
         globalThis.addEventListener('click', this._globalBubbleClickListener, { passive: true });
         globalThis.addEventListener('click', this._globalCaptureClickListener, { capture: true, passive: true });
-        globalThis.addEventListener('resize', this._windowResizeListener, { passive: true });
     }
 
     start(): void {
@@ -407,14 +406,6 @@ export class App {
         }
 
         componentRootElement.style.zIndex = defaultZIndex;
-    }
-
-    private handleWindowResizeEvent() {
-        // handling of resize event is required if GoldenLayout does not use body element
-        const bodyWidth = document.body.offsetWidth;
-        const controlsWidth = this._controlsElement.offsetWidth;
-        const height = document.body.offsetHeight;
-        this._goldenLayout.setSize(bodyWidth - controlsWidth, height)
     }
 
     private handleGlobalBubbleClickEvent() {

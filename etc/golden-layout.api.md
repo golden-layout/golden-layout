@@ -1094,6 +1094,9 @@ export abstract class LayoutManager extends EventEmitter {
     // (undocumented)
     get openPopouts(): BrowserPopout[];
     removeDragSource(dragSource: DragSource): void;
+    resizeDebounceExtendedWhenPossible: boolean;
+    resizeDebounceInterval: number;
+    resizeWithContainerAutomatically: boolean;
     // @internal @deprecated (undocumented)
     get root(): GroundItem | undefined;
     // (undocumented)
