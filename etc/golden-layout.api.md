@@ -1164,8 +1164,9 @@ export abstract class LayoutManager extends EventEmitter {
     // (undocumented)
     popoutClickHandler: (item: Stack, ev: Event) => boolean;
     removeDragSource(dragSource: DragSource): void;
-    // (undocumented)
-    removeElementEventually(element: HTMLElement): void;
+    resizeDebounceExtendedWhenPossible: boolean;
+    resizeDebounceInterval: number;
+    resizeWithContainerAutomatically: boolean;
     // @internal @deprecated (undocumented)
     get root(): GroundItem | undefined;
     // (undocumented)
