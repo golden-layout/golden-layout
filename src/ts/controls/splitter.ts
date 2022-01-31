@@ -19,7 +19,7 @@ export class Splitter {
         this._element.classList.add(DomConstants.ClassName.Splitter);
         const dragHandleElement = document.createElement('div');
         dragHandleElement.classList.add(DomConstants.ClassName.DragHandle);
-        this._element.setAttribute('draggable', 'yes');
+        this._element.setAttribute('draggable', 'true');
 
         const handleExcessSize = this._grabSize - this._size;
         const handleExcessPos = handleExcessSize / 2;

@@ -76,8 +76,8 @@ export class Tab {
         this._titleElement.classList.add(DomConstants.ClassName.Title);
         this._closeElement = document.createElement('div'); 
         this._closeElement.classList.add(DomConstants.ClassName.CloseTab);
-        this._element.setAttribute('draggable', 'yes');
-        this._closeElement.setAttribute('draggable', 'no');
+        this._element.setAttribute('draggable', 'true');
+        this._closeElement.setAttribute('draggable', 'false');
         this._element.appendChild(this._titleElement);
         this._element.appendChild(this._closeElement);
 
