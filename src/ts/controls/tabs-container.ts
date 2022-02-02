@@ -156,11 +156,9 @@ export class TabsContainer {
             }
 
             let cumulativeTabWidth = 0;
-            //let tabOverlapAllowanceExceeded = false;
-            const tabOverlapAllowance = this._layoutManager.layoutConfig.settings.tabOverlapAllowance;
+            const tabOverlapAllowance = this._layoutManager.layoutConfig.settings.tabOverlapAllowance || (dropdownActive ? 6 : 0);
             const activeIndex = this._tabs.indexOf(activeComponentItem.tab);
             const activeTab = this._tabs[activeIndex];
-            this._lastVisibleTabIndex = -1;
             while (dropdownActive && this._dropdownElement.firstChild) {
                 this._dropdownElement.removeChild(this._dropdownElement.firstChild);
             }
@@ -180,6 +178,7 @@ export class TabsContainer {
                 activeTabAvail = 2 * tabAvail;
             }
             let tight_mode = false;
+            this._lastVisibleTabIndex = numTabs - 1;
 
             for (let i = 0; i < numTabs; i++) {
                 const tab = this._tabs[i];
@@ -233,13 +232,18 @@ export class TabsContainer {
             }
 
             if (cumulativeTabWidth > availableWidth) {
-                const overlap = (cumulativeTabWidth - availableWidth)
+                if (numTabs <= 1) {
+                    return false;
+                }
+                let overlap = (cumulativeTabWidth - availableWidth)
                       / (numTabs - 1);
                 //Check overlap against allowance.
-                if ((overlap >= tabOverlapAllowance && ! dropdownActive)
-                    || numTabs <= 1) {
-                    //We now know the tab menu must be shown, so we have to recalculate everything.
-                    return false;
+                if (overlap >= tabOverlapAllowance) {
+                    if (! dropdownActive) {
+                        //We now know the tab menu must be shown, so we have to recalculate everything.
+                        return false;
+                    }
+                    overlap = tabOverlapAllowance;
                 }
                 for (let j = 0; j < numTabs; j++) {
                     const marginLeft = j === 0 ? ''
@@ -265,6 +269,14 @@ export class TabsContainer {
                             }
                         }
                     }
+                }
+                this._lastVisibleTabIndex = activeIndex;
+                for (let j = activeIndex + 1; j < numTabs; j++) {
+                    const tabElement = this._tabs[j].element;
+                    if (tabElement.offsetLeft + tabElement.offsetWidth
+                        > availableWidth + tabOverlapAllowance)
+                        break;
+                    this._lastVisibleTabIndex = j;
                 }
             }
         }

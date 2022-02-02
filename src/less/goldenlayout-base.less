@@ -9,7 +9,7 @@
 // Width variables (appears count calculates by raw css)
 @width0: 100%; // Appears 3 times
 @width1: 20px; // Appears 2 times
-@width2: 100px; // Appears 1 time
+@width2: 100px; // Appears 2 times
 @width3: 14px; // Appears 1 time
 @width4: 18px; // Appears 1 time
 @width5: 15px; // Appears 1 time
@@ -182,6 +182,10 @@
             }
         }
     }
+    .lm_drop_tab_placeholder {
+        padding-right: 0.7 * @width2;
+        margin-right: 0px; // counteract negative margin-left when taps overlap
+    }
 }
 
 // Change stack style to absolute positioning for docking transition ability
@@ -327,7 +331,7 @@
 
 .lm_drop_tab_placeholder {
   float: left;
-  width: @width2;
+  padding-right: @width2;
   height: @height3;
   visibility: hidden;
 }
