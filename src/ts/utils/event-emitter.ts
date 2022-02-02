@@ -183,6 +183,7 @@ export namespace EventEmitter {
         "drag": DragParams;
         "dragStart": DragStartParams;
         "dragStop": DragStopParams;
+        "dragExported": ComponentItemParam;
         "hide": NoParams;
         "initialised": NoParams;
         "itemDropped": ComponentItemParam;

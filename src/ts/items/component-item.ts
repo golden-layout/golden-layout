@@ -3,11 +3,12 @@ import { ComponentContainer } from '../container/component-container';
 import { Tab } from '../controls/tab';
 import { UnexpectedNullError } from '../errors/internal-error';
 import { LayoutManager } from '../layout-manager';
-import { DomConstants } from '../utils/dom-constants';
 import { ItemType, JsonValue } from '../utils/types';
-import { getElementWidthAndHeight, setElementHeight, setElementWidth } from '../utils/utils';
+import { setElementHeight, setElementWidth } from '../utils/utils';
 import { ComponentParentableItem } from './component-parentable-item';
 import { ContentItem } from './content-item';
+import { Stack } from './stack';
+import { numberToPixels } from '../utils/utils';
 
 /** @public */
 export class ComponentItem extends ContentItem {
@@ -51,7 +52,7 @@ export class ComponentItem extends ContentItem {
         /** @internal */
         private _parentItem: ComponentParentableItem
     ) {
-        super(layoutManager, config, _parentItem, document.createElement('div'));
+        super(layoutManager, config, _parentItem, layoutManager.createContainerElement(layoutManager, config));
 
         this.isComponent = true;
 
@@ -61,9 +62,8 @@ export class ComponentItem extends ContentItem {
 
         this._initialWantMaximise = config.maximised;
 
-        const containerElement = document.createElement('div');
-        containerElement.classList.add(DomConstants.ClassName.Content);
-        this.element.appendChild(containerElement);
+        this.element.classList.add('lm_component');
+        const containerElement = this.element;
         this._container = new ComponentContainer(config, this, layoutManager, containerElement,
             (itemConfig) => this.handleUpdateItemConfigEvent(itemConfig),
             () => this.show(),
@@ -243,11 +243,23 @@ export class ComponentItem extends ContentItem {
 
     /** @internal */
     private updateNodeSize(): void {
-        if (this.element.style.display !== 'none') {
+        if (this.element.style.display !== 'none' && this.parentItem instanceof Stack) {
             // Do not update size of hidden components to prevent unwanted reflows
-
-            const { width, height } = getElementWidthAndHeight(this.element);
-            this._container.setSizeToNodeSize(width, height, false);
+            const stackBounds = this.parentItem.element.getBoundingClientRect();
+            const itemBounds = this.parentItem.childElementContainer.getBoundingClientRect();
+            const layoutBounds = this.layoutManager.container.getBoundingClientRect();
+            const componentElement = this.element;
+            const contentElement = this.component as HTMLElement;
+            const contentInset = this.layoutManager.layoutConfig.dimensions.contentInset;
+            componentElement.style.top = numberToPixels(stackBounds.top - layoutBounds.top);
+            componentElement.style.left = numberToPixels(stackBounds.left - layoutBounds.left);
+            componentElement.style.width = numberToPixels(stackBounds.width);
+            componentElement.style.height = numberToPixels(stackBounds.height);
+            contentElement.style.position = "absolute";
+            contentElement.style.top = numberToPixels(itemBounds.top - stackBounds.top + contentInset);
+            contentElement.style.left = numberToPixels(contentInset);
+            contentElement.style.width = numberToPixels(itemBounds.width - 2 * contentInset);
+            contentElement.style.height = numberToPixels(itemBounds.height - 2 * contentInset);
         }
     }
 }

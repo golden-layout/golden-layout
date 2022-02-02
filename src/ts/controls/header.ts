@@ -149,8 +149,8 @@ export class Header extends EventEmitter {
         this._element.appendChild(this._controlsContainerElement);
         this._element.appendChild(this._tabsContainer.dropdownElement);
 
-        this._element.addEventListener('click', this._clickListener, { passive: true });
-        this._element.addEventListener('touchstart', this._touchStartListener, { passive: true });
+        //        this._element.addEventListener('click', this._clickListener, { passive: true });
+        //this._element.addEventListener('touchstart', this._touchStartListener, { passive: true });
 
         this._documentMouseUpListener = () => this._tabsContainer.hideAdditionalTabsDropdown()
         globalThis.document.addEventListener('mouseup', this._documentMouseUpListener, { passive: true });
@@ -164,7 +164,7 @@ export class Header extends EventEmitter {
         }
 
         if (this._popoutEnabled) {
-            this._popoutButton = new HeaderButton(this, this._popoutLabel, DomConstants.ClassName.Popout, () => this.handleButtonPopoutEvent());
+            this._popoutButton = new HeaderButton(this, this._popoutLabel, DomConstants.ClassName.Popout, (ev) => this.handleButtonPopoutEvent(ev));
         }
 
         /**
@@ -204,7 +204,7 @@ export class Header extends EventEmitter {
         this._tabsContainer.destroy();
 
         globalThis.document.removeEventListener('mouseup', this._documentMouseUpListener);
-        this._element.remove();
+        this.layoutManager.removeElementEventually(this._element);
     }
 
     /**
@@ -324,7 +324,8 @@ export class Header extends EventEmitter {
 
             if (this._tabsContainer.tabCount > 0) {
                 const headerHeight = this._show ? this._layoutManager.layoutConfig.dimensions.headerHeight : 0;
-
+                /* We need explicit this._element.style.width
+                * if the header is in an lm_header container.
                 if (this._leftRightSided) {
                     this._element.style.height = '';
                     this._element.style.width = numberToPixels(headerHeight);
@@ -332,6 +333,7 @@ export class Header extends EventEmitter {
                     this._element.style.width = '';
                     this._element.style.height = numberToPixels(headerHeight);
                 }
+                */
                 this._tabsContainer.updateTabSizes(this, this._getActiveComponentItemEvent());
             }
         });
@@ -386,7 +388,9 @@ export class Header extends EventEmitter {
     }
 
     /** @internal */
-    private handleButtonPopoutEvent() {
+    private handleButtonPopoutEvent(ev: Event) {
+        if (this._layoutManager.popoutClickHandler(this.parent, ev))
+            return;
         if (this._layoutManager.layoutConfig.settings.popoutWholeStack) {
             if (this._popoutEvent === undefined) {
                 throw new UnexpectedUndefinedError('HHBPOE17834');

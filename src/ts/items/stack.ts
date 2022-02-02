@@ -137,7 +137,7 @@ export class Stack extends ComponentParentableItem {
             this.on('minimised', this._minimisedListener);
         }
 
-        this.element.appendChild(this._header.element);
+        this.layoutManager.headersContainerElement.appendChild(this._header.element);
         this.element.appendChild(this._childElementContainer);
 
         this.setupHeaderPosition();
@@ -150,6 +150,11 @@ export class Stack extends ComponentParentableItem {
         try {
             this.updateNodeSize();
             this.updateContentItemsSize();
+            const rect = this.element.getBoundingClientRect();
+            const layoutBounds = this.layoutManager.container.getBoundingClientRect();
+            this._header.element.style.width = numberToPixels(rect.width);
+            this._header.element.style.top = numberToPixels(rect.top - layoutBounds.top);
+            this._header.element.style.left = numberToPixels(rect.left - layoutBounds.left);
         } finally {
             this.layoutManager.endVirtualSizedContainerAdding();
         }
@@ -162,7 +167,7 @@ export class Stack extends ComponentParentableItem {
         this.updateNodeSize();
 
         for (let i = 0; i < this.contentItems.length; i++) {
-            this._childElementContainer.appendChild(this.contentItems[i].element);
+            // this._childElementContainer.appendChild(this.contentItems[i].element);
         }
 
         super.init();
@@ -293,7 +298,7 @@ export class Stack extends ComponentParentableItem {
             throw new AssertError('SACC88532'); // Stacks can only have Component children
         } else {
             index = super.addChild(contentItem, index);
-            this._childElementContainer.appendChild(contentItem.element);
+            //this._childElementContainer.appendChild(contentItem.element);
             this._header.createTab(contentItem, index);
             this.setActiveComponentItem(contentItem, focus);
             this._header.updateTabSizes();
@@ -694,10 +699,22 @@ export class Stack extends ComponentParentableItem {
         if (this.element.style.display !== 'none') {
             const content: WidthAndHeight = getElementWidthAndHeight(this.element);
 
+            let headerHeight;
             if (this._header.show) {
                 const dimension = this._header.leftRightSided ? WidthOrHeightPropertyName.width : WidthOrHeightPropertyName.height;
-                content[dimension] -= this.layoutManager.layoutConfig.dimensions.headerHeight;
+                headerHeight = this.layoutManager.layoutConfig.dimensions.headerHeight;
+                content[dimension] -= headerHeight;
+                if (content[dimension] <= 0) {
+                    console.log("non-positive content["+dimension+"] size "+content[dimension]);
+                }
+            } else {
+                headerHeight = 0;
             }
+            this._header.element.style.position = 'absolute';
+            this._header.element.style.width = numberToPixels(content.width);
+            this._childElementContainer.style.position = 'relative';
+            this._childElementContainer.style.top = numberToPixels(headerHeight);
+            this._childElementContainer.style.bottom = '0px';
             this._childElementContainer.style.width = numberToPixels(content.width);
             this._childElementContainer.style.height = numberToPixels(content.height);
             for (let i = 0; i < this.contentItems.length; i++) {
@@ -888,7 +905,7 @@ export class Stack extends ComponentParentableItem {
         if (this.isMaximised === true) {
             this.toggleMaximise();
         }
-        this.layoutManager.startComponentDrag(x, y, dragListener, componentItem, this);
+        this.layoutManager.startComponentDragOld(x, y, dragListener, componentItem, this);
     }
 
     /** @internal */

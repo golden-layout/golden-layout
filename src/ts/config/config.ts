@@ -540,11 +540,25 @@ export namespace LayoutConfig {
          * Default: false
          */
         popInOnClose?: boolean;
+
+        useDragAndDrop?: boolean;
+
+        dragDataMimetype?: string;
+
+        /**
+         * Check whether location.search contains a gl-window parameter.
+         * This is used to handle window popin in simple cases.
+         * Default: true
+         */
+        checkGlWindowKey?: boolean;
     }
 
     export namespace Settings {
         export function resolve(settings: Settings | undefined): ResolvedLayoutConfig.Settings {
             const result: ResolvedLayoutConfig.Settings = {
+                useDragAndDrop: settings?.useDragAndDrop ?? false,
+                dragDataMimetype: settings?.dragDataMimetype ?? ResolvedLayoutConfig.Settings.defaults.dragDataMimetype,
+                checkGlWindowKey: settings?.checkGlWindowKey ?? true,
                 constrainDragToContainer: settings?.constrainDragToContainer ?? ResolvedLayoutConfig.Settings.defaults.constrainDragToContainer,
                 reorderEnabled: settings?.reorderEnabled ?? ResolvedLayoutConfig.Settings.defaults.reorderEnabled,
                 popoutWholeStack: settings?.popoutWholeStack ?? ResolvedLayoutConfig.Settings.defaults.popoutWholeStack,
@@ -572,6 +586,16 @@ export namespace LayoutConfig {
          * Default: 15
          */
         borderGrabWidth?: number,
+
+        /**
+         * Space to allocate between component wrapper and content element.
+         * This can be used for an 'outline'.
+         * This may affect drag from other window over iframe which may
+         * not trigger depending on the CSS pointer-events setting.
+         * (Uncertain: needs testing/experimentation.)
+         * Default: 2
+         */
+        contentInset: number;
 
         /**
          * The minimum height an item can be resized to (in pixel).
@@ -610,6 +634,7 @@ export namespace LayoutConfig {
             const result: ResolvedLayoutConfig.Dimensions = {
                 borderWidth: dimensions?.borderWidth ?? ResolvedLayoutConfig.Dimensions.defaults.borderWidth,
                 borderGrabWidth: dimensions?.borderGrabWidth ?? ResolvedLayoutConfig.Dimensions.defaults.borderGrabWidth,
+                contentInset: dimensions?.contentInset ?? ResolvedLayoutConfig.Dimensions.defaults.contentInset,
                 minItemHeight: dimensions?.minItemHeight ?? ResolvedLayoutConfig.Dimensions.defaults.minItemHeight,
                 minItemWidth: dimensions?.minItemWidth ?? ResolvedLayoutConfig.Dimensions.defaults.minItemWidth,
                 headerHeight: dimensions?.headerHeight ?? ResolvedLayoutConfig.Dimensions.defaults.headerHeight,

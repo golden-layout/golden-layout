@@ -280,6 +280,11 @@ export namespace VirtualLayout {
         containerOrBindComponentEventHandler?: HTMLElement |  VirtualLayout.BindComponentEventHandler):
         LayoutManager.ConstructorParameters
     {
+        if (typeof configOrOptionalContainer === 'object'
+            && ! (configOrOptionalContainer instanceof HTMLElement)
+            && configOrOptionalContainer.settings
+            && configOrOptionalContainer.settings.checkGlWindowKey === false)
+            subWindowChecked = true;
         const windowConfigKey = subWindowChecked ? null : new URL(document.location.href).searchParams.get('gl-window');
         subWindowChecked = true;
         const isSubWindow = windowConfigKey !== null;

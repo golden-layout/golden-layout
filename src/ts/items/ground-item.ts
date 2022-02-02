@@ -29,6 +29,13 @@ export class GroundItem extends ComponentParentableItem {
         this._containerElement = containerElement;
 
         // insert before any pre-existing content elements
+        const before = this._containerElement.firstChild;
+        /* This logic needs to updated to not use ClassName.Content.
+         * However, it also fails because  _dropTargetIndicator and _transitionIndicator
+         * are insert after pre-existing content elements.
+         * It used to work because GoldenLayout@bindComponent would do:
+         * this.container.appendChild(componentRootElement)
+         * which seems counter to the goal of not moving content elements.
         let before = null;
         while (true) {
             const prev: ChildNode | null =
@@ -40,6 +47,7 @@ export class GroundItem extends ComponentParentableItem {
                 break;
             }
         }
+        */
         this._containerElement.insertBefore(this.element, before);
     }
 

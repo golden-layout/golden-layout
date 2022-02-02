@@ -14,6 +14,7 @@ export namespace DomConstants {
         Dragging = 'lm_dragging',
         DragProxy = 'lm_dragProxy',
         Header = 'lm_header',
+        Headers = 'lm_headers',
         Tabs = 'lm_tabs',
         Tab = 'lm_tab',
         CloseTab = 'lm_close_tab',

@@ -204,7 +204,8 @@ export abstract class ContentItem extends EventEmitter {
         if (parentNode === null) {
             throw new UnexpectedNullError('CIRCP23232');
         } else {
-            parentNode.replaceChild(newChild._element, oldChild._element);
+            //if (!this.layoutManager._currentlyDragging)
+                parentNode.replaceChild(newChild._element, oldChild._element);
 
             /*
             * Optionally destroy the old content item
@@ -213,6 +214,7 @@ export abstract class ContentItem extends EventEmitter {
                 oldChild._parent = null;
                 oldChild.destroy(); // will now also destroy all children of oldChild
             }
+//            }
 
             /*
             * Wire the new contentItem into the tree

@@ -32,7 +32,9 @@ export class Tab {
     // /** @internal */
     // private readonly _closeMouseDownListener = () => this.onCloseMousedown();
     /** @internal */
-    private readonly _dragStartListener = (x: number, y: number) => this.onDragStart(x, y);
+    private readonly _dragStartListenerOld = (x: number, y: number) => this.onDragStartOld(x, y);
+    /** @internal */
+    private readonly _dragStartListener = (e: DragEvent) => this.onDragStart(e);
     /** @internal */
     private readonly _contentItemDestroyListener = () => this.onContentItemDestroy();
     /** @internal */
@@ -97,7 +99,7 @@ export class Tab {
         }
 
         this._element.addEventListener('click', this.tabClickListener, { passive: true });
-        this._element.addEventListener('touchstart', this._tabTouchStartListener, { passive: true });
+        //this._element.addEventListener('touchstart', this._tabTouchStartListener, { passive: true });
 
         if (this._componentItem.isClosable) {
             this._closeElement.addEventListener('click', this._closeClickListener, { passive: true });
@@ -158,7 +160,7 @@ export class Tab {
         if (this.reorderEnabled) {
             this.disableReorder();
         }
-        this._element.remove();
+        this._layoutManager.removeElementEventually(this._element);
     }
 
     /** @internal */
@@ -174,12 +176,12 @@ export class Tab {
     }
 
     /**
-     * Callback for the DragListener
+     * Old callback for the DragListener
      * @param x - The tabs absolute x position
      * @param y - The tabs absolute y position
      * @internal
      */
-    private onDragStart(x: number, y: number): void {
+    private onDragStartOld(x: number, y: number): void {
         if (this._dragListener === undefined) {
             throw new UnexpectedUndefinedError('TODSDLU10093');
         } else {
@@ -190,6 +192,15 @@ export class Tab {
             }
         }
 
+    }
+
+    private onDragStart(e: DragEvent): void {
+        // See drag-listener#startDrag
+        document.body.classList.add(DomConstants.ClassName.Dragging);
+        this._element.classList.add(DomConstants.ClassName.Dragging);
+        document.querySelector('iframe')?.style.setProperty('pointer-events', 'none');
+        // FIXME: set non-maximized
+        this._layoutManager.startComponentDrag(e, 0, 0, this.componentItem);
     }
 
     /** @internal */
@@ -277,18 +288,25 @@ export class Tab {
 
     /** @internal */
     private enableReorder() {
-        this._dragListener = new DragListener(this._element);
-        this._dragListener.on('dragStart', this._dragStartListener);
+        if (this._layoutManager.useNativeDragAndDrop()) {
+            this._element.addEventListener('dragstart', this._dragStartListener,
+                                           { passive: true });
+        } else {
+            this._dragListener = new DragListener(this._element);
+            this._dragListener?.on('dragStart', this._dragStartListenerOld);
+        }
         this._componentItem.on('destroy', this._contentItemDestroyListener);
     }
 
     /** @internal */
     private disableReorder() {
-        if (this._dragListener === undefined) {
+        if (this._layoutManager.useNativeDragAndDrop()) {
+            this._element.removeEventListener('dragstart', this._dragStartListener);
+        } else if (this._dragListener === undefined) {
             throw new UnexpectedUndefinedError('TDR87745');
         } else {
             this._componentItem.off('destroy', this._contentItemDestroyListener);
-            this._dragListener.off('dragStart', this._dragStartListener);
+            this._dragListener.off('dragStart', this._dragStartListenerOld);
             this._dragListener = undefined;
         }
     }

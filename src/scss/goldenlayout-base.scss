@@ -87,6 +87,12 @@ $height6: 15px; // Appears 1 time
   }
 }
 
+.lm_headers {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+};
+
 // Pane Header (container of Tabs for each pane)
 .lm_header {
   overflow: visible;

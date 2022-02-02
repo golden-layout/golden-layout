@@ -52,6 +52,8 @@ export abstract class LayoutManager extends EventEmitter {
     /** @internal */
     private _containerElement: HTMLElement;
     /** @internal */
+    private _headersContainerElement: HTMLElement;
+    /** @internal */
     private _isFullPage = false;
     /** @internal */
     private _isInitialised = false;
@@ -66,7 +68,11 @@ export abstract class LayoutManager extends EventEmitter {
     /** @internal */
     private _resizeTimeoutId: ReturnType<typeof setTimeout> | undefined;
     /** @internal */
-    private _itemAreas: ContentItem.Area[] = [];
+    private _itemAreas: ContentItem.Area[] | null = null;
+    private _currentlyDragging = false;
+    _draggedComponentItem: ComponentItem | undefined;
+    /** @internal */
+    private _dragEnterCount = 0;
     /** @internal */
     private _maximisedStack: Stack | undefined;
     /** @internal */
@@ -100,14 +106,27 @@ export abstract class LayoutManager extends EventEmitter {
     private _windowUnloadListener = () => this.onUnload();
     /** @internal */
     private _maximisedStackBeforeDestroyedListener = (ev: EventEmitter.BubblingEvent) => this.cleanupBeforeMaximisedStackDestroyed(ev);
+    private _area: ContentItem.Area | null = null;
+    private _lastValidArea: ContentItem.Area | null = null;
+    private _elementsToRemoveOnDragEnd: HTMLElement[] = [];
+
+    popoutClickHandler: (item: Stack, ev: Event)=>boolean = () => false;
 
     readonly isSubWindow: boolean;
     layoutConfig: ResolvedLayoutConfig;
 
     beforeVirtualRectingEvent: LayoutManager.BeforeVirtualRectingEvent | undefined;
     afterVirtualRectingEvent: LayoutManager.AfterVirtualRectingEvent | undefined;
+    createContainerElement: (lm: LayoutManager, config: ResolvedComponentItemConfig)=>HTMLElement = (layoutManager, config) => {
+        const element = document.createElement('div');
+        const parent = layoutManager.groundItem ? layoutManager.groundItem.element
+              : document.body;
+        parent.appendChild(element);
+        return element;
+    };
 
     get container(): HTMLElement { return this._containerElement; }
+    get headersContainerElement(): HTMLElement { return this._headersContainerElement; }
     get isInitialised(): boolean { return this._isInitialised; }
     /** @internal */
     get groundItem(): GroundItem | undefined { return this._groundItem; }
@@ -164,6 +183,10 @@ export abstract class LayoutManager extends EventEmitter {
         if (parameters.containerElement !== undefined) {
             this._containerElement = parameters.containerElement;
         }
+
+        this._headersContainerElement = document.createElement('div');
+        this._headersContainerElement.classList.add(DomConstants.ClassName.Headers);
+        this._headersContainerElement.setAttribute("draggable", "no");
     }
 
     /**
@@ -213,6 +236,17 @@ export abstract class LayoutManager extends EventEmitter {
         return ResolvedLayoutConfig.minifyConfig(config);
     }
 
+    useNativeDragAndDrop(): boolean { return this.layoutConfig.settings.useDragAndDrop; }
+
+    dragDataMimetype(): string { return this.layoutConfig.settings.dragDataMimetype; }
+
+    validDragEvent(e: DragEvent): boolean {
+        // FIXME. Might be a good idea to check that all componentTypes in the
+        // dataTransfer value are registered types.
+        // That should make it more robust even if dragDataMimetype is teh default.
+        return e.dataTransfer?.types.includes(this.dragDataMimetype()) || false;
+    }
+
     /**
      * Takes a configuration Object that was previously minified
      * using minifyConfig and returns its original version
@@ -226,6 +260,16 @@ export abstract class LayoutManager extends EventEmitter {
     abstract bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BindableComponent;
     /** @internal */
     abstract unbindComponent(container: ComponentContainer, virtual: boolean, component: ComponentContainer.Component | undefined): void;
+
+    _hideTargetIndicator() : void { // FIXME rename? hideTargetIndicator
+        const dropTargetIndicator = this.dropTargetIndicator;
+        if (dropTargetIndicator === null) {
+            throw new UnexpectedNullError('DPOD30011');
+        } else {
+            dropTargetIndicator.hide();
+        }
+    }
+
 
     /**
      * Called from GoldenLayout class. Finishes of init
@@ -266,6 +310,8 @@ export abstract class LayoutManager extends EventEmitter {
         }
         const layoutConfig = this.layoutConfig;
         this._groundItem = new GroundItem(this, layoutConfig.root, this._containerElement);
+        this._groundItem.element.insertBefore(this._headersContainerElement,
+                        this._groundItem.element.firstChild);
         this._groundItem.init();
 
         this.checkLoadedLayoutMaximiseItem();
@@ -279,6 +325,57 @@ export abstract class LayoutManager extends EventEmitter {
             // must be SubWindow
             this.loadComponentAsRoot(subWindowRootConfig);
         }
+
+        document.body.addEventListener('dragover', (e) => this.onDragOver(e));
+        document.body.addEventListener('dragenter', (e) => this.onDragEnter(e));
+        document.body.addEventListener('dragleave', (e) => this.onDragLeave(e));
+        document.body.addEventListener('dragend', (e) => this.onDragEnd(e));
+        document.body.addEventListener('drop', (e) => this.onDrop(e));
+        ///* Fired at intervals on the "drag source" (drag-listener) elements
+        // Probably not useful?
+        document.body.addEventListener('drag',
+                                       (e) => { console.log("drag "+(e.target as HTMLElement).getAttribute("class")); });
+        //*/
+    }
+
+     /**
+     * Sets the target position, highlighting the appropriate area
+     *
+     * @param x - The x position in px
+     * @param y - The y position in px
+     *
+     * @internal
+     */
+    private setDropPosition(x: number, y: number): void {
+       // this._element.style.left = numberToPixels(x);
+       // this._element.style.top = numberToPixels(y);
+        this._area = this.getArea(x, y);
+        if (this._area !== null) {
+            this._lastValidArea = this._area;
+            this._area.contentItem.highlightDropZone(x, y, this._area);
+        }
+    }
+   private onDrag(event: MouseEvent) {
+        const x = event.pageX;
+        const y = event.pageY;
+        if (this._itemAreas === null || this._itemAreas.length === 0)
+            return;
+       //
+
+        //if (!this.layoutConfig.settings.constrainDragToContainer) {
+            this.setDropPosition(x, y);
+        /*
+        } else {
+            const isWithinContainer = x > this._minX && x < this._maxX && y > this._minY && y < this._maxY;
+            if (isWithinContainer) {
+                this.setDropPosition(x, y);
+            }
+        }
+        */
+
+/*
+        this._componentItem.drag();
+        */
     }
 
     /**
@@ -914,8 +1011,18 @@ export abstract class LayoutManager extends EventEmitter {
 		dragSource.destroy();
     }
 
+    removeElementEventually(element: HTMLElement): void {
+        if (this._currentlyDragging) {
+            element.style.opacity = "0";
+            this._elementsToRemoveOnDragEnd.push(element);
+        } else {
+            element.remove();
+        }
+    }
+
     /** @internal */
-    startComponentDrag(x: number, y: number, dragListener: DragListener, componentItem: ComponentItem, stack: Stack): void {
+    startComponentDragOld(x: number, y: number, dragListener: DragListener, componentItem: ComponentItem, stack: Stack): void
+    {
         new DragProxy(
             x,
             y,
@@ -924,6 +1031,63 @@ export abstract class LayoutManager extends EventEmitter {
             componentItem,
             stack
         );
+    }
+
+    /** @internal */
+    startComponentDrag(ev: DragEvent, x: number, y: number, componentItem: ComponentItem): void
+    {
+        this._currentlyDragging = true;
+        this._draggedComponentItem = componentItem;
+        if (ev.dataTransfer) {
+            ev.dataTransfer.setData(this.dragDataMimetype(),
+                JSON.stringify({config: componentItem.toConfig()}));
+            ev.dataTransfer.dropEffect = "move"; // "link"; //"move"; // OR "copy";
+        }
+        const image = componentItem.element;
+        //        let image = componentItem.parentItem.element;
+        //        image.style['shape-outside'] = "circle(80%)";
+        image.style.setProperty('shape-outside', 'inset(20px round 30px)');
+        const tabElement = componentItem.tab.element;
+        //tabElement.style.visibility="visible";
+        const headerElement = (componentItem.parentItem as Stack).header.element;
+        //headerElement.style.visibility="hidden";
+        const tabClone = tabElement.cloneNode(true) as HTMLElement;
+        const tabsContainer = document.createElement('section');
+        tabsContainer.classList.add(DomConstants.ClassName.Tabs);
+        tabsContainer.appendChild(tabClone);
+        ///*
+        const headerClone = document.createElement('section');
+        //headerClone.classList.add(DomConstants.ClassName.Header);
+        headerClone.appendChild(tabsContainer);
+        image.insertBefore(headerClone, image.firstChild);
+        //const headerTop = headerElement.style.top;
+        //headerElement.style.top = "-100px";
+        //*/
+        //image.insertBefore(tabsContainer, image.firstChild);
+        //tabClone.style.opacity="0.2";
+        //tabClone.style.background="rgba(0,0,0,0.6)";
+        //headerClone.style.background="rgba(0,0,0,0)";
+        headerClone.style.position = "absolute";
+        headerClone.style.top = "0px";
+        const oldOpacity = image.style.opacity;
+        //image.style.opacity = "0.6";
+    ev.dataTransfer?.setDragImage(image as HTMLElement, 10, 10);
+        window.requestAnimationFrame(() => {
+            tabElement.style.visibility = '';
+            //headerElement.style.top = headerTop;
+            headerElement.style.visibility = '';
+            image.style.opacity = oldOpacity;
+            /*
+    (componentItem.container.component as HTMLElement).style.zIndex = "-4";
+ if (image.lastChild instanceof HTMLElement) {
+                image.lastChild.style.opacity = "";
+ }
+*/
+                console.log("before start removeChild parent:"+componentItem.parent);
+               componentItem.parent?.removeChild(componentItem, true);
+                console.log("after start removeChild");
+                //                this.calculateItemAreas();
+            });
     }
 
     /**
@@ -1101,9 +1265,11 @@ export abstract class LayoutManager extends EventEmitter {
         let matchingArea = null;
         let smallestSurface = Infinity;
 
-        for (let i = 0; i < this._itemAreas.length; i++) {
-            const area = this._itemAreas[i];
-
+        if (this._itemAreas === null)
+            this.calculateItemAreas();
+        const itemAreas = this._itemAreas as ContentItem.Area[];
+        for (let i = 0; i < itemAreas.length; i++) {
+            const area = itemAreas[i];
             if (
                 x > area.x1 &&
                 x < area.x2 &&
@@ -1182,6 +1348,7 @@ export abstract class LayoutManager extends EventEmitter {
                 }
             }
         }
+        console.log("l-m calculateItemAreas: "+this._itemAreas.length+" areas");
     }
 
     /**
@@ -1451,6 +1618,99 @@ export abstract class LayoutManager extends EventEmitter {
                 this.addChildContentItemsToContainer(container, item);
             }
         }
+    }
+
+    private onDragEnter(e: DragEvent) {
+        console.log("dragenter "+(e.target as HTMLElement).getAttribute("class"));
+        if (! this.validDragEvent(e))
+            return;
+        if (this._dragEnterCount == 0) {
+            this.calculateItemAreas();
+            document.querySelector('iframe')?.style.setProperty('pointer-events', 'none');
+        }
+        this._dragEnterCount++;
+        //e.preventDefault();
+    }
+
+    private onDragLeave(e: DragEvent) {
+        console.log("dragleave "+(e.target as HTMLElement).getAttribute("class"));
+        if (! this.validDragEvent(e))
+            return;
+        this._dragEnterCount--;
+        if (this._dragEnterCount <= 0) {
+            this._hideTargetIndicator();
+            document.querySelector('iframe')?.style.setProperty('pointer-events', '');
+        }
+    }
+
+    private onDragOver(e: DragEvent) {
+        const valid = this.validDragEvent(e);
+        console.log("dragover valid-drop:"+valid);
+        //      drag-listener.onPointerMove -> emit('drag', ...)
+        this.onDrag(e);
+        if (valid)
+            e.preventDefault(); // allow drop
+    }
+
+    private onDragEnd(e: DragEvent) {
+        // Four cases:
+        // (1) Normal drop in this window (drop event seen; _currentlyDragging is true)
+        // (2) Normal drop in other window
+        // (3) Drop to desktop
+        // (4) Drag cancelled (dropEffect=="non") (can also use mozUserCancelled
+        // PROBLEM: How to distingish (2) and (3)?
+        const dropEffect = e.dataTransfer?.dropEffect;
+        const component = this._draggedComponentItem;
+        if (dropEffect !== 'none'
+            && component
+            && this._currentlyDragging) {
+            // dropped in other window or to desktop
+            console.log("export-drag");
+            if (component.component)
+                component.container.emit('dragExported', component);
+            // FIME remove
+        }
+        console.log("dragend ev-handler deffect:"+dropEffect);
+        //    console.log("dragend "+(e.target as HTMLElement).getAttribute("class"));
+        //   console.log("- effect:"+e.dataTransfer?.dropEffect);
+        // FIXME incorporate drag-listener:processDragStop
+        this._draggedComponentItem = undefined;
+        // See processDragStop in drag-listener
+        document.body.classList.remove(DomConstants.ClassName.Dragging);
+        // if iframe: clear style.pointer-events
+        for (const el of this._elementsToRemoveOnDragEnd) {
+            if (el.parentNode)
+                el.parentNode.removeChild(el)
+        }
+        this._elementsToRemoveOnDragEnd.length = 0;
+        this._currentlyDragging = false;
+    }
+
+    private onDrop(e: DragEvent) {
+        console.log("drop e-handler");
+        const dvalue = e.dataTransfer?.getData(this.dragDataMimetype());
+        const data = dvalue && JSON.parse(dvalue);
+        // JSON.parse(data);
+        if (e.dataTransfer) e.dataTransfer.dropEffect="move";
+        e.preventDefault();
+        this._dragEnterCount = 0;
+        // FIXME check type
+
+        // SEE drag-proxy:onDrop
+        this._hideTargetIndicator();
+        let droppedComponentItem: ComponentItem | undefined;
+        if (this._area !== null) {
+            if (this._draggedComponentItem) {
+                droppedComponentItem = this._draggedComponentItem;
+                this._area.contentItem.onDrop(droppedComponentItem, this._area);
+                (droppedComponentItem.container.component as HTMLElement).style.zIndex = "";
+            } else {
+                console.log("dropped from different window");
+                const item = new ComponentItem(this, data.config, this.groundItem as ComponentParentableItem);
+                this._area.contentItem.onDrop(item, this._area);
+            }
+        }
+        this._currentlyDragging = false;
     }
 
     /**
