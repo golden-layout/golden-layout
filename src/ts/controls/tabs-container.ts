@@ -89,6 +89,8 @@ export class TabsContainer {
                 const tab = this._tabs[i];
                 tab.destroy();
                 this._tabs.splice(i, 1);
+                if (i <= this._lastVisibleTabIndex)
+                    --this._lastVisibleTabIndex;
                 return;
             }
         }
