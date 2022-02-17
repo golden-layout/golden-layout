@@ -1,5 +1,6 @@
 import { DomConstants } from './dom-constants';
 import { EventEmitter } from './event-emitter';
+import { enableIFramePointerEvents } from './utils';
 
 /** @internal */
 export class DragListener extends EventEmitter {
@@ -138,7 +139,7 @@ export class DragListener extends EventEmitter {
         if (this._dragging === true) {
             this._eBody.classList.remove(DomConstants.ClassName.Dragging);
             this._eElement.classList.remove(DomConstants.ClassName.Dragging);
-            this._oDocument.querySelector('iframe')?.style.setProperty('pointer-events', '');
+            enableIFramePointerEvents(true);
             this._dragging = false;
             this.emit('dragStop', dragEvent);
         }
@@ -160,7 +161,7 @@ export class DragListener extends EventEmitter {
         this._dragging = true;
         this._eBody.classList.add(DomConstants.ClassName.Dragging);
         this._eElement.classList.add(DomConstants.ClassName.Dragging);
-        this._oDocument.querySelector('iframe')?.style.setProperty('pointer-events', 'none');
+        enableIFramePointerEvents(false);
         this.emit('dragStart', this._nOriginalX, this._nOriginalY);
     }
 

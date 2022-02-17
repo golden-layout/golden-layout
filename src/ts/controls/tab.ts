@@ -5,6 +5,7 @@ import { Stack } from '../items/stack';
 import { LayoutManager } from '../layout-manager';
 import { DomConstants } from '../utils/dom-constants';
 import { DragListener } from '../utils/drag-listener';
+import { enableIFramePointerEvents } from '../utils/utils';
 
 /**
  * Represents an individual tab within a Stack's header
@@ -198,7 +199,7 @@ export class Tab {
         // See drag-listener#startDrag
         document.body.classList.add(DomConstants.ClassName.Dragging);
         this._element.classList.add(DomConstants.ClassName.Dragging);
-        document.querySelector('iframe')?.style.setProperty('pointer-events', 'none');
+        enableIFramePointerEvents(false);
         // FIXME: set non-maximized
         this._layoutManager.startComponentDrag(e, 0, 0, this.componentItem);
     }

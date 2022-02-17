@@ -30,6 +30,7 @@ import { EventHub } from './utils/event-hub';
 import { I18nStringId, I18nStrings, i18nStrings } from './utils/i18n-strings';
 import { ItemType, JsonValue, Rect, ResponsiveMode } from './utils/types';
 import {
+    enableIFramePointerEvents,
     getElementWidthAndHeight,
     removeFromArray,
     setElementHeight,
@@ -1044,12 +1045,11 @@ export abstract class LayoutManager extends EventEmitter {
             ev.dataTransfer.dropEffect = "move"; // "link"; //"move"; // OR "copy";
         }
         const image = componentItem.element;
-        //        let image = componentItem.parentItem.element;
-        //        image.style['shape-outside'] = "circle(80%)";
-        image.style.setProperty('shape-outside', 'inset(20px round 30px)');
         const tabElement = componentItem.tab.element;
         //tabElement.style.visibility="visible";
-        const headerElement = (componentItem.parentItem as Stack).header.element;
+        const stack = componentItem.parent as Stack;
+        const isActiveTab = stack.getActiveComponentItem() === componentItem;
+        const headerElement = stack.header.element;
         //headerElement.style.visibility="hidden";
         const tabClone = tabElement.cloneNode(true) as HTMLElement;
         const tabsContainer = document.createElement('section');
@@ -1069,25 +1069,43 @@ export abstract class LayoutManager extends EventEmitter {
         //headerClone.style.background="rgba(0,0,0,0)";
         headerClone.style.position = "absolute";
         headerClone.style.top = "0px";
+        if (! isActiveTab) {
+            for (const sibling of stack.contentItems) {
+                if (sibling !== componentItem)
+                    sibling.element.style.opacity = '0';
+            }
+        }
+        //Ideally we'd like to have the drag image be partially transparent.
+        //That is the default on Firefox, so we're OK.
+        //The following works on GtkWebKit and presumably Safari
+        //  image.style.opacity = "0.6";
+        //However, it semi-breaks Firefox, making it too transparent.
+        //It also seems to have no effect on Chrome/Electron.
+        //Maybe this needs to be a browser-dependent setting.  FIXME.
         const oldOpacity = image.style.opacity;
-        //image.style.opacity = "0.6";
-    ev.dataTransfer?.setDragImage(image as HTMLElement, 10, 10);
+        //The offset from the mouse pointer is wrong on GtkWebKit:
+        //- It seems to ignore the offset and just center the image over
+        //- the mouse cursor. FIXME.
+        //Pehaps scale the image if it is really large. FIXME.
+        const clientRect = (ev.target as HTMLElement).getBoundingClientRect();
+        ev.dataTransfer?.setDragImage(image as HTMLElement,
+                                      ev.clientX - clientRect.left,
+                                      ev.clientY - clientRect.top);
+
         window.requestAnimationFrame(() => {
+            if (! isActiveTab) {
+                for (const sibling of stack.contentItems) {
+                    if (sibling !== componentItem)
+                        sibling.element.style.opacity = '';
+                }
+            }
             tabElement.style.visibility = '';
             //headerElement.style.top = headerTop;
             headerElement.style.visibility = '';
             image.style.opacity = oldOpacity;
-            /*
-    (componentItem.container.component as HTMLElement).style.zIndex = "-4";
- if (image.lastChild instanceof HTMLElement) {
-                image.lastChild.style.opacity = "";
- }
-*/
-                console.log("before start removeChild parent:"+componentItem.parent);
-               componentItem.parent?.removeChild(componentItem, true);
-                console.log("after start removeChild");
-                //                this.calculateItemAreas();
-            });
+            componentItem.element.style.visibility = 'hidden';
+            componentItem.parent?.removeChild(componentItem, true);
+        });
     }
 
     /**
@@ -1626,26 +1644,25 @@ export abstract class LayoutManager extends EventEmitter {
             return;
         if (this._dragEnterCount == 0) {
             this.calculateItemAreas();
-            document.querySelector('iframe')?.style.setProperty('pointer-events', 'none');
+            enableIFramePointerEvents(false);
         }
         this._dragEnterCount++;
-        //e.preventDefault();
+        e.preventDefault();
     }
 
     private onDragLeave(e: DragEvent) {
-        console.log("dragleave "+(e.target as HTMLElement).getAttribute("class"));
+        console.log("dragleave "+(e.target as HTMLElement).getAttribute("class")+" entercount:"+this._dragEnterCount);
         if (! this.validDragEvent(e))
             return;
         this._dragEnterCount--;
         if (this._dragEnterCount <= 0) {
-            this._hideTargetIndicator();
-            document.querySelector('iframe')?.style.setProperty('pointer-events', '');
+            this.exitDrag();
         }
     }
 
     private onDragOver(e: DragEvent) {
         const valid = this.validDragEvent(e);
-        console.log("dragover valid-drop:"+valid);
+        console.log("dragover valid-drop:"+valid+" enter-count:"+this._dragEnterCount);
         //      drag-listener.onPointerMove -> emit('drag', ...)
         this.onDrag(e);
         if (valid)
@@ -1670,10 +1687,12 @@ export abstract class LayoutManager extends EventEmitter {
                 component.container.emit('dragExported', component);
             // FIME remove
         }
-        console.log("dragend ev-handler deffect:"+dropEffect);
+        console.log("dragend ev-handler deffect:"+dropEffect+" enter-count:"+this._dragEnterCount);
         //    console.log("dragend "+(e.target as HTMLElement).getAttribute("class"));
         //   console.log("- effect:"+e.dataTransfer?.dropEffect);
         // FIXME incorporate drag-listener:processDragStop
+        if (this._draggedComponentItem)
+            this._draggedComponentItem.element.style.visibility = '';
         this._draggedComponentItem = undefined;
         // See processDragStop in drag-listener
         document.body.classList.remove(DomConstants.ClassName.Dragging);
@@ -1686,6 +1705,14 @@ export abstract class LayoutManager extends EventEmitter {
         this._currentlyDragging = false;
     }
 
+    private exitDrag() {
+        this._dragEnterCount = 0;
+        this._hideTargetIndicator();
+        //this.dropTargetIndicator.hide();
+        //this._componentItem.exitDragMode();
+        enableIFramePointerEvents(true);
+    }
+
     private onDrop(e: DragEvent) {
         console.log("drop e-handler");
         const dvalue = e.dataTransfer?.getData(this.dragDataMimetype());
@@ -1693,11 +1720,10 @@ export abstract class LayoutManager extends EventEmitter {
         // JSON.parse(data);
         if (e.dataTransfer) e.dataTransfer.dropEffect="move";
         e.preventDefault();
-        this._dragEnterCount = 0;
+        this.exitDrag();
         // FIXME check type
 
         // SEE drag-proxy:onDrop
-        this._hideTargetIndicator();
         let droppedComponentItem: ComponentItem | undefined;
         if (this._area !== null) {
             if (this._draggedComponentItem) {
