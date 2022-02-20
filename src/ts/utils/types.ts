@@ -44,7 +44,7 @@ export namespace LogicalZIndex {
 export const LogicalZIndexToDefaultMap = {
     base: StyleConstants.defaultComponentBaseZIndex,
     drag: StyleConstants.defaultComponentDragZIndex,
-    stackMaximised: StyleConstants.defaultComponentDragZIndex,
+    stackMaximised: StyleConstants.defaultComponentStackMaximisedZIndex,
 }
 
 /** @internal */
