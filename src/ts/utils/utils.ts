@@ -51,7 +51,7 @@ export function setElementDisplayVisibility(element: HTMLElement, visible: boole
 }
 
 /** @internal */
-export function enableIFramePointerEvents(enable: boolean) {
+export function enableIFramePointerEvents(enable: boolean): void {
     document.querySelectorAll('iframe.lm_content').forEach((element) =>
         (element as HTMLElement).style.setProperty('pointer-events', enable ? '' : 'none'));
 }

@@ -201,7 +201,7 @@ export class Tab {
         this._element.classList.add(DomConstants.ClassName.Dragging);
         enableIFramePointerEvents(false);
         // FIXME: set non-maximized
-        this._layoutManager.startComponentDrag(e, 0, 0, this.componentItem);
+        this._layoutManager.startComponentDrag(e, this.componentItem);
     }
 
     /** @internal */

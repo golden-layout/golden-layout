@@ -1035,7 +1035,7 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /** @internal */
-    startComponentDrag(ev: DragEvent, x: number, y: number, componentItem: ComponentItem): void
+    startComponentDrag(ev: DragEvent, componentItem: ComponentItem): void
     {
         this._currentlyDragging = true;
         this._draggedComponentItem = componentItem;
@@ -1086,11 +1086,13 @@ export abstract class LayoutManager extends EventEmitter {
         //The offset from the mouse pointer is wrong on GtkWebKit:
         //- It seems to ignore the offset and just center the image over
         //- the mouse cursor. FIXME.
-        //Pehaps scale the image if it is really large. FIXME.
+        //Perhaps scale the image if it is really large. FIXME.
         const clientRect = (ev.target as HTMLElement).getBoundingClientRect();
-        ev.dataTransfer?.setDragImage(image as HTMLElement,
-                                      ev.clientX - clientRect.left,
-                                      ev.clientY - clientRect.top);
+        const dX = ev.clientX - clientRect.left;
+        const dY = ev.clientY - clientRect.top;
+        ev.dataTransfer?.setDragImage(image as HTMLElement, dX, dY);
+        this.emit('dragstart', ev);
+        enableIFramePointerEvents(false);
 
         window.requestAnimationFrame(() => {
             if (! isActiveTab) {
@@ -1644,7 +1646,6 @@ export abstract class LayoutManager extends EventEmitter {
             return;
         if (this._dragEnterCount == 0) {
             this.calculateItemAreas();
-            enableIFramePointerEvents(false);
         }
         this._dragEnterCount++;
         e.preventDefault();
@@ -1703,6 +1704,8 @@ export abstract class LayoutManager extends EventEmitter {
         }
         this._elementsToRemoveOnDragEnd.length = 0;
         this._currentlyDragging = false;
+        enableIFramePointerEvents(true);
+        this.emit('dragend', e);
     }
 
     private exitDrag() {
@@ -1710,7 +1713,11 @@ export abstract class LayoutManager extends EventEmitter {
         this._hideTargetIndicator();
         //this.dropTargetIndicator.hide();
         //this._componentItem.exitDragMode();
-        enableIFramePointerEvents(true);
+    }
+
+    // A drag was started/ending in another (top-level) window
+    public draggingInOtherWindow(ending: boolean): void {
+        enableIFramePointerEvents(ending);
     }
 
     private onDrop(e: DragEvent) {
