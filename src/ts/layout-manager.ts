@@ -49,10 +49,21 @@ declare global {
 
 /** @public */
 export abstract class LayoutManager extends EventEmitter {
+    /** Whether the layout will be automatically be resized to container whenever the container's size is changed
+     * Default is true if <body> is the container otherwise false
+     * Default will be changed to true for any container in the future
+     */
+    resizeWithContainerAutomatically = false;
+    /** The debounce interval (in milliseconds) used whenever a layout is automatically resized.  0 means next tick */
+    resizeDebounceInterval = 100;
+    /** Extend the current debounce delay time period if it is triggered during the delay.
+     * If this is true, the layout will only resize when its container has stopped being resized.
+     * If it is false, the layout will resize at intervals while its container is being resized.
+     */
+    resizeDebounceExtendedWhenPossible = true;
+
     /** @internal */
     private _containerElement: HTMLElement;
-    /** @internal */
-    private _isFullPage = false;
     /** @internal */
     private _isInitialised = false;
     /** @internal */
@@ -92,10 +103,12 @@ export abstract class LayoutManager extends EventEmitter {
     /** @internal */
     private _virtualSizedContainerAddingBeginCount = 0;
     /** @internal */
+    private _sizeInvalidationBeginCount = 0;
+    /** @internal */
     protected _constructorOrSubWindowLayoutConfig: LayoutConfig | undefined; // protected for backwards compatibility
 
     /** @internal */
-    private _windowResizeListener = () => this.processResizeWithDebounce();
+    private _resizeObserver = new ResizeObserver(() => this.handleContainerResize());
     /** @internal */
     private _windowUnloadListener = () => this.onUnload();
     /** @internal */
@@ -177,11 +190,12 @@ export abstract class LayoutManager extends EventEmitter {
                     this._openPopouts[i].close();
                 }
             }
-            if (this._isFullPage) {
-                globalThis.removeEventListener('resize', this._windowResizeListener);
-            }
+
+            this._resizeObserver.disconnect();
+            this.checkClearResizeTimeout();
             globalThis.removeEventListener('unload', this._windowUnloadListener);
             globalThis.removeEventListener('beforeunload', this._windowUnloadListener);
+
             if (this._groundItem !== undefined) {
                 this._groundItem.destroy();
             }
@@ -621,11 +635,23 @@ export abstract class LayoutManager extends EventEmitter {
                     const { width, height } = getElementWidthAndHeight(this._containerElement);
                     setElementWidth(this._maximisedStack.element, width);
                     setElementHeight(this._maximisedStack.element, height);
-                    this._maximisedStack.updateSize();
+                    this._maximisedStack.updateSize(false);
                 }
 
                 this.adjustColumnsResponsive();
             }
+        }
+    }
+
+    /** @internal */
+    beginSizeInvalidation(): void {
+        this._sizeInvalidationBeginCount++;
+    }
+
+    /** @internal */
+    endSizeInvalidation(): void {
+        if (--this._sizeInvalidationBeginCount === 0) {
+            this.updateSizeFromContainer();
         }
     }
 
@@ -637,12 +663,16 @@ export abstract class LayoutManager extends EventEmitter {
 
     /**
      * Update the size of the root ContentItem.  This will update the size of all contentItems in the tree
+     * @param force - In some cases the size is not updated if it has not changed. In this case, events
+     * (such as ComponentContainer.virtualRectingRequiredEvent) are not fired. Setting force to true, ensures the size is updated regardless, and
+     * the respective events are fired. This is sometimes necessary when a component's size has not changed but it has become visible, and the
+     * relevant events need to be fired.
      */
-    updateRootSize(): void {
+    updateRootSize(force = false): void {
         if (this._groundItem === undefined) {
             throw new UnexpectedUndefinedError('LMURS28881');
         } else {
-            this._groundItem.updateSize();
+            this._groundItem.updateSize(force);
         }
     }
 
@@ -1227,7 +1257,7 @@ export abstract class LayoutManager extends EventEmitter {
             const { width, height } = getElementWidthAndHeight(this._containerElement);
             setElementWidth(stack.element, width);
             setElementHeight(stack.element, height);
-            stack.updateSize();
+            stack.updateSize(true);
             stack.focusActiveContentItem();
             this._maximisedStack.emit('maximised');
             this.emit('stateChanged');
@@ -1246,7 +1276,7 @@ export abstract class LayoutManager extends EventEmitter {
                 stack.element.classList.remove(DomConstants.ClassName.Maximised);
                 this._maximisePlaceholder.insertAdjacentElement('afterend', stack.element);
                 this._maximisePlaceholder.remove();
-                stack.parent.updateSize();
+                this.updateRootSize(true);
                 this._maximisedStack = undefined;
                 stack.off('beforeItemDestroyed', this._maximisedStackBeforeDestroyedListener);
                 stack.emit('minimised');
@@ -1297,9 +1327,7 @@ export abstract class LayoutManager extends EventEmitter {
      * @internal
      */
     private bindEvents() {
-        if (this._isFullPage) {
-            globalThis.addEventListener('resize', this._windowResizeListener, { passive: true });
-        }
+        this._resizeObserver.observe(this._containerElement);
         globalThis.addEventListener('unload', this._windowUnloadListener, { passive: true });
         globalThis.addEventListener('beforeunload', this._windowUnloadListener, { passive: true });
     }
@@ -1320,11 +1348,38 @@ export abstract class LayoutManager extends EventEmitter {
      * Debounces resize events
      * @internal
      */
+    private handleContainerResize(): void {
+        if (this.resizeWithContainerAutomatically) {
+            this.processResizeWithDebounce();
+        }
+    }
+
+    /**
+     * Debounces resize events
+     * @internal
+     */
     private processResizeWithDebounce(): void {
+        if (this.resizeDebounceExtendedWhenPossible) {
+            this.checkClearResizeTimeout();
+        }
+
+        if (this._resizeTimeoutId === undefined) {
+            this._resizeTimeoutId = setTimeout(
+                () => {
+                    this._resizeTimeoutId = undefined;
+                    this.beginSizeInvalidation();
+                    this.endSizeInvalidation();
+                },
+                this.resizeDebounceInterval,
+            );
+        }
+    }
+
+    private checkClearResizeTimeout() {
         if (this._resizeTimeoutId !== undefined) {
             clearTimeout(this._resizeTimeoutId);
+            this._resizeTimeoutId = undefined;
         }
-        this._resizeTimeoutId = setTimeout(() => this.updateSizeFromContainer(), 100);
     }
 
     /**
@@ -1336,17 +1391,17 @@ export abstract class LayoutManager extends EventEmitter {
         const containerElement = this._containerElement ?? bodyElement;
 
         if (containerElement === bodyElement) {
-            this._isFullPage = true;
+            this.resizeWithContainerAutomatically = true;
 
             const documentElement = document.documentElement;
             documentElement.style.height = '100%';
             documentElement.style.margin = '0';
             documentElement.style.padding = '0';
-            documentElement.style.overflow = 'hidden';
+            documentElement.style.overflow = 'clip';
             bodyElement.style.height = '100%';
             bodyElement.style.margin = '0';
             bodyElement.style.padding = '0';
-            bodyElement.style.overflow = 'hidden';
+            bodyElement.style.overflow = 'clip';
         }
 
         this._containerElement = containerElement;

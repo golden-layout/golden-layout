@@ -235,7 +235,7 @@ export class ComponentItem extends ContentItem {
     // (undocumented)
     toConfig(): ResolvedComponentItemConfig;
     // @internal (undocumented)
-    updateSize(): void;
+    updateSize(force: boolean): void;
 }
 
 // @public (undocumented)
@@ -356,9 +356,9 @@ export abstract class ContentItem extends EventEmitter {
     // (undocumented)
     get type(): ItemType;
     // @internal (undocumented)
-    protected updateContentItemsSize(): void;
+    protected updateContentItemsSize(force: boolean): void;
     // @internal
-    abstract updateSize(): void;
+    abstract updateSize(force: boolean): void;
     // @internal (undocumented)
     width: number;
 }
@@ -1015,6 +1015,8 @@ export abstract class LayoutManager extends EventEmitter {
     // (undocumented)
     beforeVirtualRectingEvent: LayoutManager.BeforeVirtualRectingEvent | undefined;
     // @internal (undocumented)
+    beginSizeInvalidation(): void;
+    // @internal (undocumented)
     beginVirtualSizedContainerAdding(): void;
     // @internal (undocumented)
     abstract bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BindableComponent;
@@ -1046,6 +1048,8 @@ export abstract class LayoutManager extends EventEmitter {
     //
     // @internal (undocumented)
     get dropTargetIndicator(): DropTargetIndicator | null;
+    // @internal (undocumented)
+    endSizeInvalidation(): void;
     // @internal (undocumented)
     endVirtualSizedContainerAdding(): void;
     get eventHub(): EventHub;
@@ -1090,6 +1094,9 @@ export abstract class LayoutManager extends EventEmitter {
     // (undocumented)
     get openPopouts(): BrowserPopout[];
     removeDragSource(dragSource: DragSource): void;
+    resizeDebounceExtendedWhenPossible: boolean;
+    resizeDebounceInterval: number;
+    resizeWithContainerAutomatically: boolean;
     // @internal @deprecated (undocumented)
     get root(): GroundItem | undefined;
     // (undocumented)
@@ -1114,7 +1121,7 @@ export abstract class LayoutManager extends EventEmitter {
     abstract unbindComponent(container: ComponentContainer, virtual: boolean, component: ComponentContainer.Component | undefined): void;
     // @deprecated
     unminifyConfig(config: ResolvedLayoutConfig): ResolvedLayoutConfig;
-    updateRootSize(): void;
+    updateRootSize(force?: boolean): void;
     // @deprecated (undocumented)
     updateSize(width: number, height: number): void;
     // @internal (undocumented)
@@ -1632,7 +1639,7 @@ export class RowOrColumn extends ContentItem {
     protected setParent(parent: ContentItem): void;
     // (undocumented)
     toConfig(): ResolvedRowOrColumnItemConfig;
-    updateSize(): void;
+    updateSize(force: boolean): void;
 }
 
 // @public (undocumented)
@@ -1748,7 +1755,7 @@ export class Stack extends ComponentParentableItem {
     toConfig(): ResolvedStackItemConfig;
     toggleMaximise(): void;
     // @internal (undocumented)
-    updateSize(): void;
+    updateSize(force: boolean): void;
 }
 
 // @public (undocumented)

@@ -109,9 +109,13 @@ export abstract class ContentItem extends EventEmitter {
 
     /**
      * Updaters the size of the component and its children, called recursively
+     * @param force - In some cases the size is not updated if it has not changed. In this case, events
+     * (such as ComponentContainer.virtualRectingRequiredEvent) are not fired. Setting force to true, ensures the size is updated regardless, and
+     * the respective events are fired. This is sometimes necessary when a component's size has not changed but it has become visible, and the
+     * relevant events need to be fired.
      * @internal
      */
-    abstract updateSize(): void;
+    abstract updateSize(force: boolean): void;
 
     /**
      * Removes a child node (and its children) from the tree
@@ -148,7 +152,7 @@ export abstract class ContentItem extends EventEmitter {
          * If this node still contains other content items, adjust their size
          */
         if (this._contentItems.length > 0) {
-            this.updateSize();
+            this.updateSize(false);
         } else {
             /**
              * If this was the last content item, remove this node as well
@@ -231,7 +235,7 @@ export abstract class ContentItem extends EventEmitter {
                     newChild.init();
                 }
 
-                this.updateSize();
+                this.updateSize(false);
             }
         }
     }
@@ -291,14 +295,19 @@ export abstract class ContentItem extends EventEmitter {
 
     /** @internal */
     show(): void {
-        // Not sure why showAllActiveContentItems() was called. GoldenLayout seems to work fine without it.  Left commented code
-        // in source in case a reason for it becomes apparent.
-        // this.layoutManager.showAllActiveContentItems();
-        setElementDisplayVisibility(this._element, true);
-        this.layoutManager.updateSizeFromContainer();
+        this.layoutManager.beginSizeInvalidation();
+        try {
+            // Not sure why showAllActiveContentItems() was called. GoldenLayout seems to work fine without it.  Left commented code
+            // in source in case a reason for it becomes apparent.
+            // this.layoutManager.showAllActiveContentItems();
+            setElementDisplayVisibility(this._element, true);
+            // this.layoutManager.updateSizeFromContainer();
 
-        for (let i = 0; i < this._contentItems.length; i++) {
-            this._contentItems[i].show();
+            for (let i = 0; i < this._contentItems.length; i++) {
+                this._contentItems[i].show();
+            }
+        } finally {
+            this.layoutManager.endSizeInvalidation();
         }
     }
 
@@ -374,14 +383,19 @@ export abstract class ContentItem extends EventEmitter {
 
     /** @internal */
     protected hide(): void {
-        setElementDisplayVisibility(this._element, false);
-        this.layoutManager.updateSizeFromContainer();
+        this.layoutManager.beginSizeInvalidation();
+        try {
+            setElementDisplayVisibility(this._element, false);
+            // this.layoutManager.updateSizeFromContainer();
+        } finally {
+            this.layoutManager.endSizeInvalidation();
+        }
     }
 
     /** @internal */
-    protected updateContentItemsSize(): void {
+    protected updateContentItemsSize(force: boolean): void {
         for (let i = 0; i < this._contentItems.length; i++) {
-            this._contentItems[i].updateSize();
+            this._contentItems[i].updateSize(force);
         }
     }
 
