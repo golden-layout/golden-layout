@@ -78,17 +78,18 @@ Run `npm install` to remove the npm link.
 
 The following information sources are available which can be used to learn how to use Golden Layout:
 
-* [Golden Layout website](https://golden-layout.com)
-* This readme
+* [Original Golden Layout website](https://golden-layout.com)\
+Documents version 1 of Golden Layout. While substantial changes were made in version 2, this website can still be used to gain a broad understanding of Golden Layout.
+* This readme\
+Can be used to learn about features introduced in Version 2. It also describes the changes necessary to migrate an application from version 1 to version 2.
+* [API Reference](./reference/index.html)
 * CodePen examples
-
-The Golden Layout website documents version 1 of Golden Layout. While substantial changes were made in version 2, this website can still be used to gain a broad understanding of Golden Layout.
-
-This readme can be used to learn about features introduced in Version 2. It also describes the changes necessary to migrate an application from version 1 to version 2.
-
-The following CodePen examples are available:
-* [**Adding items to a predefined layout**](https://codepen.io/pbklink/pen/dyWJNNm)\
-A basic example showing how Golden Layout is set up and how to add a new item to a layout.
+    * [**Adding items to a predefined layout**](https://codepen.io/pbklink/pen/dyWJNNm)\
+    A basic example showing how Golden Layout is set up and how to add a new item to a layout.
+* Source code in example Applications:
+    * [testapi](#build-and-run-demotest-app)
+    * [Angular example application](https://github.com/golden-layout/golden-layout-ng-app)
+    * [Vue Example](https://github.com/chyj4747/vue3-golden-layout-virtualcomponent)
 
 # Binding Components
 
