@@ -45,7 +45,7 @@ export class Stack extends ComponentParentableItem {
     private _initialActiveItemIndex: number;
 
     /** @internal */
-    private _resizeListener = () => this.handleResize();
+    private _resizeListener = () => this.updateTabSizes();
     /** @internal */
     private _maximisedListener = () => this.handleMaximised();
     /** @internal */
@@ -186,7 +186,7 @@ export class Stack extends ComponentParentableItem {
 
                 this.setActiveComponentItem(contentItems[this._initialActiveItemIndex] as ComponentItem, false);
 
-                this._header.updateTabSizes();
+                this.updateTabSizes();
             }
         }
 
@@ -727,6 +727,7 @@ export class Stack extends ComponentParentableItem {
 
         let area: AreaLinkedRect;
 
+        const tabDropPlaceholder = this.layoutManager.tabDropPlaceholder;
         // Empty stack
         if (tabsLength === 0) {
             const headerOffset = getJQueryOffset(this._header.element);
@@ -777,14 +778,13 @@ export class Stack extends ComponentParentableItem {
 
             if (x < halfX) {
                 this._dropIndex = tabIndex;
-                tabElement.insertAdjacentElement('beforebegin', this.layoutManager.tabDropPlaceholder);
+                tabElement.insertAdjacentElement('beforebegin', tabDropPlaceholder);
             } else {
                 this._dropIndex = Math.min(tabIndex + 1, tabsLength);
-                tabElement.insertAdjacentElement('afterend', this.layoutManager.tabDropPlaceholder);
+                tabElement.insertAdjacentElement('afterend', tabDropPlaceholder);
             }
-
-            const tabDropPlaceholderOffset = getJQueryOffset(this.layoutManager.tabDropPlaceholder);
-            const tabDropPlaceholderWidth = getElementWidth(this.layoutManager.tabDropPlaceholder)
+            const tabDropPlaceholderOffset = getJQueryOffset(tabDropPlaceholder);
+            const tabDropPlaceholderWidth = getElementWidth(tabDropPlaceholder);
             if (this._header.leftRightSided) {
                 const placeHolderTop = tabDropPlaceholderOffset.top;
                 area = {
@@ -845,9 +845,9 @@ export class Stack extends ComponentParentableItem {
         }
     }
 
-    /** @internal */
-    private handleResize() {
-        this._header.updateTabSizes()
+    updateTabSizes(): void {
+        if (this._header)
+            this._header.updateTabSizes();
     }
 
     /** @internal */

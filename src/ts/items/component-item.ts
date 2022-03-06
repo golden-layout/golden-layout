@@ -24,6 +24,8 @@ export class ComponentItem extends ContentItem {
     /** @internal */
     private _tab: Tab;
     /** @internal */
+    private _titleRenderer: Tab.TitleRenderer | undefined;
+    /** @internal */
     private _focused = false;
 
     /** @internal @deprecated use {@link (ComponentItem:class).componentType} */
@@ -38,6 +40,7 @@ export class ComponentItem extends ContentItem {
 
     get headerConfig(): ResolvedHeaderedItemConfig.Header | undefined { return this._headerConfig; }
     get title(): string { return this._title; }
+    get titleRenderer(): Tab.TitleRenderer | undefined { return this._titleRenderer; }
     get tab(): Tab { return this._tab; }
     get focused(): boolean { return this._focused; }
 
@@ -166,6 +169,12 @@ export class ComponentItem extends ContentItem {
     setTitle(title: string): void {
         this._title = title;
         this.emit('titleChanged', title);
+        this.emit('stateChanged');
+    }
+
+    setTitleRenderer(renderer: Tab.TitleRenderer | undefined): void {
+        this._titleRenderer = renderer;
+        this.emit('titleChanged', this._title);
         this.emit('stateChanged');
     }
 
