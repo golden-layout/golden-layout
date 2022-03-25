@@ -181,8 +181,10 @@ export namespace EventEmitter {
         "closed": NoParams;
         "destroy": NoParams;
         "drag": DragParams;
-        "dragstart": DragEventParams; // Native (new-style) drag
+        "dragstart": DragComponentParams; // Native (new-style) drag
         "dragend": DragEventParams; // Native (new-style) drag
+        "drag-enter-window": DragEventParams; // Native (new-style) drag
+        "drag-leave-window": DragEventParams; // Native (new-style) drag
         "dragStart": DragStartParams; // Non-native (old-style) drag
         "dragStop": DragStopParams;
         "dragExported": ComponentItemParam;
@@ -226,6 +228,7 @@ export namespace EventEmitter {
     export type DragStopParams = [event: PointerEvent | undefined];
     export type DragParams = [offsetX: number, offsetY: number, event: PointerEvent];
     export type DragEventParams = [event: DragEvent];
+    export type DragComponentParams = [event: DragEvent, component: ComponentItem];
     export type BeforeComponentReleaseParams = [component: unknown];
     export type ClickBubblingEventParam = [ClickBubblingEvent];
     export type TouchStartBubblingEventParam = [TouchStartBubblingEvent];

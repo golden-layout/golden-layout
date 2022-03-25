@@ -335,7 +335,9 @@ export abstract class LayoutManager extends EventEmitter {
         ///* Fired at intervals on the "drag source" (drag-listener) elements
         // Probably not useful?
         document.body.addEventListener('drag',
-                                       (e) => { console.log("drag "+(e.target as HTMLElement).getAttribute("class")); });
+                                       (e) => {
+                                           //console.log("drag "+(e.target as HTMLElement).getAttribute("class"));
+                                       });
         //*/
     }
 
@@ -1091,7 +1093,7 @@ export abstract class LayoutManager extends EventEmitter {
         const dX = ev.clientX - clientRect.left;
         const dY = ev.clientY - clientRect.top;
         ev.dataTransfer?.setDragImage(image as HTMLElement, dX, dY);
-        this.emit('dragstart', ev);
+        this.emit('dragstart', ev, componentItem);
         enableIFramePointerEvents(false);
 
         window.requestAnimationFrame(() => {
@@ -1645,6 +1647,7 @@ export abstract class LayoutManager extends EventEmitter {
         if (! this.validDragEvent(e))
             return;
         if (this._dragEnterCount == 0) {
+            this.emit('drag-enter-window', e);
             this.calculateItemAreas();
         }
         this._dragEnterCount++;
@@ -1657,13 +1660,13 @@ export abstract class LayoutManager extends EventEmitter {
             return;
         this._dragEnterCount--;
         if (this._dragEnterCount <= 0) {
-            this.exitDrag();
+            this.exitDrag(e);
+            this.emit('drag-leave-window', e);
         }
     }
 
     private onDragOver(e: DragEvent) {
         const valid = this.validDragEvent(e);
-        console.log("dragover valid-drop:"+valid+" enter-count:"+this._dragEnterCount);
         //      drag-listener.onPointerMove -> emit('drag', ...)
         this.onDrag(e);
         if (valid)
@@ -1675,7 +1678,7 @@ export abstract class LayoutManager extends EventEmitter {
         // (1) Normal drop in this window (drop event seen; _currentlyDragging is true)
         // (2) Normal drop in other window
         // (3) Drop to desktop
-        // (4) Drag cancelled (dropEffect=="non") (can also use mozUserCancelled
+        // (4) Drag cancelled (dropEffect=="none") (can also use mozUserCancelled
         // PROBLEM: How to distingish (2) and (3)?
         const dropEffect = e.dataTransfer?.dropEffect;
         const component = this._draggedComponentItem;
@@ -1708,7 +1711,7 @@ export abstract class LayoutManager extends EventEmitter {
         this.emit('dragend', e);
     }
 
-    private exitDrag() {
+    private exitDrag(e: DragEvent) {
         this._dragEnterCount = 0;
         this._hideTargetIndicator();
         //this.dropTargetIndicator.hide();
@@ -1727,7 +1730,7 @@ export abstract class LayoutManager extends EventEmitter {
         // JSON.parse(data);
         if (e.dataTransfer) e.dataTransfer.dropEffect="move";
         e.preventDefault();
-        this.exitDrag();
+        this.exitDrag(e);
         // FIXME check type
 
         // SEE drag-proxy:onDrop
