@@ -22,7 +22,6 @@
   "author": "Golden Layout community",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
-  "browser": "dist/bundle/golden-layout.js",
   "typings": "dist/types/index.d.ts",
   "files": [
     "dist/**/*",
