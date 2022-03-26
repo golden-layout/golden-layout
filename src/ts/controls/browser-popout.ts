@@ -5,7 +5,7 @@ import { ContentItem } from '../items/content-item';
 import { LayoutManager } from '../layout-manager';
 import { EventEmitter } from '../utils/event-emitter';
 import { Rect } from '../utils/types';
-import { deepExtend, getUniqueId } from '../utils/utils';
+import { deepExtend, getErrorMessage, getUniqueId } from '../utils/utils';
 
 /**
  * Pops a content item out into a new browser window.
@@ -282,7 +282,7 @@ export class BrowserPopout extends EventEmitter {
         try {
             localStorage.setItem(storageKey, JSON.stringify(config));
         } catch (e) {
-            throw new Error('Error while writing to localStorage ' + e.toString());
+            throw new Error('Error while writing to localStorage ' + getErrorMessage(e));
         }
 
         const url = new URL(location.href);
