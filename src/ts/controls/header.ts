@@ -191,20 +191,27 @@ export class Header extends EventEmitter {
      * @internal
      */
     destroy(): void {
-        this.emit('destroy');
+        this._element.style.opacity = '0';
+        this.layoutManager.deferIfDragging((cancel) => {
+            if (cancel) {
+                this._element.style.opacity = '';
+            } else {
+                this.emit('destroy');
 
-        this._popoutEvent = undefined;
-        this._maximiseToggleEvent = undefined;
-        this._clickEvent = undefined;
-        this._touchStartEvent = undefined;
-        this._componentRemoveEvent = undefined;
-        this._componentFocusEvent = undefined;
-        this._componentDragStartEvent = undefined;
+                this._popoutEvent = undefined;
+                this._maximiseToggleEvent = undefined;
+                this._clickEvent = undefined;
+                this._touchStartEvent = undefined;
+                this._componentRemoveEvent = undefined;
+                this._componentFocusEvent = undefined;
+                this._componentDragStartEvent = undefined;
 
-        this._tabsContainer.destroy();
+                this._tabsContainer.destroy();
 
-        globalThis.document.removeEventListener('mouseup', this._documentMouseUpListener);
-        this.layoutManager.removeElementEventually(this._element);
+                globalThis.document.removeEventListener('mouseup', this._documentMouseUpListener);
+                this._element.remove();
+            }
+        });
     }
 
     /**

@@ -88,9 +88,13 @@ export class TabsContainer {
             if (this._tabs[i].componentItem === componentItem) {
                 const tab = this._tabs[i];
                 tab.destroy();
-                this._tabs.splice(i, 1);
-                if (i <= this._lastVisibleTabIndex)
-                    --this._lastVisibleTabIndex;
+                this._layoutManager.deferIfDragging((cancel) => {
+                    if (! cancel) {
+                        this._tabs.splice(i, 1);
+                        if (i <= this._lastVisibleTabIndex)
+                            --this._lastVisibleTabIndex;
+                    }
+                });
                 return;
             }
         }

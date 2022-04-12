@@ -187,20 +187,35 @@ export class RowOrColumn extends ContentItem {
          * Remove the splitter before the item or after if the item happens
          * to be the first in the row/column
          */
-        if (this._splitter[splitterIndex]) {
-            this._splitter[splitterIndex].destroy();
-            this._splitter.splice(splitterIndex, 1);
+        const splitter = this._splitter[splitterIndex];
+        if (splitter) {
+            splitter.element.style.display = 'none';
+            this.layoutManager.deferIfDragging((cancel: boolean) => {
+                if (cancel) {
+                    splitter.element.style.display = '';
+                } else {
+                    splitter.destroy();
+                    this._splitter.splice(splitterIndex, 1);
+                }
+            });
         }
 
         super.removeChild(contentItem, keepChild);
 
-        if (this.contentItems.length === 1 && this.isClosable === true) {
-            const childItem = this.contentItems[0];
-            this.contentItems.length = 0;
-            this._rowOrColumnParent.replaceChild(this, childItem, true);
-        } else {
+        this.layoutManager.deferIfDragging((cancel: boolean) => {
+            if (! cancel
+                    && this.contentItems.length === 1 && this.isClosable === true) {
+                const childItem = this.contentItems[0];
+                this.contentItems.length = 0;
+                this._rowOrColumnParent.replaceChild(this, childItem, true);
+                return;
+            }
             this.updateSize();
             this.emitBaseBubblingEvent('stateChanged');
+        });
+        if (this.layoutManager._currentlyDragging) {
+            this.updateSize();
+            //this.emitBaseBubblingEvent('stateChanged');
         }
     }
 
@@ -291,18 +306,23 @@ export class RowOrColumn extends ContentItem {
      */
     private setAbsoluteSizes() {
         const sizeData = this.calculateAbsoluteSizes();
+        let additionalPixels = sizeData.additionalPixel;
 
         for (let i = 0; i < this.contentItems.length; i++) {
-            if (sizeData.additionalPixel - i > 0) {
-                sizeData.itemSizes[i]++;
+            const item = this.contentItems[i];
+            if (item.ignoring)
+                continue;
+            let itemSize = sizeData.itemSizes[i];
+            if (additionalPixels-- > 0) {
+                itemSize++;
             }
 
             if (this._isColumn) {
-                setElementWidth(this.contentItems[i].element, sizeData.totalWidth);
-                setElementHeight(this.contentItems[i].element, sizeData.itemSizes[i]);
+                setElementWidth(item.element, sizeData.totalWidth);
+                setElementHeight(item.element, itemSize);
             } else {
-                setElementWidth(this.contentItems[i].element, sizeData.itemSizes[i]);
-                setElementHeight(this.contentItems[i].element, sizeData.totalHeight);
+                setElementWidth(item.element, itemSize);
+                setElementHeight(item.element, sizeData.totalHeight);
             }
         }
     }
@@ -313,7 +333,9 @@ export class RowOrColumn extends ContentItem {
      * @internal
      */
     private calculateAbsoluteSizes() {
-        const totalSplitterSize = (this.contentItems.length - 1) * this._splitterSize;
+        const totalSplitterSize =
+            (this.contentItems.length - (this.ignoringChild ? 2 : 1))
+            * this._splitterSize;
         let { width: totalWidth, height: totalHeight } = getElementWidthAndHeight(this.element);
 
         if (this._isColumn) {
@@ -325,13 +347,11 @@ export class RowOrColumn extends ContentItem {
         let totalAssigned = 0;
         const itemSizes = [];
 
-        for (let i = 0; i < this.contentItems.length; i++) {
-            let itemSize: number;
-            if (this._isColumn) {
-                itemSize = Math.floor(totalHeight * (this.contentItems[i].height / 100));
-            } else {
-                itemSize = Math.floor(totalWidth * (this.contentItems[i].width / 100));
-            }
+        for (const item of this.contentItems) {
+            let itemSize: number =
+                item.ignoring ? 0
+                : this._isColumn ? Math.floor(totalHeight * (item.height / 100))
+                : Math.floor(totalWidth * (item.width / 100));
 
             totalAssigned += itemSize;
             itemSizes.push(itemSize);
@@ -373,6 +393,8 @@ export class RowOrColumn extends ContentItem {
         const itemsWithoutSetDimension: ContentItem[] = [];
 
         for (let i = 0; i < this.contentItems.length; i++) {
+            if (this.contentItems[i].ignoring)
+                continue;
             if (this.contentItems[i][this._dimension] !== undefined) {
                 total += this.contentItems[i][this._dimension];
             } else {

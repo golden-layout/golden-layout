@@ -36,6 +36,8 @@ export abstract class ContentItem extends EventEmitter {
     /** @internal */
     private _isInitialised;
 
+    ignoring: boolean = false;
+    ignoringChild: boolean = false;
     /** @internal */
     width: number; // pixels
     /** @internal */
@@ -132,9 +134,9 @@ export abstract class ContentItem extends EventEmitter {
         }
 
         /**
-		 * Call destroy on the content item.
-		 * All children are destroyed as well
-		 */
+	 * Call destroy on the content item.
+	 * All children are destroyed as well
+	 */
         if (!keepChild) {
 			this._contentItems[index].destroy();
         }
@@ -142,12 +144,20 @@ export abstract class ContentItem extends EventEmitter {
         /**
          * Remove the content item from this nodes array of children
          */
-        this._contentItems.splice(index, 1);
+        this.ignoringChild = true;
+        contentItem.ignoring = true;
+        this.layoutManager.deferIfDragging((cancel: boolean) => {
+            this.ignoringChild = false;
+            contentItem.ignoring = false;
+            if (! cancel) {
+                this._contentItems.splice(index, 1);
+            }
+        });
 
         /**
          * If this node still contains other content items, adjust their size
          */
-        if (this._contentItems.length > 0) {
+        if (this._contentItems.length > (this.layoutManager._currentlyDragging ? 1 : 0)) {
             this.updateSize();
         } else {
             /**
@@ -312,11 +322,19 @@ export abstract class ContentItem extends EventEmitter {
         for (let i = 0; i < this._contentItems.length; i++) {
             this._contentItems[i].destroy();
         }
-        this._contentItems = [];
+        const element = this._element;
+        element.style.display = 'none';
+        this.layoutManager.deferIfDragging((cancel) => {
+            if (cancel) {
+                element.style.display = '';
+            } else {
+                this._contentItems = [];
 
-        this.emitBaseBubblingEvent('beforeItemDestroyed');
-        this._element.remove();
-        this.emitBaseBubblingEvent('itemDestroyed');
+                this.emitBaseBubblingEvent('beforeItemDestroyed');
+                this._element.remove();
+                this.emitBaseBubblingEvent('itemDestroyed');
+            }
+        });
     }
 
     /**
@@ -383,7 +401,8 @@ export abstract class ContentItem extends EventEmitter {
     /** @internal */
     protected updateContentItemsSize(): void {
         for (let i = 0; i < this._contentItems.length; i++) {
-            this._contentItems[i].updateSize();
+            if (! this._contentItems[i].ignoring)
+                this._contentItems[i].updateSize();
         }
     }
 

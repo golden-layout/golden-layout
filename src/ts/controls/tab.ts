@@ -149,17 +149,27 @@ export class Tab {
      * @internal
      */
     destroy(): void {
-        this._closeEvent = undefined;
-        this._focusEvent = undefined;
-        this._dragStartEvent = undefined;
-        this._element.removeEventListener('click', this.tabClickListener);
-        this._element.removeEventListener('touchstart', this._tabTouchStartListener);
-        this._closeElement?.removeEventListener('click', this._closeClickListener);
-        this._closeElement?.removeEventListener('touchstart', this._closeTouchStartListener);
-        // this._closeElement?.removeEventListener('mousedown', this._closeMouseDownListener);
-        this._componentItem.off('titleChanged', this._tabTitleChangedListener);
-        if (this.reorderEnabled) {
-            this.disableReorder();
+        const action = (cancel: boolean) => {
+            if (cancel) {
+                return;
+            }
+            this._closeEvent = undefined;
+            this._focusEvent = undefined;
+            this._dragStartEvent = undefined;
+            this._element.removeEventListener('click', this.tabClickListener);
+            this._element.removeEventListener('touchstart', this._tabTouchStartListener);
+            this._closeElement?.removeEventListener('click', this._closeClickListener);
+            this._closeElement?.removeEventListener('touchstart', this._closeTouchStartListener);
+            // this._closeElement?.removeEventListener('mousedown', this._closeMouseDownListener);
+            this._componentItem.off('titleChanged', this._tabTitleChangedListener);
+            if (this.reorderEnabled) {
+                this.disableReorder();
+            }
+        };
+        if (this._layoutManager._currentlyDragging) {
+            this._layoutManager.deferIfDragging(action);
+        } else {
+            action(false);
         }
         this._layoutManager.removeElementEventually(this._element);
     }
@@ -197,11 +207,16 @@ export class Tab {
 
     private onDragStart(e: DragEvent): void {
         // See drag-listener#startDrag
+        const tabElement = this._element;
         document.body.classList.add(DomConstants.ClassName.Dragging);
-        this._element.classList.add(DomConstants.ClassName.Dragging);
+        tabElement.classList.add(DomConstants.ClassName.Dragging);
         enableIFramePointerEvents(false);
         // FIXME: set non-maximized
         this._layoutManager.startComponentDrag(e, this.componentItem);
+        this._layoutManager.deferIfDragging((_cancel: boolean) => {
+            document.body.classList.remove(DomConstants.ClassName.Dragging);
+            tabElement.classList.remove(DomConstants.ClassName.Dragging);
+        });
     }
 
     /** @internal */

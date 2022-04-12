@@ -357,8 +357,14 @@ export class GroundItem extends ComponentParentableItem {
     private deepGetAllContentItems(content: readonly ContentItem[], result: ContentItem[]): void {
         for (let i = 0; i < content.length; i++) {
             const contentItem = content[i];
-            result.push(contentItem);
-            this.deepGetAllContentItems(contentItem.contentItems, result);
+            const children = contentItem.contentItems;
+            if (! contentItem.ignoring) {
+                if (! contentItem.ignoringChild
+                    || (contentItem.type !== ItemType.row && contentItem.type !== ItemType.column)
+                    || children.length > 2)
+                    result.push(contentItem);
+                this.deepGetAllContentItems(children, result);
+            }
         }
     }
 

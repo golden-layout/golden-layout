@@ -75,8 +75,19 @@ export class ComponentItem extends ContentItem {
 
     /** @internal */
     override destroy(): void {
-        this._container.destroy()
-        super.destroy();
+        const element = this.element;
+        element.style.display = 'none';
+        const wasDragging = this.layoutManager._currentlyDragging;
+        this.layoutManager.deferIfDragging((cancel) => {
+            if (! cancel) {
+                if (wasDragging)
+                    element.style.display = '';
+                else {
+                    this._container.destroy();
+                    super.destroy();
+                }
+            }
+        });
     }
 
     applyUpdatableConfig(config: ResolvedComponentItemConfig): void {
