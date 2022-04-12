@@ -36,8 +36,8 @@ export abstract class ContentItem extends EventEmitter {
     /** @internal */
     private _isInitialised;
 
-    ignoring: boolean = false;
-    ignoringChild: boolean = false;
+    ignoring = false;
+    ignoringChild = false;
     /** @internal */
     width: number; // pixels
     /** @internal */

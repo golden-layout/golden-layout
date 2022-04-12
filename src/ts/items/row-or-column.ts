@@ -348,7 +348,7 @@ export class RowOrColumn extends ContentItem {
         const itemSizes = [];
 
         for (const item of this.contentItems) {
-            let itemSize: number =
+            const itemSize: number =
                 item.ignoring ? 0
                 : this._isColumn ? Math.floor(totalHeight * (item.height / 100))
                 : Math.floor(totalWidth * (item.width / 100));

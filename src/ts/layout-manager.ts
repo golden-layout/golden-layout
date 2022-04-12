@@ -70,7 +70,7 @@ export abstract class LayoutManager extends EventEmitter {
     private _resizeTimeoutId: ReturnType<typeof setTimeout> | undefined;
     /** @internal */
     private _itemAreas: ContentItem.Area[] | null = null;
-    _currentlyDragging: boolean = false;
+    _currentlyDragging = false;
     _draggedComponentItem: ComponentItem | undefined;
     /** @internal */
     private _dragEnterCount = 0;
