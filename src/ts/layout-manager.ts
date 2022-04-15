@@ -1763,6 +1763,7 @@ export namespace LayoutManager {
     /** @internal */
     export function createTabDropPlaceholderElement(document: Document): HTMLElement {
         const element = document.createElement('div');
+        element.style.height = 'revert';  // for backwards compatibility - remove in future
         element.classList.add(DomConstants.ClassName.DropTabPlaceholder);
         return element;
     }
