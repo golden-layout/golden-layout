@@ -19,7 +19,7 @@ export class TabsContainer {
     get tabs(): Tab[] { return this._tabs; }
     get tabCount(): number { return this._tabs.length; }
     get lastVisibleTabIndex(): number { return this._lastVisibleTabIndex; }
-    
+
     get element(): HTMLElement { return this._element; }
     get dropdownElement(): HTMLElement { return this._dropdownElement; }
     get dropdownActive(): boolean { return this._dropdownActive; }
@@ -63,22 +63,16 @@ export class TabsContainer {
             (item) => this.handleTabFocusEvent(item),
             (x, y, dragListener, item) => this.handleTabDragStartEvent(x, y, dragListener, item));
 
-        if (this._tabs.length === 0) {
-            this._tabs.push(tab);
-            this._element.appendChild(tab.element);
-        } else {
-            if (index === undefined) {
-                index = this._tabs.length;
-            }
-
-            if (index > 0) {
-                this._tabs[index - 1].element.insertAdjacentElement('afterend', tab.element);
-            } else {
-                this._tabs[0].element.insertAdjacentElement('beforebegin', tab.element);
-            }
-
-            this._tabs.splice(index, 0, tab);
+        if (index === undefined) {
+            index = this._tabs.length;
         }
+
+        if (index < this._element.childNodes.length) {
+            this._element.insertBefore(tab.element, this._element.childNodes[index]);
+        } else {
+            this._element.appendChild(tab.element);
+        }
+        this._tabs.push(tab);
     }
 
     removeTab(componentItem: ComponentItem): void {
@@ -225,7 +219,7 @@ export class TabsContainer {
                             //Tab menu already shown, so we just add to it.
                             tabElement.style.zIndex = 'auto';
                             tabElement.style.marginLeft = '';
-                            
+
                             if (tabElement.parentElement !== this._dropdownElement) {
                                 this._dropdownElement.appendChild(tabElement);
                             }

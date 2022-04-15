@@ -717,8 +717,10 @@ export class Stack extends ComponentParentableItem {
 
     /** @internal */
     private highlightHeaderDropZone(x: number): void {
+        const tabsContainerElement = this._header.tabsContainerElement;
+        const tabsContainerElementChildNodes = tabsContainerElement.childNodes;
         // Only walk over the visible tabs
-        const tabsLength = this._header.lastVisibleTabIndex + 1;
+        const visibleTabsLength = tabsContainerElementChildNodes.length;
 
         const dropTargetIndicator = this.layoutManager.dropTargetIndicator;
         if (dropTargetIndicator === null) {
@@ -728,7 +730,7 @@ export class Stack extends ComponentParentableItem {
         let area: AreaLinkedRect;
 
         // Empty stack
-        if (tabsLength === 0) {
+        if (visibleTabsLength === 0) {
             const headerOffset = getJQueryOffset(this._header.element);
 
             const elementHeight = getElementHeight(this._header.element);
@@ -749,7 +751,7 @@ export class Stack extends ComponentParentableItem {
             let tabWidth: number;
             let tabElement: HTMLElement;
             do {
-                tabElement = this._header.tabs[tabIndex].element;
+                tabElement = tabsContainerElementChildNodes[tabIndex] as HTMLElement;
                 const offset = getJQueryOffset(tabElement);
                 if (this._header.leftRightSided) {
                     tabLeft = offset.top;
@@ -766,7 +768,7 @@ export class Stack extends ComponentParentableItem {
                 } else {
                     tabIndex++;
                 }
-            } while (tabIndex < tabsLength && !isAboveTab);
+            } while (tabIndex < visibleTabsLength && !isAboveTab);
 
             // If we're not above any tabs, or to the right of any tab, we are out of the area, so give up
             if (isAboveTab === false && x < tabLeft) {
@@ -779,7 +781,7 @@ export class Stack extends ComponentParentableItem {
                 this._dropIndex = tabIndex;
                 tabElement.insertAdjacentElement('beforebegin', this.layoutManager.tabDropPlaceholder);
             } else {
-                this._dropIndex = Math.min(tabIndex + 1, tabsLength);
+                this._dropIndex = Math.min(tabIndex + 1, visibleTabsLength);
                 tabElement.insertAdjacentElement('afterend', this.layoutManager.tabDropPlaceholder);
             }
 
