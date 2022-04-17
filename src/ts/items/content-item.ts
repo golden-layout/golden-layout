@@ -4,7 +4,6 @@ import { AssertError, UnexpectedNullError } from '../errors/internal-error'
 import { LayoutManager } from '../layout-manager'
 import { DomConstants } from '../utils/dom-constants'
 import { EventEmitter } from '../utils/event-emitter'
-import { getJQueryOffset } from '../utils/jquery-legacy'
 import { AreaLinkedRect, ItemType } from '../utils/types'
 import { getUniqueId, setElementDisplayVisibility } from '../utils/utils'
 import { ComponentItem } from './component-item'
@@ -289,7 +288,7 @@ export abstract class ContentItem extends EventEmitter {
         if (dropTargetIndicator === null) {
             throw new UnexpectedNullError('ACIHDZ5593');
         } else {
-            dropTargetIndicator.highlightArea(area);
+            dropTargetIndicator.highlightArea(area, 1);
         }
     }
 
@@ -342,16 +341,18 @@ export abstract class ContentItem extends EventEmitter {
     getElementArea(element?: HTMLElement): ContentItem.Area | null {
         element = element ?? this._element;
 
-        const offset = getJQueryOffset(element);
-        const width = element.offsetWidth;
-        const height = element.offsetHeight;
-        // const widthAndHeight = getJQueryWidthAndHeight(element);
+        const rect = element.getBoundingClientRect();
+        const top = rect.top + document.body.scrollTop;
+        const left = rect.left + document.body.scrollLeft;
+
+        const width = rect.width;
+        const height = rect.height;
 
         return {
-            x1: offset.left + 1,
-            y1: offset.top + 1,
-            x2: offset.left + width - 1,
-            y2: offset.top + height - 1,
+            x1: left,
+            y1: top,
+            x2: left + width,
+            y2: top + height,
             surface: width * height,
             contentItem: this
         };

@@ -1448,10 +1448,10 @@ export abstract class LayoutManager extends EventEmitter {
         for (let i = 0; i < itemAreas.length; i++) {
             const area = itemAreas[i];
             if (
-                x > area.x1 &&
-                x < area.x2 &&
-                y > area.y1 &&
-                y < area.y2 &&
+                x >= area.x1 &&
+                x < area.x2 && // x2 is not included in area
+                y >= area.y1 &&
+                y < area.y2 && // y2 is not included in area
                 smallestSurface > area.surface
             ) {
                 smallestSurface = area.surface;
