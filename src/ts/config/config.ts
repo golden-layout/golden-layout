@@ -491,6 +491,7 @@ export namespace LayoutConfig {
          * strong dependency on their parent and can exist on their own, but can be quite annoying to close by hand. In
          * addition, any changes made to popouts won't be stored after the parent is closed.
          * Default: true
+         * @deprecated Will be removed in version 3.
          */
         closePopoutsOnUnload?: boolean;
 

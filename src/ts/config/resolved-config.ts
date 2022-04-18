@@ -402,6 +402,7 @@ export namespace ResolvedLayoutConfig {
         readonly reorderEnabled: boolean; // also in ResolvedItemConfig which takes precedence
         readonly popoutWholeStack: boolean;
         readonly blockedPopoutsThrowError: boolean;
+        /** @deprecated Will be removed in version 3. */
         readonly closePopoutsOnUnload: boolean;
         readonly responsiveMode: ResponsiveMode;
         readonly tabOverlapAllowance: number;

@@ -119,8 +119,10 @@ export abstract class LayoutManager extends EventEmitter {
 
     /** @internal */
     private _resizeObserver = new ResizeObserver(() => this.handleContainerResize());
-    /** @internal */
-    private _windowUnloadListener = () => this.onUnload();
+    /** @internal @deprecated to be removed in version 3 */
+    private _windowBeforeUnloadListener = () => this.onBeforeUnload();
+    /** @internal @deprecated to be removed in version 3 */
+    private _windowBeforeUnloadListening = false;
     /** @internal */
     private _maximisedStackBeforeDestroyedListener = (ev: EventEmitter.BubblingEvent) => this.cleanupBeforeMaximisedStackDestroyed(ev);
     private _area: ContentItem.Area | null = null;
@@ -231,19 +233,24 @@ export abstract class LayoutManager extends EventEmitter {
     /**
      * Destroys the LayoutManager instance itself as well as every ContentItem
      * within it. After this is called nothing should be left of the LayoutManager.
+     *
+     * This function only needs to be called if an application wishes to destroy the Golden Layout object while
+     * a page remains loaded. When a page is unloaded, all resources claimed by Golden Layout will automatically
+     * be released.
      */
     destroy(): void {
         if (this._isInitialised) {
+            if (this._windowBeforeUnloadListening) {
+                globalThis.removeEventListener('beforeunload', this._windowBeforeUnloadListener);
+                this._windowBeforeUnloadListening = false;
+            }
+
             if (this.layoutConfig.settings.closePopoutsOnUnload === true) {
-                for (let i = 0; i < this._openPopouts.length; i++) {
-                    this._openPopouts[i].close();
-                }
+                this.closeAllOpenPopouts();
             }
 
             this._resizeObserver.disconnect();
             this.checkClearResizeTimeout();
-            globalThis.removeEventListener('unload', this._windowUnloadListener);
-            globalThis.removeEventListener('beforeunload', this._windowUnloadListener);
 
             if (this._groundItem !== undefined) {
                 this._groundItem.destroy();
@@ -353,7 +360,7 @@ export abstract class LayoutManager extends EventEmitter {
 
         this.checkLoadedLayoutMaximiseItem();
 
-        this.bindEvents();
+        this._resizeObserver.observe(this._containerElement);
         this._isInitialised = true;
         this.adjustColumnsResponsive();
         this.emit('initialised');
@@ -1000,7 +1007,6 @@ export abstract class LayoutManager extends EventEmitter {
             height: configWindow.height ?? 309,
         };
 
-
         const browserPopout = new BrowserPopout(config, initialWindow, this);
 
         browserPopout.on('initialised', () => this.emit('windowOpened', browserPopout));
@@ -1008,7 +1014,30 @@ export abstract class LayoutManager extends EventEmitter {
 
         this._openPopouts.push(browserPopout);
 
+        if (this.layoutConfig.settings.closePopoutsOnUnload && !this._windowBeforeUnloadListening) {
+            globalThis.addEventListener('beforeunload', this._windowBeforeUnloadListener, { passive: true });
+            this._windowBeforeUnloadListening = true;
+        }
+
         return browserPopout;
+    }
+
+    /**
+     * Closes all Open Popouts
+     * Applications can call this method when a page is unloaded to remove its open popouts
+     */
+
+    closeAllOpenPopouts() {
+        for (let i = 0; i < this._openPopouts.length; i++) {
+            this._openPopouts[i].close();
+        }
+
+        this._openPopouts.length = 0;
+
+        if (this._windowBeforeUnloadListening) {
+            globalThis.removeEventListener('beforeunload', this._windowBeforeUnloadListener);
+            this._windowBeforeUnloadListening = false;
+        }
     }
 
     /**
@@ -1638,16 +1667,6 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /**
-     * Binds to DOM/BOM events on init
-     * @internal
-     */
-    private bindEvents() {
-        this._resizeObserver.observe(this._containerElement);
-        globalThis.addEventListener('unload', this._windowUnloadListener, { passive: true });
-        globalThis.addEventListener('beforeunload', this._windowUnloadListener, { passive: true });
-    }
-
-    /**
      * Creates Subwindows (if there are any). Throws an error
      * if popouts are blocked.
      * @internal
@@ -1726,8 +1745,9 @@ export abstract class LayoutManager extends EventEmitter {
      * Called when the window is closed or the user navigates away
      * from the page
      * @internal
+     * @deprecated to be removed in version 3
      */
-    private onUnload(): void {
+    private onBeforeUnload(): void {
         this.destroy();
     }
 
