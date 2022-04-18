@@ -137,7 +137,7 @@ export class ComponentContainer extends EventEmitter {
     get visible(): boolean;
     // (undocumented)
     get width(): number;
-    }
+}
 
 // @public (undocumented)
 export namespace ComponentContainer {
@@ -386,7 +386,7 @@ export class DragSource {
     _title: string | undefined);
     // @internal
     destroy(): void;
-    }
+}
 
 // @public (undocumented)
 export namespace DragSource {
@@ -447,7 +447,7 @@ export namespace EventEmitter {
         stopPropagation(): void;
         // (undocumented)
         get target(): EventEmitter;
-        }
+    }
     // (undocumented)
     export type BubblingEventParam = [EventEmitter.BubblingEvent];
     // (undocumented)
@@ -459,7 +459,7 @@ export namespace EventEmitter {
         _mouseEvent: MouseEvent);
         // (undocumented)
         get mouseEvent(): MouseEvent;
-        }
+    }
     // (undocumented)
     export type ClickBubblingEventParam = [ClickBubblingEvent];
     // (undocumented)
@@ -554,7 +554,7 @@ export namespace EventEmitter {
         _touchEvent: TouchEvent);
         // (undocumented)
         get touchEvent(): TouchEvent;
-        }
+    }
     // (undocumented)
     export type TouchStartBubblingEventParam = [TouchStartBubblingEvent];
     // @internal (undocumented)
@@ -574,7 +574,7 @@ export class EventHub extends EventEmitter {
     destroy(): void;
     emit<K extends keyof EventEmitter.EventParamsMap>(eventName: K, ...args: EventEmitter.EventParamsMap[K]): void;
     emitUserBroadcast(...args: EventEmitter.UnknownParams): void;
-    }
+}
 
 // @public (undocumented)
 export namespace EventHub {
@@ -619,7 +619,7 @@ export class GoldenLayout extends VirtualLayout {
     registerGetComponentConstructorCallback(callback: GoldenLayout.GetComponentConstructorCallback): void;
     // @internal (undocumented)
     unbindComponent(container: ComponentContainer, virtual: boolean, component: ComponentContainer.Component | undefined): void;
-    }
+}
 
 // @public (undocumented)
 export namespace GoldenLayout {
@@ -975,6 +975,7 @@ export namespace LayoutConfig {
     // (undocumented)
     export interface Settings {
         blockedPopoutsThrowError?: boolean;
+        // @deprecated
         closePopoutsOnUnload?: boolean;
         constrainDragToContainer?: boolean;
         // @deprecated (undocumented)
@@ -1026,6 +1027,7 @@ export abstract class LayoutManager extends EventEmitter {
     checkMinimiseMaximisedStack(): void;
     clear(): void;
     clearComponentFocus(suppressEvent?: boolean): void;
+    closeAllOpenPopouts(): void;
     // @internal
     closeWindow(): void;
     // @internal (undocumented)
@@ -1128,7 +1130,7 @@ export abstract class LayoutManager extends EventEmitter {
     updateSizeFromContainer(): void;
     // (undocumented)
     get width(): number | null;
-    }
+}
 
 // @public (undocumented)
 export namespace LayoutManager {
@@ -1477,7 +1479,7 @@ export namespace ResolvedLayoutConfig {
     export interface Settings {
         // (undocumented)
         readonly blockedPopoutsThrowError: boolean;
-        // (undocumented)
+        // @deprecated (undocumented)
         readonly closePopoutsOnUnload: boolean;
         // (undocumented)
         readonly constrainDragToContainer: boolean;
@@ -1849,7 +1851,7 @@ export class Tab {
     setTitle(title: string): void;
     // (undocumented)
     get titleElement(): HTMLElement;
-    }
+}
 
 // @public (undocumented)
 export namespace Tab {
@@ -1926,7 +1928,6 @@ export namespace WidthOrHeightPropertyName {
     const // (undocumented)
     height = "height";
 }
-
 
 // (No @packageDocumentation comment for this package)
 
