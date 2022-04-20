@@ -144,8 +144,6 @@ export abstract class ContentItem extends EventEmitter {
         /**
          * Remove the content item from this nodes array of children
          */
-        this.ignoringChild = true;
-        contentItem.ignoring = true;
         this.layoutManager.deferIfDragging((cancel: boolean) => {
             this.ignoringChild = false;
             contentItem.ignoring = false;

@@ -112,6 +112,7 @@ export abstract class LayoutManager extends EventEmitter {
     private _actionsOnDragEnd: ((cancel: boolean)=>void)[] = [];
 
     popoutClickHandler: (item: Stack, ev: Event)=>boolean = () => false;
+    inSomeWindow = false;
 
     readonly isSubWindow: boolean;
     layoutConfig: ResolvedLayoutConfig;
@@ -1037,7 +1038,7 @@ export abstract class LayoutManager extends EventEmitter {
             action(false);
     }
 
-    doDeferredActions(cancel: boolean) {
+    doDeferredActions(cancel: boolean): void {
         for (const action of this._actionsOnDragEnd) {
             action(cancel);
         }
@@ -1117,8 +1118,27 @@ export abstract class LayoutManager extends EventEmitter {
         enableIFramePointerEvents(false);
         const dtr = ev.dataTransfer;
 
+        // Set 'ignoring' property now so calculateItemAreas works.
+        // The latter is called from onDragEnter, which may happen
+        // before the requestAnimationFrame action.
+        for (let item: ContentItem = componentItem; ; ) {
+            const parent = item.parent;
+            if (! parent)
+                break;
+            if ((item.isRow || item.isColumn)
+                && item.contentItems.length >= 2) {
+                break;
+            }
+            if (item === componentItem || item.isStack) {
+                item.ignoring = true;
+                parent.ignoringChild = true;
+            }
+            if (parent.isGround)
+                break;
+            item = parent;
+        }
+
         window.requestAnimationFrame(() => {
-            console.log("dragstart/animation-frame dropE:"+dtr?.dropEffect);
             headerClone.remove();
             if (! isActiveTab) {
                 for (const sibling of stack.contentItems) {
@@ -1127,18 +1147,10 @@ export abstract class LayoutManager extends EventEmitter {
                 }
             }
             tabElement.style.visibility = '';
-            //headerElement.style.top = headerTop;
             headerElement.style.visibility = '';
             image.style.opacity = oldOpacity;
-            //componentItem.element.style.visibility = 'hidden';
-            componentItem.element.style.display = 'none';
-            this._actionsOnDragEnd.push((cancel) => {
-                if (cancel) {
-                    componentItem.element.style.display = '';
-                }
-                // else componentItem.destroy() ?
-            });
             componentItem.parent?.removeChild(componentItem, true);
+
             console.log("LM/drag after removeChild dropE:"+dtr?.dropEffect);
 
         });
@@ -1723,12 +1735,20 @@ export abstract class LayoutManager extends EventEmitter {
         // drag-leave-windows to a central manager.
         const dropEffect = e.dataTransfer?.dropEffect;
         const component = this._draggedComponentItem;
-        const cancel = dropEffect === 'none';
+        // Try to detact a cancelled drag. There doesn't seem to be a way
+        // to detect this reliably except on Firefox (with mozUserCancelled).
+        // But we can a cancel while inside this or some other window;
+        // a cancel outside a window is treated as drag-to-new-window.
+        const cancel = dropEffect === 'none'
+            && ((e.dataTransfer as any).mozUserCancelled
+                || this._currentlyDragging
+                || this.inSomeWindow);
+        console.log("onDragEnd cancel:"+cancel+" comp:"+component+" cur-drag:"+this._currentlyDragging);
         if (! cancel
             && component
             && this._currentlyDragging) {
             // dropped in other window or to desktop
-            console.log("export-drag");
+            console.log("export-drag inSomeWind:"+this.inSomeWindow);
             if (component.component)
                 component.container.emit('dragExported', component);
             // FIXME remove
@@ -1790,7 +1810,7 @@ export abstract class LayoutManager extends EventEmitter {
                 (droppedComponentItem.container.component as HTMLElement).style.zIndex = "";
                 */
             } else {
-                console.log("dropped from different window");
+                console.log("dropped from different window "+JSON.stringify(data.config));
                 const item = new ComponentItem(this, data.config, this.groundItem as ComponentParentableItem);
                 this._area.contentItem.onDrop(item, this._area);
             }
