@@ -1750,7 +1750,7 @@ export abstract class LayoutManager extends EventEmitter {
             // dropped in other window or to desktop
             console.log("export-drag inSomeWind:"+this.inSomeWindow);
             if (component.component)
-                component.container.emit('dragExported', component);
+                component.container.emit('dragExported', e, component);
             // FIXME remove
         }
         //const droppedLocally = this._currentlyDragging;

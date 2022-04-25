@@ -187,7 +187,7 @@ export namespace EventEmitter {
         "drag-leave-window": DragEventParams; // Native (new-style) drag
         "dragStart": DragStartParams; // Non-native (old-style) drag
         "dragStop": DragStopParams;
-        "dragExported": ComponentItemParam;
+        "dragExported": DragComponentParams;
         "hide": NoParams;
         "initialised": NoParams;
         "itemDropped": ComponentItemParam;
