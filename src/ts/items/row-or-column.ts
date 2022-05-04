@@ -4,7 +4,7 @@ import { Splitter } from '../controls/splitter'
 import { AssertError, UnexpectedNullError } from '../errors/internal-error'
 import { LayoutManager } from '../layout-manager'
 import { DomConstants } from '../utils/dom-constants'
-import { ItemType, JsonValue, WidthOrHeightPropertyName } from '../utils/types'
+import { ItemType, JsonValue, SizeUnitEnum, WidthOrHeightPropertyName } from '../utils/types'
 import {
     getElementHeight,
     getElementWidth,
@@ -271,10 +271,10 @@ export class RowOrColumn extends ContentItem {
         const result: ResolvedRowOrColumnItemConfig = {
             type: this.type as 'row' | 'column',
             content: this.calculateConfigContent() as (ResolvedRowOrColumnItemConfig | ResolvedStackItemConfig)[],
-            width: this.width,
-            minWidth: this.minWidth,
-            height: this.height,
-            minHeight: this.minHeight,
+            size: this.size,
+            sizeUnit: this.sizeUnit,
+            minSize: this.minSize,
+            minSizeUnit: this.minSizeUnit,
             id: this.id,
             isClosable: this.isClosable,
         }
@@ -338,26 +338,37 @@ export class RowOrColumn extends ContentItem {
             * this._splitterSize;
         let { width: totalWidth, height: totalHeight } = getElementWidthAndHeight(this.element);
 
+        let totalSize: number;
         if (this._isColumn) {
-            totalHeight -= totalSplitterSize;
+            totalSize = totalHeight - totalSplitterSize;
         } else {
-            totalWidth -= totalSplitterSize;
+            totalSize = totalWidth - totalSplitterSize;
         }
 
         let totalAssigned = 0;
         const itemSizes = [];
 
-        for (const item of this.contentItems) {
-            const itemSize: number =
-                item.ignoring ? 0
-                : this._isColumn ? Math.floor(totalHeight * (item.height / 100))
-                : Math.floor(totalWidth * (item.width / 100));
+        for (const contentItem of this.contentItems) {
+            let itemSize: number;
+            if (contentItem.ignoring) {
+                itemSize = 0;
+            } else if (contentItem.sizeUnit === SizeUnitEnum.Fractional) {
+                itemSize = Math.floor(totalHeight * (contentItem.size / 100));
+            } else {
+                throw new AssertError('ROCCAS6692');
+            }
 
             totalAssigned += itemSize;
             itemSizes.push(itemSize);
         }
 
-        const additionalPixel = Math.floor((this._isColumn ? totalHeight : totalWidth) - totalAssigned);
+        const additionalPixel = Math.floor(totalSize - totalAssigned);
+
+        if (this._isColumn) {
+            totalHeight = totalSize;
+        } else {
+            totalWidth = totalSize;
+        }
 
         return {
             itemSizes: itemSizes,
@@ -390,15 +401,24 @@ export class RowOrColumn extends ContentItem {
     private calculateRelativeSizes() {
 
         let total = 0;
-        const itemsWithoutSetDimension: ContentItem[] = [];
+        const itemsWithFractionalSize: ContentItem[] = [];
 
         for (let i = 0; i < this.contentItems.length; i++) {
             if (this.contentItems[i].ignoring)
                 continue;
-            if (this.contentItems[i][this._dimension] !== undefined) {
-                total += this.contentItems[i][this._dimension];
-            } else {
-                itemsWithoutSetDimension.push(this.contentItems[i]);
+            const contentItem = this.contentItems[i];
+            const sizeUnit = contentItem.sizeUnit;
+            switch (sizeUnit) {
+                case SizeUnitEnum.Percent: {
+                    total += contentItem.size;
+                    break;
+                }
+                case SizeUnitEnum.Fractional: {
+                    itemsWithFractionalSize.push(this.contentItems[i]);
+                    break;
+                }
+                default:
+                    throw new AssertError('ROCCRS49110', JSON.stringify(contentItem));
             }
         }
 
@@ -406,18 +426,20 @@ export class RowOrColumn extends ContentItem {
          * Everything adds up to hundred, all good :-)
          */
         if (Math.round(total) === 100) {
-            this.respectMinItemWidth();
+            this.respectMinItemSize();
             return;
         }
 
         /**
          * Allocate the remaining size to the items without a set dimension
          */
-        if (Math.round(total) < 100 && itemsWithoutSetDimension.length > 0) {
-            for (let i = 0; i < itemsWithoutSetDimension.length; i++) {
-                itemsWithoutSetDimension[i][this._dimension] = (100 - total) / itemsWithoutSetDimension.length;
+        if (Math.round(total) < 100 && itemsWithFractionalSize.length > 0) {
+            for (let i = 0; i < itemsWithFractionalSize.length; i++) {
+                const contentItem = itemsWithFractionalSize[i];
+                contentItem.size = (100 - total) / itemsWithFractionalSize.length;
+                contentItem.sizeUnit = SizeUnitEnum.Percent;
             }
-            this.respectMinItemWidth();
+            this.respectMinItemSize();
             return;
         }
 
@@ -428,8 +450,10 @@ export class RowOrColumn extends ContentItem {
          * This will be reset in the next step
          */
         if (Math.round(total) > 100) {
-            for (let i = 0; i < itemsWithoutSetDimension.length; i++) {
-                itemsWithoutSetDimension[i][this._dimension] = 50;
+            for (let i = 0; i < itemsWithFractionalSize.length; i++) {
+                const contentItem = itemsWithFractionalSize[i];
+                contentItem.size = 50;
+                contentItem.sizeUnit = SizeUnitEnum.Percent;
                 total += 50;
             }
         }
@@ -438,88 +462,92 @@ export class RowOrColumn extends ContentItem {
          * Set every items size relative to 100 relative to its size to total
          */
         for (let i = 0; i < this.contentItems.length; i++) {
-            this.contentItems[i][this._dimension] = (this.contentItems[i][this._dimension] / total) * 100;
+            const contentItem = this.contentItems[i];
+            contentItem.size = (contentItem.size / total) * 100;
         }
 
-        this.respectMinItemWidth();
+        this.respectMinItemSize();
     }
 
     /**
      * Adjusts the column widths to respect the dimensions minItemWidth if set.
      * @internal
      */
-    private respectMinItemWidth() {
+    private respectMinItemSize() {
         interface Entry {
-            width: number;
+            size: number;
         }
 
-        const minItemWidth = this.layoutManager.layoutConfig.dimensions.minItemWidth;
-        let totalOverMin = 0;
-        let totalUnderMin = 0;
-        const entriesOverMin: Entry[] = [];
-        const allEntries: Entry[] = [];
+        const dimensions = this.layoutManager.layoutConfig.dimensions;
+        const minItemSize = this._isColumn ? dimensions.minItemHeight : dimensions.minItemWidth;
 
-        if (this._isColumn || !minItemWidth || this.contentItems.length <= 1) {
+        if (minItemSize < 0 || this.contentItems.length <= 1) {
             return;
-        }
+        } else {
+            let totalOverMin = 0;
+            let totalUnderMin = 0;
+            const entriesOverMin: Entry[] = [];
+            const allEntries: Entry[] = [];
 
-        const sizeData = this.calculateAbsoluteSizes();
+            const sizeData = this.calculateAbsoluteSizes();
 
-        /**
-         * Figure out how much we are under the min item size total and how much room we have to use.
-         */
-        for (let i = 0; i < sizeData.itemSizes.length; i++) {
-            const itemSize = sizeData.itemSizes[i];
+            /**
+             * Figure out how much we are under the min item size total and how much room we have to use.
+             */
+            for (let i = 0; i < sizeData.itemSizes.length; i++) {
+                const itemSize = sizeData.itemSizes[i];
 
-            let entry: Entry;
-            if (itemSize < minItemWidth) {
-                totalUnderMin += minItemWidth - itemSize;
-                entry = {
-                    width: minItemWidth
-                };
+                let entry: Entry;
+                if (itemSize < minItemSize) {
+                    totalUnderMin += minItemSize - itemSize;
+                    entry = {
+                        size: minItemSize
+                    };
 
-            } else {
-                totalOverMin += itemSize - minItemWidth;
-                entry = {
-                    width: itemSize
-                };
-                entriesOverMin.push(entry);
+                } else {
+                    totalOverMin += itemSize - minItemSize;
+                    entry = {
+                        size: itemSize
+                    };
+                    entriesOverMin.push(entry);
+                }
+
+                allEntries.push(entry);
             }
 
-            allEntries.push(entry);
-        }
+            /**
+             * If there is nothing under min, or there is not enough over to make up the difference, do nothing.
+             */
+            if (totalUnderMin === 0 || totalUnderMin > totalOverMin) {
+                return;
+            } else {
+                /**
+                 * Evenly reduce all columns that are over the min item width to make up the difference.
+                 */
+                const reducePercent = totalUnderMin / totalOverMin;
+                let remainingSize = totalUnderMin;
+                for (let i = 0; i < entriesOverMin.length; i++) {
+                    const entry = entriesOverMin[i];
+                    const reducedSize = Math.round((entry.size - minItemSize) * reducePercent);
+                    remainingSize -= reducedSize;
+                    entry.size -= reducedSize;
+                }
 
-        /**
-         * If there is nothing under min, or there is not enough over to make up the difference, do nothing.
-         */
-        if (totalUnderMin === 0 || totalUnderMin > totalOverMin) {
-            return;
-        }
+                /**
+                 * Take anything remaining from the last item.
+                 */
+                if (remainingSize !== 0) {
+                    allEntries[allEntries.length - 1].size -= remainingSize;
+                }
 
-        /**
-         * Evenly reduce all columns that are over the min item width to make up the difference.
-         */
-        const reducePercent = totalUnderMin / totalOverMin;
-        let remainingWidth = totalUnderMin;
-        for (let i = 0; i < entriesOverMin.length; i++) {
-            const entry = entriesOverMin[i];
-            const reducedWidth = Math.round((entry.width - minItemWidth) * reducePercent);
-            remainingWidth -= reducedWidth;
-            entry.width -= reducedWidth;
-        }
-
-        /**
-         * Take anything remaining from the last item.
-         */
-        if (remainingWidth !== 0) {
-            allEntries[allEntries.length - 1].width -= remainingWidth;
-        }
-
-        /**
-         * Set every items size relative to 100 relative to its size to total
-         */
-        for (let i = 0; i < this.contentItems.length; i++) {
-            this.contentItems[i].width = (allEntries[i].width / sizeData.totalWidth) * 100;
+                /**
+                 * Set every items size relative to 100 relative to its size to total
+                 */
+                for (let i = 0; i < this.contentItems.length; i++) {
+                    const contentItem = this.contentItems[i];
+                    contentItem.size = (allEntries[i].size / sizeData.totalWidth) * 100;
+                }
+            }
         }
     }
 
@@ -565,19 +593,18 @@ export class RowOrColumn extends ContentItem {
      * Gets the minimum dimensions for the given item configuration array
      * @internal
      */
-    private getMinimumDimensions(arr: readonly ContentItem[]) {
-        let minWidth = 0;
-        let minHeight = 0;
+    private getMinimumDimensions(contentItems: readonly ContentItem[]) {
+        let minSize = 0;
 
-        for (let i = 0; i < arr.length; ++i) {
-            minWidth = Math.max(arr[i].minWidth ?? 0, minWidth);
-            minHeight = Math.max(arr[i].minHeight ?? 0, minHeight);
+        for (const contentItem of contentItems) {
+            if (contentItem.sizeUnit === SizeUnitEnum.Pixel) {
+                minSize = Math.max(contentItem.minSize ?? 0, minSize);
+            } else {
+                throw new AssertError('ROCGMD98831', JSON.stringify(contentItem));
+            }
         }
 
-        return {
-            horizontal: minWidth,
-            vertical: minHeight
-        };
+        return minSize;
     }
 
     /**
@@ -589,11 +616,8 @@ export class RowOrColumn extends ContentItem {
         const items = this.getItemsForSplitter(splitter);
         const minSize = this.layoutManager.layoutConfig.dimensions[this._isColumn ? 'minItemHeight' : 'minItemWidth'];
 
-        const beforeMinDim = this.getMinimumDimensions(items.before.contentItems);
-        const beforeMinSize = this._isColumn ? beforeMinDim.vertical : beforeMinDim.horizontal;
-
-        const afterMinDim = this.getMinimumDimensions(items.after.contentItems);
-        const afterMinSize = this._isColumn ? afterMinDim.vertical : afterMinDim.horizontal;
+        const beforeMinSize = this.getMinimumDimensions(items.before.contentItems);
+        const afterMinSize = this.getMinimumDimensions(items.after.contentItems);
 
         this._splitterPosition = 0;
         this._splitterMinPosition = -1 * (pixelsToNumber(items.before.element.style[this._dimension]) - (beforeMinSize || minSize));

@@ -4,7 +4,7 @@ import { AssertError, UnexpectedNullError } from '../errors/internal-error'
 import { LayoutManager } from '../layout-manager'
 import { DomConstants } from '../utils/dom-constants'
 import { EventEmitter } from '../utils/event-emitter'
-import { AreaLinkedRect, ItemType } from '../utils/types'
+import { AreaLinkedRect, ItemType, SizeUnitEnum } from '../utils/types'
 import { getUniqueId, setElementDisplayVisibility } from '../utils/utils'
 import { ComponentItem } from './component-item'
 import { ComponentParentableItem } from './component-parentable-item'
@@ -39,13 +39,13 @@ export abstract class ContentItem extends EventEmitter {
     ignoring = false;
     ignoringChild = false;
     /** @internal */
-    width: number; // pixels
+    size: number;
     /** @internal */
-    minWidth: number; // pixels
+    sizeUnit: SizeUnitEnum;
     /** @internal */
-    height: number; // pixels
+    minSize: number;
     /** @internal */
-    minHeight: number; // pixels
+    minSizeUnit: SizeUnitEnum;
 
     isGround: boolean
     isRow: boolean
@@ -96,10 +96,10 @@ export abstract class ContentItem extends EventEmitter {
         this.isStack = false;
         this.isComponent = false;
 
-        this.width = config.width;
-        this.minWidth = config.minWidth;
-        this.height = config.height;
-        this.minHeight = config.minHeight;
+        this.size = config.size;
+        this.sizeUnit = config.sizeUnit;
+        this.minSize = config.minSize;
+        this.minSizeUnit = config.minSizeUnit;
 
         this._isClosable = config.isClosable;
 
@@ -229,8 +229,10 @@ export abstract class ContentItem extends EventEmitter {
             this._contentItems[index] = newChild;
             newChild.setParent(this);
             // newChild inherits the sizes from the old child:
-            newChild.height = oldChild.height;
-            newChild.width = oldChild.width;
+            newChild.size = oldChild.size;
+            newChild.sizeUnit = oldChild.sizeUnit;
+            newChild.minSize = oldChild.minSize;
+            newChild.minSizeUnit = oldChild.minSizeUnit;
 
             //TODO This doesn't update the config... refactor to leave item nodes untouched after creation
             if (newChild._parent === null) {

@@ -104,3 +104,13 @@ export namespace ResponsiveMode {
     export const always = 'always';
     export const onload = 'onload';
 }
+
+/** @public */
+export type SizeUnit = 'px' | '%' | 'fr' | 'em';
+/** @public */
+export enum SizeUnitEnum {
+    Pixel = 'px',
+    Percent = '%',
+    Fractional = 'fr',
+    Em = 'em',
+}
