@@ -1,6 +1,6 @@
 import { AssertError, UnreachableCaseError } from '../errors/internal-error';
 import { ConfigMinifier } from '../utils/config-minifier';
-import { ItemType, JsonValue, ResponsiveMode, Side } from '../utils/types';
+import { ItemType, JsonValue, ResponsiveMode, Side, SizeUnitEnum } from '../utils/types';
 import { deepExtendValue } from '../utils/utils';
 
 /** @public */
@@ -8,10 +8,10 @@ export interface ResolvedItemConfig {
     // see ItemConfig for comments
     readonly type: ItemType;
     readonly content: readonly ResolvedItemConfig[];
-    readonly width: number;
-    readonly minWidth: number;
-    readonly height: number;
-    readonly minHeight: number;
+    readonly size: number;
+    readonly sizeUnit: SizeUnitEnum;
+    readonly minSize: number;
+    readonly minSizeUnit: SizeUnitEnum;
     // id no longer specifies whether an Item is maximised.  This is now done by HeaderItemConfig.maximised
     readonly id: string;
     readonly isClosable: boolean;
@@ -22,10 +22,10 @@ export namespace ResolvedItemConfig {
     export const defaults: ResolvedItemConfig = {
         type: ItemType.ground, // not really default but need something
         content: [],
-        width: 50,
-        minWidth: 0,
-        height: 50,
-        minHeight: 0,
+        size: 1,
+        sizeUnit: SizeUnitEnum.Fractional,
+        minSize: 0,
+        minSizeUnit: SizeUnitEnum.Pixel,
         id: '',
         isClosable: true,
     } as const;
@@ -138,10 +138,10 @@ export namespace ResolvedStackItemConfig {
         const result: ResolvedStackItemConfig = {
             type: original.type,
             content: content !== undefined ? copyContent(content) : copyContent(original.content),
-            width: original.width,
-            minWidth: original.minWidth,
-            height: original.height,
-            minHeight: original.minHeight,
+            size: original.size,
+            sizeUnit: original.sizeUnit,
+            minSize: original.minSize,
+            minSizeUnit: original.minSizeUnit,
             id: original.id,
             maximised: original.maximised,
             isClosable: original.isClosable,
@@ -164,10 +164,10 @@ export namespace ResolvedStackItemConfig {
         const result: ResolvedStackItemConfig = {
             type: ItemType.stack,
             content: [],
-            width: ResolvedItemConfig.defaults.width,
-            minWidth: ResolvedItemConfig.defaults.minWidth,
-            height: ResolvedItemConfig.defaults.height,
-            minHeight: ResolvedItemConfig.defaults.minHeight,
+            size: ResolvedItemConfig.defaults.size,
+            sizeUnit: ResolvedItemConfig.defaults.sizeUnit,
+            minSize: ResolvedItemConfig.defaults.minSize,
+            minSizeUnit: ResolvedItemConfig.defaults.minSizeUnit,
             id: ResolvedItemConfig.defaults.id,
             maximised: ResolvedHeaderedItemConfig.defaultMaximised,
             isClosable: ResolvedItemConfig.defaults.isClosable,
@@ -209,10 +209,10 @@ export namespace ResolvedComponentItemConfig {
         const result: ResolvedComponentItemConfig = {
             type: original.type,
             content: [],
-            width: original.width,
-            minWidth: original.minWidth,
-            height: original.height,
-            minHeight: original.minHeight,
+            size: original.size,
+            sizeUnit: original.sizeUnit,
+            minSize: original.minSize,
+            minSizeUnit: original.minSizeUnit,
             id: original.id,
             maximised: original.maximised,
             isClosable: original.isClosable,
@@ -229,10 +229,10 @@ export namespace ResolvedComponentItemConfig {
         const result: ResolvedComponentItemConfig = {
             type: ItemType.component,
             content: [],
-            width: ResolvedItemConfig.defaults.width,
-            minWidth: ResolvedItemConfig.defaults.minWidth,
-            height: ResolvedItemConfig.defaults.height,
-            minHeight: ResolvedItemConfig.defaults.minHeight,
+            size: ResolvedItemConfig.defaults.size,
+            sizeUnit: ResolvedItemConfig.defaults.sizeUnit,
+            minSize: ResolvedItemConfig.defaults.minSize,
+            minSizeUnit: ResolvedItemConfig.defaults.minSizeUnit,
             id: ResolvedItemConfig.defaults.id,
             maximised: ResolvedHeaderedItemConfig.defaultMaximised,
             isClosable: ResolvedItemConfig.defaults.isClosable,
@@ -283,10 +283,10 @@ export namespace ResolvedRowOrColumnItemConfig {
         const result: ResolvedRowOrColumnItemConfig = {
             type: original.type,
             content: content !== undefined ? copyContent(content) : copyContent(original.content),
-            width: original.width,
-            minWidth: original.minWidth,
-            height: original.height,
-            minHeight: original.minHeight,
+            size: original.size,
+            sizeUnit: original.sizeUnit,
+            minSize: original.minSize,
+            minSizeUnit: original.minSizeUnit,
             id: original.id,
             isClosable: original.isClosable,
         }
@@ -306,10 +306,10 @@ export namespace ResolvedRowOrColumnItemConfig {
         const result: ResolvedRowOrColumnItemConfig = {
             type,
             content: [],
-            width: ResolvedItemConfig.defaults.width,
-            minWidth: ResolvedItemConfig.defaults.minWidth,
-            height: ResolvedItemConfig.defaults.height,
-            minHeight: ResolvedItemConfig.defaults.minHeight,
+            size: ResolvedItemConfig.defaults.size,
+            sizeUnit: ResolvedItemConfig.defaults.sizeUnit,
+            minSize: ResolvedItemConfig.defaults.minSize,
+            minSizeUnit: ResolvedItemConfig.defaults.minSizeUnit,
             id: ResolvedItemConfig.defaults.id,
             isClosable: ResolvedItemConfig.defaults.isClosable,
         }
@@ -350,10 +350,10 @@ export namespace ResolvedRootItemConfig {
 /** @internal */
 export interface ResolvedGroundItemConfig extends ResolvedItemConfig {
     readonly type: 'ground';
-    readonly width: 100,
-    readonly minWidth: 0,
-    readonly height: 100,
-    readonly minHeight: 0,
+    readonly size: 100,
+    readonly sizeUnit: SizeUnitEnum.Percent,
+    readonly minSize: 0,
+    readonly minSizeUnit: SizeUnitEnum.Pixel,
     readonly id: '',
     readonly isClosable: false,
     readonly title: '',
@@ -367,10 +367,10 @@ export namespace ResolvedGroundItemConfig {
         return {
             type: ItemType.ground,
             content,
-            width: 100,
-            minWidth: 0,
-            height: 100,
-            minHeight: 0,
+            size: 100,
+            sizeUnit: SizeUnitEnum.Percent,
+            minSize: 0,
+            minSizeUnit: SizeUnitEnum.Pixel,
             id: '',
             isClosable: false,
             title: '',
@@ -463,7 +463,7 @@ export namespace ResolvedLayoutConfig {
         export const defaults: ResolvedLayoutConfig.Dimensions = {
             borderWidth: 5,
             borderGrabWidth: 5,
-            minItemHeight: 10,
+            minItemHeight: -1,
             minItemWidth: 10,
             headerHeight: 20,
             dragProxyWidth: 300,

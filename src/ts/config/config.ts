@@ -26,25 +26,43 @@ export interface ItemConfig {
 
     /**
      * The width of this item, relative to the other children of its parent in percent
+     * @deprecated use {@link (ItemConfig:class).size} instead
      */
     width?: number;
 
     /**
      * The minimum width of this item in pixels
      * CAUTION - Not tested - do not use
+     * @deprecated use {@link (ItemConfig:class).minSize} instead
      */
     minWidth?: number;
 
     /**
      * The height of this item, relative to the other children of its parent in percent
+     * @deprecated use {@link (ItemConfig:class).size} instead
      */
     height?: number;
 
     /**
      * The minimum height of this item in pixels
      * CAUTION - Not tested - do not use
+     * @deprecated use {@link (ItemConfig:class).minSize} instead
      */
     minHeight?: number;
+
+    /**
+     * The size of this item.
+     * For rows, it specifies height. For columns, it specifies width.
+     * Has format <number><sizeUnit>. Currently only supports units `fr` and `%`
+     */
+    size?: string;
+
+    /**
+     * The size of this item.
+     * For rows, it specifies height. For columns, it specifies width.
+     * Has format <number><sizeUnit>. Currently only supports units `px`
+     */
+    minSize?: string;
 
     /**
      * A string that can be used to identify a ContentItem.
