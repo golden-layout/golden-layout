@@ -379,6 +379,7 @@ export class RowOrColumn extends ContentItem {
 
         let total = 0;
         const itemsWithFractionalSize: ContentItem[] = [];
+        let totalFractionalSize = 0;
 
         for (let i = 0; i < this.contentItems.length; i++) {
             const contentItem = this.contentItems[i];
@@ -389,7 +390,8 @@ export class RowOrColumn extends ContentItem {
                     break;
                 }
                 case SizeUnitEnum.Fractional: {
-                    itemsWithFractionalSize.push(this.contentItems[i]);
+                    itemsWithFractionalSize.push(contentItem);
+                    totalFractionalSize += contentItem.size;
                     break;
                 }
                 default:
@@ -403,45 +405,47 @@ export class RowOrColumn extends ContentItem {
         if (Math.round(total) === 100) {
             this.respectMinItemSize();
             return;
-        }
+        } else {
+            /**
+             * Allocate the remaining size to the items with a fractional size
+             */
+            if (Math.round(total) < 100 && itemsWithFractionalSize.length > 0) {
+                const fractionalAllocatedSize = 100 - total;
+                for (let i = 0; i < itemsWithFractionalSize.length; i++) {
+                    const contentItem = itemsWithFractionalSize[i];
+                    contentItem.size = fractionalAllocatedSize * (contentItem.size / totalFractionalSize);
+                    contentItem.sizeUnit = SizeUnitEnum.Percent;
+                }
+                this.respectMinItemSize();
+                return;
+            } else {
 
-        /**
-         * Allocate the remaining size to the items without a set dimension
-         */
-        if (Math.round(total) < 100 && itemsWithFractionalSize.length > 0) {
-            for (let i = 0; i < itemsWithFractionalSize.length; i++) {
-                const contentItem = itemsWithFractionalSize[i];
-                contentItem.size = (100 - total) / itemsWithFractionalSize.length;
-                contentItem.sizeUnit = SizeUnitEnum.Percent;
+                /**
+                 * If the total is > 100, but there are also items with a fractional size, assign another 50%
+                 * to the fractional items
+                 *
+                 * This will be reset in the next step
+                 */
+                if (Math.round(total) > 100 && itemsWithFractionalSize.length > 0) {
+                    for (let i = 0; i < itemsWithFractionalSize.length; i++) {
+                        const contentItem = itemsWithFractionalSize[i];
+                        contentItem.size = 50 * (contentItem.size / totalFractionalSize);
+                        contentItem.sizeUnit = SizeUnitEnum.Percent;
+                    }
+                    total += 50;
+                }
+
+                /**
+                 * Set every items size relative to 100 relative to its size to total
+                 */
+                for (let i = 0; i < this.contentItems.length; i++) {
+                    const contentItem = this.contentItems[i];
+                    contentItem.size = (contentItem.size / total) * 100;
+                }
+
+                this.respectMinItemSize();
             }
-            this.respectMinItemSize();
-            return;
         }
-
-        /**
-         * If the total is > 100, but there are also items without a set dimension left, assing 50
-         * as their dimension and add it to the total
-         *
-         * This will be reset in the next step
-         */
-        if (Math.round(total) > 100) {
-            for (let i = 0; i < itemsWithFractionalSize.length; i++) {
-                const contentItem = itemsWithFractionalSize[i];
-                contentItem.size = 50;
-                contentItem.sizeUnit = SizeUnitEnum.Percent;
-                total += 50;
-            }
-        }
-
-        /**
-         * Set every items size relative to 100 relative to its size to total
-         */
-        for (let i = 0; i < this.contentItems.length; i++) {
-            const contentItem = this.contentItems[i];
-            contentItem.size = (contentItem.size / total) * 100;
-        }
-
-        this.respectMinItemSize();
     }
 
     /**
