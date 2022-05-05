@@ -12,6 +12,39 @@ export function pixelsToNumber(value: string): number {
 }
 
 /** @internal */
+export interface SplitStringAtFirstNonDigitResult {
+    digitsPart: string;
+    firstNonDigitPart: string;
+}
+
+/** @internal */
+export function splitTrimmedStringAtFirstNonDigit(value: string): SplitStringAtFirstNonDigitResult {
+    value = value.trimStart();
+
+    const length = value.length;
+    if (length === 0) {
+        return { digitsPart: '', firstNonDigitPart: '' }
+    } else {
+        let firstNonDigitPartIndex = length;
+        for (let i = 0; i < length; i++) {
+            if (!isDigit(value[i])) {
+                firstNonDigitPartIndex = i;
+                break;
+            }
+        }
+        const digitsPart = value.substring(0, firstNonDigitPartIndex);
+        const firstNonDigitPart = value.substring(firstNonDigitPartIndex).trim();
+
+        return { digitsPart, firstNonDigitPart };
+    }
+}
+
+/** @internal */
+export function isDigit(char: string) {
+    return (char >= '0' && char <= '9');
+}
+
+/** @internal */
 export function getElementWidth(element: HTMLElement): number {
     return element.offsetWidth;
 }

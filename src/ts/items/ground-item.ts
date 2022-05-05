@@ -3,8 +3,16 @@ import { ResolvedComponentItemConfig, ResolvedGroundItemConfig, ResolvedHeadered
 import { AssertError, UnexpectedNullError } from '../errors/internal-error';
 import { LayoutManager } from '../layout-manager';
 import { DomConstants } from '../utils/dom-constants';
+<<<<<<< HEAD
 import { AreaLinkedRect, ItemType } from '../utils/types';
 import { setElementHeight, setElementWidth } from '../utils/utils';
+||||||| parent of ef01b9a (Replace [direction] with .size)
+import { AreaLinkedRect, ItemType } from '../utils/types';
+import { getElementWidthAndHeight, setElementHeight, setElementWidth } from '../utils/utils';
+=======
+import { AreaLinkedRect, ItemType, SizeUnitEnum } from '../utils/types';
+import { getElementWidthAndHeight, setElementHeight, setElementWidth } from '../utils/utils';
+>>>>>>> ef01b9a (Replace [direction] with .size)
 import { ComponentItem } from './component-item';
 import { ComponentParentableItem } from './component-parentable-item';
 import { ContentItem } from './content-item';
@@ -244,7 +252,6 @@ export class GroundItem extends ComponentParentableItem {
             }
 
             const type = area.side[0] == 'x' ? ItemType.row : ItemType.column;
-            const dimension = area.side[0] == 'x' ? 'width' : 'height';
             const insertBefore = area.side[1] == '2';
             const column = this.contentItems[0];
             if (!(column instanceof RowOrColumn) || column.type !== type) {
@@ -253,14 +260,16 @@ export class GroundItem extends ComponentParentableItem {
                 this.replaceChild(column, rowOrColumn);
                 rowOrColumn.addChild(contentItem, insertBefore ? 0 : undefined, true);
                 rowOrColumn.addChild(column, insertBefore ? undefined : 0, true);
-                column[dimension] = 50;
-                contentItem[dimension] = 50;
+                column.size = 50;
+                contentItem.size = 50;
+                contentItem.sizeUnit = SizeUnitEnum.Percent;
                 rowOrColumn.updateSize();
             } else {
                 const sibling = column.contentItems[insertBefore ? 0 : column.contentItems.length - 1]
                 column.addChild(contentItem, insertBefore ? 0 : undefined, true);
-                sibling[dimension] *= 0.5;
-                contentItem[dimension] = sibling[dimension];
+                sibling.size *= 0.5;
+                contentItem.size = sibling.size;
+                contentItem.sizeUnit = SizeUnitEnum.Percent;
                 column.updateSize();
             }
         }

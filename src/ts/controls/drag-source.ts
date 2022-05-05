@@ -20,7 +20,7 @@ export class DragSource {
     private _dummyGroundContainer: HTMLElement;
     /** @internal */
     private _dummyGroundContentItem: GroundItem;
- 
+
     /** @internal */
     constructor(
         /** @internal */
@@ -51,7 +51,7 @@ export class DragSource {
 	destroy(): void {
 		this.removeDragListener();
     }
-    
+
     /**
      * Called initially and after every drag
      * @internal
@@ -97,7 +97,7 @@ export class DragSource {
             componentState,
             title,
         }
-        const resolvedItemConfig = ComponentItemConfig.resolve(itemConfig);
+        const resolvedItemConfig = ComponentItemConfig.resolve(itemConfig, false);
 
         const componentItem = new ComponentItem(this._layoutManager, resolvedItemConfig, this._dummyGroundContentItem)
         this._dummyGroundContentItem.contentItems.push(componentItem);
