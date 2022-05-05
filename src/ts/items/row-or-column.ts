@@ -154,11 +154,12 @@ export class RowOrColumn extends ContentItem {
         }
 
         for (let i = 0; i < this.contentItems.length; i++) {
-            if (this.contentItems[i] === contentItem) {
-                contentItem[this._dimension] = newItemSize;
+            const indexedContentItem = this.contentItems[i];
+            if (indexedContentItem === contentItem) {
+                contentItem.size = newItemSize;
             } else {
-                const itemSize = this.contentItems[i][this._dimension] *= (100 - newItemSize) / 100;
-                this.contentItems[i][this._dimension] = itemSize;
+                const itemSize = indexedContentItem.size *= (100 - newItemSize) / 100;
+                indexedContentItem.size = itemSize;
             }
         }
 
@@ -208,9 +209,9 @@ export class RowOrColumn extends ContentItem {
      * Replaces a child of this Row or Column with another contentItem
      */
     override replaceChild(oldChild: ContentItem, newChild: ContentItem): void {
-        const size = oldChild[this._dimension];
+        const size = oldChild.size;
         super.replaceChild(oldChild, newChild);
-        newChild[this._dimension] = size;
+        newChild.size = size;
         this.updateSize(false);
         this.emitBaseBubblingEvent('stateChanged');
     }
@@ -558,7 +559,7 @@ export class RowOrColumn extends ContentItem {
      * @returns A map of contentItems that the splitter affects
      * @internal
      */
-    private getItemsForSplitter(splitter: Splitter) {
+    private getSplitItems(splitter: Splitter) {
         const index = this._splitter.indexOf(splitter);
 
         return {
@@ -601,15 +602,16 @@ export class RowOrColumn extends ContentItem {
      * @internal
      */
     private onSplitterDragStart(splitter: Splitter) {
-        const items = this.getItemsForSplitter(splitter);
-        const minSize = this.layoutManager.layoutConfig.dimensions[this._isColumn ? 'minItemHeight' : 'minItemWidth'];
+        const items = this.getSplitItems(splitter);
 
+        const beforeWidth = pixelsToNumber(items.before.element.style[this._dimension]);
+        const afterSize = pixelsToNumber(items.after.element.style[this._dimension]);
         const beforeMinSize = this.calculateContentItemsTotalMinSize(items.before.contentItems);
         const afterMinSize = this.calculateContentItemsTotalMinSize(items.after.contentItems);
 
         this._splitterPosition = 0;
-        this._splitterMinPosition = -1 * (pixelsToNumber(items.before.element.style[this._dimension]) - (beforeMinSize || minSize));
-        this._splitterMaxPosition = pixelsToNumber(items.after.element.style[this._dimension]) - (afterMinSize || minSize);
+        this._splitterMinPosition = -1 * (beforeWidth - beforeMinSize);
+        this._splitterMaxPosition = afterSize - afterMinSize;
     }
 
     /**
@@ -649,14 +651,14 @@ export class RowOrColumn extends ContentItem {
         if (this._splitterPosition === null) {
             throw new UnexpectedNullError('ROCOSDS66932');
         } else {
-            const items = this.getItemsForSplitter(splitter);
+            const items = this.getSplitItems(splitter);
             const sizeBefore = pixelsToNumber(items.before.element.style[this._dimension]);
             const sizeAfter = pixelsToNumber(items.after.element.style[this._dimension]);
             const splitterPositionInRange = (this._splitterPosition + sizeBefore) / (sizeBefore + sizeAfter);
-            const totalRelativeSize = items.before[this._dimension] + items.after[this._dimension];
+            const totalRelativeSize = items.before.size + items.after.size;
 
-            items.before[this._dimension] = splitterPositionInRange * totalRelativeSize;
-            items.after[this._dimension] = (1 - splitterPositionInRange) * totalRelativeSize;
+            items.before.size = splitterPositionInRange * totalRelativeSize;
+            items.after.size = (1 - splitterPositionInRange) * totalRelativeSize;
 
             splitter.element.style.top = numberToPixels(0);
             splitter.element.style.left = numberToPixels(0);

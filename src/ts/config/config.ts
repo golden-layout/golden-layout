@@ -1,6 +1,8 @@
 import { ConfigurationError } from '../errors/external-error';
 import { AssertError, UnreachableCaseError } from '../errors/internal-error';
+import { I18nStringId, i18nStrings } from '../utils/i18n-strings';
 import { ItemType, JsonValue, ResponsiveMode, Side, SizeUnitEnum } from '../utils/types';
+import { splitTrimmedStringAtFirstNonDigit } from '../utils/utils';
 import {
     ResolvedComponentItemConfig,
     ResolvedHeaderedItemConfig,
@@ -161,8 +163,7 @@ export namespace ItemConfig {
             return parseSize(size, [SizeUnitEnum.Percent, SizeUnitEnum.Fractional]);
         } else {
             const widthDefined = width !== undefined;
-            const heightDefined = height !== undefined;
-            if (widthDefined || heightDefined) {
+            if (widthDefined || height !== undefined) {
                 if (widthDefined) {
                     return { size: width, sizeUnit: SizeUnitEnum.Percent };
                 } else {
@@ -772,8 +773,18 @@ export namespace LayoutConfig {
             return result;
         }
 
-        export function createFromResolved(resolved: ResolvedLayoutConfig.Dimensions): Dimensions {
+        export function createFromResolved(resolvedDimensions: ResolvedLayoutConfig.Dimensions): Dimensions {
+            const result: Dimensions = {
+                borderWidth: resolvedDimensions.borderWidth,
+                borderGrabWidth: resolvedDimensions.borderGrabWidth,
+                defaultMinItemHeight: formatSize(resolvedDimensions.defaultMinItemHeight, resolvedDimensions.defaultMinItemHeightUnit),
+                defaultMinItemWidth: formatSize(resolvedDimensions.defaultMinItemWidth, resolvedDimensions.defaultMinItemWidthUnit),
+                headerHeight: resolvedDimensions.headerHeight,
+                dragProxyWidth: resolvedDimensions.dragProxyWidth,
+                dragProxyHeight: resolvedDimensions.dragProxyHeight,
+            };
 
+            return result;
         }
 
         export function resolveDefaultMinItemHeight(dimensions: Dimensions | undefined): SizeWithUnit {
@@ -1052,8 +1063,28 @@ export interface SizeWithUnit {
 }
 
 /** @internal */
-export function parseSize(size: string, allowableSizeUnits: readonly SizeUnitEnum[]): SizeWithUnit {
+export function parseSize(sizeString: string, allowableSizeUnits: readonly SizeUnitEnum[]): SizeWithUnit {
+    const { digitsPart, firstNonDigitPart } = splitTrimmedStringAtFirstNonDigit(sizeString);
+    const size = Number.parseInt(digitsPart, 10);
+    if (isNaN(size)) {
+        throw new ConfigurationError(`${i18nStrings[I18nStringId.InvalidNumberPartInSizeString]}: ${sizeString}`);
+    } else {
+        const sizeUnit = SizeUnitEnum.tryParse(firstNonDigitPart);
+        if (sizeUnit === undefined) {
+            throw new ConfigurationError(`${i18nStrings[I18nStringId.UnknownUnitInSizeString]}: ${sizeString}`)
+        } else {
+            if (!allowableSizeUnits.includes(sizeUnit)) {
+                throw new ConfigurationError(`${i18nStrings[I18nStringId.UnsupportedUnitInSizeString]}: ${sizeString}`)
+            } else {
+                return { size, sizeUnit };
+            }
+        }
+    }
+}
 
+/** @internal */
+export function formatSize(size: number, sizeUnit: SizeUnitEnum) {
+    return size.toString(10) + SizeUnitEnum.format(sizeUnit);
 }
 
 /** @public @deprecated - use {@link (LayoutConfig:interface)} */

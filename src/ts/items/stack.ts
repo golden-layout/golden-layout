@@ -6,7 +6,7 @@ import { LayoutManager } from '../layout-manager';
 import { DomConstants } from '../utils/dom-constants';
 import { DragListener } from '../utils/drag-listener';
 import { EventEmitter } from '../utils/event-emitter';
-import { AreaLinkedRect, ItemType, JsonValue, Side, WidthAndHeight, WidthOrHeightPropertyName } from '../utils/types';
+import { AreaLinkedRect, ItemType, JsonValue, Side, SizeUnitEnum, WidthAndHeight, WidthOrHeightPropertyName } from '../utils/types';
 import {
     getElementWidthAndHeight,
     numberToPixels,
@@ -475,7 +475,6 @@ export class Stack extends ComponentParentableItem {
         const isHorizontal = this._dropSegment === Stack.Segment.Left || this._dropSegment === Stack.Segment.Right;
         const insertBefore = this._dropSegment === Stack.Segment.Top || this._dropSegment === Stack.Segment.Left;
         const hasCorrectParent = (isVertical && this.stackParent.isColumn) || (isHorizontal && this.stackParent.isRow);
-        const dimension = isVertical ? 'height' : 'width';
 
         /*
          * The content item can be either a component or a stack. If it is a component, wrap it into a stack
@@ -509,8 +508,9 @@ export class Stack extends ComponentParentableItem {
         if (hasCorrectParent) {
             const index = this.stackParent.contentItems.indexOf(this);
             this.stackParent.addChild(contentItem, insertBefore ? index : index + 1, true);
-            this[dimension] *= 0.5;
-            contentItem[dimension] = this[dimension];
+            this.size *= 0.5;
+            contentItem.size = this.size;
+            contentItem.sizeUnit = this.sizeUnit;
             this.stackParent.updateSize(false);
             /*
              * This handles items that are dropped on top or bottom of a row or left / right of a column. We need
@@ -525,8 +525,9 @@ export class Stack extends ComponentParentableItem {
             rowOrColumn.addChild(contentItem, insertBefore ? 0 : undefined, true);
             rowOrColumn.addChild(this, insertBefore ? undefined : 0, true);
 
-            this[dimension] = 50;
-            contentItem[dimension] = 50;
+            this.size = 50;
+            contentItem.size = 50;
+            contentItem.sizeUnit = SizeUnitEnum.Percent;
             rowOrColumn.updateSize(false);
         }
     }

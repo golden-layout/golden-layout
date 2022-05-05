@@ -177,15 +177,16 @@ export class ComponentContainer extends EventEmitter {
                 } else {
                     const newSize = direction === 'height' ? height : width;
 
-                    const totalPixel = currentSize * (1 / (ancestorChildItem[direction] / 100));
+                    const totalPixel = currentSize * (1 / (ancestorChildItem.size / 100));
                     const percentage = (newSize / totalPixel) * 100;
-                    const delta = (ancestorChildItem[direction] - percentage) / (ancestorItem.contentItems.length - 1);
+                    const delta = (ancestorChildItem.size - percentage) / (ancestorItem.contentItems.length - 1);
 
                     for (let i = 0; i < ancestorItem.contentItems.length; i++) {
-                        if (ancestorItem.contentItems[i] === ancestorChildItem) {
-                            ancestorItem.contentItems[i][direction] = percentage;
+                        const ancestorItemContentItem = ancestorItem.contentItems[i];
+                        if (ancestorItemContentItem === ancestorChildItem) {
+                            ancestorItemContentItem.size = percentage;
                         } else {
-                            ancestorItem.contentItems[i][direction] += delta;
+                            ancestorItemContentItem.size += delta;
                         }
                     }
 
