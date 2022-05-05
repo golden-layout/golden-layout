@@ -1775,7 +1775,7 @@ export abstract class LayoutManager extends EventEmitter {
                         return;
                     } else {
                         // If they all still fit, do nothing.
-                        const minItemWidth = this.layoutConfig.dimensions.minItemWidth;
+                        const minItemWidth = this.layoutConfig.dimensions.defaultMinItemWidth;
                         const totalMinWidth = columnCount * minItemWidth;
                         if (totalMinWidth <= this._width) {
                             return;

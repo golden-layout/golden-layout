@@ -1,6 +1,6 @@
 import { ConfigurationError } from '../errors/external-error';
 import { AssertError, UnreachableCaseError } from '../errors/internal-error';
-import { ItemType, JsonValue, ResponsiveMode, Side } from '../utils/types';
+import { ItemType, JsonValue, ResponsiveMode, Side, SizeUnitEnum } from '../utils/types';
 import {
     ResolvedComponentItemConfig,
     ResolvedHeaderedItemConfig,
@@ -53,7 +53,14 @@ export interface ItemConfig {
     /**
      * The size of this item.
      * For rows, it specifies height. For columns, it specifies width.
-     * Has format <number><sizeUnit>. Currently only supports units `fr` and `%`
+     * Has format <number><{@link sizeUnit}>. Currently only supports units `fr` and `%`.
+     *
+     * Space is first proportionally allocated to items with sizeUnit `%`.
+     * If there is any space left over (less than 100% allocated), then the
+     * remainder is allocated to the items with unit `fr` according to the fractional size.
+     * If more than 100% is allocated, then an extra 50% is allocated to items with unit `fr` and
+     * is allocated to each item according to its fractional size. All item sizes are then adjusted
+     * to bring the total back to 100%
      */
     size?: string;
 
@@ -87,19 +94,26 @@ export interface ItemConfig {
 
 /** @public */
 export namespace ItemConfig {
-    export function resolve(itemConfig: ItemConfig): ResolvedItemConfig {
+    /** @internal */
+    export const enum SizeWidthHeightSpecificationType {
+        None,
+        Size,
+        WidthOrHeight,
+    }
+
+    export function resolve(itemConfig: ItemConfig, rowAndColumnChildLegacySizeDefault: boolean): ResolvedItemConfig {
         switch (itemConfig.type) {
             case ItemType.ground:
                 throw new ConfigurationError('ItemConfig cannot specify type ground', JSON.stringify(itemConfig));
             case ItemType.row:
             case ItemType.column:
-                return RowOrColumnItemConfig.resolve(itemConfig as RowOrColumnItemConfig);
+                return RowOrColumnItemConfig.resolve(itemConfig as RowOrColumnItemConfig, rowAndColumnChildLegacySizeDefault);
 
             case ItemType.stack:
-                return StackItemConfig.resolve(itemConfig as StackItemConfig);
+                return StackItemConfig.resolve(itemConfig as StackItemConfig, rowAndColumnChildLegacySizeDefault);
 
             case ItemType.component:
-                return ComponentItemConfig.resolve(itemConfig as ComponentItemConfig);
+                return ComponentItemConfig.resolve(itemConfig as ComponentItemConfig, rowAndColumnChildLegacySizeDefault);
 
             default:
                 throw new UnreachableCaseError('UCUICR55499', itemConfig.type);
@@ -113,7 +127,7 @@ export namespace ItemConfig {
             const count = content.length;
             const result = new Array<ResolvedItemConfig>(count);
             for (let i = 0; i < count; i++) {
-                result[i] = ItemConfig.resolve(content[i]);
+                result[i] = ItemConfig.resolve(content[i], false);
             }
             return result;
         }
@@ -133,7 +147,65 @@ export namespace ItemConfig {
                 return id;
             }
         }
+    }
 
+    export function resolveSize(
+        size: string | undefined,
+        width: number | undefined,
+        height: number | undefined,
+        rowAndColumnChildLegacySizeDefault: boolean):
+    SizeWithUnit {
+        // Remove support for rowAndColumnChildLegacySizeDefault in a major version release
+
+        if (size !== undefined) {
+            return parseSize(size, [SizeUnitEnum.Percent, SizeUnitEnum.Fractional]);
+        } else {
+            const widthDefined = width !== undefined;
+            const heightDefined = height !== undefined;
+            if (widthDefined || heightDefined) {
+                if (widthDefined) {
+                    return { size: width, sizeUnit: SizeUnitEnum.Percent };
+                } else {
+                    return { size: height, sizeUnit: SizeUnitEnum.Percent };
+                }
+            } else {
+                if (rowAndColumnChildLegacySizeDefault) {
+                    return { size: 50, sizeUnit: SizeUnitEnum.Percent };
+                } else {
+                    return { size: ResolvedItemConfig.defaults.size, sizeUnit: ResolvedItemConfig.defaults.sizeUnit };
+                }
+            }
+        }
+    }
+
+    export function resolveMinSize(minSize: string | undefined, minWidth: number | undefined, minHeight: number | undefined) {
+        if (minSize !== undefined) {
+            return parseSize(minSize, [SizeUnitEnum.Pixel]);
+        } else {
+            const minWidthDefined = minWidth !== undefined;
+            const minHeightDefined = minHeight !== undefined;
+            if (minWidthDefined || minHeightDefined) {
+                if (minWidthDefined) {
+                    return { size: minWidth, sizeUnit: SizeUnitEnum.Pixel };
+                } else {
+                    return { size: minHeight, sizeUnit: SizeUnitEnum.Pixel };
+                }
+            } else {
+                return { size: ResolvedItemConfig.defaults.size, sizeUnit: ResolvedItemConfig.defaults.sizeUnit };
+            }
+        }
+    }
+
+    export function calculateSizeWidthHeightSpecificationType(config: ItemConfig): SizeWidthHeightSpecificationType {
+        if (config.size !== undefined) {
+            return SizeWidthHeightSpecificationType.Size;
+        } else {
+            if (config.width !== undefined || config.height !== undefined) {
+                return SizeWidthHeightSpecificationType.WidthOrHeight;
+            } else {
+                return SizeWidthHeightSpecificationType.None;
+            }
+        }
     }
 
     export function isGround(config: ItemConfig): config is ItemConfig {
@@ -239,15 +311,18 @@ export interface StackItemConfig extends HeaderedItemConfig {
 
 /** @public */
 export namespace StackItemConfig {
-    export function resolve(itemConfig: StackItemConfig): ResolvedStackItemConfig {
+    export function resolve(itemConfig: StackItemConfig, rowAndColumnChildLegacySizeDefault: boolean): ResolvedStackItemConfig {
         const { id, maximised } = HeaderedItemConfig.resolveIdAndMaximised(itemConfig);
+        const { size, sizeUnit } = ItemConfig.resolveSize(itemConfig.size, itemConfig.width, itemConfig.height, rowAndColumnChildLegacySizeDefault);
+        const { size: minSize, sizeUnit: minSizeUnit } = ItemConfig.resolveMinSize(itemConfig.minSize, itemConfig.minWidth, itemConfig.minHeight);
+
         const result: ResolvedStackItemConfig = {
             type: ItemType.stack,
             content: resolveContent(itemConfig.content),
-            width: itemConfig.width ?? ResolvedItemConfig.defaults.width,
-            minWidth: itemConfig.minWidth ?? ResolvedItemConfig.defaults.minWidth,
-            height: itemConfig.height ?? ResolvedItemConfig.defaults.height,
-            minHeight: itemConfig.minHeight ?? ResolvedItemConfig.defaults.minHeight,
+            size,
+            sizeUnit,
+            minSize,
+            minSizeUnit,
             id,
             maximised,
             isClosable: itemConfig.isClosable ?? ResolvedItemConfig.defaults.isClosable,
@@ -265,7 +340,7 @@ export namespace StackItemConfig {
             const result = new Array<ResolvedComponentItemConfig>(count);
             for (let i = 0; i < count; i++) {
                 const childItemConfig = content[i];
-                const itemConfig = ItemConfig.resolve(childItemConfig);
+                const itemConfig = ItemConfig.resolve(childItemConfig, false);
                 if (!ResolvedItemConfig.isComponentItem(itemConfig)) {
                     throw new AssertError('UCUSICRC91114', JSON.stringify(itemConfig));
                 } else {
@@ -310,7 +385,7 @@ export interface ComponentItemConfig extends HeaderedItemConfig {
 
 /** @public */
 export namespace ComponentItemConfig {
-    export function resolve(itemConfig: ComponentItemConfig): ResolvedComponentItemConfig {
+    export function resolve(itemConfig: ComponentItemConfig, rowAndColumnChildLegacySizeDefault: boolean): ResolvedComponentItemConfig {
         let componentType: JsonValue | undefined = itemConfig.componentType;
         if (componentType === undefined) {
             componentType = itemConfig.componentName;
@@ -325,13 +400,15 @@ export namespace ComponentItemConfig {
             } else {
                 title = itemConfig.title;
             }
+            const { size, sizeUnit } = ItemConfig.resolveSize(itemConfig.size, itemConfig.width, itemConfig.height, rowAndColumnChildLegacySizeDefault);
+            const { size: minSize, sizeUnit: minSizeUnit } = ItemConfig.resolveMinSize(itemConfig.minSize, itemConfig.minWidth, itemConfig.minHeight);
             const result: ResolvedComponentItemConfig = {
                 type: itemConfig.type,
                 content: [],
-                width: itemConfig.width ?? ResolvedItemConfig.defaults.width,
-                minWidth: itemConfig.minWidth ?? ResolvedItemConfig.defaults.minWidth,
-                height: itemConfig.height ?? ResolvedItemConfig.defaults.height,
-                minHeight: itemConfig.minHeight ?? ResolvedItemConfig.defaults.minHeight,
+                size,
+                sizeUnit,
+                minSize,
+                minSizeUnit,
                 id,
                 maximised,
                 isClosable: itemConfig.isClosable ?? ResolvedItemConfig.defaults.isClosable,
@@ -381,36 +458,73 @@ export namespace RowOrColumnItemConfig {
         }
     }
 
-    export function resolve(itemConfig: RowOrColumnItemConfig): ResolvedRowOrColumnItemConfig {
+    export function resolve(itemConfig: RowOrColumnItemConfig, rowAndColumnChildLegacySizeDefault: boolean): ResolvedRowOrColumnItemConfig {
+        const { size, sizeUnit } = ItemConfig.resolveSize(itemConfig.size, itemConfig.width, itemConfig.height, rowAndColumnChildLegacySizeDefault);
+        const { size: minSize, sizeUnit: minSizeUnit } = ItemConfig.resolveMinSize(itemConfig.minSize, itemConfig.minWidth, itemConfig.minHeight);
         const result: ResolvedRowOrColumnItemConfig = {
             type: itemConfig.type,
             content: RowOrColumnItemConfig.resolveContent(itemConfig.content),
-            width: itemConfig.width ?? ResolvedItemConfig.defaults.width,
-            minWidth: itemConfig.width ?? ResolvedItemConfig.defaults.minWidth,
-            height: itemConfig.height ?? ResolvedItemConfig.defaults.height,
-            minHeight: itemConfig.height ?? ResolvedItemConfig.defaults.minHeight,
+            size,
+            sizeUnit,
+            minSize,
+            minSizeUnit,
             id: ItemConfig.resolveId(itemConfig.id),
             isClosable: itemConfig.isClosable ?? ResolvedItemConfig.defaults.isClosable,
         }
         return result;
     }
+
     export function resolveContent(content: ChildItemConfig[] | undefined): ResolvedRowOrColumnItemConfig.ChildItemConfig[] {
         if (content === undefined) {
             return [];
         } else {
             const count = content.length;
-            const result = new Array<ResolvedRowOrColumnItemConfig.ChildItemConfig>(count);
+            const childItemConfigs = new Array<RowOrColumnItemConfig.ChildItemConfig>(count);
+            let widthOrHeightSpecifiedAtLeastOnce = false;
+            let sizeSpecifiedAtLeastOnce = false;
             for (let i = 0; i < count; i++) {
                 const childItemConfig = content[i];
                 if (!RowOrColumnItemConfig.isChildItemConfig(childItemConfig)) {
                     throw new ConfigurationError('ItemConfig is not Row, Column or Stack', childItemConfig);
                 } else {
-                    const resolvedChildItemConfig = ItemConfig.resolve(childItemConfig);
-                    if (!ResolvedRowOrColumnItemConfig.isChildItemConfig(resolvedChildItemConfig)) {
-                        throw new AssertError('UROCOSPIC99512', JSON.stringify(resolvedChildItemConfig));
-                    } else {
-                        result[i] = resolvedChildItemConfig;
+                    if (!sizeSpecifiedAtLeastOnce) {
+                        const sizeWidthHeightSpecificationType = ItemConfig.calculateSizeWidthHeightSpecificationType(childItemConfig);
+                        switch (sizeWidthHeightSpecificationType) {
+                            case ItemConfig.SizeWidthHeightSpecificationType.None:
+                                break;
+                            case ItemConfig.SizeWidthHeightSpecificationType.WidthOrHeight:
+                                widthOrHeightSpecifiedAtLeastOnce = true;
+                                break;
+                            case ItemConfig.SizeWidthHeightSpecificationType.Size:
+                                sizeSpecifiedAtLeastOnce = true;
+                                break;
+                            default:
+                                throw new UnreachableCaseError('ROCICRC87556', sizeWidthHeightSpecificationType);
+                        }
                     }
+                    childItemConfigs[i] = childItemConfig;
+                }
+            }
+
+            let legacySizeDefault: boolean;
+            if (sizeSpecifiedAtLeastOnce) {
+                legacySizeDefault = false;
+            } else {
+                if (widthOrHeightSpecifiedAtLeastOnce) {
+                    legacySizeDefault = true;
+                } else {
+                    legacySizeDefault = false;
+                }
+            }
+
+            const result = new Array<ResolvedRowOrColumnItemConfig.ChildItemConfig>(count);
+            for (let i = 0; i < count; i++) {
+                const childItemConfig = childItemConfigs[i];
+                const resolvedChildItemConfig = ItemConfig.resolve(childItemConfig, legacySizeDefault);
+                if (!ResolvedRowOrColumnItemConfig.isChildItemConfig(resolvedChildItemConfig)) {
+                    throw new AssertError('UROCOSPIC99512', JSON.stringify(resolvedChildItemConfig));
+                } else {
+                    result[i] = resolvedChildItemConfig;
                 }
             }
             return result;
@@ -441,13 +555,17 @@ export namespace RootItemConfig {
         if (itemConfig === undefined) {
             return undefined;
         } else {
-            const result = ItemConfig.resolve(itemConfig);
+            const result = ItemConfig.resolve(itemConfig, false);
             if (!ResolvedRootItemConfig.isRootItemConfig(result)) {
                 throw new ConfigurationError('ItemConfig is not Row, Column or Stack', JSON.stringify(itemConfig));
             } else {
                 return result;
             }
         }
+    }
+
+    export function createFromResolved(resolvedItemConfig: ResolvedRootItemConfig): RootItemConfig {
+
     }
 }
 
@@ -634,15 +752,27 @@ export namespace LayoutConfig {
 
         /**
          * The minimum height an item can be resized to (in pixel).
-         * Default: 10
+         * @deprecated use {@link (ItemConfig.Dimensions:class).defaultMinItemHeight} instead
          */
         minItemHeight?: number;
 
         /**
+         * The minimum height an item can be resized to.
+         * Default: 0
+         */
+        defaultMinItemHeight?: string;
+
+        /**
          * The minimum width an item can be resized to (in pixel).
-         * Default: 10
+         * @deprecated use {@link (ItemConfig.Dimensions:class).defaultMinItemWidth} instead
          */
         minItemWidth?: number;
+
+        /**
+         * The minimum width an item can be resized to.
+         * Default: 10px
+         */
+        defaultMinItemWidth?: string;
 
         /**
          * The height of the header elements in pixel. This can be changed, but your theme's header css needs to be
@@ -666,17 +796,43 @@ export namespace LayoutConfig {
 
     export namespace Dimensions {
         export function resolve(dimensions: Dimensions | undefined): ResolvedLayoutConfig.Dimensions {
+            const { size: defaultMinItemHeight, sizeUnit: defaultMinItemHeightUnit } = Dimensions.resolveDefaultMinItemHeight(dimensions);
+            const { size: defaultMinItemWidth, sizeUnit: defaultMinItemWidthUnit } = Dimensions.resolveDefaultMinItemWidth(dimensions);
             const result: ResolvedLayoutConfig.Dimensions = {
                 borderWidth: dimensions?.borderWidth ?? ResolvedLayoutConfig.Dimensions.defaults.borderWidth,
                 borderGrabWidth: dimensions?.borderGrabWidth ?? ResolvedLayoutConfig.Dimensions.defaults.borderGrabWidth,
                 contentInset: dimensions?.contentInset ?? ResolvedLayoutConfig.Dimensions.defaults.contentInset,
-                minItemHeight: dimensions?.minItemHeight ?? ResolvedLayoutConfig.Dimensions.defaults.minItemHeight,
-                minItemWidth: dimensions?.minItemWidth ?? ResolvedLayoutConfig.Dimensions.defaults.minItemWidth,
+                defaultMinItemHeight,
+                defaultMinItemHeightUnit,
+                defaultMinItemWidth,
+                defaultMinItemWidthUnit,
                 headerHeight: dimensions?.headerHeight ?? ResolvedLayoutConfig.Dimensions.defaults.headerHeight,
                 dragProxyWidth: dimensions?.dragProxyWidth ?? ResolvedLayoutConfig.Dimensions.defaults.dragProxyWidth,
                 dragProxyHeight: dimensions?.dragProxyHeight ?? ResolvedLayoutConfig.Dimensions.defaults.dragProxyHeight,
             }
             return result;
+        }
+
+        export function createFromResolved(resolved: ResolvedLayoutConfig.Dimensions): Dimensions {
+
+        }
+
+        export function resolveDefaultMinItemHeight(dimensions: Dimensions | undefined): SizeWithUnit {
+            const height = dimensions?.defaultMinItemHeight;
+            if (height === undefined) {
+                return { size: ResolvedLayoutConfig.Dimensions.defaults.defaultMinItemHeight, sizeUnit: ResolvedLayoutConfig.Dimensions.defaults.defaultMinItemHeightUnit };
+            } else {
+                return parseSize(height, [SizeUnitEnum.Pixel]);
+            }
+        }
+
+        export function resolveDefaultMinItemWidth(dimensions: Dimensions | undefined): SizeWithUnit {
+            const width = dimensions?.defaultMinItemWidth;
+            if (width === undefined) {
+                return { size: ResolvedLayoutConfig.Dimensions.defaults.defaultMinItemWidth, sizeUnit: ResolvedLayoutConfig.Dimensions.defaults.defaultMinItemWidthUnit };
+            } else {
+                return parseSize(width, [SizeUnitEnum.Pixel]);
+            }
         }
     }
 
@@ -812,13 +968,12 @@ export namespace LayoutConfig {
     }
 
     export function fromResolved(config: ResolvedLayoutConfig): LayoutConfig {
-        const copiedConfig = ResolvedLayoutConfig.createCopy(config);
         const result: LayoutConfig = {
-            root: copiedConfig.root as RootItemConfig,
-            openPopouts: copiedConfig.openPopouts as unknown as PopoutLayoutConfig[],
-            dimensions: copiedConfig.dimensions,
-            settings: copiedConfig.settings,
-            header: copiedConfig.header,
+            root: RootItemConfig.createFromResolved(config.root),
+            openPopouts: ResolvedLayoutConfig.copyOpenPopouts(config.openPopouts) as unknown as PopoutLayoutConfig[],
+            settings: ResolvedLayoutConfig.Settings.createCopy(config.settings),
+            dimensions: LayoutConfig.Dimensions.createFromResolved(config.dimensions),
+            header: ResolvedLayoutConfig.Header.createCopy(config.header),
         };
         return result;
     }
@@ -929,6 +1084,17 @@ export namespace PopoutLayoutConfig {
         }
         return config;
     }
+}
+
+/** @internal */
+export interface SizeWithUnit {
+    size: number;
+    sizeUnit: SizeUnitEnum;
+}
+
+/** @internal */
+export function parseSize(size: string, allowableSizeUnits: readonly SizeUnitEnum[]): SizeWithUnit {
+
 }
 
 /** @public @deprecated - use {@link (LayoutConfig:interface)} */

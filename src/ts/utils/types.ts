@@ -105,7 +105,10 @@ export namespace ResponsiveMode {
     export const onload = 'onload';
 }
 
-/** @public */
+/**
+ * Length units which can specify the size of a Component Item
+ * @public
+ */
 export type SizeUnit = 'px' | '%' | 'fr' | 'em';
 /** @public */
 export enum SizeUnitEnum {

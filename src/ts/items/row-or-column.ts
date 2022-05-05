@@ -105,7 +105,7 @@ export class RowOrColumn extends ContentItem {
         index?: number
     ): number {
         this.layoutManager.checkMinimiseMaximisedStack();
-        const resolvedItemConfig = ItemConfig.resolve(itemConfig);
+        const resolvedItemConfig = ItemConfig.resolve(itemConfig, false);
         const contentItem = this.layoutManager.createAndInitContentItem(resolvedItemConfig, this);
         return this.addChild(contentItem, index, false);
     }
@@ -482,10 +482,9 @@ export class RowOrColumn extends ContentItem {
             size: number;
         }
 
-        const dimensions = this.layoutManager.layoutConfig.dimensions;
-        const minItemSize = this._isColumn ? dimensions.minItemHeight : dimensions.minItemWidth;
+        const minItemSize = this.calculateContentItemMinSize(this);
 
-        if (minItemSize < 0 || this.contentItems.length <= 1) {
+        if (minItemSize <= 0 || this.contentItems.length <= 1) {
             return;
         } else {
             let totalOverMin = 0;
@@ -593,22 +592,32 @@ export class RowOrColumn extends ContentItem {
         };
     }
 
+    private calculateContentItemMinSize(contentItem: ContentItem) {
+        const minSize = contentItem.minSize;
+        if (minSize !== undefined) {
+            if (contentItem.sizeUnit === SizeUnitEnum.Pixel) {
+                return minSize;
+            } else {
+                throw new AssertError('ROCGMD98831', JSON.stringify(contentItem));
+            }
+        } else {
+            const dimensions = this.layoutManager.layoutConfig.dimensions;
+            return this._isColumn ? dimensions.defaultMinItemHeight : dimensions.defaultMinItemWidth;
+        }
+    }
+
     /**
      * Gets the minimum dimensions for the given item configuration array
      * @internal
      */
-    private getMinimumDimensions(contentItems: readonly ContentItem[]) {
-        let minSize = 0;
+    private calculateContentItemsTotalMinSize(contentItems: readonly ContentItem[]) {
+        let totalMinSize = 0;
 
         for (const contentItem of contentItems) {
-            if (contentItem.sizeUnit === SizeUnitEnum.Pixel) {
-                minSize = Math.max(contentItem.minSize ?? 0, minSize);
-            } else {
-                throw new AssertError('ROCGMD98831', JSON.stringify(contentItem));
-            }
+            totalMinSize += this.calculateContentItemMinSize(contentItem);
         }
 
-        return minSize;
+        return totalMinSize;
     }
 
     /**
@@ -620,8 +629,8 @@ export class RowOrColumn extends ContentItem {
         const items = this.getItemsForSplitter(splitter);
         const minSize = this.layoutManager.layoutConfig.dimensions[this._isColumn ? 'minItemHeight' : 'minItemWidth'];
 
-        const beforeMinSize = this.getMinimumDimensions(items.before.contentItems);
-        const afterMinSize = this.getMinimumDimensions(items.after.contentItems);
+        const beforeMinSize = this.calculateContentItemsTotalMinSize(items.before.contentItems);
+        const afterMinSize = this.calculateContentItemsTotalMinSize(items.after.contentItems);
 
         this._splitterPosition = 0;
         this._splitterMinPosition = -1 * (pixelsToNumber(items.before.element.style[this._dimension]) - (beforeMinSize || minSize));
