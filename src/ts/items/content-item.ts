@@ -40,7 +40,7 @@ export abstract class ContentItem extends EventEmitter {
     /** @internal */
     sizeUnit: SizeUnitEnum;
     /** @internal */
-    minSize: number;
+    minSize: number | undefined;
     /** @internal */
     minSizeUnit: SizeUnitEnum;
 

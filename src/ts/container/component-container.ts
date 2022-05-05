@@ -216,7 +216,7 @@ export class ComponentContainer extends EventEmitter {
         if (!ItemConfig.isComponent(itemConfig)) {
             throw new Error('ReplaceComponent not passed a component ItemConfig')
         } else {
-            const config = ComponentItemConfig.resolve(itemConfig);
+            const config = ComponentItemConfig.resolve(itemConfig, false);
             this._initialState = config.componentState;
             this._state = this._initialState;
             this._componentType = config.componentType;

@@ -10,7 +10,7 @@ export interface ResolvedItemConfig {
     readonly content: readonly ResolvedItemConfig[];
     readonly size: number;
     readonly sizeUnit: SizeUnitEnum;
-    readonly minSize: number;
+    readonly minSize: number | undefined;
     readonly minSizeUnit: SizeUnitEnum;
     // id no longer specifies whether an Item is maximised.  This is now done by HeaderItemConfig.maximised
     readonly id: string;
@@ -24,7 +24,7 @@ export namespace ResolvedItemConfig {
         content: [],
         size: 1,
         sizeUnit: SizeUnitEnum.Fractional,
-        minSize: 0,
+        minSize: undefined,
         minSizeUnit: SizeUnitEnum.Pixel,
         id: '',
         isClosable: true,
@@ -440,8 +440,10 @@ export namespace ResolvedLayoutConfig {
         // see LayoutConfig.Dimensions for comments
         readonly borderWidth: number;
         readonly borderGrabWidth: number,
-        readonly minItemHeight: number;
-        readonly minItemWidth: number;
+        readonly defaultMinItemHeight: number;
+        readonly defaultMinItemHeightUnit: SizeUnitEnum;
+        readonly defaultMinItemWidth: number;
+        readonly defaultMinItemWidthUnit: SizeUnitEnum;
         readonly headerHeight: number;
         readonly dragProxyWidth: number;
         readonly dragProxyHeight: number;
@@ -452,8 +454,10 @@ export namespace ResolvedLayoutConfig {
             return {
                 borderWidth: original.borderWidth,
                 borderGrabWidth: original.borderGrabWidth,
-                minItemHeight: original.minItemHeight,
-                minItemWidth: original.minItemWidth,
+                defaultMinItemHeight: original.defaultMinItemHeight,
+                defaultMinItemHeightUnit: original.defaultMinItemHeightUnit,
+                defaultMinItemWidth: original.defaultMinItemWidth,
+                defaultMinItemWidthUnit: original.defaultMinItemWidthUnit,
                 headerHeight: original.headerHeight,
                 dragProxyWidth: original.dragProxyWidth,
                 dragProxyHeight: original.dragProxyHeight,
@@ -463,8 +467,10 @@ export namespace ResolvedLayoutConfig {
         export const defaults: ResolvedLayoutConfig.Dimensions = {
             borderWidth: 5,
             borderGrabWidth: 5,
-            minItemHeight: -1,
-            minItemWidth: 10,
+            defaultMinItemHeight: 0,
+            defaultMinItemHeightUnit: SizeUnitEnum.Pixel,
+            defaultMinItemWidth: 10,
+            defaultMinItemWidthUnit: SizeUnitEnum.Pixel,
             headerHeight: 20,
             dragProxyWidth: 300,
             dragProxyHeight: 200

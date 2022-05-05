@@ -99,7 +99,7 @@ export class GroundItem extends ComponentParentableItem {
     ): number {
         this.layoutManager.checkMinimiseMaximisedStack();
 
-        const resolvedItemConfig = ItemConfig.resolve(itemConfig);
+        const resolvedItemConfig = ItemConfig.resolve(itemConfig, false);
         let parent: ContentItem;
         if (this.contentItems.length > 0) {
             parent = this.contentItems[0];
@@ -119,7 +119,7 @@ export class GroundItem extends ComponentParentableItem {
         // Remove existing root if it exists
         this.clearRoot();
 
-        const resolvedItemConfig = ItemConfig.resolve(itemConfig) as ResolvedComponentItemConfig;
+        const resolvedItemConfig = ItemConfig.resolve(itemConfig, false) as ResolvedComponentItemConfig;
 
         if (resolvedItemConfig.maximised) {
             throw new Error('Root Component cannot be maximised');
