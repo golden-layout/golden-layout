@@ -1,8 +1,8 @@
 import { ConfigurationError } from '../errors/external-error';
-import { AssertError, UnreachableCaseError } from '../errors/internal-error';
+import { AssertError, UnexpectedUndefinedError, UnreachableCaseError } from '../errors/internal-error';
 import { I18nStringId, i18nStrings } from '../utils/i18n-strings';
 import { ItemType, JsonValue, ResponsiveMode, Side, SizeUnitEnum } from '../utils/types';
-import { splitTrimmedStringAtFirstNonDigit } from '../utils/utils';
+import { deepExtendValue, splitTrimmedStringAtFirstNonDigit } from '../utils/utils';
 import {
     ResolvedComponentItemConfig,
     ResolvedHeaderedItemConfig,
@@ -28,34 +28,34 @@ export interface ItemConfig {
 
     /**
      * The width of this item, relative to the other children of its parent in percent
-     * @deprecated use {@link (ItemConfig:class).size} instead
+     * @deprecated use {@link (ItemConfig:interface).size} instead
      */
     width?: number;
 
     /**
      * The minimum width of this item in pixels
      * CAUTION - Not tested - do not use
-     * @deprecated use {@link (ItemConfig:class).minSize} instead
+     * @deprecated use {@link (ItemConfig:interface).minSize} instead
      */
     minWidth?: number;
 
     /**
      * The height of this item, relative to the other children of its parent in percent
-     * @deprecated use {@link (ItemConfig:class).size} instead
+     * @deprecated use {@link (ItemConfig:interface).size} instead
      */
     height?: number;
 
     /**
      * The minimum height of this item in pixels
      * CAUTION - Not tested - do not use
-     * @deprecated use {@link (ItemConfig:class).minSize} instead
+     * @deprecated use {@link (ItemConfig:interface).minSize} instead
      */
     minHeight?: number;
 
     /**
      * The size of this item.
      * For rows, it specifies height. For columns, it specifies width.
-     * Has format <number><{@link sizeUnit}>. Currently only supports units `fr` and `%`.
+     * Has format \<number\>\<{@link SizeUnit}\>. Currently only supports units `fr` and `%`.
      *
      * Space is first proportionally allocated to items with sizeUnit `%`.
      * If there is any space left over (less than 100% allocated), then the
@@ -90,6 +90,7 @@ export interface ItemConfig {
     /**
      * The title of the item as displayed on its tab and on popout windows
      * Default: componentType.toString() or ''
+     * @deprecated only Component has a title
      */
     title?: string;
 }
@@ -103,6 +104,7 @@ export namespace ItemConfig {
         WidthOrHeight,
     }
 
+    /** @internal */
     export function resolve(itemConfig: ItemConfig, rowAndColumnChildLegacySizeDefault: boolean): ResolvedItemConfig {
         switch (itemConfig.type) {
             case ItemType.ground:
@@ -122,6 +124,7 @@ export namespace ItemConfig {
         }
     }
 
+    /** @internal */
     export function resolveContent(content: ItemConfig[] | undefined): ResolvedItemConfig[] {
         if (content === undefined) {
             return [];
@@ -135,6 +138,7 @@ export namespace ItemConfig {
         }
     }
 
+    /** @internal */
     export function resolveId(id: string | string[] | undefined): string {
         if (id === undefined) {
             return ResolvedItemConfig.defaults.id;
@@ -151,6 +155,7 @@ export namespace ItemConfig {
         }
     }
 
+    /** @internal */
     export function resolveSize(
         size: string | undefined,
         width: number | undefined,
@@ -162,12 +167,15 @@ export namespace ItemConfig {
         if (size !== undefined) {
             return parseSize(size, [SizeUnitEnum.Percent, SizeUnitEnum.Fractional]);
         } else {
-            const widthDefined = width !== undefined;
-            if (widthDefined || height !== undefined) {
-                if (widthDefined) {
+            if (width !== undefined || height !== undefined) {
+                if (width !== undefined) {
                     return { size: width, sizeUnit: SizeUnitEnum.Percent };
                 } else {
-                    return { size: height, sizeUnit: SizeUnitEnum.Percent };
+                    if (height !== undefined) {
+                        return { size: height, sizeUnit: SizeUnitEnum.Percent };
+                    } else {
+                        throw new UnexpectedUndefinedError('CRS33390');
+                    }
                 }
             } else {
                 if (rowAndColumnChildLegacySizeDefault) {
@@ -179,7 +187,8 @@ export namespace ItemConfig {
         }
     }
 
-    export function resolveMinSize(minSize: string | undefined, minWidth: number | undefined, minHeight: number | undefined) {
+    /** @internal */
+    export function resolveMinSize(minSize: string | undefined, minWidth: number | undefined, minHeight: number | undefined): UndefinableSizeWithUnit {
         if (minSize !== undefined) {
             return parseSize(minSize, [SizeUnitEnum.Pixel]);
         } else {
@@ -192,11 +201,12 @@ export namespace ItemConfig {
                     return { size: minHeight, sizeUnit: SizeUnitEnum.Pixel };
                 }
             } else {
-                return { size: ResolvedItemConfig.defaults.size, sizeUnit: ResolvedItemConfig.defaults.sizeUnit };
+                return { size: ResolvedItemConfig.defaults.minSize, sizeUnit: ResolvedItemConfig.defaults.minSizeUnit };
             }
         }
     }
 
+    /** @internal */
     export function calculateSizeWidthHeightSpecificationType(config: ItemConfig): SizeWidthHeightSpecificationType {
         if (config.size !== undefined) {
             return SizeWidthHeightSpecificationType.Size;
@@ -267,6 +277,7 @@ export namespace HeaderedItemConfig {
         }
     }
 
+    /** @internal */
     export function resolveIdAndMaximised(config: HeaderedItemConfig): { id: string, maximised: boolean} {
         let id: string;
         // To support legacy configs with Id saved as an array of string, assign config.id to a type which includes string array
@@ -312,6 +323,7 @@ export interface StackItemConfig extends HeaderedItemConfig {
 
 /** @public */
 export namespace StackItemConfig {
+    /** @internal */
     export function resolve(itemConfig: StackItemConfig, rowAndColumnChildLegacySizeDefault: boolean): ResolvedStackItemConfig {
         const { id, maximised } = HeaderedItemConfig.resolveIdAndMaximised(itemConfig);
         const { size, sizeUnit } = ItemConfig.resolveSize(itemConfig.size, itemConfig.width, itemConfig.height, rowAndColumnChildLegacySizeDefault);
@@ -333,7 +345,25 @@ export namespace StackItemConfig {
         return result;
     }
 
-    export function resolveContent(content: ComponentItemConfig[] | undefined): ResolvedComponentItemConfig[] {
+    /** @internal */
+    export function fromResolved(resolvedConfig: ResolvedStackItemConfig): StackItemConfig {
+        const result: StackItemConfig = {
+            type: ItemType.stack,
+            content: fromResolvedContent(resolvedConfig.content),
+            size: formatSize(resolvedConfig.size, resolvedConfig.sizeUnit),
+            minSize: formatUndefinableSize(resolvedConfig.minSize, resolvedConfig.minSizeUnit),
+            id: resolvedConfig.id,
+            maximised: resolvedConfig.maximised,
+            isClosable: resolvedConfig.isClosable,
+            activeItemIndex: resolvedConfig.activeItemIndex,
+            header: ResolvedHeaderedItemConfig.Header.createCopy(resolvedConfig.header),
+        };
+
+        return result;
+    }
+
+    /** @internal */
+    function resolveContent(content: ComponentItemConfig[] | undefined): ResolvedComponentItemConfig[] {
         if (content === undefined) {
             return [];
         } else {
@@ -351,12 +381,30 @@ export namespace StackItemConfig {
             return result;
         }
     }
+
+    /** @internal */
+    function fromResolvedContent(resolvedContent: ResolvedComponentItemConfig[]): ComponentItemConfig[] {
+        const count = resolvedContent.length;
+        const result = new Array<ComponentItemConfig>(count);
+        for (let i = 0; i < count; i++) {
+            const resolvedContentConfig = resolvedContent[i];
+            result[i] = ComponentItemConfig.fromResolved(resolvedContentConfig);
+        }
+        return result;
+    }
 }
 
 /** @public */
 export interface ComponentItemConfig extends HeaderedItemConfig {
     type: 'component';
     readonly content?: [];
+
+    /**
+     * The title of the item as displayed on its tab and on popout windows
+     * Default: componentType.toString() or ''
+     */
+    title?: string;
+
     /**
      * The type of the component.
      * @deprecated use {@link (ComponentItemConfig:interface).componentType} instead
@@ -386,6 +434,7 @@ export interface ComponentItemConfig extends HeaderedItemConfig {
 
 /** @public */
 export namespace ComponentItemConfig {
+    /** @internal */
     export function resolve(itemConfig: ComponentItemConfig, rowAndColumnChildLegacySizeDefault: boolean): ResolvedComponentItemConfig {
         let componentType: JsonValue | undefined = itemConfig.componentType;
         if (componentType === undefined) {
@@ -421,6 +470,25 @@ export namespace ComponentItemConfig {
             };
             return result;
         }
+    }
+
+    /** @internal */
+    export function fromResolved(resolvedConfig: ResolvedComponentItemConfig): ComponentItemConfig {
+        const result: ComponentItemConfig = {
+            type: ItemType.component,
+            size: formatSize(resolvedConfig.size, resolvedConfig.sizeUnit),
+            minSize: formatUndefinableSize(resolvedConfig.minSize, resolvedConfig.minSizeUnit),
+            id: resolvedConfig.id,
+            maximised: resolvedConfig.maximised,
+            isClosable: resolvedConfig.isClosable,
+            reorderEnabled: resolvedConfig.reorderEnabled,
+            title: resolvedConfig.title,
+            header: ResolvedHeaderedItemConfig.Header.createCopy(resolvedConfig.header),
+            componentType: resolvedConfig.componentType,
+            componentState: deepExtendValue(undefined, resolvedConfig.componentState) as JsonValue,
+        }
+
+        return result;
     }
 
     export function componentTypeToTitle(componentType: JsonValue): string {
@@ -459,6 +527,7 @@ export namespace RowOrColumnItemConfig {
         }
     }
 
+    /** @internal */
     export function resolve(itemConfig: RowOrColumnItemConfig, rowAndColumnChildLegacySizeDefault: boolean): ResolvedRowOrColumnItemConfig {
         const { size, sizeUnit } = ItemConfig.resolveSize(itemConfig.size, itemConfig.width, itemConfig.height, rowAndColumnChildLegacySizeDefault);
         const { size: minSize, sizeUnit: minSizeUnit } = ItemConfig.resolveMinSize(itemConfig.minSize, itemConfig.minWidth, itemConfig.minHeight);
@@ -475,6 +544,21 @@ export namespace RowOrColumnItemConfig {
         return result;
     }
 
+    /** @internal */
+    export function fromResolved(resolvedConfig: ResolvedRowOrColumnItemConfig): RowOrColumnItemConfig {
+        const result: RowOrColumnItemConfig = {
+            type: resolvedConfig.type,
+            content: fromResolvedContent(resolvedConfig.content),
+            size: formatSize(resolvedConfig.size, resolvedConfig.sizeUnit),
+            minSize: formatUndefinableSize(resolvedConfig.minSize, resolvedConfig.minSizeUnit),
+            id: resolvedConfig.id,
+            isClosable: resolvedConfig.isClosable,
+        }
+
+        return result;
+    }
+
+    /** @internal */
     export function resolveContent(content: ChildItemConfig[] | undefined): ResolvedRowOrColumnItemConfig.ChildItemConfig[] {
         if (content === undefined) {
             return [];
@@ -531,6 +615,33 @@ export namespace RowOrColumnItemConfig {
             return result;
         }
     }
+
+    /** @internal */
+    function fromResolvedContent(resolvedContent: readonly ResolvedRowOrColumnItemConfig.ChildItemConfig[]): RowOrColumnItemConfig.ChildItemConfig[] {
+        const count = resolvedContent.length;
+        const result = new Array<RowOrColumnItemConfig.ChildItemConfig>(count);
+        for (let i = 0; i < count; i++) {
+            const resolvedContentConfig = resolvedContent[i];
+            const type = resolvedContentConfig.type;
+            let contentConfig: RowOrColumnItemConfig.ChildItemConfig;
+            switch (type) {
+                case ItemType.row:
+                case ItemType.column:
+                    contentConfig = RowOrColumnItemConfig.fromResolved(resolvedContentConfig);
+                    break;
+                case ItemType.stack:
+                    contentConfig = StackItemConfig.fromResolved(resolvedContentConfig);
+                    break;
+                case ItemType.component:
+                    contentConfig = ComponentItemConfig.fromResolved(resolvedContentConfig);
+                    break;
+                default:
+                    throw new UnreachableCaseError('ROCICFRC44797', type);
+            }
+            result[i] = contentConfig;
+        }
+        return result;
+    }
 }
 
 /** @public */
@@ -552,6 +663,7 @@ export namespace RootItemConfig {
         }
     }
 
+    /** @internal */
     export function resolve(itemConfig: RootItemConfig | undefined): ResolvedRootItemConfig | undefined {
         if (itemConfig === undefined) {
             return undefined;
@@ -565,14 +677,30 @@ export namespace RootItemConfig {
         }
     }
 
-    export function createFromResolved(resolvedItemConfig: ResolvedRootItemConfig): RootItemConfig {
-
+    /** @internal */
+    export function fromResolvedOrUndefined(resolvedItemConfig: ResolvedRootItemConfig | undefined): RootItemConfig | undefined {
+        if (resolvedItemConfig === undefined) {
+            return undefined;
+        } else {
+            const type = resolvedItemConfig.type;
+            switch (type) {
+                case ItemType.row:
+                case ItemType.column:
+                    return RowOrColumnItemConfig.fromResolved(resolvedItemConfig);
+                case ItemType.stack:
+                    return StackItemConfig.fromResolved(resolvedItemConfig);
+                case ItemType.component:
+                    return ComponentItemConfig.fromResolved(resolvedItemConfig);
+                default:
+                    throw new UnreachableCaseError('RICFROU89921', type);
+            }
+        }
     }
 }
 
 /** @public */
 export interface LayoutConfig {
-    root: RootItemConfig;
+    root: RootItemConfig | undefined;
     /** @deprecated Use {@link (LayoutConfig:interface).root} */
     content?: (RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig)[];
     openPopouts?: PopoutLayoutConfig[];
@@ -713,7 +841,7 @@ export namespace LayoutConfig {
 
         /**
          * The minimum height an item can be resized to (in pixel).
-         * @deprecated use {@link (ItemConfig.Dimensions:class).defaultMinItemHeight} instead
+         * @deprecated use {@link (LayoutConfig:namespace).(Dimensions:interface).defaultMinItemHeight} instead
          */
         minItemHeight?: number;
 
@@ -725,7 +853,7 @@ export namespace LayoutConfig {
 
         /**
          * The minimum width an item can be resized to (in pixel).
-         * @deprecated use {@link (ItemConfig.Dimensions:class).defaultMinItemWidth} instead
+         * @deprecated use {@link (LayoutConfig:namespace).(Dimensions:interface).defaultMinItemWidth} instead
          */
         minItemWidth?: number;
 
@@ -756,6 +884,7 @@ export namespace LayoutConfig {
     }
 
     export namespace Dimensions {
+        /** @internal */
         export function resolve(dimensions: Dimensions | undefined): ResolvedLayoutConfig.Dimensions {
             const { size: defaultMinItemHeight, sizeUnit: defaultMinItemHeightUnit } = Dimensions.resolveDefaultMinItemHeight(dimensions);
             const { size: defaultMinItemWidth, sizeUnit: defaultMinItemWidthUnit } = Dimensions.resolveDefaultMinItemWidth(dimensions);
@@ -773,7 +902,8 @@ export namespace LayoutConfig {
             return result;
         }
 
-        export function createFromResolved(resolvedDimensions: ResolvedLayoutConfig.Dimensions): Dimensions {
+        /** @internal */
+        export function fromResolved(resolvedDimensions: ResolvedLayoutConfig.Dimensions): Dimensions {
             const result: Dimensions = {
                 borderWidth: resolvedDimensions.borderWidth,
                 borderGrabWidth: resolvedDimensions.borderGrabWidth,
@@ -787,6 +917,7 @@ export namespace LayoutConfig {
             return result;
         }
 
+        /** @internal */
         export function resolveDefaultMinItemHeight(dimensions: Dimensions | undefined): SizeWithUnit {
             const height = dimensions?.defaultMinItemHeight;
             if (height === undefined) {
@@ -796,6 +927,7 @@ export namespace LayoutConfig {
             }
         }
 
+        /** @internal */
         export function resolveDefaultMinItemWidth(dimensions: Dimensions | undefined): SizeWithUnit {
             const width = dimensions?.defaultMinItemWidth;
             if (width === undefined) {
@@ -878,6 +1010,7 @@ export namespace LayoutConfig {
     }
 
     export namespace Header {
+        /** @internal */
         export function resolve(header: Header | undefined,
             settings: LayoutConfig.Settings | undefined, labels: LayoutConfig.Labels | undefined
         ): ResolvedLayoutConfig.Header {
@@ -911,6 +1044,7 @@ export namespace LayoutConfig {
         return 'parentId' in config || 'indexInParent' in config || 'window' in config;
     }
 
+    /** @internal */
     export function resolve(layoutConfig: LayoutConfig): ResolvedLayoutConfig {
         if (isPopout(layoutConfig)) {
             return PopoutLayoutConfig.resolve(layoutConfig);
@@ -939,10 +1073,10 @@ export namespace LayoutConfig {
 
     export function fromResolved(config: ResolvedLayoutConfig): LayoutConfig {
         const result: LayoutConfig = {
-            root: RootItemConfig.createFromResolved(config.root),
-            openPopouts: ResolvedLayoutConfig.copyOpenPopouts(config.openPopouts) as unknown as PopoutLayoutConfig[],
+            root: RootItemConfig.fromResolvedOrUndefined(config.root),
+            openPopouts: PopoutLayoutConfig.fromResolvedArray(config.openPopouts),
             settings: ResolvedLayoutConfig.Settings.createCopy(config.settings),
-            dimensions: LayoutConfig.Dimensions.createFromResolved(config.dimensions),
+            dimensions: LayoutConfig.Dimensions.fromResolved(config.dimensions),
             header: ResolvedLayoutConfig.Header.createCopy(config.header),
         };
         return result;
@@ -953,6 +1087,7 @@ export namespace LayoutConfig {
         return config.resolved !== undefined && (config.resolved === true);
     }
 
+    /** @internal */
     export function resolveOpenPopouts(popoutConfigs: PopoutLayoutConfig[] | undefined): ResolvedPopoutLayoutConfig[] {
         if (popoutConfigs === undefined) {
             return [];
@@ -988,13 +1123,13 @@ export namespace PopoutLayoutConfig {
     /** @deprecated use {@link (PopoutLayoutConfig:namespace).(Window:interface)} */
     export interface Dimensions extends LayoutConfig.Dimensions {
         /** @deprecated use {@link (PopoutLayoutConfig:namespace).(Window:interface).width} */
-        width: number | null,
+        width?: number | null,
         /** @deprecated use {@link (PopoutLayoutConfig:namespace).(Window:interface).height} */
-        height: number | null,
+        height?: number | null,
         /** @deprecated use {@link (PopoutLayoutConfig:namespace).(Window:interface).left} */
-        left: number | null,
+        left?: number | null,
         /** @deprecated use {@link (PopoutLayoutConfig:namespace).(Window:interface).top} */
-        top: number | null,
+        top?: number | null,
     }
 
     export interface Window {
@@ -1005,6 +1140,7 @@ export namespace PopoutLayoutConfig {
     }
 
     export namespace Window {
+        /** @internal */
         export function resolve(window: Window | undefined,
             dimensions: Dimensions | undefined): ResolvedPopoutLayoutConfig.Window
         {
@@ -1027,8 +1163,21 @@ export namespace PopoutLayoutConfig {
             }
             return result;
         }
+
+        /** @internal */
+        export function fromResolved(resolvedWindow: ResolvedPopoutLayoutConfig.Window): Window {
+            const result: Window = {
+                width: resolvedWindow.width === null ? undefined : resolvedWindow.width,
+                height: resolvedWindow.height === null ? undefined : resolvedWindow.height,
+                left: resolvedWindow.left === null ? undefined : resolvedWindow.left,
+                top: resolvedWindow.top === null ? undefined : resolvedWindow.top,
+            }
+
+            return result;
+        }
     }
 
+    /** @internal */
     export function resolve(popoutConfig: PopoutLayoutConfig): ResolvedPopoutLayoutConfig {
         let root: RootItemConfig | undefined;
         if (popoutConfig.root !== undefined) {
@@ -1044,8 +1193,8 @@ export namespace PopoutLayoutConfig {
         const config: ResolvedPopoutLayoutConfig = {
             root: RootItemConfig.resolve(root),
             openPopouts: LayoutConfig.resolveOpenPopouts(popoutConfig.openPopouts),
-            settings: LayoutConfig.Settings.resolve(popoutConfig.settings),
             dimensions: LayoutConfig.Dimensions.resolve(popoutConfig.dimensions),
+            settings: LayoutConfig.Settings.resolve(popoutConfig.settings),
             header: LayoutConfig.Header.resolve(popoutConfig.header, popoutConfig.settings, popoutConfig.labels),
             parentId: popoutConfig.parentId ?? null,
             indexInParent: popoutConfig.indexInParent ?? null,
@@ -1054,11 +1203,45 @@ export namespace PopoutLayoutConfig {
         }
         return config;
     }
+
+    /** @internal */
+    export function fromResolved(resolvedConfig: ResolvedPopoutLayoutConfig): PopoutLayoutConfig {
+        const result: PopoutLayoutConfig = {
+            root: RootItemConfig.fromResolvedOrUndefined(resolvedConfig.root),
+            openPopouts: fromResolvedArray(resolvedConfig.openPopouts),
+            dimensions: LayoutConfig.Dimensions.fromResolved(resolvedConfig.dimensions),
+            settings: ResolvedLayoutConfig.Settings.createCopy(resolvedConfig.settings),
+            header: ResolvedLayoutConfig.Header.createCopy(resolvedConfig.header),
+            parentId: resolvedConfig.parentId,
+            indexInParent: resolvedConfig.indexInParent,
+            window: PopoutLayoutConfig.Window.fromResolved(resolvedConfig.window),
+        }
+
+        return result;
+    }
+
+    /** @internal */
+    export function fromResolvedArray(resolvedArray: ResolvedPopoutLayoutConfig[]): PopoutLayoutConfig[] {
+        const resolvedOpenPopoutCount = resolvedArray.length;
+        const result = new Array<PopoutLayoutConfig>(resolvedOpenPopoutCount);
+        for (let i = 0; i < resolvedOpenPopoutCount; i++) {
+            const resolvedOpenPopout = resolvedArray[i];
+            result[i] = PopoutLayoutConfig.fromResolved(resolvedOpenPopout);
+        }
+
+        return result;
+    }
 }
 
 /** @internal */
 export interface SizeWithUnit {
     size: number;
+    sizeUnit: SizeUnitEnum;
+}
+
+/** @internal */
+export interface UndefinableSizeWithUnit {
+    size: number | undefined;
     sizeUnit: SizeUnitEnum;
 }
 
@@ -1085,6 +1268,15 @@ export function parseSize(sizeString: string, allowableSizeUnits: readonly SizeU
 /** @internal */
 export function formatSize(size: number, sizeUnit: SizeUnitEnum) {
     return size.toString(10) + SizeUnitEnum.format(sizeUnit);
+}
+
+/** @internal */
+export function formatUndefinableSize(size: number| undefined, sizeUnit: SizeUnitEnum) {
+    if (size === undefined) {
+        return undefined;
+    } else {
+        return size.toString(10) + SizeUnitEnum.format(sizeUnit);
+    }
 }
 
 /** @public @deprecated - use {@link (LayoutConfig:interface)} */

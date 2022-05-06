@@ -291,19 +291,19 @@ export class RowOrColumn extends ContentItem {
      * @internal
      */
     private setAbsoluteSizes() {
-        const sizeData = this.calculateAbsoluteSizes();
+        const absoluteSizes = this.calculateAbsoluteSizes();
 
         for (let i = 0; i < this.contentItems.length; i++) {
-            if (sizeData.additionalPixel - i > 0) {
-                sizeData.itemSizes[i]++;
+            if (absoluteSizes.additionalPixel - i > 0) {
+                absoluteSizes.itemSizes[i]++;
             }
 
             if (this._isColumn) {
-                setElementWidth(this.contentItems[i].element, sizeData.totalWidth);
-                setElementHeight(this.contentItems[i].element, sizeData.itemSizes[i]);
+                setElementWidth(this.contentItems[i].element, absoluteSizes.crossAxisSize);
+                setElementHeight(this.contentItems[i].element, absoluteSizes.itemSizes[i]);
             } else {
-                setElementWidth(this.contentItems[i].element, sizeData.itemSizes[i]);
-                setElementHeight(this.contentItems[i].element, sizeData.totalHeight);
+                setElementWidth(this.contentItems[i].element, absoluteSizes.itemSizes[i]);
+                setElementHeight(this.contentItems[i].element, absoluteSizes.crossAxisSize);
             }
         }
     }
@@ -313,15 +313,18 @@ export class RowOrColumn extends ContentItem {
      * @returns Set with absolute sizes and additional pixels.
      * @internal
      */
-    private calculateAbsoluteSizes() {
+    private calculateAbsoluteSizes(): RowOrColumn.AbsoluteSizes {
         const totalSplitterSize = (this.contentItems.length - 1) * this._splitterSize;
-        let { width: totalWidth, height: totalHeight } = getElementWidthAndHeight(this.element);
+        const { width: elementWidth, height: elementHeight } = getElementWidthAndHeight(this.element);
 
         let totalSize: number;
+        let crossAxisSize: number;
         if (this._isColumn) {
-            totalSize = totalHeight - totalSplitterSize;
+            totalSize = elementHeight - totalSplitterSize;
+            crossAxisSize = elementWidth;
         } else {
-            totalSize = totalWidth - totalSplitterSize;
+            totalSize = elementWidth - totalSplitterSize;
+            crossAxisSize = elementHeight;
         }
 
         let totalAssigned = 0;
@@ -330,8 +333,8 @@ export class RowOrColumn extends ContentItem {
         for (let i = 0; i < this.contentItems.length; i++) {
             const contentItem = this.contentItems[i];
             let itemSize: number;
-            if (contentItem.sizeUnit === SizeUnitEnum.Fractional) {
-                itemSize = Math.floor(totalHeight * (contentItem.size / 100));
+            if (contentItem.sizeUnit === SizeUnitEnum.Percent) {
+                itemSize = Math.floor(totalSize * (contentItem.size / 100));
             } else {
                 throw new AssertError('ROCCAS6692');
             }
@@ -342,17 +345,11 @@ export class RowOrColumn extends ContentItem {
 
         const additionalPixel = Math.floor(totalSize - totalAssigned);
 
-        if (this._isColumn) {
-            totalHeight = totalSize;
-        } else {
-            totalWidth = totalSize;
-        }
-
         return {
-            itemSizes: itemSizes,
-            additionalPixel: additionalPixel,
-            totalWidth: totalWidth,
-            totalHeight: totalHeight
+            itemSizes,
+            additionalPixel,
+            totalSize,
+            crossAxisSize,
         };
     }
 
@@ -468,13 +465,13 @@ export class RowOrColumn extends ContentItem {
             const entriesOverMin: Entry[] = [];
             const allEntries: Entry[] = [];
 
-            const sizeData = this.calculateAbsoluteSizes();
+            const absoluteSizes = this.calculateAbsoluteSizes();
 
             /**
              * Figure out how much we are under the min item size total and how much room we have to use.
              */
-            for (let i = 0; i < sizeData.itemSizes.length; i++) {
-                const itemSize = sizeData.itemSizes[i];
+            for (let i = 0; i < absoluteSizes.itemSizes.length; i++) {
+                const itemSize = absoluteSizes.itemSizes[i];
 
                 let entry: Entry;
                 if (itemSize < minItemSize) {
@@ -524,7 +521,7 @@ export class RowOrColumn extends ContentItem {
                  */
                 for (let i = 0; i < this.contentItems.length; i++) {
                     const contentItem = this.contentItems[i];
-                    contentItem.size = (allEntries[i].size / sizeData.totalWidth) * 100;
+                    contentItem.size = (allEntries[i].size / absoluteSizes.totalSize) * 100;
                 }
             }
         }
@@ -571,7 +568,7 @@ export class RowOrColumn extends ContentItem {
     private calculateContentItemMinSize(contentItem: ContentItem) {
         const minSize = contentItem.minSize;
         if (minSize !== undefined) {
-            if (contentItem.sizeUnit === SizeUnitEnum.Pixel) {
+            if (contentItem.minSizeUnit === SizeUnitEnum.Pixel) {
                 return minSize;
             } else {
                 throw new AssertError('ROCGMD98831', JSON.stringify(contentItem));
@@ -670,6 +667,14 @@ export class RowOrColumn extends ContentItem {
 
 /** @public */
 export namespace RowOrColumn {
+    /** @internal */
+    export interface AbsoluteSizes {
+        itemSizes: number[],
+        additionalPixel: number,
+        totalSize: number,
+        crossAxisSize: number
+    }
+
     /** @internal */
     export function getElementDimensionSize(element: HTMLElement, dimension: WidthOrHeightPropertyName): number {
         if (dimension === 'width') {
