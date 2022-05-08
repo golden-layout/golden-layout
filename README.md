@@ -13,7 +13,7 @@ Golden Layout is a Javascript layout manager which enables you to layout compone
 * Focus components
 * Completely themeable
 * Works in modern browsers (Firefox, Chrome)
-* Reponsive design
+* Responsive design
 
 This fork has a number of advances over the semi-unmaintained upstream.
 The main feature is optional use

@@ -6,27 +6,28 @@
 
 Golden Layout is a Javascript layout manager which enables you to layout components in a web page and re-arrange them with drag and drop.
 
+**Important Note:** This is the main Golden Layout website. Another Golden Layout website is [https://golden-layout.com](https://golden-layout.com). This other website describes Version 1 of Golden Layout. The information at [https://golden-layout.com](https://golden-layout.com) may be useful to gain an initial understanding of Golden Layout however please note that it is now out of date.
+
 # Table of Contents
 
 - [Features](#features)
 - [Installation](#installation--usage)
 - [Learn](#learn)
-- [Binding Components](#binding-components)
-- [Frameworks](#frameworks)
-- [Notes](#notes)
-- [Version 2](#version-2)
-- [Migration Guide](#migration-to-v2)
+- [Description](#description)
+- [Migration from previous versions](#migration-from-previous-versions)
 
 # Features
 
 * Native popup windows
-* Full touch support
+* Touch support
+* Support for application frameworks such as Angular and Vue
 * Virtual components
 * Comprehensive API
-* Powerful persistence
+* Load and save layouts
+* Focus components
 * Completely themeable
 * Works in modern browsers (Firefox, Chrome)
-* Reponsive design
+* Responsive design
 
 # Installation / Usage
 
@@ -78,25 +79,26 @@ Run `npm install` to remove the npm link.
 
 The following information sources are available which can be used to learn how to use Golden Layout:
 
-* [Golden Layout website](https://golden-layout.com)
-* This readme
-* CodePen examples
+* **[Version 1 Golden Layout website](https://golden-layout.com)**\
+[https://golden-layout.com](https://golden-layout.com) documents version 1 of Golden Layout. While substantial changes were made in version 2, this website can still be used to gain an initial understanding of Golden Layout.
+* **This readme**
+* **CodePen examples**
+    * [**Adding items to a predefined layout**](https://codepen.io/pbklink/pen/dyWJNNm)\
+    A basic example showing how Golden Layout is set up and how to add a new item to a layout.
 
-The Golden Layout website documents version 1 of Golden Layout. While substantial changes were made in version 2, this website can still be used to gain a broad understanding of Golden Layout.
+# Description
 
-This readme can be used to learn about features introduced in Version 2. It also describes the changes necessary to migrate an application from version 1 to version 2.
+## Structure
 
-The following CodePen examples are available:
-* [**Adding items to a predefined layout**](https://codepen.io/pbklink/pen/dyWJNNm)\
-A basic example showing how Golden Layout is set up and how to add a new item to a layout.
+The structure of a Golden Layout object consists of its `LayoutManager` object and `ContentItem` objects which define the layout itself.  See [Structure](./structure/index.md) for more details.
 
-# Binding Components
+## Binding Components
 
 Golden Layout binds to components and then controls their position, size and visibility (positioning) so that they fit within a layout. There are several different ways in which Golden Layout can bind to components. The easiest method is to register a component type and then specify that component type in a component's configuration.
 
 See [Binding Components](./binding-components/index.md) for a full description of how Golden Layout component binding works.
 
-# Frameworks
+## Frameworks
 
 Golden Layout has been designed to work with JavaScript application frameworks such as Angular and Vue. Typically these types of frameworks wrap HTML elements with their own components. Instead of an application being a tree of HTML elements, it is a tree of framework components, each of which wrap an HTML element.
 
@@ -104,92 +106,28 @@ To support these frameworks, Golden Layout implements 'Virtual Components'. This
 
 See [Frameworks](./frameworks/index.md) for a description and examples covering how to use Golden Layout with JavaScript application frameworks.
 
-# Structure
+## Sizing components
 
-The structure of a Golden Layout object consists of its `LayoutManager` object and `ContentItem` objects which define the layout itself.  See [Structure] for a more details.
+Within a layout structure, it is necessary to specify the size of `RowOrColumn` content items and their children.  [More](./sizing-components/index.md).
 
-# Sizing components
+## Layout resizing
 
-# Notes
+A layout should normally resize to always fit within Golden Layout's container element.  This resizing can be configured to occur automatically or can be manually managed. [More](./layout-resizing/index.md)
 
-## Using Popouts
+## Component Focus
 
-Popouts are supported, although the scope is more limited than in the original v1. Popouts are enabled by default for all content items. Popouts are disabled by either setting `{ popout: false }` in the `header` configuration or when a component is not closable. Also, as a popout user, if you are using registration binding, make sure to register all component types before initializing the golden-layout instance in your child windows.
+Components can have focus. This is analagous to HTML elements having focus. Only one component can have focus at any time. [More](./component-focus/index.md)
 
-Popouts will not be automatically destroyed when a page unloads.  If an application wants to remove the page's popouts when it unloads, the application should call the `LayoutManager.closeAllOpenPopouts()` function as part of its page unload handling.
+## Location Selectors
 
-Popout examples are available in the `standard` and `tabDropdown` layouts within the apitest application.
+LocationSelectors specify the location of a component in terms of a parent and a index. They can be used when adding components programatically.  [More](./location-selectors/index.md)
 
-EventHub can be used to broadcast messages and events to all windows.  The LayoutManager.eventHub.emitUserBroadcast() function is used to broadcast messages.  Messages can be received by listening to “userBroadcast” events.  For example:
+## Popouts
 
-```typescript
-layoutManager.eventHub.on('userBroadcast',  (...ev: EventEmitter.UnknownParams) => {
-  // respond to user broadcast event
-});
-```
+A component in a layout can be 'popped' out into a separate browser window.  It can be then be viewed separately from the main layout. [More](./popouts/index.md)
 
-See event-component.ts in apitest for a complete example of broadcasting user messages.
+# Migration from previous versions
 
-### Limitations
-
-- The EventHub is restricted to `userBroadcast` events, other event types will not be broadcasted between windows.
-- This means the you have to take care of propagating state changes between windows yourself.
-
-## Layout Resizing
-
-A layout should normally resize to always fit within Golden Layout's container element.  This resizing can be configured to occur automatically or can be manually managed.
-
-Three `LayoutManager` properties control how Golden Layout will resize its layout when the Golden Layout's container changes size:
-
-1. `resizeWithContainerAutomatically`\
-Specifies whether automatic resizing is enabled. If this is `true`, then Golden Layout will automatically resize a layout whenever its container's size changes. If it is `false`, then the application needs to manage resizing Golden Layout.
-1. `resizeDebounceInterval`\
-A debounce interval to reduce the number of layout resizes when the container's size is being changed. Default is 100 milliseconds. This only has effect when automatic resizing is enabled.
-1. `resizeDebounceExtendedWhenPossible`\
-Specifies that a layout resize operation should be delayed as long as possible while the container is being resized. If this is `true` (the default), normally the layout will not be resized while the container is in the process of being resized. This only has effect when automatic resizing is enabled.
-
-It is recommended that the container's `overflow` property be set to `clip` when automatic resizing is enabled.
-
-If automatic resizing is disabled (`LayoutManager.resizeWithContainerAutomatically` is `false`), then the application can use `LayoutManager.setSize()` to manually resize Golden Layout. It is hard to think of a use case for disabling automatic resizing. Managing Golden Layout's container's size is probably a better application design approach than managing Golden Layout's size directly.
-
-In version 2 of Golden Layout, the default value of `LayoutManager.resizeWithContainerAutomatically` is `true` if the Golden Layout container is `<body>`.  Otherwise it is `false`.  These default values maintain backwards compatibility.  When version 3 is released, the default value will be changed to always be 'true'.
-
-Note that Golden Layout uses [ResizeObserver](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver) to detected changes in its container HTML element.  This API is not available in Internet Explorer. If your application supports Internet Explorer you will need to use a polyfill.  However please note, as per browserslist in `package.json`, Golden Layout only supports modern browsers and does not support Internet Explorer.
-
-## Understanding Focus
-
-Components can have focus.  This is analagous to HTML Elements having focus.
-
-Only one component in a layout can have focus at any time (or alternatively, no component has focus). Similarly to HTML elements, a component will be focused when you click on its tab.  You can programatically give a component focus by calling the `focus()` method on its container.  Likewise, you can remove focus from a container by calling `ComponentContainer.blur()`.
-
-Clicking on HTML within a component will not automatically give a Golden Layout component focus.  However this can be achieved by listening to the bubbling `click` and/or `focusin` events and calling `ComponentContainer.focus()` in these events' handlers.  The `apitest` demonstrates this technique.
-
-A focused component's tab and header HTML elements will contain the class `lm_focused`.  This can be used to highlight the focused tab and or header.  The `goldenlayout-dark-theme.less` theme that ships with Golden Layout (and is used by `apitest`) will set the background color of a focused tab to a different color from other tabs.  If you do NOT want focused tabs to be highlighted, ensure that the `lm_focused` selector is removed from the relevant css/less/scss used by your application.
-
-## Understanding LocationSelectors
-
-LocationSelectors specify the location of a component in terms of a parent and a index.  LocationSelectors are useful for specifying where a new ContentItem should be placed.
-
-A `LocationSelector` does not specify the parent directly.  Instead it specifies how the parent is to be searched for.  It has the type:
-```
-export interface LocationSelector {
-    typeId: LocationSelector.TypeId;
-    index?: number;
-}
-```
-
-`typeId` specifies the algorithm used to search for a parent.
-`index` is used by the algorithm to work out the preferred child position under the parent.
-
-Some `LocationSelector.TypeId` will always find a location.  Eg: `LocationSelector.TypeId.Root` is guaranteed to find a location.  Others may not find a location.  Eg: `LocationSelector.TypeId.FirstStack` will not find a location if a layout is empty.
-
-The `LayoutManager.addComponentAtLocation()` and `LayoutManager.newComponentAtLocation()` use an array of LocationSelectors to determine the location at which a new/added component will be installed.  These functions will attempt to find a valid location starting with the first element in the LocationSelectors array.  When a valid location is found, that location will be used for the new component.  If no valid location is found from the LocationSelectors in the array, then the component will not be added.
-
-The `LayoutManager.addComponent()` and `LayoutManager.newComponent()` use a default LocationSelectors array.  The last element in this default array is a LocationSelector of type `LocationSelector.TypeId.Root`.  So this array is guaranteed to find a location.  Accordingly, `LayoutManager.addComponent()` and `LayoutManager.newComponent()` will always succeed in adding a component.
-
-This default LocationSelectors array is available at `LayoutManager.defaultLocationSelectors`.  An alternative predefined array is available at `LayoutManager.afterFocusedItemIfPossibleLocationSelectors`.
-
-
-# Version 2
+## Upgrading to Version 2
 
 With version 2, Golden Layout was ported to TypeScript. Substantial changes to its feature set and API were made as part of this conversion. These changes are summarised [here](./version-2/index.md).
