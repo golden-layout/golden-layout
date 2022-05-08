@@ -5,47 +5,52 @@
 The following diagram shows structure of a Golden Layout object.
 
 ```
-+-----------------+      +------------+       +-----------------+
-| Layout Manager  +------+ GroundItem +-------+ ComponentItem   |
-| (GoldenLayout   |      | (hidden)   |       | (root item)     |
-|  or             |      |            |       |                 |
-|  VirtualLayout) |      +------------+       +-----------------+
-|                 |
++-----------------+      +------------+     +---------------+
+| Layout Manager  +------+ GroundItem +-----+ ComponentItem |
+| (GoldenLayout   |      | (hidden)   |     | (root item)   |
+|  or             |      +------------+     +---------------+
+|  VirtualLayout) |                    OR
+|                 |                         +---------------+
+|                 |                    -----+ Stack         +---+
+|                 |                         | (root item)   |   |   +----------------+
+|                 |                         +---------------+   +---+ ComponentItem  |
+|                 |                                             |   +----------------+
+|                 |                                             |
+|                 |                                             +--- more components
+|                 |                                             |
 |                 |                    OR
-|                 |                           +------------------+
-|                 |                    -------+ RowOrColumn Item +---+
-|                 |                           | (root item)      |   |
-|                 |                           +------------------+   |   +------------------+
-|                 |                                                  +---+ RowOrColumn Item +---+
-|                 |                                                  |   +------------------+   |
-|                 |                                                  |                          +--- more RowOrColumns and Stacks
-|                 |                                                  |                          |
-|                 |                                                  |
-|                 |                                                  |   +------------------+
-|                 |                                                  +---+ Stack Item       +---+
-|                 |                                                  |   +------------------+   |   +-----------------+
-|                 |                                                  |                          +---+ Component Item  +
-|                 |                                                  |                          |   +-----------------+
-|                 |                                                  |                          |
-|                 |                                                  |                          +--- more Components
-|                 |                                                  |                          |
-|                 |                                                  |
-|                 |                                                  +--- more RowOrColumns and Stacks
-|                 |                                                  |
+|                 |                         +---------------+
+|                 |                    -----+ RowOrColumn   +---+
+|                 |                         | (root item)   |   |   +-------------+
+|                 |                         +---------------+   +---+ RowOrColumn +---+
+|                 |                                             |   +-------------+   |
+|                 |                                             |                     +--- more RowOrColumns, Stacks
+|                 |                                             |                     |
+|                 |                                             |
+|                 |                                             |   +-------------+
+|                 |                                             +---+ Stack Item  +---+
+|                 |                                             |   +-------------+   |   +----------------+
+|                 |                                             |                     +---+ ComponentItem  |
+|                 |                                             |                     |   +----------------+
+|                 |                                             |                     |
+|                 |                                             |                     +--- more Components
+|                 |                                             |                     |
+|                 |                                             |
+|                 |                                             +--- more RowOrColumns, Stacks
+|                 |                                             |
 |                 |
 |     openPopouts +-----------------------+
-|                 |                       |   +-----------------+      +------------+       +---------------+
-+-----------------+                       +---+ BrowserPopout   +------+ GroundItem +-------+ ComponentItem |
-                                          |   | (LayoutManager) |      |            |       |               |
-                                          |   +-----------------+      +------------+       +---------------+
+|                 |                       |   +-----------------+     +------------+     +---------------+
++-----------------+                       +---+ LayoutManager   +-----+ GroundItem +-----+ ComponentItem |
+                                          |   | (BrowserPopout) |     +------------+     +---------------+
+                                          |   +-----------------+
                                           |
                                           +--- more BrowserPopouts
                                           |
-                                          |
 
 
-|    Permanent                        |    Replaced whenever a layout is loaded                                                 |
-+-------------------------------------+-----------------------------------------------------------------------------------------+
+|    Permanent                        |    Replaced whenever a layout is loaded                                    |
++-------------------------------------+----------------------------------------------------------------------------+
 ```
 
 A `GoldenLayout` (or `VirtualLayout`) object is a descendant of a `LayoutManager` object.  So when an instance of either of these is created, a `LayoutManager` is created. Upon creation, an instance of a `GroundItem` content item is also created. It will remain in existence for the life of the `LayoutManager` object. The other objects (`ComponentItem`, `RowOrColumn`, `Stack` and `BrowserPopout`) make up a layout and are loaded when a Layout is loaded or modified.  These objects will be destroyed when a layout is closed or a new layout is loaded.
@@ -55,7 +60,7 @@ A layout consists of 2 sets of elements:
 2. A list of `BrowserPopout`s.  These are the open popouts which appear above the main layout.
 
 ## Main Layout
-The main layout is a tree of `ContentItem`s. The root of the tree is either a `ComponentItem` or a `RowOrColumn` content item.
+The main layout is a tree of `ContentItem`s. The root of the tree is either a `ComponentItem`, `Stack` or a `RowOrColumn` content item.
 
 If the root is a `ComponentItem`, then the layout will only have one component/element which the user cannot manipulate with Golden Layout in any way. To the user, it will appear as if Golden Layout was not present - just the component/element.
 
