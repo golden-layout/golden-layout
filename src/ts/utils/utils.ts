@@ -12,13 +12,13 @@ export function pixelsToNumber(value: string): number {
 }
 
 /** @internal */
-export interface SplitStringAtFirstNonDigitResult {
+export interface SplitStringAtFirstNonNumericCharResult {
     digitsPart: string;
     firstNonDigitPart: string;
 }
 
 /** @internal */
-export function splitTrimmedStringAtFirstNonDigit(value: string): SplitStringAtFirstNonDigitResult {
+export function splitTrimmedStringAtFirstNonNumericChar(value: string): SplitStringAtFirstNonNumericCharResult {
     value = value.trimStart();
 
     const length = value.length;
@@ -27,7 +27,7 @@ export function splitTrimmedStringAtFirstNonDigit(value: string): SplitStringAtF
     } else {
         let firstNonDigitPartIndex = length;
         for (let i = 0; i < length; i++) {
-            if (!isDigit(value[i])) {
+            if (!isNumericChar(value[i])) {
                 firstNonDigitPartIndex = i;
                 break;
             }
@@ -40,8 +40,8 @@ export function splitTrimmedStringAtFirstNonDigit(value: string): SplitStringAtF
 }
 
 /** @internal */
-export function isDigit(char: string) {
-    return (char >= '0' && char <= '9');
+export function isNumericChar(char: string) {
+    return (char >= '0' && char <= '9') || char === '.';
 }
 
 /** @internal */
