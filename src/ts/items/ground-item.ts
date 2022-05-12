@@ -104,6 +104,7 @@ export class GroundItem extends ComponentParentableItem {
         if (this.contentItems.length > 0) {
             parent = this.contentItems[0];
         } else {
+            // eslint-disable-next-line @typescript-eslint/no-this-alias
             parent = this;
         }
         if (parent.isComponent) {
