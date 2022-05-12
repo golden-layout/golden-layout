@@ -3,7 +3,6 @@ import {
     ComponentContainer,
     ComponentItemConfig,
     ContentItem,
-    DragSource,
     EventEmitter,
     GoldenLayout,
     JsonValue,
@@ -498,9 +497,13 @@ export class App {
         this._goldenLayout.addComponent(componentType);
     }
 
-    private getDragComponentTypeAndState(): DragSource.ComponentItemConfig {
+    private getDragComponentTypeAndState(): ComponentItemConfig {
         const componentType = this._registeredComponentTypesForAddSelect.value;
-        return { type: componentType };
+        const itemConfig: ComponentItemConfig = {
+            type: 'component',
+            componentType,
+        }
+        return itemConfig;
     }
 
     private handleLoadLayoutButtonClick() {

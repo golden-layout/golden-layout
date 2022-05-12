@@ -379,17 +379,9 @@ export abstract class ContentItem extends EventEmitter {
     // @internal (undocumented)
     protected updateContentItemsSize(): void;
     // @internal
-<<<<<<< HEAD
     abstract updateSize(): void;
     // @internal (undocumented)
     width: number;
-||||||| parent of 53dc313 (Begin testing size config property)
-    abstract updateSize(force: boolean): void;
-    // @internal (undocumented)
-    width: number;
-=======
-    abstract updateSize(force: boolean): void;
->>>>>>> 53dc313 (Begin testing size config property)
 }
 
 // @public (undocumented)
@@ -411,16 +403,17 @@ export class DragSource {
     constructor(
     _layoutManager: LayoutManager,
     _element: HTMLElement,
-    _componentTypeOrFtn: JsonValue | (() => DragSource.ComponentItemConfig),
+    _componentTypeOrFtn: JsonValue | (() => (DragSource.ComponentItemConfig | ComponentItemConfig)),
     _componentState: JsonValue | undefined,
-    _title: string | undefined);
+    _title: string | undefined,
+    _id: string | undefined);
     // @internal
     destroy(): void;
 }
 
 // @public (undocumented)
 export namespace DragSource {
-    // (undocumented)
+    // @deprecated (undocumented)
     export interface ComponentItemConfig {
         // (undocumented)
         state?: JsonValue;
@@ -429,6 +422,8 @@ export namespace DragSource {
         // (undocumented)
         type: JsonValue;
     }
+    // @deprecated (undocumented)
+    export function isDragSourceComponentItemConfig(config: DragSource.ComponentItemConfig | ComponentItemConfig): config is DragSource.ComponentItemConfig;
 }
 
 // @public
@@ -1014,13 +1009,7 @@ export namespace LayoutConfig {
     export interface Dimensions {
         borderGrabWidth?: number;
         borderWidth?: number;
-<<<<<<< HEAD
         contentInset?: number;
-||||||| parent of 53dc313 (Begin testing size config property)
-=======
-        defaultMinItemHeight?: string;
-        defaultMinItemWidth?: string;
->>>>>>> 53dc313 (Begin testing size config property)
         dragProxyHeight?: number;
         dragProxyWidth?: number;
         headerHeight?: number;
@@ -1221,9 +1210,9 @@ export abstract class LayoutManager extends EventEmitter {
     minifyConfig(config: ResolvedLayoutConfig): ResolvedLayoutConfig;
     newComponent(componentType: JsonValue, componentState?: JsonValue, title?: string): ComponentItem;
     newComponentAtLocation(componentType: JsonValue, componentState?: JsonValue, title?: string, locationSelectors?: LayoutManager.LocationSelector[]): ComponentItem | undefined;
-    newDragSource(element: HTMLElement, itemConfigCallback: () => DragSource.ComponentItemConfig): DragSource;
-    // (undocumented)
-    newDragSource(element: HTMLElement, componentType: JsonValue, componentState?: JsonValue, title?: JsonValue): DragSource;
+    newDragSource(element: HTMLElement, itemConfigCallback: () => (DragSource.ComponentItemConfig | ComponentItemConfig)): DragSource;
+    // @deprecated (undocumented)
+    newDragSource(element: HTMLElement, componentType: JsonValue, componentState?: JsonValue, title?: JsonValue, id?: string): DragSource;
     newItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig): ContentItem;
     newItemAtLocation(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig, locationSelectors?: readonly LayoutManager.LocationSelector[]): ContentItem | undefined;
     // (undocumented)
@@ -1581,11 +1570,8 @@ export namespace ResolvedLayoutConfig {
         // (undocumented)
         readonly borderWidth: number;
         // (undocumented)
-<<<<<<< HEAD
         readonly contentInset: number;
         // (undocumented)
-||||||| parent of 53dc313 (Begin testing size config property)
-=======
         readonly defaultMinItemHeight: number;
         // (undocumented)
         readonly defaultMinItemHeightUnit: SizeUnitEnum;
@@ -1594,7 +1580,6 @@ export namespace ResolvedLayoutConfig {
         // (undocumented)
         readonly defaultMinItemWidthUnit: SizeUnitEnum;
         // (undocumented)
->>>>>>> 53dc313 (Begin testing size config property)
         readonly dragProxyHeight: number;
         // (undocumented)
         readonly dragProxyWidth: number;

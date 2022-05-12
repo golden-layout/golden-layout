@@ -1,4 +1,5 @@
-import { ComponentItemConfig } from '../config/config';
+import { ComponentItemConfig as ConfigComponentItemConfig } from '../config/config'; // remove alias in version 3
+import { ResolvedRowOrColumnItemConfig } from "../config/resolved-config";
 import { UnexpectedNullError } from '../errors/internal-error';
 import { ComponentItem } from '../items/component-item';
 import { GroundItem } from '../items/ground-item';
@@ -6,7 +7,6 @@ import { LayoutManager } from '../layout-manager';
 import { DragListener } from '../utils/drag-listener';
 import { JsonValue } from '../utils/types';
 import { DragProxy } from './drag-proxy';
-import { ResolvedRowOrColumnItemConfig } from "../config/resolved-config";
 
 /**
  * Allows for any DOM item to create a component on drag
@@ -28,10 +28,10 @@ export class DragSource {
         /** @internal */
         private readonly _element: HTMLElement,
         /** @internal */
-        private _componentTypeOrFtn: JsonValue | (() => DragSource.ComponentItemConfig),
-        /** @internal */
+        private _componentTypeOrFtn: JsonValue | (() => (DragSource.ComponentItemConfig | ConfigComponentItemConfig)),
+        /** @internal @deprecated remove in version 3 */
         private _componentState: JsonValue | undefined,
-        /** @internal */
+        /** @internal @deprecated remove in version 3 */
         private _title: string | undefined,
     ) {
         this._dragListener = null;
@@ -72,18 +72,29 @@ export class DragSource {
      * @internal
      */
     private onDragStart(x: number, y: number) {
-        let componentType: JsonValue;
-        let componentState: JsonValue | undefined;
-        let title: string | undefined;
+        const type = 'component';
+        let dragSourceItemConfig: ConfigComponentItemConfig;
+
         if (typeof this._componentTypeOrFtn === "function") {
-            const dragSourceItemConfig: DragSource.ComponentItemConfig = this._componentTypeOrFtn();
-            componentType = dragSourceItemConfig.type;
-            componentState = dragSourceItemConfig.state;
-            title = dragSourceItemConfig.title;
+            const ftnDragSourceItemConfig = this._componentTypeOrFtn() as (DragSource.ComponentItemConfig | ConfigComponentItemConfig);
+            // If the componentType property exists, then it is already a ComponentItemConfig so nothing to do
+            if (DragSource.isDragSourceComponentItemConfig(ftnDragSourceItemConfig)) {
+                dragSourceItemConfig = {
+                    type,
+                    componentState: ftnDragSourceItemConfig.state,
+                    componentType: ftnDragSourceItemConfig.type,
+                    title: ftnDragSourceItemConfig.title ?? this._title,
+                };
+            } else {
+                dragSourceItemConfig = ftnDragSourceItemConfig;
+            }
         } else {
-            componentType = this._componentTypeOrFtn;
-            componentState = this._componentState;
-            title = this._title;
+            dragSourceItemConfig = {
+                type,
+                componentState: this._componentState,
+                componentType: this._componentTypeOrFtn,
+                title: this._title,
+            };
         }
 
         // Create a dummy ContentItem only for drag purposes
@@ -91,13 +102,7 @@ export class DragSource {
         // Instead of allowing null parents (as Javascript version did), use a temporary dummy GroundItem parent and add ContentItem to that
         // If this does not work, need to create alternative GroundItem class
 
-        const itemConfig: ComponentItemConfig = {
-            type: 'component',
-            componentType,
-            componentState,
-            title,
-        }
-        const resolvedItemConfig = ComponentItemConfig.resolve(itemConfig, false);
+        const resolvedItemConfig = ConfigComponentItemConfig.resolve(dragSourceItemConfig, false);
 
         const componentItem = new ComponentItem(this._layoutManager, resolvedItemConfig, this._dummyGroundContentItem)
         this._dummyGroundContentItem.contentItems.push(componentItem);
@@ -134,9 +139,17 @@ export class DragSource {
 
 /** @public */
 export namespace DragSource {
+    /** @deprecated  use Config {@link (ComponentItemConfig:interface)} */
     export interface ComponentItemConfig {
         type: JsonValue,
         state?: JsonValue,
         title?: string,
+    }
+
+    /** @deprecated remove in version 3 */
+    export function isDragSourceComponentItemConfig(
+        config: DragSource.ComponentItemConfig | ConfigComponentItemConfig
+    ): config is DragSource.ComponentItemConfig {
+        return !("componentType" in config);
     }
 }
