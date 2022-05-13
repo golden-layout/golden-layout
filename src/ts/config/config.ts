@@ -2,7 +2,7 @@ import { ConfigurationError } from '../errors/external-error';
 import { AssertError, UnexpectedUndefinedError, UnreachableCaseError } from '../errors/internal-error';
 import { I18nStringId, i18nStrings } from '../utils/i18n-strings';
 import { ItemType, JsonValue, ResponsiveMode, Side, SizeUnitEnum } from '../utils/types';
-import { deepExtendValue, splitTrimmedStringAtFirstNonNumericChar } from '../utils/utils';
+import { deepExtendValue, splitStringAtFirstNonNumericChar } from '../utils/utils';
 import {
     ResolvedComponentItemConfig,
     ResolvedHeaderedItemConfig,
@@ -1247,7 +1247,7 @@ export interface UndefinableSizeWithUnit {
 
 /** @internal */
 export function parseSize(sizeString: string, allowableSizeUnits: readonly SizeUnitEnum[]): SizeWithUnit {
-    const { digitsPart, firstNonDigitPart } = splitTrimmedStringAtFirstNonNumericChar(sizeString);
+    const { numericPart: digitsPart, firstNonNumericCharPart: firstNonDigitPart } = splitStringAtFirstNonNumericChar(sizeString);
     const size = Number.parseInt(digitsPart, 10);
     if (isNaN(size)) {
         throw new ConfigurationError(`${i18nStrings[I18nStringId.InvalidNumberPartInSizeString]}: ${sizeString}`);
