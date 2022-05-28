@@ -12,6 +12,8 @@ export namespace DomConstants {
         Vertical = 'lm_vertical',
         Horizontal = 'lm_horizontal',
         Dragging = 'lm_dragging',
+        DragImage = 'lm_dragImage',
+        DragImageInner = 'lm_dragImageInner',
         DragProxy = 'lm_dragProxy',
         Header = 'lm_header',
         Headers = 'lm_headers',

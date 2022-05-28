@@ -119,7 +119,7 @@ export abstract class LayoutManager extends EventEmitter {
 
     beforeVirtualRectingEvent: LayoutManager.BeforeVirtualRectingEvent | undefined;
     afterVirtualRectingEvent: LayoutManager.AfterVirtualRectingEvent | undefined;
-    createContainerElement: (lm: LayoutManager, config: ResolvedComponentItemConfig)=>HTMLElement = (layoutManager, config) => {
+    createContainerElement: (lm: LayoutManager, config: ResolvedComponentItemConfig)=>HTMLElement|undefined = (layoutManager, config) => {
         const element = document.createElement('div');
         const parent = layoutManager.groundItem ? layoutManager.groundItem.element
               : document.body;
@@ -809,7 +809,7 @@ export abstract class LayoutManager extends EventEmitter {
 
     findFirstComponentItemById(id: string): ComponentItem | undefined {
         if (this._groundItem === undefined) {
-            throw new UnexpectedUndefinedError('LMFFCIBI82446');
+            return undefined;
         } else {
             return this.findFirstContentItemTypeByIdRecursive(ItemType.component, id, this._groundItem) as ComponentItem;
         }
@@ -898,7 +898,7 @@ export abstract class LayoutManager extends EventEmitter {
 
     /** @internal */
     beginVirtualSizedContainerAdding(): void {
-        if (++this._virtualSizedContainerAddingBeginCount === 0) {
+        if (this._virtualSizedContainerAddingBeginCount++ === 0) {
             this._virtualSizedContainers.length = 0;
         }
     }
@@ -1063,12 +1063,14 @@ export abstract class LayoutManager extends EventEmitter {
     {
         this._currentlyDragging = true;
         this._draggedComponentItem = componentItem;
+        const data = {config: componentItem.toConfig()};
         if (ev.dataTransfer) {
-            ev.dataTransfer.setData(this.dragDataMimetype(),
-                JSON.stringify({config: componentItem.toConfig()}));
+            const jdata = JSON.stringify(data);
+            ev.dataTransfer.setData(this.dragDataMimetype(), jdata);
             ev.dataTransfer.dropEffect = "move"; // "link"; //"move"; // OR "copy";
         }
-        const image = componentItem.element;
+
+        // Make drag-image
         const tabElement = componentItem.tab.element;
         //tabElement.style.visibility="visible";
         const stack = componentItem.parent as Stack;
@@ -1083,13 +1085,29 @@ export abstract class LayoutManager extends EventEmitter {
         const headerClone = document.createElement('section');
         //headerClone.classList.add(DomConstants.ClassName.Header);
         headerClone.appendChild(tabsContainer);
-        image.insertBefore(headerClone, image.firstChild);
-        //const headerTop = headerElement.style.top;
-        //headerElement.style.top = "-100px";
-        //*/
-        //image.insertBefore(tabsContainer, image.firstChild);
-        //tabClone.style.background="rgba(0,0,0,0.6)";
-        //headerClone.style.background="rgba(0,0,0,0)";
+        let image: HTMLElement;
+        const useFreshDragImage = true; //componentItem.element === LayoutManager.VIRTUAL_ELEMENT_DUMMY;
+        if (useFreshDragImage) {
+            image = document.createElement('section');
+            image.classList.add(DomConstants.ClassName.DragImage);
+            const inner = document.createElement('div');
+            inner.classList.add(DomConstants.ClassName.DragImageInner);
+            image.appendChild(headerClone);
+            image.appendChild(inner);
+            document.body.appendChild(image);
+            const stackBounds = stack.element.getBoundingClientRect();
+            image.style.top = `${stackBounds.top}px`;
+            image.style.left = `${stackBounds.left}px`;
+            image.style.width = `${stackBounds.width}px`;
+            image.style.height = `${stackBounds.height}px`;
+            inner.style.left = "0px";
+            inner.style.right = "0px";
+            inner.style.height = `${stackBounds.height-tabsContainer.clientHeight}px`;
+            inner.style.bottom = "0px";
+        } else {
+            image = componentItem.element;
+            image.insertBefore(headerClone, image.firstChild);
+        }
         headerClone.style.position = "absolute";
         headerClone.style.top = "0px";
         if (! isActiveTab) {
@@ -1148,7 +1166,10 @@ export abstract class LayoutManager extends EventEmitter {
             }
             tabElement.style.visibility = '';
             headerElement.style.visibility = '';
-            image.style.opacity = oldOpacity;
+            if (useFreshDragImage)
+                image.remove();
+            else
+                image.style.opacity = oldOpacity;
             componentItem.parent?.removeChild(componentItem, true);
 
             console.log("LM/drag after removeChild dropE:"+dtr?.dropEffect);
@@ -1760,15 +1781,12 @@ export abstract class LayoutManager extends EventEmitter {
             // did a local drop - case (1) above
             const droppedComponentItem = this._draggedComponentItem;
             this._area.contentItem.onDrop(droppedComponentItem, this._area);
-            (droppedComponentItem.container.component as HTMLElement).style.zIndex = "";
         }
         this._currentlyDragging = false;
         console.log("dragend ev-handler deffect:"+dropEffect+" enter-count:"+this._dragEnterCount);
         //    console.log("dragend "+(e.target as HTMLElement).getAttribute("class"));
         //   console.log("- effect:"+e.dataTransfer?.dropEffect);
         // FIXME incorporate drag-listener:processDragStop
-        if (this._draggedComponentItem)
-            this._draggedComponentItem.element.style.visibility = '';
         this._draggedComponentItem = undefined;
         // See processDragStop in drag-listener
         //document.body.classList.remove(DomConstants.ClassName.Dragging);
@@ -1810,7 +1828,7 @@ export abstract class LayoutManager extends EventEmitter {
                 (droppedComponentItem.container.component as HTMLElement).style.zIndex = "";
                 */
             } else {
-                console.log("dropped from different window "+JSON.stringify(data.config));
+                console.log("dropped from different window "+dvalue+" // "+JSON.stringify(data.config));
                 const item = new ComponentItem(this, data.config, this.groundItem as ComponentParentableItem);
                 this._area.contentItem.onDrop(item, this._area);
             }
@@ -2055,6 +2073,7 @@ export abstract class LayoutManager extends EventEmitter {
 export namespace LayoutManager {
     export type BeforeVirtualRectingEvent = (this: void, count: number) => void;
     export type AfterVirtualRectingEvent = (this: void) => void;
+    export const VIRTUAL_ELEMENT_DUMMY = document.createElement('div');
 
     /** @internal */
     export interface ConstructorParameters {

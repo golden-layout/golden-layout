@@ -52,8 +52,9 @@ export class ComponentItem extends ContentItem {
         /** @internal */
         private _parentItem: ComponentParentableItem
     ) {
-        super(layoutManager, config, _parentItem, layoutManager.createContainerElement(layoutManager, config));
-
+        // FIXME _element should be _parentItem.childElementContainer
+        // There may be no containerelement if virtual
+        super(layoutManager, config, _parentItem, _createContainer(layoutManager, _parentItem, config));
         this.isComponent = true;
 
         this._reorderEnabled = config.reorderEnabled;
@@ -62,8 +63,7 @@ export class ComponentItem extends ContentItem {
 
         this._initialWantMaximise = config.maximised;
 
-        this.element.classList.add('lm_component');
-        const containerElement = this.element;
+        const containerElement = /*_parentItem instanceof Stack && this.element === _parentItem.childElementContainer ? undefined :*/ this.element;
         this._container = new ComponentContainer(config, this, layoutManager, containerElement,
             (itemConfig) => this.handleUpdateItemConfigEvent(itemConfig),
             () => this.show(),
@@ -76,10 +76,12 @@ export class ComponentItem extends ContentItem {
     /** @internal */
     override destroy(): void {
         const element = this.element;
-        element.style.opacity = '0.1';
+        if (element)
+            element.style.opacity = '0.1';
         const wasDragging = this.layoutManager._currentlyDragging;
         this.layoutManager.deferIfDragging((cancel) => {
-            element.style.opacity = '';
+            if (element)
+                element.style.opacity = '';
             if (! cancel && ! wasDragging) {
                 this._container.destroy();
                 super.destroy();
@@ -194,13 +196,11 @@ export class ComponentItem extends ContentItem {
 
     /** @internal */
     override hide(): void {
-        super.hide();
         this._container.setVisibility(false);
     }
 
     /** @internal */
     override show(): void {
-        super.show();
         this._container.setVisibility(true);
     }
 
@@ -250,25 +250,51 @@ export class ComponentItem extends ContentItem {
     }
 
     /** @internal */
-    private updateNodeSize(): void {
-        if (this.element.style.display !== 'none' && this.parentItem instanceof Stack) {
+    updateNodeSize(): void {
+        const componentElement = this.element;
+        if (componentElement
+            && componentElement.style.display !== 'none'
+            && this.parentItem instanceof Stack) {
+            /* old:
+            const { width, height } = getElementWidthAndHeight(this.element);
+            this._container.setSizeToNodeSize(width, height, false);
+             */
             // Do not update size of hidden components to prevent unwanted reflows
             const stackBounds = this.parentItem.element.getBoundingClientRect();
-            const itemBounds = this.parentItem.childElementContainer.getBoundingClientRect();
+            const items = this.parentItem.childElementContainer;
+            const itemBounds = items.getBoundingClientRect();
             const layoutBounds = this.layoutManager.container.getBoundingClientRect();
-            const componentElement = this.element;
-            const contentElement = this.component as HTMLElement;
-            const contentInset = this.layoutManager.layoutConfig.dimensions.contentInset;
-            componentElement.style.top = numberToPixels(stackBounds.top - layoutBounds.top);
-            componentElement.style.left = numberToPixels(stackBounds.left - layoutBounds.left);
-            componentElement.style.width = numberToPixels(stackBounds.width);
-            componentElement.style.height = numberToPixels(stackBounds.height);
-            contentElement.style.position = "absolute";
-            contentElement.style.top = numberToPixels(itemBounds.top - stackBounds.top + contentInset);
-            contentElement.style.left = numberToPixels(contentInset);
-            contentElement.style.width = numberToPixels(itemBounds.width - 2 * contentInset);
-            contentElement.style.height = numberToPixels(itemBounds.height - 2 * contentInset);
+            if (this.element !== LayoutManager.VIRTUAL_ELEMENT_DUMMY && this.component != items) { // not virtual
+                if (this.component !== componentElement) {
+                    componentElement.style.top = numberToPixels(stackBounds.top - layoutBounds.top);
+                    componentElement.style.left = numberToPixels(stackBounds.left - layoutBounds.left);
+                    componentElement.style.width = numberToPixels(stackBounds.width);
+                    componentElement.style.height = numberToPixels(stackBounds.height);
+                }
+                if (this.component !== LayoutManager.VIRTUAL_ELEMENT_DUMMY) {
+                    const contentElement = this.component as HTMLElement;
+                    const contentInset = this.layoutManager.layoutConfig.dimensions.contentInset;
+                    contentElement.style.position = "absolute";
+                    contentElement.style.top = numberToPixels(itemBounds.top - stackBounds.top + contentInset);
+                    contentElement.style.left = numberToPixels(contentInset);
+                    contentElement.style.width = numberToPixels(itemBounds.width - 2 * contentInset);
+                    contentElement.style.height = numberToPixels(itemBounds.height - 2 * contentInset);
+                }
+            }
         }
+        else console.trace("updateNodeSize ignored");
+        this.container.addVirtualSizedContainerToLayoutManager();
+    }
+}
+
+function _createContainer(layoutManager: LayoutManager, parentItem: ComponentParentableItem, config: ResolvedComponentItemConfig): HTMLElement {
+    const container =
+        layoutManager.createContainerElement(layoutManager, config);
+    if (container) {
+        container.classList.add('lm_component');
+        return container;
+    } else {
+        return LayoutManager.VIRTUAL_ELEMENT_DUMMY;
     }
 }
 

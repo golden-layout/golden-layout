@@ -18,13 +18,10 @@ export class GoldenLayout extends VirtualLayout {
     /** @internal */
     private _registeredComponentMap = new Map<ComponentContainer, ComponentContainer.Component>();
     /** @internal */
-    private _virtuableComponentMap = new Map<ComponentContainer, GoldenLayout.VirtuableComponent>();
+    private _virtuableComponentMap = new Map<ComponentContainer, GoldenLayout.VirtuableComponent>(); // FIXME remove
     /** @internal */
     private _goldenLayoutBoundingClientRect: DOMRect;
 
-    /** @internal */
-    private _containerVirtualRectingRequiredEventListener =
-        (container: ComponentContainer, width: number, height: number) => this.handleContainerVirtualRectingRequiredEvent(container, width, height);
     /** @internal */
     private _containerVirtualVisibilityChangeRequiredEventListener =
         (container: ComponentContainer, visible: boolean) => this.handleContainerVirtualVisibilityChangeRequiredEvent(container, visible);
@@ -248,7 +245,6 @@ export class GoldenLayout extends VirtualLayout {
                         ensureElementPositionAbsolute(componentRootElement);
                         this.container.appendChild(componentRootElement);
                         this._virtuableComponentMap.set(container, virtuableComponent);
-                        container.virtualRectingRequiredEvent = this._containerVirtualRectingRequiredEventListener;
                         container.virtualVisibilityChangeRequiredEvent = this._containerVirtualVisibilityChangeRequiredEventListener;
                         container.virtualZIndexChangeRequiredEvent = this._containerVirtualZIndexChangeRequiredEventListener;
                     }
@@ -294,27 +290,6 @@ export class GoldenLayout extends VirtualLayout {
         super.fireBeforeVirtualRectingEvent(count);
     }
 
-
-    /** @internal */
-    private handleContainerVirtualRectingRequiredEvent(container: ComponentContainer, width: number, height: number): void {
-        const virtuableComponent = this._virtuableComponentMap.get(container);
-        if (virtuableComponent === undefined) {
-            throw new UnexpectedUndefinedError('GLHCSCE55933');
-        } else {
-            const rootElement = virtuableComponent.rootHtmlElement;
-            if (rootElement === undefined) {
-                throw new BindError(i18nStrings[I18nStringId.ComponentIsNotVirtuable] + ' ' + container.title);
-            } else {
-                const containerBoundingClientRect = container.element.getBoundingClientRect();
-                const left = containerBoundingClientRect.left - this._goldenLayoutBoundingClientRect.left;
-                rootElement.style.left = numberToPixels(left);
-                const top = containerBoundingClientRect.top - this._goldenLayoutBoundingClientRect.top;
-                rootElement.style.top = numberToPixels(top);
-                setElementWidth(rootElement, width);
-                setElementHeight(rootElement, height);
-            }
-        }
-    }
 
     /** @internal */
     private handleContainerVirtualVisibilityChangeRequiredEvent(container: ComponentContainer, visible: boolean): void {

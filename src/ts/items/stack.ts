@@ -71,7 +71,6 @@ export class Stack extends ComponentParentableItem {
     /** @internal */
     constructor(layoutManager: LayoutManager, config: ResolvedStackItemConfig, parent: ContentItem) {
         super(layoutManager, config, parent, Stack.createElement(document));
-
         this._headerConfig = config.header;
         const layoutHeaderConfig = layoutManager.layoutConfig.header;
         const configContent = config.content;
@@ -717,10 +716,6 @@ export class Stack extends ComponentParentableItem {
             this._childElementContainer.style.bottom = '0px';
             this._childElementContainer.style.width = numberToPixels(content.width);
             this._childElementContainer.style.height = numberToPixels(content.height);
-            for (let i = 0; i < this.contentItems.length; i++) {
-                this.contentItems[i].element.style.width = numberToPixels(content.width);
-                this.contentItems[i].element.style.height = numberToPixels(content.height);
-            }
             this.emit('resize');
             this.emitStateChangedEvent();
         }
