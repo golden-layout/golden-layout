@@ -67,6 +67,7 @@ export class TabsContainer {
         if (this._tabs.length === 0) {
             this._tabs.push(tab);
             this._element.appendChild(tab.element);
+            this.element.classList.add("lm_single");
         } else {
             if (index === undefined) {
                 index = this._tabs.length;
@@ -79,6 +80,7 @@ export class TabsContainer {
             }
 
             this._tabs.splice(index, 0, tab);
+            this.element.classList.remove("lm_single");
         }
     }
 
@@ -91,6 +93,8 @@ export class TabsContainer {
                 this._layoutManager.deferIfDragging((cancel) => {
                     if (! cancel) {
                         this._tabs.splice(i, 1);
+                        if (this._tabs.length <= 1)
+                            this.element.classList.add("lm_single");
                         if (i <= this._lastVisibleTabIndex)
                             --this._lastVisibleTabIndex;
                     }
@@ -155,7 +159,7 @@ export class TabsContainer {
         const headerNode = this.element.parentNode as HTMLElement;
         headerNode.classList.remove("lm_tight_mode");
         let availableWidth: number = header.availableTabsSize();
-        this.element.style.width = numberToPixels(availableWidth);
+        this.element.style.width = ''; //numberToPixels(availableWidth);
         if (this._tabs.length > 0) {
             if (activeComponentItem === undefined) {
                 throw new Error('non-empty tabs must have active component item');
@@ -212,7 +216,7 @@ export class TabsContainer {
                          (isActiveTab ? Tab.RenderFlags.IsActiveTab : 0) |
                          (dropdownActive ? Tab.RenderFlags.DropdownActive : 0));
 
-                cumulativeTabWidth = tabElement.offsetLeft + tabElement.offsetWidth + tabMarginRight;
+                cumulativeTabWidth = tabElement.offsetLeft - this._element.offsetLeft + tabElement.offsetWidth + tabMarginRight;
 
                 if (dropdownActive) {
                     const el = document.createElement('span');
@@ -233,7 +237,7 @@ export class TabsContainer {
                     // take less space, we should have more available space.
                     availableWidth = header.availableTabsSize();
                     this.element.style.width = numberToPixels(availableWidth);
-                    cumulativeTabWidth = tabElement.offsetLeft + tabElement.offsetWidth + tabMarginRight;
+                    cumulativeTabWidth = tabElement.offsetLeft - this._element.offsetLeft + tabElement.offsetWidth + tabMarginRight;
                 }
             }
 

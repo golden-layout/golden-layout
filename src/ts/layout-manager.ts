@@ -1083,7 +1083,7 @@ export abstract class LayoutManager extends EventEmitter {
         tabsContainer.appendChild(tabClone);
         ///*
         const headerClone = document.createElement('section');
-        //headerClone.classList.add(DomConstants.ClassName.Header);
+        headerClone.classList.add(DomConstants.ClassName.Header);
         headerClone.appendChild(tabsContainer);
         let image: HTMLElement;
         const useFreshDragImage = true; //componentItem.element === LayoutManager.VIRTUAL_ELEMENT_DUMMY;
@@ -1103,6 +1103,7 @@ export abstract class LayoutManager extends EventEmitter {
             inner.style.left = "0px";
             inner.style.right = "0px";
             inner.style.height = `${stackBounds.height-tabsContainer.clientHeight}px`;
+            inner.style.top = `${tabsContainer.clientHeight}px`;
             inner.style.bottom = "0px";
         } else {
             image = componentItem.element;
@@ -1128,9 +1129,10 @@ export abstract class LayoutManager extends EventEmitter {
         //- It seems to ignore the offset and just center the image over
         //- the mouse cursor. FIXME.
         //Perhaps scale the image if it is really large. FIXME.
-        const clientRect = (ev.target as HTMLElement).getBoundingClientRect();
-        const dX = ev.clientX - clientRect.left;
-        const dY = ev.clientY - clientRect.top;
+        const etarget = ev.target as HTMLElement;
+        const dX = ev.offsetX + etarget.offsetLeft;
+        const dY = ev.offsetY + etarget.offsetTop;
+        tabsContainer.style.marginLeft = `${(ev.target as HTMLElement).offsetLeft}px`;
         ev.dataTransfer?.setDragImage(image as HTMLElement, dX, dY);
         this.emit('dragstart', ev, componentItem);
         enableIFramePointerEvents(false);
@@ -1143,8 +1145,7 @@ export abstract class LayoutManager extends EventEmitter {
             const parent = item.parent;
             if (! parent)
                 break;
-            if ((item.isRow || item.isColumn)
-                && item.contentItems.length >= 2) {
+            if (item.contentItems.length >= 2) {
                 break;
             }
             if (item === componentItem || item.isStack) {
@@ -1709,7 +1710,7 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     private onDragEnter(e: DragEvent) {
-        console.log("dragenter "+(e.target as HTMLElement).getAttribute("class")+" dropEffect:"+e.dataTransfer?.dropEffect);
+        console.log("dragenter "+(e.target as HTMLElement).getAttribute("class")+" dropEffect:"+e.dataTransfer?.dropEffect+" old-count:"+this._dragEnterCount);
         e.stopPropagation();
         if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
 
@@ -1724,7 +1725,7 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     private onDragLeave(e: DragEvent) {
-        console.log("dragleave "+(e.target as HTMLElement).getAttribute("class")+" entercount:"+this._dragEnterCount+" dropEffect:"+e.dataTransfer?.dropEffect);
+        console.log("dragleave "+(e.target as HTMLElement).getAttribute("class")+" old-entercount:"+this._dragEnterCount+" dropEffect:"+e.dataTransfer?.dropEffect);
         e.stopPropagation();
         if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
         if (! this.validDragEvent(e))
@@ -1764,7 +1765,7 @@ export abstract class LayoutManager extends EventEmitter {
             && ((e.dataTransfer as any).mozUserCancelled
                 || this._currentlyDragging
                 || this.inSomeWindow);
-        console.log("onDragEnd cancel:"+cancel+" comp:"+component+" cur-drag:"+this._currentlyDragging);
+        console.log("onDragEnd now:"+Date.now()+" cancel:"+cancel+" dropEff:"+dropEffect+" comp:"+component+" cur-drag:"+this._currentlyDragging);
         if (! cancel
             && component
             && this._currentlyDragging) {
@@ -1808,7 +1809,6 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     private onDrop(e: DragEvent) {
-        console.log("drop e-handler");
         const dvalue = e.dataTransfer?.getData(this.dragDataMimetype());
         const data = dvalue && JSON.parse(dvalue);
         // JSON.parse(data);

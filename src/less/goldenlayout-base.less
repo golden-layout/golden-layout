@@ -177,26 +177,33 @@
 }
 
 .lm_header.lm_tight_mode {
-    .lm_tabs {
-        .lm_tab {
-            padding-left: 2px;
-            padding-right: 2px;
-            .lm_close_tab {
-                display: none;
-            }
-        }
-        .lm_tab.lm_active {
-            display: inherit;
-            padding-right: 22px;
-            .lm_close_tab {
-                display: inherit;
-            }
-        }
+  .lm_tabs {
+    .lm_tab {
+      padding-left: 2px;
+      padding-right: 2px;
     }
-    .lm_drop_tab_placeholder {
-        padding-right: 0.7 * @width2;
-        margin-right: 0px; // counteract negative margin-left when taps overlap
+    .lm_tab.lm_active {
+      display: inherit;
+      padding-right: 22px;
+      .lm_close_tab {
+        display: inherit;
+      }
     }
+  }
+  .lm_drop_tab_placeholder {
+    padding-right: 0.7 * @width2;
+    margin-right: 0px; // counteract negative margin-left when taps overlap
+  }
+}
+.lm_header.lm_tight_mode .lm_tabs .lm_tab .lm_close_tab,
+.lm_header .lm_tabs.lm_single .lm_tab.lm_active .lm_close_tab {
+   display: none;
+ }
+.lm_header .lm_tabs.lm_single {
+  .lm_tab, .lm_tab.lm_active {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
 }
 
 // Change stack style to absolute positioning for docking transition ability
@@ -459,5 +466,20 @@
 
   > .lm_icon {
     z-index: 20;
+  }
+}
+
+.lm_dragImage {
+  position: absolute;
+  opacity: 0.8;
+
+  section {
+    background-color: transparent;
+   }
+
+  .lm_dragImageInner {
+    border: solid 2px red;
+    background-color: transparent;
+    position: relative;
   }
 }

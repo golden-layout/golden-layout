@@ -145,9 +145,7 @@ export class Header extends EventEmitter {
         this._element.classList.add(DomConstants.ClassName.Header);
         this._controlsContainerElement = document.createElement('section');
         this._controlsContainerElement.classList.add(DomConstants.ClassName.Controls);
-        this._element.appendChild(this._tabsContainer.element);
-        this._element.appendChild(this._controlsContainerElement);
-        this._element.appendChild(this._tabsContainer.dropdownElement);
+        this.layoutDefault();
 
         //        this._element.addEventListener('click', this._clickListener, { passive: true });
         //this._element.addEventListener('touchstart', this._touchStartListener, { passive: true });
@@ -184,6 +182,15 @@ export class Header extends EventEmitter {
         }
 
         this.processTabDropdownActiveChanged();
+    }
+
+    layoutDefault(): void {
+        const el = this._element;
+        while (el.firstChild)
+            el.removeChild(el.firstChild);
+        el.appendChild(this._tabsContainer.element);
+        el.appendChild(this._controlsContainerElement);
+        el.appendChild(this._tabsContainer.dropdownElement);
     }
 
     /**
@@ -330,9 +337,9 @@ export class Header extends EventEmitter {
             this._updateRequested = 0;
 
             if (this._tabsContainer.tabCount > 0) {
-                const headerHeight = this._show ? this._layoutManager.layoutConfig.dimensions.headerHeight : 0;
                 /* We need explicit this._element.style.width
                 * if the header is in an lm_header container.
+                const headerHeight = this._show ? this._layoutManager.layoutConfig.dimensions.headerHeight : 0;
                 if (this._leftRightSided) {
                     this._element.style.height = '';
                     this._element.style.width = numberToPixels(headerHeight);
@@ -347,11 +354,14 @@ export class Header extends EventEmitter {
     }
 
     availableTabsSize(): number {
-        if (this._leftRightSided) {
-            return this._element.offsetHeight - this._controlsContainerElement.offsetHeight - this._tabControlOffset;
-        } else {
-            return this._element.offsetWidth - this._controlsContainerElement.offsetWidth - this._tabControlOffset;
+        const el = this._element;
+        let avail = this._leftRightSided ? el.offsetHeight : el.offsetWidth;
+        for (let ch = el.firstElementChild; ch; ch = ch.nextElementSibling) {
+            if (ch !== this.tabsContainerElement && ch instanceof HTMLElement) {
+                avail -= this._leftRightSided ? ch.offsetHeight : ch.offsetWidth
+            }
         }
+        return avail;
     }
 
     /** @internal */

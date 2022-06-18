@@ -282,7 +282,7 @@ export class ComponentItem extends ContentItem {
                 }
             }
         }
-        else console.trace("updateNodeSize ignored");
+        else console.log('updateNodeSize ignored');
         this.container.addVirtualSizedContainerToLayoutManager();
     }
 }
