@@ -3,6 +3,7 @@ import { ComponentContainer } from '../container/component-container';
 import { Tab } from '../controls/tab';
 import { UnexpectedNullError } from '../errors/internal-error';
 import { LayoutManager } from '../layout-manager';
+import { DomConstants } from '../utils/dom-constants'
 import { ItemType, JsonValue } from '../utils/types';
 import { setElementHeight, setElementWidth } from '../utils/utils';
 import { ComponentParentableItem } from './component-parentable-item';
@@ -52,9 +53,7 @@ export class ComponentItem extends ContentItem {
         /** @internal */
         private _parentItem: ComponentParentableItem
     ) {
-        // FIXME _element should be _parentItem.childElementContainer
-        // There may be no containerelement if virtual
-        super(layoutManager, config, _parentItem, _createContainer(layoutManager, _parentItem, config));
+        super(layoutManager, config, _parentItem, ContentItem.createElement());
         this.isComponent = true;
 
         this._reorderEnabled = config.reorderEnabled;
@@ -63,7 +62,12 @@ export class ComponentItem extends ContentItem {
 
         this._initialWantMaximise = config.maximised;
 
-        const containerElement = /*_parentItem instanceof Stack && this.element === _parentItem.childElementContainer ? undefined :*/ this.element;
+        //const containerElement = _createContainer(layoutManager, _parentItem, config);
+        let containerElement = layoutManager.createContainerElement(layoutManager, config);
+        if (containerElement)
+            containerElement.classList.add('lm_component');
+        //else
+        //containerElement = LayoutManager.VIRTUAL_ELEMENT_DUMMY;
         this._container = new ComponentContainer(config, this, layoutManager, containerElement,
             (itemConfig) => this.handleUpdateItemConfigEvent(itemConfig),
             () => this.show(),
@@ -251,50 +255,40 @@ export class ComponentItem extends ContentItem {
 
     /** @internal */
     updateNodeSize(): void {
-        const componentElement = this.element;
-        if (componentElement
-            && componentElement.style.display !== 'none'
+        const contentInset = this.layoutManager.layoutConfig.dimensions.contentInset;
+        this.element.style.margin = contentInset ? `${contentInset}px` : '';
+
+        let contentElement = this.component;
+        let componentElement =
+            (contentElement instanceof HTMLElement
+                && contentElement.parentNode instanceof HTMLElement
+                && contentElement.parentNode.classList.contains("lm_component"))
+            ? contentElement.parentNode
+            : contentElement;
+        if (contentElement instanceof HTMLElement
+            // && contentElement.style.display !== 'none'
             && this.parentItem instanceof Stack) {
-            /* old:
-            const { width, height } = getElementWidthAndHeight(this.element);
-            this._container.setSizeToNodeSize(width, height, false);
-             */
             // Do not update size of hidden components to prevent unwanted reflows
-            const stackBounds = this.parentItem.element.getBoundingClientRect();
-            const items = this.parentItem.childElementContainer;
-            const itemBounds = items.getBoundingClientRect();
+            const stackElement = this.parentItem.element;
+            const stackBounds = stackElement.getBoundingClientRect();
+            const itemElement = this.element;
+            const itemBounds = itemElement.getBoundingClientRect();
             const layoutBounds = this.layoutManager.container.getBoundingClientRect();
-            if (this.element !== LayoutManager.VIRTUAL_ELEMENT_DUMMY && this.component != items) { // not virtual
-                if (this.component !== componentElement) {
-                    componentElement.style.top = numberToPixels(stackBounds.top - layoutBounds.top);
-                    componentElement.style.left = numberToPixels(stackBounds.left - layoutBounds.left);
-                    componentElement.style.width = numberToPixels(stackBounds.width);
-                    componentElement.style.height = numberToPixels(stackBounds.height);
-                }
-                if (this.component !== LayoutManager.VIRTUAL_ELEMENT_DUMMY) {
-                    const contentElement = this.component as HTMLElement;
-                    const contentInset = this.layoutManager.layoutConfig.dimensions.contentInset;
-                    contentElement.style.position = "absolute";
-                    contentElement.style.top = numberToPixels(itemBounds.top - stackBounds.top + contentInset);
-                    contentElement.style.left = numberToPixels(contentInset);
-                    contentElement.style.width = numberToPixels(itemBounds.width - 2 * contentInset);
-                    contentElement.style.height = numberToPixels(itemBounds.height - 2 * contentInset);
-                }
+            if (componentElement  instanceof HTMLElement
+                && contentElement !== componentElement) {
+                componentElement.style.top = numberToPixels(stackBounds.top - layoutBounds.top);
+                componentElement.style.left = numberToPixels(stackBounds.left - layoutBounds.left);
+                componentElement.style.width = numberToPixels(stackBounds.width);
+                componentElement.style.height = numberToPixels(stackBounds.height);
             }
+            contentElement.style.position = "absolute";
+            contentElement.style.top = numberToPixels(itemBounds.top - stackBounds.top);
+            contentElement.style.left = numberToPixels(itemBounds.left - stackBounds.left);
+            contentElement.style.width = numberToPixels(itemBounds.width);
+            contentElement.style.height = numberToPixels(itemBounds.height);
         }
         else console.log('updateNodeSize ignored');
         this.container.addVirtualSizedContainerToLayoutManager();
-    }
-}
-
-function _createContainer(layoutManager: LayoutManager, parentItem: ComponentParentableItem, config: ResolvedComponentItemConfig): HTMLElement {
-    const container =
-        layoutManager.createContainerElement(layoutManager, config);
-    if (container) {
-        container.classList.add('lm_component');
-        return container;
-    } else {
-        return LayoutManager.VIRTUAL_ELEMENT_DUMMY;
     }
 }
 

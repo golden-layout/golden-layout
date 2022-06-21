@@ -388,10 +388,10 @@ export class ComponentContainer extends EventEmitter {
             || this.notifyResize) {
             if (this.virtualRectingRequiredEvent)
                 this.virtualRectingRequiredEvent(this, this._width, this._height);
-            const parentItem = this.parent.parentItem;
+            const element = this.parent.element;
             //let left = 0, top = 0, width = 0, height = 0;
-            if (this.notifyResize && parentItem instanceof Stack) {
-                const bounds = parentItem.childElementContainer.getBoundingClientRect();
+            if (this.notifyResize && element) {
+                const bounds = element.getBoundingClientRect();
                 this.notifyResize(this, bounds.left, bounds.top, bounds.width, bounds.height);
             }
             this.emit('resize');

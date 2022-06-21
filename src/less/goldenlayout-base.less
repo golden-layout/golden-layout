@@ -87,12 +87,6 @@
   }
 }
 
-.lm_headers {
-  width: 100%;
-  height: 100%;
-  position: absolute;
-};
-
 .lm_component {
   position: absolute;
 }
@@ -103,6 +97,7 @@
   position: relative;
   z-index: 1;
   user-select: none;
+  width: 100%;
 
   [class^=lm_] {
     box-sizing: content-box !important;
@@ -209,9 +204,21 @@
 // Change stack style to absolute positioning for docking transition ability
 .lm_stack {
   position: relative;
+  display: flex;
+  flex-direction: column;
 
   > .lm_items {
       overflow: hidden;
+      flex-grow: 1;
+      position: relative;
+
+      .lm_item {
+        position: absolute;
+        left: 0px;
+        right: 0px;
+        top: 0px;
+        bottom: 0px;
+      }
   }
 
   &.lm_left {
@@ -232,6 +239,7 @@
       position: absolute;
       right: 0;
       top: 0;
+      flex-grow: 0;
     }
   }
   &.lm_bottom {

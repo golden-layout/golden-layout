@@ -22,7 +22,8 @@ export class GroundItem extends ComponentParentableItem {
 
     constructor(layoutManager: LayoutManager, rootItemConfig: ResolvedRootItemConfig | undefined, containerElement: HTMLElement) {
 
-        super(layoutManager, ResolvedGroundItemConfig.create(rootItemConfig), null, GroundItem.createElement(document));
+        super(layoutManager, ResolvedGroundItemConfig.create(rootItemConfig), null, ContentItem.createElement(DomConstants.ClassName.Root));
+        this.element.classList.add(DomConstants.ClassName.GoldenLayout);
 
         this.isGround = true;
         this._childElementContainer = this.element;
@@ -404,13 +405,5 @@ export namespace GroundItem {
             y1: 'y2',
             x1: 'x2',
         };
-    }
-
-    export function createElement(document: Document): HTMLDivElement {
-        const element = document.createElement('div');
-        element.classList.add(DomConstants.ClassName.GoldenLayout);
-        element.classList.add(DomConstants.ClassName.Item);
-        element.classList.add(DomConstants.ClassName.Root);
-        return element;
     }
 }

@@ -45,7 +45,7 @@ export class RowOrColumn extends ContentItem {
         /** @internal */
         private _rowOrColumnParent: ContentItem
     ) {
-        super(layoutManager, config, _rowOrColumnParent, RowOrColumn.createElement(document, isColumn));
+        super(layoutManager, config, _rowOrColumnParent, ContentItem.createElement(isColumn ? DomConstants.ClassName.Column : DomConstants.ClassName.Row));
 
         this.isRow = !isColumn;
         this.isColumn = isColumn;
@@ -672,17 +672,5 @@ export namespace RowOrColumn {
         } else {
             return setElementHeight(element, value);
         }
-    }
-
-    /** @internal */
-    export function createElement(document: Document, isColumn: boolean): HTMLDivElement {
-        const element = document.createElement('div');
-        element.classList.add(DomConstants.ClassName.Item);
-        if (isColumn) {
-            element.classList.add(DomConstants.ClassName.Column);
-        } else {
-            element.classList.add(DomConstants.ClassName.Row);
-        }
-        return element;
     }
 }

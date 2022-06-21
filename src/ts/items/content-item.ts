@@ -2,6 +2,7 @@ import { ResolvedItemConfig } from '../config/resolved-config'
 import { BrowserPopout } from '../controls/browser-popout'
 import { AssertError, UnexpectedNullError } from '../errors/internal-error'
 import { LayoutManager } from '../layout-manager'
+import { DomConstants } from '../utils/dom-constants'
 import { EventEmitter } from '../utils/event-emitter'
 import { getJQueryOffset } from '../utils/jquery-legacy'
 import { AreaLinkedRect, ItemType } from '../utils/types'
@@ -508,6 +509,16 @@ export namespace ContentItem {
     export interface Area extends AreaLinkedRect {
         surface: number;
         contentItem: ContentItem;
+    }
+
+    /** @internal */
+    export function createElement(kindClass?: string): HTMLDivElement {
+        const element = document.createElement('div');
+        element.classList.add(DomConstants.ClassName.Item);
+        if (kindClass) {
+            element.classList.add(kindClass);
+        }
+        return element;
     }
 }
 

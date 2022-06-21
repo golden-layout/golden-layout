@@ -53,8 +53,6 @@ export abstract class LayoutManager extends EventEmitter {
     /** @internal */
     private _containerElement: HTMLElement;
     /** @internal */
-    private _headersContainerElement: HTMLElement;
-    /** @internal */
     private _isFullPage = false;
     /** @internal */
     private _isInitialised = false;
@@ -128,7 +126,6 @@ export abstract class LayoutManager extends EventEmitter {
     };
 
     get container(): HTMLElement { return this._containerElement; }
-    get headersContainerElement(): HTMLElement { return this._headersContainerElement; }
     get isInitialised(): boolean { return this._isInitialised; }
     /** @internal */
     get groundItem(): GroundItem | undefined { return this._groundItem; }
@@ -185,10 +182,6 @@ export abstract class LayoutManager extends EventEmitter {
         if (parameters.containerElement !== undefined) {
             this._containerElement = parameters.containerElement;
         }
-
-        this._headersContainerElement = document.createElement('div');
-        this._headersContainerElement.classList.add(DomConstants.ClassName.Headers);
-        this._headersContainerElement.setAttribute("draggable", "no");
     }
 
     /**
@@ -312,8 +305,6 @@ export abstract class LayoutManager extends EventEmitter {
         }
         const layoutConfig = this.layoutConfig;
         this._groundItem = new GroundItem(this, layoutConfig.root, this._containerElement);
-        this._groundItem.element.insertBefore(this._headersContainerElement,
-                        this._groundItem.element.firstChild);
         this._groundItem.init();
 
         this.checkLoadedLayoutMaximiseItem();
@@ -1086,7 +1077,7 @@ export abstract class LayoutManager extends EventEmitter {
         headerClone.classList.add(DomConstants.ClassName.Header);
         headerClone.appendChild(tabsContainer);
         let image: HTMLElement;
-        const useFreshDragImage = true; //componentItem.element === LayoutManager.VIRTUAL_ELEMENT_DUMMY;
+        const useFreshDragImage = true; //!!componentItem.component;
         if (useFreshDragImage) {
             image = document.createElement('section');
             image.classList.add(DomConstants.ClassName.DragImage);
@@ -2073,7 +2064,7 @@ export abstract class LayoutManager extends EventEmitter {
 export namespace LayoutManager {
     export type BeforeVirtualRectingEvent = (this: void, count: number) => void;
     export type AfterVirtualRectingEvent = (this: void) => void;
-    export const VIRTUAL_ELEMENT_DUMMY = document.createElement('div');
+    //export const VIRTUAL_ELEMENT_DUMMY = document.createElement('div');
 
     /** @internal */
     export interface ConstructorParameters {
