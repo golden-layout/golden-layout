@@ -4,7 +4,6 @@ import { Tab } from '../controls/tab';
 import { AssertError, UnexpectedNullError } from '../errors/internal-error';
 import { ComponentItem } from '../items/component-item';
 import { ContentItem } from '../items/content-item';
-import { Stack } from '../items/stack';
 import { LayoutManager } from '../layout-manager';
 import { EventEmitter } from '../utils/event-emitter';
 import { setElementDisplayVisibility } from '../utils/utils'

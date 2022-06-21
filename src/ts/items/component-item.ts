@@ -3,7 +3,6 @@ import { ComponentContainer } from '../container/component-container';
 import { Tab } from '../controls/tab';
 import { UnexpectedNullError } from '../errors/internal-error';
 import { LayoutManager } from '../layout-manager';
-import { DomConstants } from '../utils/dom-constants'
 import { ItemType, JsonValue } from '../utils/types';
 import { setElementHeight, setElementWidth } from '../utils/utils';
 import { ComponentParentableItem } from './component-parentable-item';
@@ -62,7 +61,7 @@ export class ComponentItem extends ContentItem {
 
         this._initialWantMaximise = config.maximised;
 
-        let containerElement = layoutManager.createContainerElement(layoutManager, config);
+        const containerElement = layoutManager.createContainerElement(layoutManager, config);
         if (containerElement)
             containerElement.classList.add('lm_component');
         this._container = new ComponentContainer(config, this, layoutManager, containerElement,
@@ -255,8 +254,8 @@ export class ComponentItem extends ContentItem {
         const contentInset = this.layoutManager.layoutConfig.dimensions.contentInset;
         this.element.style.margin = contentInset ? `${contentInset}px` : '';
 
-        let contentElement = this.component;
-        let componentElement =
+        const contentElement = this.component;
+        const componentElement =
             (contentElement instanceof HTMLElement
                 && contentElement.parentNode instanceof HTMLElement
                 && contentElement.parentNode.classList.contains("lm_component"))

@@ -7,12 +7,10 @@ import { DomConstants } from '../utils/dom-constants';
 import { DragListener } from '../utils/drag-listener';
 import { EventEmitter } from '../utils/event-emitter';
 import { getJQueryOffset } from '../utils/jquery-legacy';
-import { AreaLinkedRect, ItemType, JsonValue, Side, WidthAndHeight, WidthOrHeightPropertyName } from '../utils/types';
+import { AreaLinkedRect, ItemType, JsonValue, Side } from '../utils/types';
 import {
     getElementHeight,
     getElementWidth,
-    getElementWidthAndHeight,
-    numberToPixels,
     setElementDisplayVisibility
 } from '../utils/utils';
 import { ComponentItem } from './component-item';
