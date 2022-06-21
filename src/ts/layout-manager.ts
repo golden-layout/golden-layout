@@ -2064,7 +2064,6 @@ export abstract class LayoutManager extends EventEmitter {
 export namespace LayoutManager {
     export type BeforeVirtualRectingEvent = (this: void, count: number) => void;
     export type AfterVirtualRectingEvent = (this: void) => void;
-    //export const VIRTUAL_ELEMENT_DUMMY = document.createElement('div');
 
     /** @internal */
     export interface ConstructorParameters {

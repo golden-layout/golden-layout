@@ -62,12 +62,9 @@ export class ComponentItem extends ContentItem {
 
         this._initialWantMaximise = config.maximised;
 
-        //const containerElement = _createContainer(layoutManager, _parentItem, config);
         let containerElement = layoutManager.createContainerElement(layoutManager, config);
         if (containerElement)
             containerElement.classList.add('lm_component');
-        //else
-        //containerElement = LayoutManager.VIRTUAL_ELEMENT_DUMMY;
         this._container = new ComponentContainer(config, this, layoutManager, containerElement,
             (itemConfig) => this.handleUpdateItemConfigEvent(itemConfig),
             () => this.show(),
