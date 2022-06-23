@@ -60,16 +60,31 @@
 // Separator line (handle to change pane size)
 .lm_splitter {
   position: relative;
-  z-index: 2;
+  z-index: auto;
   touch-action: none;
+  background: transparent;
 
+  .lm_bg {
+    opacity: 1;
+    z-index: -2;
+    position: absolute;
+  }
+  .lm_drag_handle {
+    position: absolute;
+    background-clip: content-box;
+    z-index: 2;
+    touch-action: none;
+    -webkit-user-select: none;
+            user-select: none;
+    box-sizing: content-box;
+  }
   &.lm_vertical {
+    .lm_bg {
+      width: @width0;
+    }
     .lm_drag_handle {
       width: @width0;
-      position: absolute;
       cursor: ns-resize;
-      touch-action: none;
-      user-select: none;
     }
   }
 
@@ -77,12 +92,12 @@
     float: left;
     height: @height0;
 
+    .lm_bg {
+      height: @height0;
+    }
     .lm_drag_handle {
       height: @height0;
-      position: absolute;
       cursor: ew-resize;
-      touch-action: none;
-      user-select: none;
     }
   }
 }

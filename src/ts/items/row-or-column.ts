@@ -619,11 +619,11 @@ export class RowOrColumn extends ContentItem {
         offset = Math.min(offset, this._splitterMaxPosition);
 
         this._splitterPosition = offset;
-        const offsetPixels = numberToPixels(offset);
+        const offsetPixels = numberToPixels(offset - splitter.dragHandleOffset);
         if (this._isColumn) {
-            splitter.element.style.top = offsetPixels;
+            splitter.dragHandleElement.style.top = offsetPixels;
         } else {
-            splitter.element.style.left = offsetPixels;
+            splitter.dragHandleElement.style.left = offsetPixels;
         }
     }
 
@@ -646,8 +646,11 @@ export class RowOrColumn extends ContentItem {
             items.before[this._dimension] = splitterPositionInRange * totalRelativeSize;
             items.after[this._dimension] = (1 - splitterPositionInRange) * totalRelativeSize;
 
-            splitter.element.style.top = numberToPixels(0);
-            splitter.element.style.left = numberToPixels(0);
+            const offset = splitter.dragHandleOffset;
+            if (this._isColumn)
+                splitter.dragHandleElement.style.top = `${-offset}px`;
+            else
+                splitter.dragHandleElement.style.left = `${-offset}px`;
 
             globalThis.requestAnimationFrame(() => this.updateSize());
         }

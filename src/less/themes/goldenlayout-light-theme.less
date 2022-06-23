@@ -49,14 +49,12 @@
 
 // Separator line (handle to change pane size)
 .lm_splitter {
-  background: @color8;
-  opacity: 0.001;
-  transition: opacity 200ms ease;
-
-  &:hover, // When hovered by mouse...
-  &.lm_dragging {
-    background: @color9;
-    opacity: 1;
+  .lm_bg {
+    background-color: @color11;
+  }
+  &:hover .lm_drag_handle, // When hovered by mouse...
+  &.lm_dragging .lm_drag_handle {
+    background-color: @color9;
   }
 }
 

@@ -583,7 +583,7 @@ export namespace LayoutConfig {
         borderWidth?: number;
 
         /**
-         * Default: 15
+         * Default: 5
          */
         borderGrabWidth?: number,
 
