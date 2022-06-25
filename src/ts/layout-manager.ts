@@ -1762,8 +1762,14 @@ export abstract class LayoutManager extends EventEmitter {
             && this._currentlyDragging) {
             // dropped in other window or to desktop
             console.log("export-drag inSomeWind:"+this.inSomeWindow);
-            if (component.component)
+            if (component.component) {
+                const parent = component.parent;
+                // dragExported callback may need size/position of element,
+                // which it can't get if display is 'none'.
+                if (parent && parent.type === 'stack')
+                    parent.element.style.display='';
                 component.container.emit('dragExported', e, component);
+            }
             // FIXME remove
         }
         //const droppedLocally = this._currentlyDragging;
