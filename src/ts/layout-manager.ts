@@ -110,6 +110,7 @@ export abstract class LayoutManager extends EventEmitter {
     private _actionsOnDragEnd: ((cancel: boolean)=>void)[] = [];
 
     popoutClickHandler: (item: Stack, ev: Event)=>boolean = () => false;
+    // May be set by client code.
     inSomeWindow = false;
 
     readonly isSubWindow: boolean;
@@ -238,7 +239,7 @@ export abstract class LayoutManager extends EventEmitter {
     validDragEvent(e: DragEvent): boolean {
         // FIXME. Might be a good idea to check that all componentTypes in the
         // dataTransfer value are registered types.
-        // That should make it more robust even if dragDataMimetype is teh default.
+        // That should make it more robust even if dragDataMimetype is the default.
         return e.dataTransfer?.types.includes(this.dragDataMimetype()) || false;
     }
 

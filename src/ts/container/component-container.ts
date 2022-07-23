@@ -14,7 +14,7 @@ import { deepExtend, setElementHeight, setElementWidth } from '../utils/utils';
 export class ComponentContainer extends EventEmitter {
     /** @internal */
     private _componentType: JsonValue;
-    /** @internal */
+    /** @internal */ // DEPRECATED
     private _boundComponent: ComponentContainer.BindableComponent;
     /** @internal */
     private _width: number;
@@ -50,6 +50,7 @@ export class ComponentContainer extends EventEmitter {
     get componentName(): JsonValue { return this._componentType; }
     get componentType(): JsonValue { return this._componentType; }
     get virtual(): boolean { return this._boundComponent.virtual; }
+    // FIXME get rid of _boundComponent
     get component(): ComponentContainer.Component { return this._boundComponent.component; }
     get tab(): Tab { return this._tab; }
     get title(): string { return this._parent.title; }
