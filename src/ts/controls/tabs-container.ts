@@ -67,12 +67,13 @@ export class TabsContainer {
             index = this._tabs.length;
         }
 
+        this._tabs.splice(index, 0, tab);
+
         if (index < this._element.childNodes.length) {
             this._element.insertBefore(tab.element, this._element.childNodes[index]);
         } else {
             this._element.appendChild(tab.element);
         }
-        this._tabs.push(tab);
     }
 
     removeTab(componentItem: ComponentItem): void {
