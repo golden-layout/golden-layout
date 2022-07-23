@@ -851,6 +851,9 @@ export class Stack extends ComponentParentableItem {
 
     /** @internal */
     private handleHeaderClickEvent(ev: MouseEvent) {
+        // Forces updates if click is when top-level window has lost focus.
+        if (this._activeComponentItem)
+            this.setActiveComponentItem(this._activeComponentItem, true);
         const eventName = EventEmitter.headerClickEventName;
         const bubblingEvent = new EventEmitter.ClickBubblingEvent(eventName, this, ev);
         this.emit(eventName, bubblingEvent);

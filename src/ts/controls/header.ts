@@ -147,7 +147,7 @@ export class Header extends EventEmitter {
         this._controlsContainerElement.classList.add(DomConstants.ClassName.Controls);
         this.layoutDefault();
 
-        //        this._element.addEventListener('click', this._clickListener, { passive: true });
+        this._element.addEventListener('click', this._clickListener, { passive: true });
         //this._element.addEventListener('touchstart', this._touchStartListener, { passive: true });
 
         this._documentMouseUpListener = () => this._tabsContainer.hideAdditionalTabsDropdown()
@@ -434,7 +434,7 @@ export class Header extends EventEmitter {
     }
 
     /**
-     * Invoked when the header's background is clicked (not it's tabs or controls)
+     * Invoked when the header's background is clicked (not its tabs or controls)
      * @internal
      */
     private onClick(event: MouseEvent) {
@@ -444,7 +444,7 @@ export class Header extends EventEmitter {
     }
 
     /**
-     * Invoked when the header's background is touched (not it's tabs or controls)
+     * Invoked when the header's background is touched (not its tabs or controls)
      * @internal
      */
     private onTouchStart(event: TouchEvent) {
