@@ -957,14 +957,16 @@ export abstract class LayoutManager extends EventEmitter {
 	 *          and the attached itemConfig. This can be used in
 	 *          removeDragSource() later to get rid of the drag listeners.
      */
-    newDragSource(element: HTMLElement, itemConfigCallback: () => DragSource.ComponentItemConfig): DragSource;
-    newDragSource(element: HTMLElement, componentType: JsonValue, componentState?: JsonValue, title?: JsonValue): DragSource;
+    newDragSource(element: HTMLElement, itemConfigCallback: () => (DragSource.ComponentItemConfig | ComponentItemConfig)): DragSource;
+    /** @deprecated will be replaced in version 3 with newDragSource(element: HTMLElement, itemConfig: ComponentItemConfig) */
+    newDragSource(element: HTMLElement, componentType: JsonValue, componentState?: JsonValue, title?: JsonValue, id?: string): DragSource;
     newDragSource(element: HTMLElement,
-        componentTypeOrItemConfigCallback: JsonValue | (() => DragSource.ComponentItemConfig),
+        componentTypeOrItemConfigCallback: JsonValue | (() => (DragSource.ComponentItemConfig | ComponentItemConfig)),
         componentState?: JsonValue,
         title?: string,
+        id?: string,
     ): DragSource {
-        const dragSource = new DragSource(this, element, [], componentTypeOrItemConfigCallback, componentState, title);
+        const dragSource = new DragSource(this, element, [], componentTypeOrItemConfigCallback, componentState, title, id);
         this._dragSources.push(dragSource);
 
         return dragSource;

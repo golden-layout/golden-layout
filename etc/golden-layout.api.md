@@ -384,16 +384,17 @@ export class DragSource {
     _layoutManager: LayoutManager,
     _element: HTMLElement,
     _extraAllowableChildTargets: HTMLElement[],
-    _componentTypeOrFtn: JsonValue | (() => DragSource.ComponentItemConfig),
+    _componentTypeOrFtn: JsonValue | (() => (DragSource.ComponentItemConfig | ComponentItemConfig)),
     _componentState: JsonValue | undefined,
-    _title: string | undefined);
+    _title: string | undefined,
+    _id: string | undefined);
     // @internal
     destroy(): void;
 }
 
 // @public (undocumented)
 export namespace DragSource {
-    // (undocumented)
+    // @deprecated (undocumented)
     export interface ComponentItemConfig {
         // (undocumented)
         state?: JsonValue;
@@ -402,6 +403,8 @@ export namespace DragSource {
         // (undocumented)
         type: JsonValue;
     }
+    // @deprecated (undocumented)
+    export function isDragSourceComponentItemConfig(config: DragSource.ComponentItemConfig | ComponentItemConfig): config is DragSource.ComponentItemConfig;
 }
 
 // @public
@@ -1139,9 +1142,9 @@ export abstract class LayoutManager extends EventEmitter {
     minifyConfig(config: ResolvedLayoutConfig): ResolvedLayoutConfig;
     newComponent(componentType: JsonValue, componentState?: JsonValue, title?: string): ComponentItem;
     newComponentAtLocation(componentType: JsonValue, componentState?: JsonValue, title?: string, locationSelectors?: LayoutManager.LocationSelector[]): ComponentItem | undefined;
-    newDragSource(element: HTMLElement, itemConfigCallback: () => DragSource.ComponentItemConfig): DragSource;
-    // (undocumented)
-    newDragSource(element: HTMLElement, componentType: JsonValue, componentState?: JsonValue, title?: JsonValue): DragSource;
+    newDragSource(element: HTMLElement, itemConfigCallback: () => (DragSource.ComponentItemConfig | ComponentItemConfig)): DragSource;
+    // @deprecated (undocumented)
+    newDragSource(element: HTMLElement, componentType: JsonValue, componentState?: JsonValue, title?: JsonValue, id?: string): DragSource;
     newItem(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig): ContentItem;
     newItemAtLocation(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig, locationSelectors?: readonly LayoutManager.LocationSelector[]): ContentItem | undefined;
     // (undocumented)
