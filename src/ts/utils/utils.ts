@@ -12,36 +12,47 @@ export function pixelsToNumber(value: string): number {
 }
 
 /** @internal */
-export interface SplitStringAtFirstNonDigitResult {
-    digitsPart: string;
-    firstNonDigitPart: string;
+export interface SplitStringAtFirstNonNumericCharResult {
+    numericPart: string;
+    firstNonNumericCharPart: string;
 }
 
 /** @internal */
-export function splitTrimmedStringAtFirstNonDigit(value: string): SplitStringAtFirstNonDigitResult {
+export function splitStringAtFirstNonNumericChar(value: string): SplitStringAtFirstNonNumericCharResult {
     value = value.trimStart();
 
     const length = value.length;
     if (length === 0) {
-        return { digitsPart: '', firstNonDigitPart: '' }
+        return { numericPart: '', firstNonNumericCharPart: '' }
     } else {
         let firstNonDigitPartIndex = length;
+        let gotDecimalPoint = false;
         for (let i = 0; i < length; i++) {
-            if (!isDigit(value[i])) {
-                firstNonDigitPartIndex = i;
-                break;
+            const char = value[i];
+            if (!isDigit(char)) {
+                if (char !== '.') {
+                    firstNonDigitPartIndex = i;
+                    break;
+                } else {
+                    if (gotDecimalPoint) {
+                        firstNonDigitPartIndex = i;
+                        break;
+                    } else {
+                        gotDecimalPoint = true;
+                    }
+                }
             }
         }
         const digitsPart = value.substring(0, firstNonDigitPartIndex);
         const firstNonDigitPart = value.substring(firstNonDigitPartIndex).trim();
 
-        return { digitsPart, firstNonDigitPart };
+        return { numericPart: digitsPart, firstNonNumericCharPart: firstNonDigitPart };
     }
 }
 
 /** @internal */
 export function isDigit(char: string) {
-    return (char >= '0' && char <= '9');
+    return char >= '0' && char <= '9';
 }
 
 /** @internal */
