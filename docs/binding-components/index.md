@@ -232,7 +232,7 @@ Use 'Embedding via Registration'. The classic way of using Golden Layout.
 If your existing application uses the Golden Layout registration functions, then it will automatically use 'Embedding via Registration' without any changes.
 * **Deprecated `getComponentEvent`**\
 To quickly get rid of this deprecation, use 'Embedding via Events'.
-* **Easy virtual component bindings**
+* **Easy virtual component bindings**\
 Use 'Virtual via Registration' to get the advantages of Virtual Component binding with minimal changes to applications.
 * **Maximum design flexibility**\
 Use 'Virtual via Events' (Virtual Components).
