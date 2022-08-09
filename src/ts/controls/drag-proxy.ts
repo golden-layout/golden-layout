@@ -1,4 +1,4 @@
-import { UnexpectedNullError } from '../errors/internal-error';
+import { UnexpectedNullError, UnexpectedUndefinedError } from '../errors/internal-error';
 import { ComponentItem } from '../items/component-item';
 import { ContentItem } from '../items/content-item';
 import { Stack } from '../items/stack';
@@ -6,10 +6,8 @@ import { LayoutManager } from '../layout-manager';
 import { DomConstants } from '../utils/dom-constants';
 import { DragListener } from '../utils/drag-listener';
 import { EventEmitter } from '../utils/event-emitter';
-import { getJQueryOffset } from '../utils/jquery-legacy';
 import { Side } from '../utils/types';
 import {
-    getElementWidthAndHeight,
     numberToPixels
 } from '../utils/utils';
 
@@ -67,12 +65,6 @@ export class DragProxy extends EventEmitter {
         document.body.appendChild(this._element);
 
         this.determineMinMaxXY();
-        if (this._layoutManager.layoutConfig.settings.constrainDragToContainer) {
-            const constrainedPosition = this.getXYWithinMinMax(x, y);
-            x = constrainedPosition.x;
-            y = constrainedPosition.y;
-        }
-
         this._layoutManager.calculateItemAreas();
         this.setDropPosition(x, y);
     }
@@ -114,28 +106,17 @@ export class DragProxy extends EventEmitter {
     }
 
     private determineMinMaxXY(): void {
-        const offset = getJQueryOffset(this._layoutManager.container);
-        this._minX = offset.left;
-        this._minY = offset.top;
-        const { width: containerWidth, height: containerHeight } = getElementWidthAndHeight(this._layoutManager.container);
-        this._maxX = containerWidth + this._minX;
-        this._maxY = containerHeight + this._minY;
-    }
-
-    private getXYWithinMinMax(x: number, y: number): {x: number, y: number} {
-        if (x <= this._minX) {
-            x = Math.ceil(this._minX + 1);
-        } else if (x >= this._maxX) {
-            x = Math.floor(this._maxX - 1);
+        const groundItem = this._layoutManager.groundItem;
+        if (groundItem === undefined) {
+            throw new UnexpectedUndefinedError('DPDMMXY73109');
+        } else {
+            const groundElement = groundItem.element;
+            const rect = groundElement.getBoundingClientRect();
+            this._minX = rect.left + document.body.scrollLeft;
+            this._minY = rect.top + document.body.scrollTop;
+            this._maxX = this._minX + rect.width;
+            this._maxY = this._minY + rect.height;
         }
-
-        if (y <= this._minY) {
-            y = Math.ceil(this._minY + 1);
-        } else if (y >= this._maxY) {
-            y = Math.floor(this._maxY - 1);
-        }
-
-        return {x,y};
     }
 
     /**
@@ -153,15 +134,7 @@ export class DragProxy extends EventEmitter {
         const x = event.pageX;
         const y = event.pageY;
 
-        if (!this._layoutManager.layoutConfig.settings.constrainDragToContainer) {
-            this.setDropPosition(x, y);
-        } else {
-            const isWithinContainer = x > this._minX && x < this._maxX && y > this._minY && y < this._maxY;
-            if (isWithinContainer) {
-                this.setDropPosition(x, y);
-            }
-        }
-
+        this.setDropPosition(x, y);
         this._componentItem.drag();
     }
 
@@ -174,6 +147,20 @@ export class DragProxy extends EventEmitter {
      * @internal
      */
     private setDropPosition(x: number, y: number): void {
+        if (this._layoutManager.layoutConfig.settings.constrainDragToContainer) {
+            if (x <= this._minX) {
+                x = Math.ceil(this._minX);
+            } else if (x >= this._maxX) {
+                x = Math.floor(this._maxX);
+            }
+
+            if (y <= this._minY) {
+                y = Math.ceil(this._minY);
+            } else if (y >= this._maxY) {
+                y = Math.floor(this._maxY);
+            }
+        }
+
         this._element.style.left = numberToPixels(x);
         this._element.style.top = numberToPixels(y);
         this._area = this._layoutManager.getArea(x, y);

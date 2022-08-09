@@ -88,10 +88,10 @@ export class ComponentItem extends ContentItem {
         const result: ResolvedComponentItemConfig = {
             type: ItemType.component,
             content: [],
-            width: this.width,
-            minWidth: this.minWidth,
-            height: this.height,
-            minHeight: this.minHeight,
+            size: this.size,
+            sizeUnit: this.sizeUnit,
+            minSize: this.minSize,
+            minSizeUnit: this.minSizeUnit,
             id: this.id,
             maximised: false,
             isClosable: this.isClosable,
@@ -143,13 +143,13 @@ export class ComponentItem extends ContentItem {
     }
 
     /** @internal */
-    override updateSize(): void {
-        this.updateNodeSize();
+    override updateSize(force: boolean): void {
+        this.updateNodeSize(force);
     }
 
     /** @internal */
     override init(): void {
-        this.updateNodeSize();
+        this.updateNodeSize(false);
 
         super.init();
         this._container.emit('open');
@@ -233,12 +233,12 @@ export class ComponentItem extends ContentItem {
     }
 
     /** @internal */
-    private updateNodeSize(): void {
+    private updateNodeSize(force: boolean): void {
         if (this.element.style.display !== 'none') {
             // Do not update size of hidden components to prevent unwanted reflows
 
             const { width, height } = getElementWidthAndHeight(this.element);
-            this._container.setSizeToNodeSize(width, height, false);
+            this._container.setSizeToNodeSize(width, height, force);
         }
     }
 }

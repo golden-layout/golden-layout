@@ -1,3 +1,4 @@
+import { UnreachableCaseError } from '../errors/internal-error';
 import { StyleConstants } from './style-constants';
 
 /** @internal */
@@ -44,7 +45,7 @@ export namespace LogicalZIndex {
 export const LogicalZIndexToDefaultMap = {
     base: StyleConstants.defaultComponentBaseZIndex,
     drag: StyleConstants.defaultComponentDragZIndex,
-    stackMaximised: StyleConstants.defaultComponentDragZIndex,
+    stackMaximised: StyleConstants.defaultComponentStackMaximisedZIndex,
 }
 
 /** @internal */
@@ -103,4 +104,42 @@ export namespace ResponsiveMode {
     export const none = 'none';
     export const always = 'always';
     export const onload = 'onload';
+}
+
+/**
+ * Length units which can specify the size of a Component Item
+ * @public
+ */
+export type SizeUnit = 'px' | '%' | 'fr' | 'em';
+
+/** @public */
+export enum SizeUnitEnum {
+    Pixel = 'px',
+    Percent = '%',
+    Fractional = 'fr',
+    Em = 'em',
+}
+
+/** @public */
+export namespace SizeUnitEnum {
+    export function tryParse(value: string) {
+        switch (value) {
+            case SizeUnitEnum.Pixel: return SizeUnitEnum.Pixel;
+            case SizeUnitEnum.Percent: return SizeUnitEnum.Percent;
+            case SizeUnitEnum.Fractional: return SizeUnitEnum.Fractional;
+            case SizeUnitEnum.Em: return SizeUnitEnum.Em;
+            default: return undefined;
+        }
+    }
+
+    export function format(value: SizeUnitEnum) {
+        switch (value) {
+            case SizeUnitEnum.Pixel: return SizeUnitEnum.Pixel;
+            case SizeUnitEnum.Percent: return SizeUnitEnum.Percent;
+            case SizeUnitEnum.Fractional: return SizeUnitEnum.Fractional;
+            case SizeUnitEnum.Em: return SizeUnitEnum.Em;
+            default:
+                throw new UnreachableCaseError('SUEF44998', value);
+        }
+    }
 }

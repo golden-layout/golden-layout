@@ -9,6 +9,9 @@ export const enum I18nStringId {
     ComponentIsNotVirtuable,
     VirtualComponentDoesNotHaveRootHtmlElement,
     ItemConfigIsNotTypeComponent,
+    InvalidNumberPartInSizeString,
+    UnknownUnitInSizeString,
+    UnsupportedUnitInSizeString,
 }
 
 /** @public */
@@ -54,6 +57,19 @@ export namespace I18nStrings {
         ItemConfigIsNotTypeComponent: {
             id: I18nStringId.ItemConfigIsNotTypeComponent,
             default: 'ItemConfig is not of type component',
+        },
+
+        InvalidNumberPartInSizeString: {
+            id: I18nStringId.InvalidNumberPartInSizeString,
+            default: 'Invalid number part in size string',
+        },
+        UnknownUnitInSizeString: {
+            id: I18nStringId.UnknownUnitInSizeString,
+            default: 'Unknown unit in size string',
+        },
+        UnsupportedUnitInSizeString: {
+            id: I18nStringId.UnsupportedUnitInSizeString,
+            default: 'Unsupported unit in size string',
         },
     }
 

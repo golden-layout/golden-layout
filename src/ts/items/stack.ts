@@ -6,11 +6,8 @@ import { LayoutManager } from '../layout-manager';
 import { DomConstants } from '../utils/dom-constants';
 import { DragListener } from '../utils/drag-listener';
 import { EventEmitter } from '../utils/event-emitter';
-import { getJQueryOffset } from '../utils/jquery-legacy';
-import { AreaLinkedRect, ItemType, JsonValue, Side, WidthAndHeight, WidthOrHeightPropertyName } from '../utils/types';
+import { AreaLinkedRect, ItemType, JsonValue, Side, SizeUnitEnum, WidthAndHeight, WidthOrHeightPropertyName } from '../utils/types';
 import {
-    getElementHeight,
-    getElementWidth,
     getElementWidthAndHeight,
     numberToPixels,
     setElementDisplayVisibility
@@ -145,11 +142,11 @@ export class Stack extends ComponentParentableItem {
     }
 
     /** @internal */
-    override updateSize(): void {
+    override updateSize(force: boolean): void {
         this.layoutManager.beginVirtualSizedContainerAdding();
         try {
             this.updateNodeSize();
-            this.updateContentItemsSize();
+            this.updateContentItemsSize(force);
         } finally {
             this.layoutManager.endVirtualSizedContainerAdding();
         }
@@ -208,12 +205,18 @@ export class Stack extends ComponentParentableItem {
             if (this.contentItems.indexOf(componentItem) === -1) {
                 throw new Error('componentItem is not a child of this stack');
             } else {
-                if (this._activeComponentItem !== undefined) {
-                    this._activeComponentItem.hide();
+                this.layoutManager.beginSizeInvalidation();
+                try {
+                    if (this._activeComponentItem !== undefined) {
+                        this._activeComponentItem.hide();
+                    }
+                    this._activeComponentItem = componentItem;
+                    this._header.processActiveComponentChanged(componentItem);
+                    componentItem.show();
+                } finally {
+                    this.layoutManager.endSizeInvalidation();
                 }
-                this._activeComponentItem = componentItem;
-                this._header.processActiveComponentChanged(componentItem);
-                componentItem.show();
+
                 this.emit('activeContentItemChanged', componentItem);
                 this.layoutManager.emit('activeContentItemChanged', componentItem);
                 this.emitStateChangedEvent();
@@ -278,7 +281,7 @@ export class Stack extends ComponentParentableItem {
     addItem(itemConfig: ComponentItemConfig, index?: number): number {
         this.layoutManager.checkMinimiseMaximisedStack();
 
-        const resolvedItemConfig = ItemConfig.resolve(itemConfig);
+        const resolvedItemConfig = ItemConfig.resolve(itemConfig, false);
         const contentItem = this.layoutManager.createAndInitContentItem(resolvedItemConfig, this);
         return this.addChild(contentItem, index);
     }
@@ -297,7 +300,7 @@ export class Stack extends ComponentParentableItem {
             this._header.createTab(contentItem, index);
             this.setActiveComponentItem(contentItem, focus);
             this._header.updateTabSizes();
-            this.updateSize();
+            this.updateSize(false);
             contentItem.container.setBaseLogicalZIndex();
             this._header.updateClosability();
             this.emitStateChangedEvent();
@@ -407,10 +410,10 @@ export class Stack extends ComponentParentableItem {
             const result: ResolvedStackItemConfig = {
                 type: 'stack',
                 content: this.calculateConfigContent() as ResolvedComponentItemConfig[],
-                width: this.width,
-                minWidth: this.minWidth,
-                height: this.height,
-                minHeight: this.minHeight,
+                size: this.size,
+                sizeUnit: this.sizeUnit,
+                minSize: this.minSize,
+                minSizeUnit: this.minSizeUnit,
                 id: this.id,
                 isClosable: this.isClosable,
                 maximised: this.isMaximised,
@@ -472,7 +475,6 @@ export class Stack extends ComponentParentableItem {
         const isHorizontal = this._dropSegment === Stack.Segment.Left || this._dropSegment === Stack.Segment.Right;
         const insertBefore = this._dropSegment === Stack.Segment.Top || this._dropSegment === Stack.Segment.Left;
         const hasCorrectParent = (isVertical && this.stackParent.isColumn) || (isHorizontal && this.stackParent.isRow);
-        const dimension = isVertical ? 'height' : 'width';
 
         /*
          * The content item can be either a component or a stack. If it is a component, wrap it into a stack
@@ -506,9 +508,10 @@ export class Stack extends ComponentParentableItem {
         if (hasCorrectParent) {
             const index = this.stackParent.contentItems.indexOf(this);
             this.stackParent.addChild(contentItem, insertBefore ? index : index + 1, true);
-            this[dimension] *= 0.5;
-            contentItem[dimension] = this[dimension];
-            this.stackParent.updateSize();
+            this.size *= 0.5;
+            contentItem.size = this.size;
+            contentItem.sizeUnit = this.sizeUnit;
+            this.stackParent.updateSize(false);
             /*
              * This handles items that are dropped on top or bottom of a row or left / right of a column. We need
              * to create the appropriate contentItem for them to live in
@@ -522,9 +525,10 @@ export class Stack extends ComponentParentableItem {
             rowOrColumn.addChild(contentItem, insertBefore ? 0 : undefined, true);
             rowOrColumn.addChild(this, insertBefore ? undefined : 0, true);
 
-            this[dimension] = 50;
-            contentItem[dimension] = 50;
-            rowOrColumn.updateSize();
+            this.size = 50;
+            contentItem.size = 50;
+            contentItem.sizeUnit = SizeUnitEnum.Percent;
+            rowOrColumn.updateSize(false);
         }
     }
 
@@ -711,8 +715,20 @@ export class Stack extends ComponentParentableItem {
 
     /** @internal */
     private highlightHeaderDropZone(x: number): void {
-        // Only walk over the visible tabs
-        const tabsLength = this._header.lastVisibleTabIndex + 1;
+        const visibleTabsLength = this._header.lastVisibleTabIndex + 1;
+        const tabsContainerElement = this._header.tabsContainerElement;
+        const tabsContainerElementChildNodes = tabsContainerElement.childNodes;
+
+        // Create shallow copy of childNodes list, excluding DropPlaceHolder, as we will be modifying the childNodes list
+        const visibleTabElements = new Array<HTMLElement>(visibleTabsLength);
+        let tabIndex = 0;
+        let tabCount = 0;
+        while (tabCount < visibleTabsLength) {
+            const visibleTabElement = tabsContainerElementChildNodes[tabIndex++] as HTMLElement;
+            if (visibleTabElement !== this.layoutManager.tabDropPlaceholder) {
+                visibleTabElements[tabCount++] = visibleTabElement;
+            }
+        }
 
         const dropTargetIndicator = this.layoutManager.dropTargetIndicator;
         if (dropTargetIndicator === null) {
@@ -722,15 +738,16 @@ export class Stack extends ComponentParentableItem {
         let area: AreaLinkedRect;
 
         // Empty stack
-        if (tabsLength === 0) {
-            const headerOffset = getJQueryOffset(this._header.element);
+        if (visibleTabsLength === 0) {
+            const headerRect = this._header.element.getBoundingClientRect();
+            const headerTop = headerRect.top + document.body.scrollTop;
+            const headerLeft = headerRect.left + document.body.scrollLeft;
 
-            const elementHeight = getElementHeight(this._header.element);
             area = {
-                x1: headerOffset.left,
-                x2: headerOffset.left + 100,
-                y1: headerOffset.top + elementHeight - 20,
-                y2: headerOffset.top + elementHeight,
+                x1: headerLeft,
+                x2: headerLeft + 100,
+                y1: headerTop + headerRect.height - 20,
+                y2: headerTop + headerRect.height,
             };
 
             this._dropIndex = 0;
@@ -743,16 +760,19 @@ export class Stack extends ComponentParentableItem {
             let tabWidth: number;
             let tabElement: HTMLElement;
             do {
-                tabElement = this._header.tabs[tabIndex].element;
-                const offset = getJQueryOffset(tabElement);
+                tabElement = visibleTabElements[tabIndex] as HTMLElement;
+                const tabRect = tabElement.getBoundingClientRect();
+                const tabRectTop = tabRect.top + document.body.scrollTop;
+                const tabRectLeft = tabRect.left + document.body.scrollLeft;
+
                 if (this._header.leftRightSided) {
-                    tabLeft = offset.top;
-                    tabTop = offset.left;
-                    tabWidth = getElementHeight(tabElement);
+                    tabLeft = tabRectTop;
+                    tabTop = tabRectLeft;
+                    tabWidth = tabRect.height;
                 } else {
-                    tabLeft = offset.left;
-                    tabTop = offset.top;
-                    tabWidth = getElementWidth(tabElement);
+                    tabLeft = tabRectLeft;
+                    tabTop = tabRectTop;
+                    tabWidth = tabRect.width;
                 }
 
                 if (x >= tabLeft && x < tabLeft + tabWidth) {
@@ -760,7 +780,7 @@ export class Stack extends ComponentParentableItem {
                 } else {
                     tabIndex++;
                 }
-            } while (tabIndex < tabsLength && !isAboveTab);
+            } while (tabIndex < visibleTabsLength && !isAboveTab);
 
             // If we're not above any tabs, or to the right of any tab, we are out of the area, so give up
             if (isAboveTab === false && x < tabLeft) {
@@ -773,33 +793,36 @@ export class Stack extends ComponentParentableItem {
                 this._dropIndex = tabIndex;
                 tabElement.insertAdjacentElement('beforebegin', this.layoutManager.tabDropPlaceholder);
             } else {
-                this._dropIndex = Math.min(tabIndex + 1, tabsLength);
+                this._dropIndex = Math.min(tabIndex + 1, visibleTabsLength);
                 tabElement.insertAdjacentElement('afterend', this.layoutManager.tabDropPlaceholder);
             }
 
-            const tabDropPlaceholderOffset = getJQueryOffset(this.layoutManager.tabDropPlaceholder);
-            const tabDropPlaceholderWidth = getElementWidth(this.layoutManager.tabDropPlaceholder)
+            const tabDropPlaceholderRect = this.layoutManager.tabDropPlaceholder.getBoundingClientRect();
+            const tabDropPlaceholderRectTop = tabDropPlaceholderRect.top + document.body.scrollTop;
+            const tabDropPlaceholderRectLeft = tabDropPlaceholderRect.left + document.body.scrollLeft;
+            const tabDropPlaceholderRectWidth = tabDropPlaceholderRect.width;
+
             if (this._header.leftRightSided) {
-                const placeHolderTop = tabDropPlaceholderOffset.top;
+                const placeHolderTop = tabDropPlaceholderRectTop;
                 area = {
                     x1: tabTop,
                     x2: tabTop + tabElement.clientHeight,
                     y1: placeHolderTop,
-                    y2: placeHolderTop + tabDropPlaceholderWidth,
+                    y2: placeHolderTop + tabDropPlaceholderRectWidth,
                 };
             } else {
-                const placeHolderLeft = tabDropPlaceholderOffset.left;
+                const placeHolderLeft = tabDropPlaceholderRectLeft;
 
                 area = {
                     x1: placeHolderLeft,
-                    x2: placeHolderLeft + tabDropPlaceholderWidth,
+                    x2: placeHolderLeft + tabDropPlaceholderRectWidth,
                     y1: tabTop,
                     y2: tabTop + tabElement.clientHeight,
                 };
             }
         }
 
-        dropTargetIndicator.highlightArea(area);
+        dropTargetIndicator.highlightArea(area, 0);
         return;
     }
 
@@ -820,7 +843,7 @@ export class Stack extends ComponentParentableItem {
         //    // move the header behind the content.
         //    this.element.appendChild(this._header.element);
         //}
-        this.updateSize();
+        this.updateSize(false);
     }
 
     /** @internal */
@@ -833,7 +856,7 @@ export class Stack extends ComponentParentableItem {
             if (dropTargetIndicator === null) {
                 throw new UnexpectedNullError('SHBDZD96110');
             } else {
-                dropTargetIndicator.highlightArea(highlightArea);
+                dropTargetIndicator.highlightArea(highlightArea, 1);
                 this._dropSegment = segment;
             }
         }

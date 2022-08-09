@@ -3,8 +3,7 @@ import { BrowserPopout } from '../controls/browser-popout'
 import { AssertError, UnexpectedNullError } from '../errors/internal-error'
 import { LayoutManager } from '../layout-manager'
 import { EventEmitter } from '../utils/event-emitter'
-import { getJQueryOffset } from '../utils/jquery-legacy'
-import { AreaLinkedRect, ItemType } from '../utils/types'
+import { AreaLinkedRect, ItemType, SizeUnitEnum } from '../utils/types'
 import { getUniqueId, setElementDisplayVisibility } from '../utils/utils'
 import { ComponentItem } from './component-item'
 import { ComponentParentableItem } from './component-parentable-item'
@@ -37,13 +36,13 @@ export abstract class ContentItem extends EventEmitter {
     private _isInitialised;
 
     /** @internal */
-    width: number; // pixels
+    size: number;
     /** @internal */
-    minWidth: number; // pixels
+    sizeUnit: SizeUnitEnum;
     /** @internal */
-    height: number; // pixels
+    minSize: number | undefined;
     /** @internal */
-    minHeight: number; // pixels
+    minSizeUnit: SizeUnitEnum;
 
     isGround: boolean
     isRow: boolean
@@ -94,10 +93,10 @@ export abstract class ContentItem extends EventEmitter {
         this.isStack = false;
         this.isComponent = false;
 
-        this.width = config.width;
-        this.minWidth = config.minWidth;
-        this.height = config.height;
-        this.minHeight = config.minHeight;
+        this.size = config.size;
+        this.sizeUnit = config.sizeUnit;
+        this.minSize = config.minSize;
+        this.minSizeUnit = config.minSizeUnit;
 
         this._isClosable = config.isClosable;
 
@@ -109,9 +108,13 @@ export abstract class ContentItem extends EventEmitter {
 
     /**
      * Updaters the size of the component and its children, called recursively
+     * @param force - In some cases the size is not updated if it has not changed. In this case, events
+     * (such as ComponentContainer.virtualRectingRequiredEvent) are not fired. Setting force to true, ensures the size is updated regardless, and
+     * the respective events are fired. This is sometimes necessary when a component's size has not changed but it has become visible, and the
+     * relevant events need to be fired.
      * @internal
      */
-    abstract updateSize(): void;
+    abstract updateSize(force: boolean): void;
 
     /**
      * Removes a child node (and its children) from the tree
@@ -148,7 +151,7 @@ export abstract class ContentItem extends EventEmitter {
          * If this node still contains other content items, adjust their size
          */
         if (this._contentItems.length > 0) {
-            this.updateSize();
+            this.updateSize(false);
         } else {
             /**
              * If this was the last content item, remove this node as well
@@ -220,8 +223,10 @@ export abstract class ContentItem extends EventEmitter {
             this._contentItems[index] = newChild;
             newChild.setParent(this);
             // newChild inherits the sizes from the old child:
-            newChild.height = oldChild.height;
-            newChild.width = oldChild.width;
+            newChild.size = oldChild.size;
+            newChild.sizeUnit = oldChild.sizeUnit;
+            newChild.minSize = oldChild.minSize;
+            newChild.minSizeUnit = oldChild.minSizeUnit;
 
             //TODO This doesn't update the config... refactor to leave item nodes untouched after creation
             if (newChild._parent === null) {
@@ -231,7 +236,7 @@ export abstract class ContentItem extends EventEmitter {
                     newChild.init();
                 }
 
-                this.updateSize();
+                this.updateSize(false);
             }
         }
     }
@@ -279,7 +284,7 @@ export abstract class ContentItem extends EventEmitter {
         if (dropTargetIndicator === null) {
             throw new UnexpectedNullError('ACIHDZ5593');
         } else {
-            dropTargetIndicator.highlightArea(area);
+            dropTargetIndicator.highlightArea(area, 1);
         }
     }
 
@@ -291,14 +296,19 @@ export abstract class ContentItem extends EventEmitter {
 
     /** @internal */
     show(): void {
-        // Not sure why showAllActiveContentItems() was called. GoldenLayout seems to work fine without it.  Left commented code
-        // in source in case a reason for it becomes apparent.
-        // this.layoutManager.showAllActiveContentItems();
-        setElementDisplayVisibility(this._element, true);
-        this.layoutManager.updateSizeFromContainer();
+        this.layoutManager.beginSizeInvalidation();
+        try {
+            // Not sure why showAllActiveContentItems() was called. GoldenLayout seems to work fine without it.  Left commented code
+            // in source in case a reason for it becomes apparent.
+            // this.layoutManager.showAllActiveContentItems();
+            setElementDisplayVisibility(this._element, true);
+            // this.layoutManager.updateSizeFromContainer();
 
-        for (let i = 0; i < this._contentItems.length; i++) {
-            this._contentItems[i].show();
+            for (let i = 0; i < this._contentItems.length; i++) {
+                this._contentItems[i].show();
+            }
+        } finally {
+            this.layoutManager.endSizeInvalidation();
         }
     }
 
@@ -324,16 +334,18 @@ export abstract class ContentItem extends EventEmitter {
     getElementArea(element?: HTMLElement): ContentItem.Area | null {
         element = element ?? this._element;
 
-        const offset = getJQueryOffset(element);
-        const width = element.offsetWidth;
-        const height = element.offsetHeight;
-        // const widthAndHeight = getJQueryWidthAndHeight(element);
+        const rect = element.getBoundingClientRect();
+        const top = rect.top + document.body.scrollTop;
+        const left = rect.left + document.body.scrollLeft;
+
+        const width = rect.width;
+        const height = rect.height;
 
         return {
-            x1: offset.left + 1,
-            y1: offset.top + 1,
-            x2: offset.left + width - 1,
-            y2: offset.top + height - 1,
+            x1: left,
+            y1: top,
+            x2: left + width,
+            y2: top + height,
             surface: width * height,
             contentItem: this
         };
@@ -374,14 +386,19 @@ export abstract class ContentItem extends EventEmitter {
 
     /** @internal */
     protected hide(): void {
-        setElementDisplayVisibility(this._element, false);
-        this.layoutManager.updateSizeFromContainer();
+        this.layoutManager.beginSizeInvalidation();
+        try {
+            setElementDisplayVisibility(this._element, false);
+            // this.layoutManager.updateSizeFromContainer();
+        } finally {
+            this.layoutManager.endSizeInvalidation();
+        }
     }
 
     /** @internal */
-    protected updateContentItemsSize(): void {
+    protected updateContentItemsSize(force: boolean): void {
         for (let i = 0; i < this._contentItems.length; i++) {
-            this._contentItems[i].updateSize();
+            this._contentItems[i].updateSize(force);
         }
     }
 

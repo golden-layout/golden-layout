@@ -23,9 +23,15 @@ module.exports = {
         port: 3000,
         // un-comment to allow testing from remote devices:
         // host: '0.0.0.0',
-        writeToDisk: true,
-        publicPath: 'apitest/dist/',
-        contentBase: path.resolve(__dirname, 'dist'),
+        static: [
+            {
+                directory: path.resolve(__dirname, 'dist'),
+                publicPath: 'apitest/dist/',
+            }
+        ],
+        devMiddleware: {
+            writeToDisk: true,
+        },
     },
 
     resolve: {
@@ -52,7 +58,7 @@ module.exports = {
                 test: /\.js$/,
                 enforce: 'pre',
                 use: ['source-map-loader'],
-            
+
             },
             {
                 test: /\.less$/,
