@@ -46,23 +46,22 @@ export class VirtualLayout extends LayoutManager {
     /** @internal */
     constructor(configOrOptionalContainer: LayoutConfig | HTMLElement | undefined,
         containerOrBindComponentEventHandler: HTMLElement | VirtualLayout.BindComponentEventHandler | undefined,
-        unbindComponentEventHandler: VirtualLayout.UnbindComponentEventHandler | undefined,
+        unbindComponentEventHandler: VirtualLayout.UnbindComponentEventHandler | undefined | Node | null,
         skipInit: true,
     );
     /** @internal */
     constructor(configOrOptionalContainer: LayoutConfig | HTMLElement | undefined,
         containerOrBindComponentEventHandler?: HTMLElement | VirtualLayout.BindComponentEventHandler,
-        unbindComponentEventHandler?: VirtualLayout.UnbindComponentEventHandler,
+        unbindComponentEventHandler?: VirtualLayout.UnbindComponentEventHandler| Node | null,
         skipInit?: true,
     ) {
-        super(VirtualLayout.createLayoutManagerConstructorParameters(configOrOptionalContainer, containerOrBindComponentEventHandler));
-
+        super(VirtualLayout.createLayoutManagerConstructorParameters(configOrOptionalContainer, containerOrBindComponentEventHandler, unbindComponentEventHandler));
         if (containerOrBindComponentEventHandler !== undefined) {
             if (typeof containerOrBindComponentEventHandler === 'function') {
                 this.bindComponentEvent = containerOrBindComponentEventHandler;
                 this._bindComponentEventHanlderPassedInConstructor = true;
 
-                if (unbindComponentEventHandler !== undefined) {
+                if (typeof unbindComponentEventHandler === 'function') {
                     this.unbindComponentEvent = unbindComponentEventHandler;
                 }
             }
@@ -277,8 +276,9 @@ export namespace VirtualLayout {
 
     /** @internal */
     export function createLayoutManagerConstructorParameters(configOrOptionalContainer: LayoutConfig | HTMLElement | undefined,
-        containerOrBindComponentEventHandler?: HTMLElement |  VirtualLayout.BindComponentEventHandler):
-        LayoutManager.ConstructorParameters
+        containerOrBindComponentEventHandler?: HTMLElement | Node | null | VirtualLayout.BindComponentEventHandler,
+        unbindComponentEventHandler?: VirtualLayout.UnbindComponentEventHandler| Node | null)
+    : LayoutManager.ConstructorParameters
     {
         if (typeof configOrOptionalContainer === 'object'
             && ! (configOrOptionalContainer instanceof HTMLElement)
@@ -290,6 +290,7 @@ export namespace VirtualLayout {
         const isSubWindow = windowConfigKey !== null;
 
         let containerElement: HTMLElement | undefined;
+        let containerPosition: Node | null = null;
         let config: LayoutConfig | undefined;
         if (windowConfigKey !== null) {
             const windowConfigStr = localStorage.getItem(windowConfigKey);
@@ -320,6 +321,8 @@ export namespace VirtualLayout {
             if (containerElement === undefined) {
                 if (containerOrBindComponentEventHandler instanceof HTMLElement) {
                     containerElement = containerOrBindComponentEventHandler;
+                    if (unbindComponentEventHandler instanceof Node)
+                        containerPosition = unbindComponentEventHandler;
                 }
             }
         }
@@ -328,6 +331,7 @@ export namespace VirtualLayout {
             constructorOrSubWindowLayoutConfig: config,
             isSubWindow,
             containerElement,
+            containerPosition,
         };
     }
 }

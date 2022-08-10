@@ -43,12 +43,17 @@ export class GoldenLayout extends VirtualLayout {
         bindComponentEventHandler?: VirtualLayout.BindComponentEventHandler,
         unbindComponentEventHandler?: VirtualLayout.UnbindComponentEventHandler,
     );
+    constructor(
+        config: LayoutConfig,
+        container?: HTMLElement,
+        position?: Node | null,
+        );
     /** @deprecated specify layoutConfig in {@link (LayoutManager:class).loadLayout} */
     constructor(config: LayoutConfig, container?: HTMLElement);
     /** @internal */
     constructor(configOrOptionalContainer: LayoutConfig | HTMLElement | undefined,
         containerOrBindComponentEventHandler?: HTMLElement | VirtualLayout.BindComponentEventHandler,
-        unbindComponentEventHandler?: VirtualLayout.UnbindComponentEventHandler,
+        unbindComponentEventHandler?: VirtualLayout.UnbindComponentEventHandler | Node | null,
     ) {
         super(configOrOptionalContainer, containerOrBindComponentEventHandler, unbindComponentEventHandler, true);
         // we told VirtualLayout to not call init() (skipInit set to true) so that Golden Layout can initialise its properties before init is called

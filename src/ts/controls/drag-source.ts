@@ -39,7 +39,7 @@ export class DragSource {
         this._dummyGroundContainer = document.createElement('div');
 
         const dummyRootItemConfig = ResolvedRowOrColumnItemConfig.createDefault('row');
-        this._dummyGroundContentItem = new GroundItem(this._layoutManager, dummyRootItemConfig, this._dummyGroundContainer);
+        this._dummyGroundContentItem = new GroundItem(this._layoutManager, dummyRootItemConfig, this._dummyGroundContainer, null);
  
         this.createDragListener();
     }

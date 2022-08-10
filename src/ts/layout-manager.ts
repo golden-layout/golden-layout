@@ -52,6 +52,8 @@ export abstract class LayoutManager extends EventEmitter {
     /** @internal */
     private _containerElement: HTMLElement;
     /** @internal */
+    private _containerPosition: Node | null;
+    /** @internal */
     private _isFullPage = false;
     /** @internal */
     private _isInitialised = false;
@@ -179,6 +181,9 @@ export abstract class LayoutManager extends EventEmitter {
         if (parameters.containerElement !== undefined) {
             this._containerElement = parameters.containerElement;
         }
+        if (parameters.containerPosition !== undefined) {
+            this._containerPosition = parameters.containerPosition;
+        }
     }
 
     /**
@@ -266,7 +271,6 @@ export abstract class LayoutManager extends EventEmitter {
      */
     init(): void {
         this.setContainer();
-        this._dropTargetIndicator = new DropTargetIndicator(/*this.container*/);
         this.updateSizeFromContainer();
 
         let subWindowRootConfig: ComponentItemConfig | undefined;
@@ -297,8 +301,10 @@ export abstract class LayoutManager extends EventEmitter {
             }
         }
         const layoutConfig = this.layoutConfig;
-        this._groundItem = new GroundItem(this, layoutConfig.root, this._containerElement);
+        this._groundItem = new GroundItem(this, layoutConfig.root, this._containerElement, this._containerPosition);
         this._groundItem.init();
+        const element = this._groundItem.element;
+        this._dropTargetIndicator = new DropTargetIndicator(element, element.firstChild);
 
         this.checkLoadedLayoutMaximiseItem();
 
@@ -1581,7 +1587,8 @@ export abstract class LayoutManager extends EventEmitter {
         const bodyElement = document.body;
         const containerElement = this._containerElement ?? bodyElement;
 
-        if (containerElement === bodyElement) {
+        if (containerElement === bodyElement
+                && bodyElement.firstElementChild === null) {
             this._isFullPage = true;
 
             const documentElement = document.documentElement;
@@ -2077,6 +2084,7 @@ export namespace LayoutManager {
         constructorOrSubWindowLayoutConfig: LayoutConfig | undefined;
         isSubWindow: boolean;
         containerElement: HTMLElement | undefined;
+        containerPosition: Node | null;
     }
 
     /** @internal */

@@ -20,36 +20,14 @@ export class GroundItem extends ComponentParentableItem {
     private readonly _childElementContainer: HTMLElement;
     private readonly _containerElement: HTMLElement;
 
-    constructor(layoutManager: LayoutManager, rootItemConfig: ResolvedRootItemConfig | undefined, containerElement: HTMLElement) {
+    constructor(layoutManager: LayoutManager, rootItemConfig: ResolvedRootItemConfig | undefined, containerElement: HTMLElement, containerPosition: Node | null) {
 
-        super(layoutManager, ResolvedGroundItemConfig.create(rootItemConfig), null, ContentItem.createElement(DomConstants.ClassName.Root));
+        super(layoutManager, ResolvedGroundItemConfig.create(rootItemConfig), null, _createRootElement(containerElement, containerPosition));
         this.element.classList.add(DomConstants.ClassName.GoldenLayout);
 
         this.isGround = true;
         this._childElementContainer = this.element;
         this._containerElement = containerElement;
-
-        // insert before any pre-existing content elements
-        const before = this._containerElement.firstChild;
-        /* This logic needs to updated to not use ClassName.Content.
-         * However, it also fails because  _dropTargetIndicator and _transitionIndicator
-         * are insert after pre-existing content elements.
-         * It used to work because GoldenLayout@bindComponent would do:
-         * this.container.appendChild(componentRootElement)
-         * which seems counter to the goal of not moving content elements.
-        let before = null;
-        while (true) {
-            const prev: ChildNode | null =
-                before ? before.previousSibling : this._containerElement.lastChild;
-            if (prev instanceof Element
-                && prev.classList.contains(DomConstants.ClassName.Content)) {
-                before = prev;
-            } else {
-                break;
-            }
-        }
-        */
-        this._containerElement.insertBefore(this.element, before);
     }
 
     override init(): void {
@@ -381,6 +359,12 @@ export class GroundItem extends ComponentParentableItem {
         }
     }
 
+}
+
+function _createRootElement(containerElement: HTMLElement, containerPosition: Node | null): HTMLDivElement {
+    const element = ContentItem.createElement(DomConstants.ClassName.Root);
+    containerElement.insertBefore(element, containerPosition);
+    return element;
 }
 
 /** @internal */
