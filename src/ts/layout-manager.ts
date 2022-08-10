@@ -110,6 +110,7 @@ export abstract class LayoutManager extends EventEmitter {
     private _actionsOnDragEnd: ((cancel: boolean)=>void)[] = [];
 
     popoutClickHandler: (item: Stack, ev: Event)=>boolean = () => false;
+    private _removeItem: (()=>void) | undefined = undefined;
     // May be set by client code.
     inSomeWindow = false;
 
@@ -1130,26 +1131,33 @@ export abstract class LayoutManager extends EventEmitter {
         enableIFramePointerEvents(false);
         const dtr = ev.dataTransfer;
 
-        // Set 'ignoring' property now so calculateItemAreas works.
-        // The latter is called from onDragEnter, which may happen
-        // before the requestAnimationFrame action.
-        for (let item: ContentItem = componentItem; ; ) {
-            const parent = item.parent;
-            if (! parent)
-                break;
-            if (item.contentItems.length >= 2) {
-                break;
-            }
-            if (item === componentItem || item.isStack) {
-                item.ignoring = true;
-                parent.ignoringChild = true;
-            }
-            if (parent.isGround)
-                break;
-            item = parent;
-        }
+        // We need to visible remove the componentItem during dragging.
+        // However, this needs to happen at a later 'tick' than setDragImage,
+        // at least if !useFreshDragImage.
+        this._removeItem = () => {
+            if (! this._removeItem)
+                return;
+            this._removeItem = undefined;
 
-        window.requestAnimationFrame(() => {
+            // Set 'ignoring' property so calculateItemAreas works.
+            // The latter is called from onDragEnter, which may happen
+            // before the requestAnimationFrame action.
+            for (let item: ContentItem = componentItem; ; ) {
+                const parent = item.parent;
+                if (! parent)
+                    break;
+                if (item.contentItems.length >= 2) {
+                    break;
+                }
+                if (item === componentItem || item.isStack) {
+                    item.ignoring = true;
+                    parent.ignoringChild = true;
+                }
+                if (parent.isGround)
+                    break;
+                item = parent;
+            }
+
             headerClone.remove();
             if (! isActiveTab) {
                 for (const sibling of stack.contentItems) {
@@ -1164,10 +1172,9 @@ export abstract class LayoutManager extends EventEmitter {
             else
                 image.style.opacity = oldOpacity;
             componentItem.parent?.removeChild(componentItem, true);
+        }
 
-            console.log("LM/drag after removeChild dropE:"+dtr?.dropEffect);
-
-        });
+        window.requestAnimationFrame(this._removeItem);
     }
 
     /**
@@ -1703,6 +1710,8 @@ export abstract class LayoutManager extends EventEmitter {
 
     private onDragEnter(e: DragEvent) {
         console.log("dragenter "+(e.target as HTMLElement).getAttribute("class")+" dropEffect:"+e.dataTransfer?.dropEffect+" old-count:"+this._dragEnterCount);
+        if (this._removeItem)
+            this._removeItem();
         e.stopPropagation();
         if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
 
