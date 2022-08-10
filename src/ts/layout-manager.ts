@@ -13,7 +13,6 @@ import { BrowserPopout } from './controls/browser-popout';
 import { DragProxy } from './controls/drag-proxy';
 import { DragSource } from './controls/drag-source';
 import { DropTargetIndicator } from './controls/drop-target-indicator';
-import { TransitionIndicator } from './controls/transition-indicator';
 import { ConfigurationError } from './errors/external-error';
 import { AssertError, UnexpectedNullError, UnexpectedUndefinedError, UnreachableCaseError } from './errors/internal-error';
 import { ComponentItem } from './items/component-item';
@@ -62,8 +61,6 @@ export abstract class LayoutManager extends EventEmitter {
     private _openPopouts: BrowserPopout[] = [];
     /** @internal */
     private _dropTargetIndicator: DropTargetIndicator | null = null;
-    /** @internal */
-    private _transitionIndicator: TransitionIndicator | null = null;
     /** @internal */
     private _resizeTimeoutId: ReturnType<typeof setTimeout> | undefined;
     /** @internal */
@@ -136,8 +133,6 @@ export abstract class LayoutManager extends EventEmitter {
     get openPopouts(): BrowserPopout[] { return this._openPopouts; }
     /** @internal */
     get dropTargetIndicator(): DropTargetIndicator | null { return this._dropTargetIndicator; }
-    /** @internal @deprecated To be removed */
-    get transitionIndicator(): TransitionIndicator | null { return this._transitionIndicator; }
     get width(): number | null { return this._width; }
     get height(): number | null { return this._height; }
     /**
@@ -209,9 +204,6 @@ export abstract class LayoutManager extends EventEmitter {
             if (this._dropTargetIndicator !== null) {
                 this._dropTargetIndicator.destroy();
             }
-            if (this._transitionIndicator !== null) {
-                this._transitionIndicator.destroy();
-            }
             this._eventHub.destroy();
 
             for (const dragSource of this._dragSources) {
@@ -275,7 +267,6 @@ export abstract class LayoutManager extends EventEmitter {
     init(): void {
         this.setContainer();
         this._dropTargetIndicator = new DropTargetIndicator(/*this.container*/);
-        this._transitionIndicator = new TransitionIndicator();
         this.updateSizeFromContainer();
 
         let subWindowRootConfig: ComponentItemConfig | undefined;

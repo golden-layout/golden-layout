@@ -105,14 +105,7 @@ export class DragSource {
         if (this._dragListener === null) {
             throw new UnexpectedNullError('DSODSD66746');
         } else {
-            const dragProxy = new DragProxy(x, y, this._dragListener, this._layoutManager, componentItem , this._dummyGroundContentItem);
-
-            const transitionIndicator = this._layoutManager.transitionIndicator;
-            if (transitionIndicator === null) {
-                throw new UnexpectedNullError('DSODST66746');
-            } else {
-                transitionIndicator.transitionElements(this._element, dragProxy.element);
-            }
+            new DragProxy(x, y, this._dragListener, this._layoutManager, componentItem , this._dummyGroundContentItem);
         }
     }
 
