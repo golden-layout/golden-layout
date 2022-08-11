@@ -213,6 +213,7 @@ export class Tab {
         enableIFramePointerEvents(false);
         // FIXME: set non-maximized
         this._layoutManager.startComponentDrag(e, this.componentItem);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         this._layoutManager.deferIfDragging((_cancel: boolean) => {
             document.body.classList.remove(DomConstants.ClassName.Dragging);
             tabElement.classList.remove(DomConstants.ClassName.Dragging);

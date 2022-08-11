@@ -5,7 +5,7 @@ import { ApiError, BindError } from './errors/external-error';
 import { AssertError, UnexpectedUndefinedError } from './errors/internal-error';
 import { I18nStringId, i18nStrings } from './utils/i18n-strings';
 import { JsonValue, LogicalZIndex } from './utils/types';
-import { deepExtendValue, ensureElementPositionAbsolute, numberToPixels, setElementDisplayVisibility, setElementHeight, setElementWidth } from './utils/utils';
+import { deepExtendValue, ensureElementPositionAbsolute, setElementDisplayVisibility } from './utils/utils';
 import { VirtualLayout } from './virtual-layout';
 
 /** @public */

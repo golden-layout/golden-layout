@@ -16,7 +16,7 @@ export class Splitter {
     get element(): HTMLDivElement { return this._element; }
     get dragHandleElement(): HTMLDivElement { return this._dragHandleElement; }
     get backgroundElement(): HTMLDivElement { return this._backgroundElement; }
-    get dragHandleOffset() { return this._dragHandleOffset; }
+    get dragHandleOffset(): number { return this._dragHandleOffset; }
 
     constructor(private _isVertical: boolean, private _size: number, grabSize: number) {
         this._grabSize = grabSize < this._size ? this._size : grabSize;

@@ -6,7 +6,7 @@ import { DomConstants } from '../utils/dom-constants';
 import { DragListener } from '../utils/drag-listener';
 import { EventEmitter } from '../utils/event-emitter';
 import { Side } from '../utils/types';
-import { numberToPixels, setElementDisplayVisibility } from '../utils/utils';
+import { setElementDisplayVisibility } from '../utils/utils';
 import { HeaderButton } from './header-button';
 import { Tab } from './tab';
 import { TabsContainer } from './tabs-container';
@@ -342,10 +342,10 @@ export class Header extends EventEmitter {
                 const headerHeight = this._show ? this._layoutManager.layoutConfig.dimensions.headerHeight : 0;
                 if (this._leftRightSided) {
                     this._element.style.height = '';
-                    this._element.style.width = numberToPixels(headerHeight);
+                    this._element.style.width = `${headerHeight}px;
                 } else {
                     this._element.style.width = '';
-                    this._element.style.height = numberToPixels(headerHeight);
+                    this._element.style.height = `${headerHeight}px`;
                 }
                 */
                 this._tabsContainer.updateTabSizes(this, this._getActiveComponentItemEvent());

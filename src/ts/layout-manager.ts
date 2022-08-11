@@ -122,10 +122,12 @@ export abstract class LayoutManager extends EventEmitter {
     containerWidthAndHeight: () => WidthAndHeight;
     beforeVirtualRectingEvent: LayoutManager.BeforeVirtualRectingEvent | undefined;
     afterVirtualRectingEvent: LayoutManager.AfterVirtualRectingEvent | undefined;
-    createContainerElement: (lm: LayoutManager, config: ResolvedComponentItemConfig)=>HTMLElement|undefined = (layoutManager, config) => {
+    createContainerElement: (lm: LayoutManager, config: ResolvedComponentItemConfig)=>HTMLElement|undefined
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    = (layoutManager, config) => {
         const element = document.createElement('div');
         const parent = layoutManager.groundItem ? layoutManager.groundItem.element
-              : document.body;
+            : document.body;
         parent.appendChild(element);
         return element;
     };
@@ -329,13 +331,6 @@ export abstract class LayoutManager extends EventEmitter {
         elm.addEventListener('dragleave', (e) => this.onDragLeave(e), true);
         elm.addEventListener('dragend', (e) => this.onDragEnd(e), true);
         elm.addEventListener('drop', (e) => this.onDrop(e));
-        ///* Fired at intervals on the "drag source" (drag-listener) elements
-        // Probably not useful?
-        document.body.addEventListener('drag',
-                                       (e) => {
-                                           //console.log("drag "+(e.target as HTMLElement).getAttribute("class"));
-                                       });
-        //*/
     }
 
      /**
@@ -1131,7 +1126,6 @@ export abstract class LayoutManager extends EventEmitter {
         ev.dataTransfer?.setDragImage(image as HTMLElement, dX, dY);
         this.emit('dragstart', ev, componentItem);
         enableIFramePointerEvents(false);
-        const dtr = ev.dataTransfer;
 
         // We need to visible remove the componentItem during dragging.
         // However, this needs to happen at a later 'tick' than setDragImage,
@@ -1736,7 +1730,7 @@ export abstract class LayoutManager extends EventEmitter {
             return;
         this._dragEnterCount--;
         if (this._dragEnterCount <= 0) {
-            this.exitDrag(e);
+            this.exitDrag();
             this.emit('drag-leave-window', e);
         }
     }
@@ -1766,6 +1760,7 @@ export abstract class LayoutManager extends EventEmitter {
         // But we can a cancel while inside this or some other window;
         // a cancel outside a window is treated as drag-to-new-window.
         const cancel = dropEffect === 'none'
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
             && ((e.dataTransfer as any).mozUserCancelled
                 || this._currentlyDragging
                 || this.inSomeWindow);
@@ -1806,7 +1801,7 @@ export abstract class LayoutManager extends EventEmitter {
         this.emit('dragend', e);
     }
 
-    private exitDrag(e: DragEvent) {
+    private exitDrag() {
         this._dragEnterCount = 0;
         this._hideTargetIndicator();
         //this.dropTargetIndicator.hide();
@@ -1824,7 +1819,7 @@ export abstract class LayoutManager extends EventEmitter {
         // JSON.parse(data);
         if (e.dataTransfer) e.dataTransfer.dropEffect="move";
         e.preventDefault();
-        this.exitDrag(e);
+        this.exitDrag();
         // FIXME check type
 
         // SEE drag-proxy:onDrop
