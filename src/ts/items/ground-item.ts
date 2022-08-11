@@ -4,7 +4,7 @@ import { AssertError, UnexpectedNullError } from '../errors/internal-error';
 import { LayoutManager } from '../layout-manager';
 import { DomConstants } from '../utils/dom-constants';
 import { AreaLinkedRect, ItemType } from '../utils/types';
-import { getElementWidthAndHeight, setElementHeight, setElementWidth } from '../utils/utils';
+import { setElementHeight, setElementWidth } from '../utils/utils';
 import { ComponentItem } from './component-item';
 import { ComponentParentableItem } from './component-parentable-item';
 import { ContentItem } from './content-item';
@@ -319,7 +319,7 @@ export class GroundItem extends ComponentParentableItem {
     }
 
     private updateNodeSize(): void {
-        const { width, height } = getElementWidthAndHeight(this._containerElement);
+        const { width, height } = this.layoutManager.containerWidthAndHeight();
 
         setElementWidth(this.element, width);
         setElementHeight(this.element, height);

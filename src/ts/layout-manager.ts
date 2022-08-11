@@ -27,7 +27,7 @@ import { DragListener } from './utils/drag-listener';
 import { EventEmitter } from './utils/event-emitter';
 import { EventHub } from './utils/event-hub';
 import { I18nStringId, I18nStrings, i18nStrings } from './utils/i18n-strings';
-import { ItemType, JsonValue, Rect, ResponsiveMode } from './utils/types';
+import { ItemType, JsonValue, Rect, ResponsiveMode, WidthAndHeight } from './utils/types';
 import {
     enableIFramePointerEvents,
     getElementWidthAndHeight,
@@ -116,6 +116,10 @@ export abstract class LayoutManager extends EventEmitter {
     readonly isSubWindow: boolean;
     layoutConfig: ResolvedLayoutConfig;
 
+    /** Return width and height available for root element.
+     * By default size of containerElement - which is usually document.root.
+     * Should be overridden if not 100% of containerElement. */
+    containerWidthAndHeight: () => WidthAndHeight;
     beforeVirtualRectingEvent: LayoutManager.BeforeVirtualRectingEvent | undefined;
     afterVirtualRectingEvent: LayoutManager.AfterVirtualRectingEvent | undefined;
     createContainerElement: (lm: LayoutManager, config: ResolvedComponentItemConfig)=>HTMLElement|undefined = (layoutManager, config) => {
@@ -184,6 +188,7 @@ export abstract class LayoutManager extends EventEmitter {
         if (parameters.containerPosition !== undefined) {
             this._containerPosition = parameters.containerPosition;
         }
+        this.containerWidthAndHeight = () => getElementWidthAndHeight(this._containerElement);
     }
 
     /**
@@ -712,7 +717,7 @@ export abstract class LayoutManager extends EventEmitter {
                 this._groundItem.setSize(this._width, this._height);
 
                 if (this._maximisedStack) {
-                    const { width, height } = getElementWidthAndHeight(this._containerElement);
+                    const { width, height } = this.containerWidthAndHeight();
                     setElementWidth(this._maximisedStack.element, width);
                     setElementHeight(this._maximisedStack.element, height);
                     this._maximisedStack.updateSize();
@@ -725,7 +730,7 @@ export abstract class LayoutManager extends EventEmitter {
 
     /** @internal */
     updateSizeFromContainer(): void {
-        const { width, height } = getElementWidthAndHeight(this._containerElement);
+        const { width, height } = this.containerWidthAndHeight();
         this.setSize(width, height);
     }
 
@@ -1476,7 +1481,7 @@ export abstract class LayoutManager extends EventEmitter {
             throw new UnexpectedUndefinedError('LMMXI19993');
         } else {
             this._groundItem.element.prepend(stack.element);
-            const { width, height } = getElementWidthAndHeight(this._containerElement);
+            const { width, height } = this.containerWidthAndHeight();
             setElementWidth(stack.element, width);
             setElementHeight(stack.element, height);
             stack.updateSize();
