@@ -3,6 +3,7 @@ import { ComponentItem } from '../items/component-item';
 import { LayoutManager } from '../layout-manager';
 import { DomConstants } from '../utils/dom-constants';
 import { DragListener } from '../utils/drag-listener';
+import { EventConstants } from '../utils/event-constants';
 
 /**
  * Represents an individual tab within a Stack's header
@@ -25,6 +26,8 @@ export class Tab {
     private readonly _tabClickListener = (ev: MouseEvent) => this.onTabClickDown(ev);
     /** @internal */
     private readonly _tabTouchStartListener = (ev: TouchEvent) => this.onTabTouchStart(ev);
+    /** @internal */
+    private readonly _tabMouseDownListener = (ev: MouseEvent) => this.onMouseDown(ev);
     /** @internal */
     private readonly _closeClickListener = () => this.onCloseClick();
     /** @internal */
@@ -96,6 +99,7 @@ export class Tab {
 
         this._element.addEventListener('click', this._tabClickListener, { passive: true });
         this._element.addEventListener('touchstart', this._tabTouchStartListener, { passive: true });
+        this._element.addEventListener('mousedown', this._tabMouseDownListener, { passive: true });
 
         if (this._componentItem.isClosable) {
             this._closeElement.addEventListener('click', this._closeClickListener, { passive: true });
@@ -220,6 +224,13 @@ export class Tab {
     private onTabTouchStart(event: TouchEvent) {
         if (event.target === this._element) {
             this.notifyFocus();
+        }
+    }
+
+    /** @internal */
+    private onMouseDown(event: MouseEvent) {
+        if (event.button === EventConstants.MouseDownButton.Wheel) {
+            this.notifyClose();
         }
     }
 
