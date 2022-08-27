@@ -41,7 +41,7 @@
 // ".lm_dragging" is applied to BODY tag during Drag and is also directly applied to the root of the object being dragged
 .lm_dragging,
 .lm_dragging * {
-  cursor: move !important;
+  cursor: move;
   user-select: none;
 }
 
@@ -84,7 +84,7 @@
     }
     .lm_drag_handle {
       width: @width0;
-      cursor: ns-resize;
+      cursor: row-resize;
     }
   }
 
@@ -97,7 +97,7 @@
     }
     .lm_drag_handle {
       height: @height0;
-      cursor: ew-resize;
+      cursor: col-resize;
     }
   }
 }
