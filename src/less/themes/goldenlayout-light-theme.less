@@ -6,10 +6,10 @@
 
 @color4: #ffffff; // Appears 1 time
 @color5: #555555; // Appears 1 time
-@color6: #452500; // Appears 1 time
+@color6: #452500; // Appears 2 time (one seems to be unused)
 @color7: #fafafa; // Appears 1 time
 @color8: #999999; // Appears 1 time
-@color9: #bbbbbb; // Appears 1 time
+//@color9: #bbbbbb; // Appears 1 time
 @color10: #888888; // Appears 1 time
 @color11: #f4f4f4; // Appears 1 time
 
@@ -54,7 +54,7 @@
   }
   &:hover .lm_drag_handle, // When hovered by mouse...
   &.lm_dragging .lm_drag_handle {
-    background-color: @color9;
+    background-color: @color6;
   }
 }
 
@@ -125,7 +125,7 @@
   }
 }
 
-// If Pane Header (container of Tabs for each pane) is selected (used only if addition of new Contents is made "by selection" and not "by drag")
+// If Pane Header (container of Tabs for each pane) is selected (used only if addition of new Contents is made "by selection" and not "by drag") UNUSED?
 .lm_selected {
   .lm_header {
     background-color: @color6;
