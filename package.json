@@ -1,7 +1,7 @@
 {
-  "name": "golden-layout",
+  "name": "@genesiscommunitysuccess/golden-layout",
   "version": "2.6.0",
-  "description": "A multi-screen javascript Layout manager",
+  "description": "A @genesiscommunitysuccess fork of the GoldenLayout multi-screen javascript Layout manager",
   "keywords": [
     "docking",
     "javascript",
@@ -10,16 +10,16 @@
     "layout manager",
     "popouts"
   ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/golden-layout/golden-layout.git"
+	"repository": "https://github.com/genesiscommunitysuccess/golden-layout.git",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/@genesiscommunitysuccess"
   },
-  "homepage": "https://github.com/golden-layout/golden-layout",
+  "homepage": "https://github.com/genesiscommunitysuccess/golden-layout/",
   "bugs": {
-    "url": "https://github.com/golden-layout/golden-layout/issues"
+    "url": "https://github.com/genesiscommunitysuccess/golden-layout/"
   },
   "license": "MIT",
-  "author": "Golden Layout community",
+  "author": "@genesiscommunitysuccess fork - Golden Layout community",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "typings": "dist/types/index.d.ts",
