@@ -1,0 +1,55 @@
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
+name: Build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [16.x]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Configure Node ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        registry-url: https://npm.pkg.github.com/
+        scope: '@genesislcap'
+
+    - name: Intall
+      run: npm install
+      env:
+        NODE_AUTH_TOKEN: ${{secrets.GPR_READ_TOKEN}}
+
+      # Fails the build if the working tree is dirty
+      # which happens when you don't update the API docs in line
+      # with the tsdoc comments
+    - name: Check working tree
+      run: test -z "$(git status --porcelain)"
+
+    - name: ESLint
+      env:
+        NODE_OPTIONS: "--max_old_space_size=4096"
+      run: npm run lint:ts
+
+    - name: Test
+      run: npm test
+
+    # only publishes to registry if on master & package versions have changed
+    - name: Publish
+      # if: ${{ github.ref == 'refs/heads/master' }}
+      run: npm run publish:github
+      env:
+        NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}

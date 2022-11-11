@@ -31,10 +31,7 @@ jobs:
         run: npm ci
 
       - name: Build
-        run: npm run build
-
-      - name: Build Bundles
-        run: npm run build:bundles
+        run: npm run build:full
 
       - name: Lint
         run: npm run lint:ts
