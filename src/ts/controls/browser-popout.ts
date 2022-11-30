@@ -285,9 +285,7 @@ export class BrowserPopout extends EventEmitter {
             throw new Error('Error while writing to localStorage ' + getErrorMessage(e));
         }
 
-        const url = new URL(location.href);
-        url.searchParams.set('gl-window', storageKey);
-        return url.toString();
+        return `${location.href}/?gl-window=${storageKey}`;
     }
 
     /**
