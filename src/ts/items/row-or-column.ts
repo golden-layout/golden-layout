@@ -213,7 +213,7 @@ export class RowOrColumn extends ContentItem {
             this.updateSize();
             this.emitBaseBubblingEvent('stateChanged');
         });
-        if (this.layoutManager._currentlyDragging) {
+        if (this.layoutManager.currentlyDragging()) {
             this.updateSize();
             //this.emitBaseBubblingEvent('stateChanged');
         }

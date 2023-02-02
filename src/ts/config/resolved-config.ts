@@ -393,6 +393,7 @@ export interface ResolvedLayoutConfig {
 export namespace ResolvedLayoutConfig {
     export interface Settings {
         readonly useDragAndDrop: boolean;
+        readonly copyForDragImage: boolean;
         readonly dragDataMimetype: string;
         readonly checkGlWindowKey: boolean;
         // see Config.Settings for comments
@@ -411,6 +412,7 @@ export namespace ResolvedLayoutConfig {
     export namespace Settings {
         export const defaults: ResolvedLayoutConfig.Settings = {
             useDragAndDrop: true,
+            copyForDragImage: true,
             dragDataMimetype: 'text/gl-drag-data',
             checkGlWindowKey: true,
             constrainDragToContainer: true,
@@ -428,6 +430,7 @@ export namespace ResolvedLayoutConfig {
         export function createCopy(original: Settings): Settings {
             return {
                 useDragAndDrop: original.useDragAndDrop,
+                copyForDragImage: original.copyForDragImage,
                 dragDataMimetype: original.dragDataMimetype,
                 checkGlWindowKey: original.checkGlWindowKey,
                 constrainDragToContainer: original.constrainDragToContainer,

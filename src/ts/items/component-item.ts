@@ -4,7 +4,6 @@ import { Tab } from '../controls/tab';
 import { UnexpectedNullError } from '../errors/internal-error';
 import { LayoutManager } from '../layout-manager';
 import { ItemType, JsonValue } from '../utils/types';
-import { setElementHeight, setElementWidth } from '../utils/utils';
 import { ComponentParentableItem } from './component-parentable-item';
 import { ContentItem } from './content-item';
 import { Stack } from './stack';
@@ -61,7 +60,7 @@ export class ComponentItem extends ContentItem {
 
         this._initialWantMaximise = config.maximised;
 
-        const containerElement = layoutManager.createContainerElement(layoutManager, config);
+        const containerElement = layoutManager.createContainerElement(layoutManager, config, this);
         if (containerElement)
             containerElement.classList.add('lm_component');
         this._container = new ComponentContainer(config, this, layoutManager, containerElement,
@@ -78,7 +77,7 @@ export class ComponentItem extends ContentItem {
         const element = this.element;
         if (element)
             element.style.opacity = '0.1';
-        const wasDragging = this.layoutManager._currentlyDragging;
+        const wasDragging = this.layoutManager.currentlyDragging();
         this.layoutManager.deferIfDragging((cancel) => {
             if (element)
                 element.style.opacity = '';
@@ -129,13 +128,17 @@ export class ComponentItem extends ContentItem {
     // Used by Drag Proxy
     /** @internal */
     enterDragMode(width: number, height: number): void {
-        setElementWidth(this.element, width);
-        setElementHeight(this.element, height);
+        const style = this.element.style;
+        style.height = `${height}px`;
+        style.width = `${width}px`;
         this._container.enterDragMode(width, height);
     }
 
     /** @internal */
     exitDragMode(): void {
+        const style = this.element.style;
+        style.height = '';
+        style.width = '';
         this._container.exitDragMode();
     }
 
@@ -270,7 +273,7 @@ export class ComponentItem extends ContentItem {
             const itemElement = this.element;
             const itemBounds = itemElement.getBoundingClientRect();
             const layoutBounds = this.layoutManager.container.getBoundingClientRect();
-            if (componentElement  instanceof HTMLElement
+            if (componentElement instanceof HTMLElement
                 && contentElement !== componentElement) {
                 componentElement.style.top = numberToPixels(stackBounds.top - layoutBounds.top);
                 componentElement.style.left = numberToPixels(stackBounds.left - layoutBounds.left);

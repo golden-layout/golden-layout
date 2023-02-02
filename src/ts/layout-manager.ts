@@ -43,6 +43,13 @@ declare global {
     }
 }
 
+enum DragState {
+    NotDragging = 0,
+    DroppedInThisWindow = 1,
+    DroppedElsewhere = 2,
+    CurrentlyDragging = 3,
+}
+
 /**
  * The main class that will be exposed as GoldenLayout.
  */
@@ -67,8 +74,9 @@ export abstract class LayoutManager extends EventEmitter {
     private _resizeTimeoutId: ReturnType<typeof setTimeout> | undefined;
     /** @internal */
     private _itemAreas: ContentItem.Area[] | null = null;
-    _currentlyDragging = false;
-    _draggedComponentItem: ComponentItem | undefined;
+    private _dragState: DragState = DragState.NotDragging;
+    private _lastDragLeaveTime = 0;
+    private _draggedComponentItem: ComponentItem | undefined;
     /** @internal */
     private _dragEnterCount = 0;
     /** @internal */
@@ -112,6 +120,8 @@ export abstract class LayoutManager extends EventEmitter {
     private _removeItem: (()=>void) | undefined = undefined;
     // May be set by client code.
     inSomeWindow = false;
+    private delayedDragEndTimer: ReturnType<typeof setTimeout> | undefined;
+    private delayedDragEndFunction: (()=>void) | undefined = undefined;
 
     readonly isSubWindow: boolean;
     layoutConfig: ResolvedLayoutConfig;
@@ -122,7 +132,7 @@ export abstract class LayoutManager extends EventEmitter {
     containerWidthAndHeight: () => WidthAndHeight;
     beforeVirtualRectingEvent: LayoutManager.BeforeVirtualRectingEvent | undefined;
     afterVirtualRectingEvent: LayoutManager.AfterVirtualRectingEvent | undefined;
-    createContainerElement: (lm: LayoutManager, config: ResolvedComponentItemConfig)=>HTMLElement|undefined
+    createContainerElement: (lm: LayoutManager, config: ResolvedComponentItemConfig, item: ComponentItem)=>HTMLElement|undefined
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     = (layoutManager, config) => {
         const element = document.createElement('div');
@@ -132,6 +142,12 @@ export abstract class LayoutManager extends EventEmitter {
         return element;
     };
 
+    enterOrLeaveSomeWindow(entering: boolean): void {
+        this.inSomeWindow = entering;
+        if (! entering) {
+            this._lastDragLeaveTime = Date.now();
+        }
+    }
     get container(): HTMLElement { return this._containerElement; }
     get isInitialised(): boolean { return this._isInitialised; }
     /** @internal */
@@ -239,6 +255,8 @@ export abstract class LayoutManager extends EventEmitter {
 
     useNativeDragAndDrop(): boolean { return this.layoutConfig.settings.useDragAndDrop; }
 
+    currentlyDragging(): boolean { return this._dragState == DragState.CurrentlyDragging; }
+
     dragDataMimetype(): string { return this.layoutConfig.settings.dragDataMimetype; }
 
     validDragEvent(e: DragEvent): boolean {
@@ -326,11 +344,26 @@ export abstract class LayoutManager extends EventEmitter {
         }
 
         const elm = document.body; //this._groundItem.element;
-        elm.addEventListener('dragover', (e) => this.onDragOver(e), true);
-        elm.addEventListener('dragenter', (e) => this.onDragEnter(e), true);
-        elm.addEventListener('dragleave', (e) => this.onDragLeave(e), true);
-        elm.addEventListener('dragend', (e) => this.onDragEnd(e), true);
-        elm.addEventListener('drop', (e) => this.onDrop(e));
+        if (this.useNativeDragAndDrop()) {
+            elm.addEventListener('dragover', (e) => this.onDragOver(e), true);
+            elm.addEventListener('dragenter', (e) => this.onDragEnter(e), true);
+            elm.addEventListener('dragleave', (e) => this.onDragLeave(e), true);
+            elm.addEventListener('dragend', (e) => {
+                const x = e.screenX, y = e.screenY;
+                if (this._dragState === DragState.CurrentlyDragging) {
+                    this.delayedDragEndFunction = () => {
+                        if (this.delayedDragEndTimer)
+                            clearTimeout(this.delayedDragEndTimer);
+                        this.delayedDragEndTimer = undefined;
+                        this.delayedDragEndFunction = undefined;
+                        this.onDragEnd(x, y);
+                    };
+                    this.delayedDragEndTimer = globalThis.setTimeout(this.delayedDragEndFunction, 100);
+                } else
+                    this.onDragEnd(x, y, e);
+            }, true);
+            elm.addEventListener('drop', (e) => {console.log("drop event"); this.onDrop(e);});
+        }
     }
 
      /**
@@ -1000,16 +1033,16 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /**
-	 * Removes a DragListener added by createDragSource() so the corresponding
-	 * DOM element is not a drag source any more.
-	 */
-	removeDragSource(dragSource: DragSource): void {
-		removeFromArray(dragSource, this._dragSources );
-		dragSource.destroy();
+     * Removes a DragListener added by createDragSource() so the corresponding
+     * DOM element is not a drag source any more.
+     */
+    removeDragSource(dragSource: DragSource): void {
+	removeFromArray(dragSource, this._dragSources );
+	dragSource.destroy();
     }
 
     removeElementEventually(element: HTMLElement): void {
-        if (this._currentlyDragging) {
+        if (this.currentlyDragging()) {
             element.style.opacity = '0';
             this._actionsOnDragEnd.push((cancel) => {
                 if (cancel)
@@ -1022,7 +1055,7 @@ export abstract class LayoutManager extends EventEmitter {
         }
     }
     deferIfDragging(action: (cancel: boolean)=>void): void {
-        if (this._currentlyDragging)
+        if (this.currentlyDragging())
             this._actionsOnDragEnd.push(action);
         else
             action(false);
@@ -1051,13 +1084,12 @@ export abstract class LayoutManager extends EventEmitter {
     /** @internal */
     startComponentDrag(ev: DragEvent, componentItem: ComponentItem): void
     {
-        this._currentlyDragging = true;
+        this._dragState = DragState.CurrentlyDragging;
         this._draggedComponentItem = componentItem;
         const data = {config: componentItem.toConfig()};
-        if (ev.dataTransfer) {
+        if (ev instanceof DragEvent && ev.dataTransfer) {
             const jdata = JSON.stringify(data);
             ev.dataTransfer.setData(this.dragDataMimetype(), jdata);
-            ev.dataTransfer.dropEffect = "move"; // "link"; //"move"; // OR "copy";
         }
 
         // Make drag-image
@@ -1076,7 +1108,9 @@ export abstract class LayoutManager extends EventEmitter {
         headerClone.classList.add(DomConstants.ClassName.Header);
         headerClone.appendChild(tabsContainer);
         let image: HTMLElement;
-        const useFreshDragImage = true; //!!componentItem.component;
+        const useFreshDragImage =
+            ! this.layoutConfig.settings.copyForDragImage
+            || ! componentItem.container.element;
         if (useFreshDragImage) {
             image = document.createElement('section');
             image.classList.add(DomConstants.ClassName.DragImage);
@@ -1096,9 +1130,10 @@ export abstract class LayoutManager extends EventEmitter {
             inner.style.top = `${tabsContainer.clientHeight}px`;
             inner.style.bottom = "0px";
         } else {
-            image = componentItem.element;
+            image = componentItem.container.element as HTMLElement;
             image.insertBefore(headerClone, image.firstChild);
         }
+        headerClone.style.background = "transparent";
         headerClone.style.position = "absolute";
         headerClone.style.top = "0px";
         if (! isActiveTab) {
@@ -1107,14 +1142,16 @@ export abstract class LayoutManager extends EventEmitter {
                     sibling.element.style.opacity = '0';
             }
         }
+        const oldOpacity = image.style.opacity;
         //Ideally we'd like to have the drag image be partially transparent.
         //That is the default on Firefox, so we're OK.
         //The following works on GtkWebKit and presumably Safari
-        //  image.style.opacity = "0.6";
+        //THE FOLLOWING SEEMS TO BE NEEDED IF !useFreshDragImage
+        //(ON Chrome/Electron/Qt AND WebKit BUT NOT Firefox).
+        image.style.opacity = "0.6";
         //However, it semi-breaks Firefox, making it too transparent.
         //It also seems to have no effect on Chrome/Electron.
         //Maybe this needs to be a browser-dependent setting.  FIXME.
-        const oldOpacity = image.style.opacity;
         //The offset from the mouse pointer is wrong on GtkWebKit:
         //- It seems to ignore the offset and just center the image over
         //- the mouse cursor. FIXME.
@@ -1127,7 +1164,7 @@ export abstract class LayoutManager extends EventEmitter {
         this.emit('dragstart', ev, componentItem);
         enableIFramePointerEvents(false);
 
-        // We need to visible remove the componentItem during dragging.
+        // We need to visibly remove the componentItem during dragging.
         // However, this needs to happen at a later 'tick' than setDragImage,
         // at least if !useFreshDragImage.
         this._removeItem = () => {
@@ -1705,15 +1742,15 @@ export abstract class LayoutManager extends EventEmitter {
         }
     }
 
-    private onDragEnter(e: DragEvent) {
-        console.log("dragenter "+(e.target as HTMLElement).getAttribute("class")+" dropEffect:"+e.dataTransfer?.dropEffect+" old-count:"+this._dragEnterCount);
+    private onDragEnter(e: MouseEvent) {
         if (this._removeItem)
             this._removeItem();
         e.stopPropagation();
-        if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
-
-        if (! this.validDragEvent(e))
-            return;
+        if (e instanceof DragEvent) {
+            if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+            if (! this.validDragEvent(e))
+                return;
+        }
         if (this._dragEnterCount == 0) {
             this.emit('drag-enter-window', e);
             this.calculateItemAreas();
@@ -1722,12 +1759,13 @@ export abstract class LayoutManager extends EventEmitter {
         e.preventDefault();
     }
 
-    private onDragLeave(e: DragEvent) {
-        console.log("dragleave "+(e.target as HTMLElement).getAttribute("class")+" old-entercount:"+this._dragEnterCount+" dropEffect:"+e.dataTransfer?.dropEffect);
+    private onDragLeave(e: MouseEvent) {
+        this._lastDragLeaveTime = Date.now();
         e.stopPropagation();
-        if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
-        if (! this.validDragEvent(e))
-            return;
+        if (e instanceof DragEvent) {
+            if (! this.validDragEvent(e))
+                return;
+        }
         this._dragEnterCount--;
         if (this._dragEnterCount <= 0) {
             this.exitDrag();
@@ -1735,70 +1773,95 @@ export abstract class LayoutManager extends EventEmitter {
         }
     }
 
-    private onDragOver(e: DragEvent) {
-        if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
-        const valid = this.validDragEvent(e);
-        console.log("dragover "+(e.target as HTMLElement).getAttribute("class")+" valid:"+valid+" entercount:"+this._dragEnterCount+" dropEffect:"+e.dataTransfer?.dropEffect);
+    private onDragOver(e: MouseEvent) {
+        if (e instanceof DragEvent && e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+        const valid = e instanceof DragEvent && this.validDragEvent(e);
+        //console.log("dragover "+(e.target as HTMLElement).getAttribute("class")+" valid:"+valid+" entercount:"+this._dragEnterCount+(e instanceof DragEvent ? (" dropEffect:"+e.dataTransfer?.dropEffect):""));
         //      drag-listener.onPointerMove -> emit('drag', ...)
         this.onDrag(e);
         if (valid)
             e.preventDefault(); // allow drop
     }
 
-    private onDragEnd(e: DragEvent) {
-        // Four cases:
-        // (1) Normal drop in this window (drop event seen; _currentlyDragging is false)
-        // (2) Normal drop in other window
+    private onDragEnd( screenX: number, screenY: number,
+                       event: MouseEvent|null = null) {
+        console.log("onDragEnd st:"+this._dragState+" timer:"+this.delayedDragEndTimer);
+
+        // There are four cases we want to handle. Unfortunately, it is not
+        // possible to reliably distinguish them on all browsers we care about.
+        // (1) Normal drop in this window (_dragState == DroppedInThisWindow)
+        // (2) Normal drop in other window (_dragState == DroppedElsewhere)
+        // We can't detect this case unless we get an external notification
+        // (the application calls droppedInOtherWindow). The notification may
+        // happen after the dragend event, which is one reason we wait a bit.
+        // If we don't get the notification in time, we handle it as case (3).
         // (3) Drop to desktop
-        // (4) Drag cancelled (dropEffect=="none") (can also use mozUserCancelled
-        // We distinguish between (2) and (3) by sending drag-enter-window and
-        // drag-leave-windows to a central manager.
-        const dropEffect = e.dataTransfer?.dropEffect;
-        const component = this._draggedComponentItem;
+        // (4) Drag was cancelled (by typing Esc).
+
         // Try to detact a cancelled drag. There doesn't seem to be a way
         // to detect this reliably except on Firefox (with mozUserCancelled).
-        // But we can a cancel while inside this or some other window;
-        // a cancel outside a window is treated as drag-to-new-window.
-        const cancel = dropEffect === 'none'
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            && ((e.dataTransfer as any).mozUserCancelled
-                || this._currentlyDragging
-                || this.inSomeWindow);
-        console.log("onDragEnd now:"+Date.now()+" cancel:"+cancel+" dropEff:"+dropEffect+" comp:"+component+" cur-drag:"+this._currentlyDragging);
-        if (! cancel
+        // Note that while the specification says dropEffect is supposed
+        // to be "none" if the drag was cancelled, this is unreliable.
+        let cancel = false;
+        if (event instanceof DragEvent
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            && (event.dataTransfer as any).mozUserCancelled)
+            cancel = true;
+        if (this._dragState == DragState.CurrentlyDragging && ! cancel) {
+            // Heuristic: If the most recent dragleave was less than 200ms ago,
+            // it was probably caused by a 'cancel' (Escape pressed).
+            const now = Date.now();
+            if (now >= this._lastDragLeaveTime
+                && now - this._lastDragLeaveTime <= 200) {
+                cancel = true;
+            }
+        }
+
+        const component = this._draggedComponentItem;
+        console.log("onDragEnd now:"+Date.now()+" cancel:"+cancel+" comp:"+component+" cur-drag:"+this._dragState+" in-win:"+this.inSomeWindow+" ecnt:"+this._dragEnterCount);
+        // if this is the only component, and it is dropped to the desktop,
+        // just reuse the window (though move it - if possible).
+        const onlyWindow = component?.parent
+            && component.parent.type === "stack"
+            && component.parent.contentItems.length === 1
+            && component.parent.contentItems[0] === component
+            && component.parent.parent?.type === "ground";
+        if (this._draggedComponentItem && this._area !== null
+            && this._dragState == DragState.DroppedInThisWindow) {
+            if (onlyWindow)
+                cancel = true;
+            else
+                this._area.contentItem.onDrop(this._draggedComponentItem, this._area);
+        }
+
+        const moveWindow = ! cancel && ! this.inSomeWindow && onlyWindow;
+        if (! (cancel || moveWindow)
             && component
-            && this._currentlyDragging) {
+            && this._dragState >= DragState.DroppedElsewhere) {
             // dropped in other window or to desktop
-            console.log("export-drag inSomeWind:"+this.inSomeWindow);
             if (component.component) {
                 const parent = component.parent;
                 // dragExported callback may need size/position of element,
                 // which it can't get if display is 'none'.
                 if (parent && parent.type === 'stack')
                     parent.element.style.display='';
-                component.container.emit('dragExported', e, component);
+                component.container.emit('dragExported', screenX, screenY, component);
             }
-            // FIXME remove
         }
-        //const droppedLocally = this._currentlyDragging;
-        this.doDeferredActions(cancel);
-        if (this._draggedComponentItem && this._area !== null
-            && ! this._currentlyDragging) {
-            // did a local drop - case (1) above
-            const droppedComponentItem = this._draggedComponentItem;
-            this._area.contentItem.onDrop(droppedComponentItem, this._area);
-        }
-        this._currentlyDragging = false;
-        console.log("dragend ev-handler deffect:"+dropEffect+" enter-count:"+this._dragEnterCount);
-        //    console.log("dragend "+(e.target as HTMLElement).getAttribute("class"));
-        //   console.log("- effect:"+e.dataTransfer?.dropEffect);
+
+        this.doDeferredActions(cancel || !!moveWindow);
+        //console.log("dragend ev-handler enter-count:"+this._dragEnterCount);
         // FIXME incorporate drag-listener:processDragStop
-        this._draggedComponentItem = undefined;
         // See processDragStop in drag-listener
         //document.body.classList.remove(DomConstants.ClassName.Dragging);
         // if iframe: clear style.pointer-events
         enableIFramePointerEvents(true);
-        this.emit('dragend', e);
+        if (moveWindow && component && component.container) {
+            component.container.emit('dragMoved', screenX, screenY, component);
+        }
+        this._draggedComponentItem = undefined;
+        this._dragState = DragState.NotDragging;
+        this.emit('dragend');
     }
 
     private exitDrag() {
@@ -1809,15 +1872,31 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     // A drag was started/ending in another (top-level) window
+    // Needs to be called from application.
     public draggingInOtherWindow(ending: boolean): void {
         enableIFramePointerEvents(ending);
     }
 
-    private onDrop(e: DragEvent) {
-        const dvalue = e.dataTransfer?.getData(this.dragDataMimetype());
-        const data = dvalue && JSON.parse(dvalue);
+    // Dropped to another (top-level) window.
+    // Needs to be called from application.
+    public droppedInOtherWindow(): void {
+        this._dragState = DragState.DroppedElsewhere;
+        if (this.delayedDragEndFunction)
+            this.delayedDragEndFunction();
+    }
+
+    private onDrop(e: MouseEvent) {
+        this.emit('drop', e);
+        let data;
+        if (e instanceof DragEvent) {
+            if (e.dataTransfer) e.dataTransfer.dropEffect="move";
+            const dvalue = e.dataTransfer?.getData(this.dragDataMimetype());
+            data = dvalue && JSON.parse(dvalue);
+        } else if (this._draggedComponentItem) {
+            data = {config: this._draggedComponentItem.toConfig()};
+        }
+        console.log("onDrop area:"+this._area);
         // JSON.parse(data);
-        if (e.dataTransfer) e.dataTransfer.dropEffect="move";
         e.preventDefault();
         this.exitDrag();
         // FIXME check type
@@ -1833,12 +1912,14 @@ export abstract class LayoutManager extends EventEmitter {
                 (droppedComponentItem.container.component as HTMLElement).style.zIndex = "";
                 */
             } else {
-                console.log("dropped from different window "+dvalue+" // "+JSON.stringify(data.config));
+                console.log("dropped from different window "+JSON.stringify(data.config));
                 const item = new ComponentItem(this, data.config, this.groundItem as ComponentParentableItem);
                 this._area.contentItem.onDrop(item, this._area);
             }
         }
-        this._currentlyDragging = false;
+        this._dragState = DragState.DroppedInThisWindow;
+        if (this.delayedDragEndFunction)
+            this.delayedDragEndFunction();
     }
 
     /**

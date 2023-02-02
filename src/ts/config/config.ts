@@ -543,6 +543,13 @@ export namespace LayoutConfig {
 
         useDragAndDrop?: boolean;
 
+        /**
+         * Use component's element for setDragImage, if possible.
+         * Has side-effect of nesting content element inside a component.
+         * Ignored unless useDragAndDrop.
+         */
+        copyForDragImage?: boolean;
+
         dragDataMimetype?: string;
 
         /**
@@ -557,6 +564,7 @@ export namespace LayoutConfig {
         export function resolve(settings: Settings | undefined): ResolvedLayoutConfig.Settings {
             const result: ResolvedLayoutConfig.Settings = {
                 useDragAndDrop: settings?.useDragAndDrop ?? false,
+                copyForDragImage: settings?.copyForDragImage ?? settings?.useDragAndDrop ?? false,
                 dragDataMimetype: settings?.dragDataMimetype ?? ResolvedLayoutConfig.Settings.defaults.dragDataMimetype,
                 checkGlWindowKey: settings?.checkGlWindowKey ?? true,
                 constrainDragToContainer: settings?.constrainDragToContainer ?? ResolvedLayoutConfig.Settings.defaults.constrainDragToContainer,

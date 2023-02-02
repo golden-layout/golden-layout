@@ -166,7 +166,7 @@ export class Tab {
                 this.disableReorder();
             }
         };
-        if (this._layoutManager._currentlyDragging) {
+        if (this._layoutManager.currentlyDragging()) {
             this._layoutManager.deferIfDragging(action);
         } else {
             action(false);

@@ -156,7 +156,7 @@ export abstract class ContentItem extends EventEmitter {
         /**
          * If this node still contains other content items, adjust their size
          */
-        if (this._contentItems.length > (this.layoutManager._currentlyDragging ? 1 : 0)) {
+        if (this._contentItems.length > (this.layoutManager.currentlyDragging() ? 1 : 0)) {
             this.updateSize();
         } else {
             /**
@@ -166,7 +166,7 @@ export abstract class ContentItem extends EventEmitter {
                 if (this._parent === null) {
                     throw new UnexpectedNullError('CIUC00874');
                 } else {
-                    this._parent.removeChild(this);
+                    this._parent.removeChild(this, keepChild);
                 }
             }
         }
@@ -213,8 +213,7 @@ export abstract class ContentItem extends EventEmitter {
         if (parentNode === null) {
             throw new UnexpectedNullError('CIRCP23232');
         } else {
-            //if (!this.layoutManager._currentlyDragging)
-                parentNode.replaceChild(newChild._element, oldChild._element);
+            parentNode.replaceChild(newChild._element, oldChild._element);
 
             /*
             * Optionally destroy the old content item
