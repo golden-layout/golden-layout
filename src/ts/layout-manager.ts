@@ -390,22 +390,8 @@ export abstract class LayoutManager extends EventEmitter {
             this.calculateItemAreas();
         if (this._itemAreas === null || this._itemAreas.length === 0)
             return;
-       //
 
-        //if (!this.layoutConfig.settings.constrainDragToContainer) {
-            this.setDropPosition(x, y);
-        /*
-        } else {
-            const isWithinContainer = x > this._minX && x < this._maxX && y > this._minY && y < this._maxY;
-            if (isWithinContainer) {
-                this.setDropPosition(x, y);
-            }
-        }
-        */
-
-/*
-        this._componentItem.drag();
-        */
+        this.setDropPosition(x, y);
     }
 
     /**
@@ -1779,7 +1765,7 @@ export abstract class LayoutManager extends EventEmitter {
         //console.log("dragover "+(e.target as HTMLElement).getAttribute("class")+" valid:"+valid+" entercount:"+this._dragEnterCount+(e instanceof DragEvent ? (" dropEffect:"+e.dataTransfer?.dropEffect):""));
         //      drag-listener.onPointerMove -> emit('drag', ...)
         this.onDrag(e);
-        if (valid)
+        if (valid && this._area)
             e.preventDefault(); // allow drop
     }
 
@@ -1826,12 +1812,14 @@ export abstract class LayoutManager extends EventEmitter {
             && component.parent.contentItems.length === 1
             && component.parent.contentItems[0] === component
             && component.parent.parent?.type === "ground";
-        if (this._draggedComponentItem && this._area !== null
+        let dropItem = undefined;
+        if (this._draggedComponentItem
             && this._dragState == DragState.DroppedInThisWindow) {
             if (onlyWindow)
                 cancel = true;
-            else
-                this._area.contentItem.onDrop(this._draggedComponentItem, this._area);
+            else {
+                dropItem = this._draggedComponentItem;
+            }
         }
 
         const moveWindow = ! cancel && ! this.inSomeWindow && onlyWindow;
@@ -1850,6 +1838,8 @@ export abstract class LayoutManager extends EventEmitter {
         }
 
         this.doDeferredActions(cancel || !!moveWindow);
+        if (dropItem && this._area)
+            this._area.contentItem.onDrop(dropItem, this._area);
         //console.log("dragend ev-handler enter-count:"+this._dragEnterCount);
         // FIXME incorporate drag-listener:processDragStop
         // See processDragStop in drag-listener
