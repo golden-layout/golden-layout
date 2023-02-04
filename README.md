@@ -16,7 +16,7 @@ Golden Layout is a Javascript layout manager which enables you to layout compone
 * Reponsive design
 
 This fork has a number of advances over the semi-unmaintained upstream.
-The main on is optional use
+The main feature is optional use
 of the [HTML Drag and Drop API](https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API).
 This enables:
 
