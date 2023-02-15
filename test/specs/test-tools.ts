@@ -19,9 +19,8 @@ export default class TestTools {
 		if ( state === undefined ) {
 			const span = document.createElement('span');
 			span.innerText = 'that worked';
-			container.element.appendChild
 		}
-		else if (state) {
+		else if (state && container.element) {
 			const html = (state as {html: string}).html;
 			if (html) {
 				container.element.outerHTML = html;

@@ -9,10 +9,10 @@ describe('component creation', function () {
 		layout = new GoldenLayout();
 
 		function Recorder(container: ComponentContainer) {
-			const span = document.createElement('span');
-			span.innerText = 'that worked';
-			container.element.appendChild(span);
-            return;
+		    const span = document.createElement('span');
+		    span.innerText = 'that worked';
+		    (container.element as HTMLElement).appendChild(span);
+                    return;
 		}
 
 		layout.registerComponentFactoryFunction('testComponent', Recorder);

@@ -122,6 +122,7 @@ export abstract class LayoutManager extends EventEmitter {
     inSomeWindow = false;
     private delayedDragEndTimer: ReturnType<typeof setTimeout> | undefined;
     private delayedDragEndFunction: (()=>void) | undefined = undefined;
+    createDragProxy: ((item: ComponentItem, x: number, y: number)=>void)|undefined;
 
     readonly isSubWindow: boolean;
     layoutConfig: ResolvedLayoutConfig;
@@ -1056,7 +1057,11 @@ export abstract class LayoutManager extends EventEmitter {
 
     /** @internal */
     startComponentDragOld(x: number, y: number, dragListener: DragListener, componentItem: ComponentItem, stack: Stack): void
-    {
+        {
+        if (this.createDragProxy) {
+            this.createDragProxy(componentItem, x, y);
+            // return;
+        }
         new DragProxy(
             x,
             y,
