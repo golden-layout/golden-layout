@@ -601,9 +601,9 @@ export namespace LayoutConfig {
          * This may affect drag from other window over iframe which may
          * not trigger depending on the CSS pointer-events setting.
          * (Uncertain: needs testing/experimentation.)
-         * Default: 2
+         * Default: 0
          */
-        contentInset: number;
+        contentInset?: number;
 
         /**
          * The minimum height an item can be resized to (in pixel).

@@ -963,7 +963,7 @@ export namespace LayoutConfig {
     export interface Dimensions {
         borderGrabWidth?: number;
         borderWidth?: number;
-        contentInset: number;
+        contentInset?: number;
         dragProxyHeight?: number;
         dragProxyWidth?: number;
         headerHeight?: number;

@@ -476,7 +476,7 @@ export namespace ResolvedLayoutConfig {
         export const defaults: ResolvedLayoutConfig.Dimensions = {
             borderWidth: 5,
             borderGrabWidth: 5,
-            contentInset: 2,
+            contentInset: 0,
             minItemHeight: 10,
             minItemWidth: 10,
             headerHeight: 20,
