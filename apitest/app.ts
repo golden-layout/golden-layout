@@ -368,7 +368,7 @@ export class App {
             throw new Error('handleContainerVirtualRectingRequiredEvent: Component does not have a root HTML element');
         }
 
-        const containerBoundingClientRect = container.element.getBoundingClientRect();
+        const containerBoundingClientRect = (container.element as HTMLElement).getBoundingClientRect();
         const left = containerBoundingClientRect.left - this._goldenLayoutBoundingClientRect.left;
         rootElement.style.left = this.numberToPixels(left);
         const top = containerBoundingClientRect.top - this._goldenLayoutBoundingClientRect.top;
