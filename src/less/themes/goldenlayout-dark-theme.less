@@ -19,16 +19,13 @@
 // Entire GoldenLayout Container, if a background is set, it is visible as color of "pane header" and "splitters" (if these latest has opacity very low)
 .lm_goldenlayout {
   background: @color0;
+  --lm_border_color: @color0;
 }
 
 // Single Pane content (area in which final dragged content is contained)
 .lm_content {
   background: @color1;
 }
-.lm_items {
-  border: 1px solid transparent;
-}
-
 // Single Pane content during Drag (style of moving window following mouse)
 .lm_dragProxy {
   .lm_content {
@@ -50,9 +47,6 @@
 
 // Separator line (handle to change pane size)
 .lm_splitter {
-  .lm_bg {
-    background-color: @color0;
-  }
   &:hover .lm_drag_handle, // When hovered by mouse...
   &.lm_dragging .lm_drag_handle {
     background-color: @color5;
