@@ -29,7 +29,10 @@
 }
 
 .lm_goldenlayout {
+    // The follow colors may be overridden by themes or even on-the-fly
     --lm_border_color: #000000;
+    --lm_drag_old_position_border: 2px tan dashed;
+    --lm_splitter_drag_color: darkcyan;
 }
 
 .lm_items {
@@ -56,6 +59,14 @@
 .lm_dragging * {
   cursor: move;
   user-select: none;
+}
+
+// Separator line (handle to change pane size)
+.lm_splitter {
+  &:hover .lm_drag_handle, // When hovered by mouse...
+  &.lm_dragging .lm_drag_handle {
+    background-color: var(--lm_splitter_drag_color);
+  }
 }
 
 // If a specific Pane is maximized
@@ -219,14 +230,34 @@
   }
 }
 .lm_header.lm_tight_mode .lm_tabs .lm_tab .lm_close_tab,
-.lm_header .lm_tabs.lm_single .lm_tab.lm_active .lm_close_tab {
+.lm_stack.lm_single .lm_tabs .lm_tab.lm_active .lm_close_tab {
    display: none;
  }
-.lm_header .lm_tabs.lm_single {
+.lm_stack.lm_single .lm_header .lm_tabs {
   .lm_tab, .lm_tab.lm_active {
     padding-left: 6px;
     padding-right: 6px;
   }
+}
+div.lm_drag_old_position {
+    box-sizing: border-box;
+}
+div.lm_drag_old_position .lm_header .lm_tab.lm_dragging,
+div.lm_drag_old_position .lm_item {
+    border: var(--lm_drag_old_position_border);
+}
+div.lm_drag_old_position .lm_header .lm_tab.lm_dragging {
+    opacity: 1;
+    background-color: transparent;
+}
+div.lm_drag_old_position.lm_single .lm_header {
+    background-color: transparent;
+}
+div.lm_drag_old_position .lm_header .lm_tab.lm_dragging .lm_title {
+    opacity: 0;
+}
+div.lm_drag_old_position  .lm_controls {
+    display: none;
 }
 
 // Change stack style to absolute positioning for docking transition ability
@@ -234,11 +265,13 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  z-index: auto;
 
   > .lm_items {
       overflow: hidden;
       flex-grow: 1;
       position: relative;
+      z-index: auto;
 
       .lm_item {
         position: absolute;

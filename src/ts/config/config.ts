@@ -550,6 +550,13 @@ export namespace LayoutConfig {
          */
         copyForDragImage?: boolean;
 
+        /**
+         * When dragging an item, indicate the original position.
+         * The default style uses a dashed light-brown outline.
+         * Default: true
+         */
+        showOldPositionWhenDragging?: boolean;
+
         dragDataMimetype?: string;
 
         /**
@@ -565,6 +572,7 @@ export namespace LayoutConfig {
             const result: ResolvedLayoutConfig.Settings = {
                 useDragAndDrop: settings?.useDragAndDrop ?? false,
                 copyForDragImage: settings?.copyForDragImage ?? settings?.useDragAndDrop ?? false,
+                showOldPositionWhenDragging: settings?.showOldPositionWhenDragging ?? ResolvedLayoutConfig.Settings.defaults.showOldPositionWhenDragging,
                 dragDataMimetype: settings?.dragDataMimetype ?? ResolvedLayoutConfig.Settings.defaults.dragDataMimetype,
                 checkGlWindowKey: settings?.checkGlWindowKey ?? true,
                 constrainDragToContainer: settings?.constrainDragToContainer ?? ResolvedLayoutConfig.Settings.defaults.constrainDragToContainer,

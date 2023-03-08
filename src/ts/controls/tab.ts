@@ -166,12 +166,16 @@ export class Tab {
                 this.disableReorder();
             }
         };
-        if (this._layoutManager.currentlyDragging()) {
-            this._layoutManager.deferIfDragging(action);
+        const lm = this._layoutManager;
+        if (lm.currentlyDragging()) {
+            lm.deferIfDragging(action);
         } else {
             action(false);
         }
-        this._layoutManager.removeElementEventually(this._element);
+        lm.deferIfDragging((cancel) => {
+            if (! cancel)
+                this._element.remove();
+            });
     }
 
     /** @internal */

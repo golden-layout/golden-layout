@@ -67,7 +67,7 @@ export class TabsContainer {
         if (this._tabs.length === 0) {
             this._tabs.push(tab);
             this._element.appendChild(tab.element);
-            this.element.classList.add("lm_single");
+            this.markAsSingle(true);
         } else {
             if (index === undefined) {
                 index = this._tabs.length;
@@ -80,7 +80,17 @@ export class TabsContainer {
             }
 
             this._tabs.splice(index, 0, tab);
-            this.element.classList.remove("lm_single");
+            this.markAsSingle(false);
+        }
+    }
+
+    /** @internal */
+    markAsSingle(is_single: boolean): void {
+        const stackNode = this.element?.parentNode?.parentNode as HTMLElement;
+        if (is_single) {
+            stackNode.classList.add("lm_single");
+        } else {
+            stackNode.classList.remove("lm_single");
         }
     }
 
@@ -94,7 +104,7 @@ export class TabsContainer {
                     if (! cancel) {
                         this._tabs.splice(i, 1);
                         if (this._tabs.length <= 1)
-                            this.element.classList.add("lm_single");
+                            this.markAsSingle(true);
                         if (i <= this._lastVisibleTabIndex)
                             --this._lastVisibleTabIndex;
                     }

@@ -1182,6 +1182,45 @@ export abstract class LayoutManager extends EventEmitter {
                 item = parent;
             }
 
+            // Take the lm_item out of the layout (set position to absolute),
+            // so remaining elements can be re-positioned.
+            // Whle doing so, add a dashed border (at the old position)
+            // as a visual feedbakc.
+            const ielement = componentItem.element;
+            const oparent = stack.element.offsetParent;
+            const draggingWholeStack = stack.contentItems.length <= 1;
+            // FUTURE: draggingWholeStack should also be set if dragging
+            // an enture stack as a unit.
+            if (this.layoutConfig.settings.showOldPositionWhenDragging
+                && stack.parent && oparent //&& stack.parent.isGround
+                && ielement.style.position === '') {
+                const itemBounds = ielement.getBoundingClientRect();
+                const stackBounds = stack.element.getBoundingClientRect();
+                const parentBounds = oparent.getBoundingClientRect();
+                stack.element.classList.add("lm_drag_old_position");
+                stack.element.style.zIndex = '4';
+                if (draggingWholeStack) {
+                    const sstyle = stack.element.style;
+                    sstyle.top = `${stackBounds.top - parentBounds.top}px`;
+                    sstyle.left = `${stackBounds.left - parentBounds.left}px`;
+                    sstyle.width = `${stackBounds.width - 2}px`;
+                    sstyle.height = `${stackBounds.height - 2}px`;
+                    sstyle.position = 'absolute'
+                };
+                this._actionsOnDragEnd.push((cancel) => {
+                    stack.element.classList.remove("lm_drag_old_position");
+                    stack.element.style.zIndex = '';
+                    if (draggingWholeStack) {
+                        const sstyle = stack.element.style;
+                        sstyle.top = '';
+                        sstyle.left = '';
+                        sstyle.width = '';
+                        sstyle.height = '';
+                        sstyle.position = '';
+                    }
+                });
+            }
+
             headerClone.remove();
             if (! isActiveTab) {
                 for (const sibling of stack.contentItems) {
@@ -1196,6 +1235,14 @@ export abstract class LayoutManager extends EventEmitter {
             else
                 image.style.opacity = oldOpacity;
             componentItem.parent?.removeChild(componentItem, true);
+            const container = componentItem.container;
+            if (container.visible) {
+                container.setVisibility(false);
+                this._actionsOnDragEnd.push((cancel) => {
+                    container.setVisibility(true);
+                });
+            }
+            console.log("after removeChild");
         }
 
         window.requestAnimationFrame(this._removeItem);

@@ -394,6 +394,7 @@ export namespace ResolvedLayoutConfig {
     export interface Settings {
         readonly useDragAndDrop: boolean;
         readonly copyForDragImage: boolean;
+        readonly showOldPositionWhenDragging: boolean;
         readonly dragDataMimetype: string;
         readonly checkGlWindowKey: boolean;
         // see Config.Settings for comments
@@ -413,6 +414,7 @@ export namespace ResolvedLayoutConfig {
         export const defaults: ResolvedLayoutConfig.Settings = {
             useDragAndDrop: true,
             copyForDragImage: true,
+            showOldPositionWhenDragging: true,
             dragDataMimetype: 'text/gl-drag-data',
             checkGlWindowKey: true,
             constrainDragToContainer: true,
@@ -431,6 +433,7 @@ export namespace ResolvedLayoutConfig {
             return {
                 useDragAndDrop: original.useDragAndDrop,
                 copyForDragImage: original.copyForDragImage,
+                showOldPositionWhenDragging: original.showOldPositionWhenDragging,
                 dragDataMimetype: original.dragDataMimetype,
                 checkGlWindowKey: original.checkGlWindowKey,
                 constrainDragToContainer: original.constrainDragToContainer,
