@@ -72,7 +72,7 @@ lm.utils.copy( lm.controls.Tab.prototype, {
 	 */
 	setTitle: function( title ) {
 		this.element.attr( 'title', lm.utils.stripTags( title ) );
-		this.titleElement.html( title );
+		this.titleElement.text( title );
 	},
 
 	/**
