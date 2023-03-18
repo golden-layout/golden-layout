@@ -133,12 +133,19 @@ export abstract class LayoutManager extends EventEmitter {
     containerWidthAndHeight: () => WidthAndHeight;
     beforeVirtualRectingEvent: LayoutManager.BeforeVirtualRectingEvent | undefined;
     afterVirtualRectingEvent: LayoutManager.AfterVirtualRectingEvent | undefined;
-    createContainerElement: (lm: LayoutManager, config: ResolvedComponentItemConfig, item: ComponentItem)=>HTMLElement|undefined
+    createContainerElement: (config: ResolvedComponentItemConfig, item: ComponentItem)=>HTMLElement|undefined
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     = (layoutManager, config) => {
-        const element = document.createElement('div');
-        const parent = layoutManager.groundItem ? layoutManager.groundItem.element
+        let parent = this.groundItem ? this.groundItem.element
             : document.body;
+        const element = document.createElement('div');
+        let component = element;
+        if (this.layoutConfig.settings.copyForDragImage) {
+            component = document.createElement('div');
+            parent.appendChild(component);
+            parent = component;
+        }
+        component.classList.add(DomConstants.ClassName.Component);
         parent.appendChild(element);
         return element;
     };
@@ -1206,7 +1213,7 @@ export abstract class LayoutManager extends EventEmitter {
                     sstyle.width = `${stackBounds.width - 2}px`;
                     sstyle.height = `${stackBounds.height - 2}px`;
                     sstyle.position = 'absolute'
-                };
+                }
                 this._actionsOnDragEnd.push((cancel) => {
                     stack.element.classList.remove("lm_drag_old_position");
                     stack.element.style.zIndex = '';

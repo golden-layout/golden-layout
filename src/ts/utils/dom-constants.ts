@@ -29,6 +29,7 @@ export namespace DomConstants {
         Close = 'lm_close',
         Active = 'lm_active',
         Maximised = 'lm_maximised',
+        Component = 'lm_component',
         Content = 'lm_content',
         Left = 'lm_left',
         Right = 'lm_right',
