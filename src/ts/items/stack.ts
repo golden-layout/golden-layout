@@ -701,6 +701,8 @@ export class Stack extends ComponentParentableItem {
 
     /** @internal */
     private highlightHeaderDropZone(x: number): void {
+        const tabDropPlaceholder = this.layoutManager.tabDropPlaceholder;
+        tabDropPlaceholder.remove();
         const tabsContainerElement = this._header.tabsContainerElement;
         const tabsContainerElementChildNodes = tabsContainerElement.childNodes;
         // Only walk over the visible tabs
@@ -713,7 +715,6 @@ export class Stack extends ComponentParentableItem {
 
         let area: AreaLinkedRect;
 
-        const tabDropPlaceholder = this.layoutManager.tabDropPlaceholder;
         // Empty stack
         if (visibleTabsLength === 0) {
             const headerOffset = getJQueryOffset(this._header.element);
@@ -735,6 +736,7 @@ export class Stack extends ComponentParentableItem {
             let tabLeft: number;
             let tabWidth: number;
             let tabElement: HTMLElement;
+            let afterDrag = 0;
             do {
                 tabElement = tabsContainerElementChildNodes[tabIndex] as HTMLElement;
                 const offset = getJQueryOffset(tabElement);
@@ -746,6 +748,9 @@ export class Stack extends ComponentParentableItem {
                     tabLeft = offset.left;
                     tabTop = offset.top;
                     tabWidth = getElementWidth(tabElement);
+                }
+                if (tabElement.classList.contains(DomConstants.ClassName.Dragging)) {
+                    afterDrag++;
                 }
 
                 if (x >= tabLeft && x < tabLeft + tabWidth) {
@@ -760,15 +765,10 @@ export class Stack extends ComponentParentableItem {
                 return;
             }
 
-            const halfX = tabLeft + tabWidth / 2;
-
-            if (x < halfX) {
-                this._dropIndex = tabIndex;
-                tabElement.insertAdjacentElement('beforebegin', tabDropPlaceholder);
-            } else {
-                this._dropIndex = Math.min(tabIndex + 1,visibleTabsLength);
-                tabElement.insertAdjacentElement('afterend', tabDropPlaceholder);
-            }
+            const preferNext = x >= (tabLeft + tabWidth / 2);
+            this._dropIndex = tabIndex + (tabIndex < visibleTabsLength && preferNext ? 1 : 0) - afterDrag;
+            tabElement.parentNode?.insertBefore(tabDropPlaceholder,
+                                                preferNext ? tabElement.nextSibling : tabElement);
             const tabDropPlaceholderOffset = getJQueryOffset(tabDropPlaceholder);
             const tabDropPlaceholderWidth = getElementWidth(tabDropPlaceholder);
             if (this._header.leftRightSided) {
