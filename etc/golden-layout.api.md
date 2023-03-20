@@ -380,8 +380,6 @@ export abstract class ContentItem extends EventEmitter {
     protected updateContentItemsSize(): void;
     // @internal
     abstract updateSize(): void;
-    // @internal (undocumented)
-    width: number;
 }
 
 // @public (undocumented)
@@ -405,8 +403,7 @@ export class DragSource {
     _element: HTMLElement,
     _componentTypeOrFtn: JsonValue | (() => (DragSource.ComponentItemConfig | ComponentItemConfig)),
     _componentState: JsonValue | undefined,
-    _title: string | undefined,
-    _id: string | undefined);
+    _title: string | undefined);
     // @internal
     destroy(): void;
 }
@@ -1010,6 +1007,8 @@ export namespace LayoutConfig {
         borderGrabWidth?: number;
         borderWidth?: number;
         contentInset?: number;
+        defaultMinItemHeight?: string;
+        defaultMinItemWidth?: string;
         dragProxyHeight?: number;
         dragProxyWidth?: number;
         headerHeight?: number;
@@ -1090,6 +1089,7 @@ export namespace LayoutConfig {
         showCloseIcon?: boolean;
         // @deprecated
         showMaximiseIcon?: boolean;
+        showOldPositionWhenDragging?: boolean;
         // @deprecated
         showPopoutIcon?: boolean;
         tabControlOffset?: number;
@@ -1139,7 +1139,7 @@ export abstract class LayoutManager extends EventEmitter {
     // (undocumented)
     createAndInitContentItem(config: ResolvedItemConfig, parent: ContentItem): ContentItem;
     // (undocumented)
-    createContainerElement: (lm: LayoutManager, config: ResolvedComponentItemConfig, item: ComponentItem) => HTMLElement | undefined;
+    createContainerElement: (config: ResolvedComponentItemConfig, item: ComponentItem) => HTMLElement | undefined;
     // @internal
     createContentItem(config: ResolvedItemConfig, parent: ContentItem): ContentItem;
     // (undocumented)
@@ -1220,6 +1220,8 @@ export abstract class LayoutManager extends EventEmitter {
     // (undocumented)
     popoutClickHandler: (item: Stack, ev: Event) => boolean;
     removeDragSource(dragSource: DragSource): void;
+    // (undocumented)
+    removeElementEventually(element: HTMLElement): void;
     resizeDebounceExtendedWhenPossible: boolean;
     resizeDebounceInterval: number;
     resizeWithContainerAutomatically: boolean;
@@ -1644,6 +1646,8 @@ export namespace ResolvedLayoutConfig {
         readonly reorderOnTabMenuClick: boolean;
         // (undocumented)
         readonly responsiveMode: ResponsiveMode;
+        // (undocumented)
+        readonly showOldPositionWhenDragging: boolean;
         // (undocumented)
         readonly tabControlOffset: number;
         // (undocumented)

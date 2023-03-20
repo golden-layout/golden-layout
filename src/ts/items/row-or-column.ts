@@ -307,7 +307,6 @@ export class RowOrColumn extends ContentItem {
      */
     private setAbsoluteSizes() {
         const absoluteSizes = this.calculateAbsoluteSizes();
-        let additionalPixels = sizeData.additionalPixel;
 
         for (let i = 0; i < this.contentItems.length; i++) {
             const item = this.contentItems[i];
