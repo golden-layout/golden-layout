@@ -6,13 +6,7 @@ import { LayoutManager } from '../layout-manager';
 import { DomConstants } from '../utils/dom-constants';
 import { DragListener } from '../utils/drag-listener';
 import { EventEmitter } from '../utils/event-emitter';
-<<<<<<< HEAD
-import { AreaLinkedRect, ItemType, JsonValue, Side } from '../utils/types';
-||||||| parent of ef01b9a (Replace [direction] with .size)
-import { AreaLinkedRect, ItemType, JsonValue, Side, WidthAndHeight, WidthOrHeightPropertyName } from '../utils/types';
-=======
-import { AreaLinkedRect, ItemType, JsonValue, Side, SizeUnitEnum, WidthAndHeight, WidthOrHeightPropertyName } from '../utils/types';
->>>>>>> ef01b9a (Replace [direction] with .size)
+import { AreaLinkedRect, ItemType, JsonValue, Side, SizeUnitEnum } from '../utils/types';
 import {
     setElementDisplayVisibility
 } from '../utils/utils';

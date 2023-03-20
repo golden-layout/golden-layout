@@ -3,16 +3,8 @@ import { ResolvedComponentItemConfig, ResolvedGroundItemConfig, ResolvedHeadered
 import { AssertError, UnexpectedNullError } from '../errors/internal-error';
 import { LayoutManager } from '../layout-manager';
 import { DomConstants } from '../utils/dom-constants';
-<<<<<<< HEAD
-import { AreaLinkedRect, ItemType } from '../utils/types';
-import { setElementHeight, setElementWidth } from '../utils/utils';
-||||||| parent of ef01b9a (Replace [direction] with .size)
-import { AreaLinkedRect, ItemType } from '../utils/types';
-import { getElementWidthAndHeight, setElementHeight, setElementWidth } from '../utils/utils';
-=======
 import { AreaLinkedRect, ItemType, SizeUnitEnum } from '../utils/types';
-import { getElementWidthAndHeight, setElementHeight, setElementWidth } from '../utils/utils';
->>>>>>> ef01b9a (Replace [direction] with .size)
+import { setElementHeight, setElementWidth } from '../utils/utils';
 import { ComponentItem } from './component-item';
 import { ComponentParentableItem } from './component-parentable-item';
 import { ContentItem } from './content-item';
