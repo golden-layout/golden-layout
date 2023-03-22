@@ -4,7 +4,6 @@ import { Tab } from '../controls/tab';
 import { UnexpectedNullError } from '../errors/internal-error';
 import { LayoutManager } from '../layout-manager';
 import { ItemType, JsonValue } from '../utils/types';
-import { DomConstants } from '../utils/dom-constants';
 import { ComponentParentableItem } from './component-parentable-item';
 import { ContentItem } from './content-item';
 import { Stack } from './stack';
@@ -61,10 +60,7 @@ export class ComponentItem extends ContentItem {
 
         this._initialWantMaximise = config.maximised;
 
-        const containerElement = layoutManager.createContainerElement(config, this);
-        if (containerElement)
-            containerElement.classList.add(DomConstants.ClassName.Content);
-        this._container = new ComponentContainer(config, this, layoutManager, containerElement,
+        this._container = new ComponentContainer(config, this, layoutManager,
             (itemConfig) => this.handleUpdateItemConfigEvent(itemConfig),
             () => this.show(),
             () => this.hide(),

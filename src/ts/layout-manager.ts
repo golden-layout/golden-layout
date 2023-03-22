@@ -146,21 +146,22 @@ export abstract class LayoutManager extends EventEmitter {
     containerWidthAndHeight: () => WidthAndHeight;
     beforeVirtualRectingEvent: LayoutManager.BeforeVirtualRectingEvent | undefined;
     afterVirtualRectingEvent: LayoutManager.AfterVirtualRectingEvent | undefined;
-    createContainerElement: (config: ResolvedComponentItemConfig, item: ComponentItem)=>HTMLElement|undefined
+
+    createComponentElement: (config: ResolvedComponentItemConfig, component: ComponentContainer)=>HTMLElement|undefined
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    = (layoutManager, config) => {
-        let parent = this.groundItem ? this.groundItem.element
-            : document.body;
-        const element = document.createElement('div');
-        let component = element;
-        if (this.layoutConfig.settings.copyForDragImage) {
-            component = document.createElement('div');
-            parent.appendChild(component);
-            parent = component;
+        = (config, component) => {
+        let parent = this.groundItem?.element || document.body;
+        const contentElement = document.createElement('div');
+        let componentElement = contentElement;
+        if (this.layoutConfig.settings.copyForDragImage
+            ?? this.layoutConfig.settings.useDragAndDrop) {
+            componentElement = document.createElement('div');
+            parent.appendChild(componentElement);
+            parent = componentElement;
         }
-        component.classList.add(DomConstants.ClassName.Component);
-        parent.appendChild(element);
-        return element;
+        parent.appendChild(contentElement);
+        contentElement.classList.add(DomConstants.ClassName.Content);
+        return componentElement;
     };
 
     enterOrLeaveSomeWindow(entering: boolean): void {
@@ -1066,8 +1067,7 @@ export abstract class LayoutManager extends EventEmitter {
     newDragSource(element: HTMLElement,
         componentTypeOrItemConfigCallback: JsonValue | (() => (DragSource.ComponentItemConfig | ComponentItemConfig)),
         componentState?: JsonValue,
-        title?: string,
-        id?: string,
+        title?: string
     ): DragSource {
         const dragSource = new DragSource(this, element, componentTypeOrItemConfigCallback, componentState, title);
         this._dragSources.push(dragSource);
@@ -1150,14 +1150,14 @@ export abstract class LayoutManager extends EventEmitter {
         const tabsContainer = document.createElement('section');
         tabsContainer.classList.add(DomConstants.ClassName.Tabs);
         tabsContainer.appendChild(tabClone);
-        ///*
         const headerClone = document.createElement('section');
         headerClone.classList.add(DomConstants.ClassName.Header);
         headerClone.appendChild(tabsContainer);
         let image: HTMLElement;
-        const useFreshDragImage =
-            ! this.layoutConfig.settings.copyForDragImage
-            || ! componentItem.container.element;
+        const element = componentItem.container.element;
+        const contentElement = componentItem.container.contentElement;
+        // usually same as effective copyForDragImage - see createComponentElement
+        const useFreshDragImage = ! element || element === contentElement;
         if (useFreshDragImage) {
             image = document.createElement('section');
             image.classList.add(DomConstants.ClassName.DragImage);
@@ -1177,7 +1177,7 @@ export abstract class LayoutManager extends EventEmitter {
             inner.style.top = `${tabsContainer.clientHeight}px`;
             inner.style.bottom = "0px";
         } else {
-            image = componentItem.container.element as HTMLElement;
+            image = element as HTMLElement;
             image.insertBefore(headerClone, image.firstChild);
         }
         headerClone.style.background = "transparent";
@@ -1250,7 +1250,6 @@ export abstract class LayoutManager extends EventEmitter {
             if (this.layoutConfig.settings.showOldPositionWhenDragging
                 && stack.parent && oparent //&& stack.parent.isGround
                 && ielement.style.position === '') {
-                const itemBounds = ielement.getBoundingClientRect();
                 const stackBounds = stack.element.getBoundingClientRect();
                 const parentBounds = oparent.getBoundingClientRect();
                 stack.element.classList.add("lm_drag_old_position");

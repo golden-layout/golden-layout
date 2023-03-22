@@ -5,6 +5,7 @@ import { AssertError, UnexpectedNullError } from '../errors/internal-error';
 import { ComponentItem } from '../items/component-item';
 import { ContentItem } from '../items/content-item';
 import { LayoutManager } from '../layout-manager';
+import { DomConstants } from '../utils/dom-constants';
 import { EventEmitter } from '../utils/event-emitter';
 import { setElementDisplayVisibility } from '../utils/utils'
 import { JsonValue, LogicalZIndex, LogicalZIndexToDefaultMap } from '../utils/types';
@@ -36,6 +37,8 @@ export class ComponentContainer extends EventEmitter {
     private _stackMaximised = false;
     /** @internal */
     private _logicalZIndex: LogicalZIndex;
+    /** @internal */
+    private _element: HTMLElement | undefined;
 
     stateRequestEvent: ComponentContainer.StateRequestEventHandler | undefined;
     virtualRectingRequiredEvent: ComponentContainer.VirtualRectingRequiredEvent | undefined; // DEPRECATED
@@ -62,6 +65,7 @@ export class ComponentContainer extends EventEmitter {
     get initialState(): JsonValue | undefined { return this._initialState; }
     /** The inner DOM element where the container's content is intended to live in */
     get element(): HTMLElement | undefined { return this._element; }
+    readonly contentElement: HTMLElement | undefined;
 
     /** @internal */
     constructor(
@@ -71,8 +75,6 @@ export class ComponentContainer extends EventEmitter {
         private readonly _parent: ComponentItem,
         /** @internal */
         private readonly _layoutManager: LayoutManager,
-        /** @internal */
-        private readonly _element: HTMLElement | undefined,
         /** @internal */
         private readonly _updateItemConfigEvent: ComponentContainer.UpdateItemConfigEventHandler,
         /** @internal */
@@ -86,6 +88,13 @@ export class ComponentContainer extends EventEmitter {
     ) {
         super();
 
+        this._element = _layoutManager.createComponentElement(_config, this);
+        if (this._element) {
+            this._element.classList.add(DomConstants.ClassName.Component);
+            const content = this._element.querySelector(".lm_content");
+            this.contentElement = content instanceof HTMLElement ? content
+                : this._element;
+        }
         this._width = 0;
         this._height = 0;
         this._visible = true;

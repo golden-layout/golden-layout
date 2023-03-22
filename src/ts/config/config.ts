@@ -837,7 +837,7 @@ export namespace LayoutConfig {
         export function resolve(settings: Settings | undefined): ResolvedLayoutConfig.Settings {
             const result: ResolvedLayoutConfig.Settings = {
                 useDragAndDrop: settings?.useDragAndDrop ?? false,
-                copyForDragImage: settings?.copyForDragImage ?? settings?.useDragAndDrop ?? false,
+                copyForDragImage: settings?.copyForDragImage,
                 showOldPositionWhenDragging: settings?.showOldPositionWhenDragging ?? ResolvedLayoutConfig.Settings.defaults.showOldPositionWhenDragging,
                 dragDataMimetype: settings?.dragDataMimetype ?? ResolvedLayoutConfig.Settings.defaults.dragDataMimetype,
                 checkGlWindowKey: settings?.checkGlWindowKey ?? true,
