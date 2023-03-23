@@ -7,7 +7,7 @@ using `registerComponent` or `registerComponentDefault`.
 
 1. The `createComponentElement` function normally creates an HTML element that will contain the content of the component.  The default `createComponentElement` creates an child of the main Golden Layout root (ground) element. If you override `createComponentElement` you can create or re-use some other element.  If a call to `createComponentElement` returns `undefined` then the component is considered "virtual".
 
-2. After `createComponentElement` returns an initialization function is called. This is a function you have registered with `registerComponent` or `registerComponentDefault`. The initialization function returns a `ComponenetContainer.Handle` which can be any JavaScript value that is useful. For example it can be handle to an object in a framework like React or Vue. If there is no matching initialization function, then no further initialization is done, beyond whatever you have done in `createComponentElement`.
+2. After `createComponentElement` returns an initialization function is called. This is a function you have registered with `registerComponent` or `registerComponentDefault`. The initialization function returns a `ComponentContainer.Handle` which can be any JavaScript value that is useful. For example it can be handle to an object in a framework like React or Vue. If there is no matching initialization function, then no further initialization is done, beyond whatever you have done in `createComponentElement`.
 
 ## Component element allocation
 
@@ -17,21 +17,21 @@ If you don't set `createComponentElement` then Golden Layout will instantiate th
 
 ### Custom Allocation
 
-If you change `createComponentElement` you are responsible for allocating the component's root HTML element. It can be anywhere - for example as a child of `document.body`. It can also be a pre-existing element - for example if you want tocreate an initial component, only loading Golden Layout when you create a second component. The return value of `createComponentElement` is the  component's root HTML element.  Golden Layout will normally handle handle re-position and re-sizing the component as needed, though you can set handlers to override theseand other actions.
+If you change `createComponentElement` you are responsible for allocating the component's root HTML element. It can be anywhere - for example as a child of `document.body`. It can also be a pre-existing element - for example if you want to create an initial component, only loading Golden Layout when you create a second component. The return value of `createComponentElement` is the  component's root HTML element.  Golden Layout will normally handle handle re-position and re-sizing the component as needed, though you can set handlers to override these and other actions.
 
-A complication is if `copyForDragImage` is set. [See here.](#the-copyfordragimage-setting).
+A complication is if `copyForDragImage` is set. [See here.](#the-copyfordragimage-setting)
 
 ### Virtual Components
 
-If `createComponentElement` return `undefined` then the component is virtual.  Golden Layout calculates the space and position allocated for each component, you are responsible for aactually positioning the components, used functions called from Golden Layout. You may also need to adjust focus and visibility.
+If `createComponentElement` return `undefined` then the component is virtual.  Golden Layout calculates the space and position allocated for each component, but you are responsible for actually positioning the components, using functions called from Golden Layout. You may also need to adjust focus and visibility.
 
 ## The `copyForDragImage` setting
 
-If the the `copyForDragImage` setting (in `LayoutConfig`) is true, then an extra level of HTML element nesting is created: The result of `createComponentElement` gets the `class` `lm_component`.  It has a single child which has the `class` `lm_content`.  The latter is the actual element used by your application.
+If the `copyForDragImage` setting (in `LayoutConfig`) is true, then an extra level of HTML element nesting is created: The result of `createComponentElement` gets the `class` `lm_component`.  It has a single child which has the `class` `lm_content`.  The latter is the actual element used by your application.
 
-If `copyForDragImage` is false, the `lm_component` and the `lm_content` are the asme element.
+If `copyForDragImage` is false, the `lm_component` and the `lm_content` are the same element.
 
-If `copyForDragImage` is undefined, the default `createComponentElement` will treat it as true. A custom `createComponentElement` is do as it will, but it is recommended that it also create separate `lm_component` and `lm_content` elemens if `copyForDragImage` is undefined _or_ true.
+If `copyForDragImage` is undefined, the default `createComponentElement` will treat it as true. A custom `createComponentElement` can do as it will, but it is recommended that it also create separate `lm_component` and `lm_content` elemens if `copyForDragImage` is undefined _or_ true.
 
 Having distinct `lm_component` and `lm_content` elements allows Golden Layout to create a nicer visual representation (a drag image or drag proxy) when a component is dragged using native drag-and-drop.
 
