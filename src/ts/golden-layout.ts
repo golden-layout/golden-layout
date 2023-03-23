@@ -11,9 +11,9 @@ import { VirtualLayout } from './virtual-layout';
 /** @public */
 export class GoldenLayout extends VirtualLayout {
     /** @internal */
-    private _componentTypesMap = new Map<string, GoldenLayout.ComponentInstantiator>();
+    private _componentTypesMap = new Map<string, GoldenLayout.ComponentFactoryFunction>();
     /** @internal */
-    private _getComponentConstructorFtn: GoldenLayout.GetComponentConstructorCallback;
+    private _componentTypesDefault:  GoldenLayout.ComponentFactoryFunction | undefined;
 
     /** @internal */
     private _registeredComponentMap = new Map<ComponentContainer, ComponentContainer.Component>();
@@ -62,56 +62,12 @@ export class GoldenLayout extends VirtualLayout {
         }
     }
 
-    /**
-     * Register a new component type with the layout manager.
-     *
-     * @deprecated See {@link https://stackoverflow.com/questions/40922531/how-to-check-if-a-javascript-function-is-a-constructor}
-     * instead use {@link (GoldenLayout:class).registerComponentConstructor}
-     * or {@link (GoldenLayout:class).registerComponentFactoryFunction}
-     */
-    registerComponent(name: string,
-        componentConstructorOrFactoryFtn: GoldenLayout.ComponentConstructor | GoldenLayout.ComponentFactoryFunction,
-        virtual = false
-    ): void {
-        if (typeof componentConstructorOrFactoryFtn !== 'function') {
-            throw new ApiError('registerComponent() componentConstructorOrFactoryFtn parameter is not a function')
-        } else {
-            if (componentConstructorOrFactoryFtn.hasOwnProperty('prototype')) {
-                const componentConstructor = componentConstructorOrFactoryFtn as GoldenLayout.ComponentConstructor;
-                this.registerComponentConstructor(name, componentConstructor, virtual);
-            } else {
-                const componentFactoryFtn = componentConstructorOrFactoryFtn as GoldenLayout.ComponentFactoryFunction;
-                this.registerComponentFactoryFunction(name, componentFactoryFtn, virtual);
-            }
-        }
-    }
-
-    /**
-     * Register a new component type with the layout manager.
-     */
-    registerComponentConstructor(typeName: string, componentConstructor: GoldenLayout.ComponentConstructor, virtual = false): void {
-        if (typeof componentConstructor !== 'function') {
-            throw new Error(i18nStrings[I18nStringId.PleaseRegisterAConstructorFunction]);
-        }
-
-        const existingComponentType = this._componentTypesMap.get(typeName);
-
-        if (existingComponentType !== undefined) {
-            throw new BindError(`${i18nStrings[I18nStringId.ComponentIsAlreadyRegistered]}: ${typeName}`);
-        }
-
-        this._componentTypesMap.set(typeName, {
-                constructor: componentConstructor,
-                factoryFunction: undefined,
-                virtual,
-            }
-        );
-    }
+    //  REMOVE   registerComponentFactoryFunction(typeName: string, componentFactoryFunction: GoldenLayout.ComponentFactoryFunction, virtual = false): void {
 
     /**
      * Register a new component with the layout manager.
      */
-    registerComponentFactoryFunction(typeName: string, componentFactoryFunction: GoldenLayout.ComponentFactoryFunction, virtual = false): void {
+    registerComponent(typeName: string, componentFactoryFunction: GoldenLayout.ComponentFactoryFunction): void {
         if (typeof componentFactoryFunction !== 'function') {
             throw new BindError('Please register a constructor function');
         }
@@ -122,43 +78,17 @@ export class GoldenLayout extends VirtualLayout {
             throw new BindError(`${i18nStrings[I18nStringId.ComponentIsAlreadyRegistered]}: ${typeName}`);
         }
 
-        this._componentTypesMap.set(typeName, {
-                constructor: undefined,
-                factoryFunction: componentFactoryFunction,
-                virtual,
-            }
-        );
+        this._componentTypesMap.set(typeName, componentFactoryFunction);
     }
 
-    /**
-     * Register a component function with the layout manager. This function should
-     * return a constructor for a component based on a config.
-     * This function will be called if a component type with the required name is not already registered.
-     * It is recommended that applications use the {@link (VirtualLayout:class).getComponentEvent} and
-     * {@link (VirtualLayout:class).releaseComponentEvent} instead of registering a constructor callback
-     * @deprecated use {@link (GoldenLayout:class).registerGetComponentConstructorCallback}
-     */
-    registerComponentFunction(callback: GoldenLayout.GetComponentConstructorCallback): void {
-        this.registerGetComponentConstructorCallback(callback);
-    }
-
-    /**
-     * Register a callback closure with the layout manager which supplies a Component Constructor.
-     * This callback should return a constructor for a component based on a config.
-     * This function will be called if a component type with the required name is not already registered.
-     * It is recommended that applications use the {@link (VirtualLayout:class).getComponentEvent} and
-     * {@link (VirtualLayout:class).releaseComponentEvent} instead of registering a constructor callback
-     */
-    registerGetComponentConstructorCallback(callback: GoldenLayout.GetComponentConstructorCallback): void {
-        if (typeof callback !== 'function') {
-            throw new Error('Please register a callback function');
+    registerComponentDefault(componentFactoryFunction: GoldenLayout.ComponentFactoryFunction): void {
+        if (typeof componentFactoryFunction !== 'function') {
+            throw new BindError('Please register a constructor function');
         }
-
-        if (this._getComponentConstructorFtn !== undefined) {
-            console.warn('Multiple component functions are being registered.  Only the final registered function will be used.')
+        if (this._componentTypesDefault !== undefined) {
+            throw new BindError(`${i18nStrings[I18nStringId.ComponentIsAlreadyRegistered]} - default`);
         }
-
-        this._getComponentConstructorFtn = callback;
+        this._componentTypesDefault = componentFactoryFunction;
     }
 
     getRegisteredComponentTypeNames(): string[] {
@@ -175,47 +105,22 @@ export class GoldenLayout extends VirtualLayout {
      * @param config - The item config
      * @public
      */
-    getComponentInstantiator(config: ResolvedComponentItemConfig): GoldenLayout.ComponentInstantiator | undefined {
-        let instantiator: GoldenLayout.ComponentInstantiator | undefined;
+    getComponentInstantiator(config: ResolvedComponentItemConfig): GoldenLayout.ComponentFactoryFunction | undefined {
+        let instantiator: GoldenLayout.ComponentFactoryFunction | undefined;
 
         const typeName = ResolvedComponentItemConfig.resolveComponentTypeName(config)
         if (typeName !== undefined) {
             instantiator = this._componentTypesMap.get(typeName);
         }
-        if (instantiator === undefined) {
-            if (this._getComponentConstructorFtn !== undefined) {
-                instantiator = {
-                    constructor: this._getComponentConstructorFtn(config),
-                    factoryFunction: undefined,
-                    virtual: false,
-                }
-            }
-        }
-
-        return instantiator;
+        return instantiator || this._componentTypesDefault;
     }
 
     /** @internal */
-    override bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BindableComponent {
-        let instantiator: GoldenLayout.ComponentInstantiator | undefined;
+    override bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.Handle {
+        const factoryFunction = this.getComponentInstantiator(itemConfig);
 
-        const typeName = ResolvedComponentItemConfig.resolveComponentTypeName(itemConfig);
-        if (typeName !== undefined) {
-            instantiator = this._componentTypesMap.get(typeName);
-        }
-        if (instantiator === undefined) {
-            if (this._getComponentConstructorFtn !== undefined) {
-                instantiator = {
-                    constructor: this._getComponentConstructorFtn(itemConfig),
-                    factoryFunction: undefined,
-                    virtual: false,
-                }
-            }
-        }
-
-        let result: ComponentContainer.BindableComponent;
-        if (instantiator !== undefined) {
-            const virtual = instantiator.virtual;
+        let result: ComponentContainer.Handle = undefined;
+        if (factoryFunction !== undefined) {
             // handle case where component is obtained by name or component constructor callback
             let componentState: JsonValue | undefined;
             if (itemConfig.componentState === undefined) {
@@ -225,19 +130,11 @@ export class GoldenLayout extends VirtualLayout {
                 componentState = deepExtendValue({}, itemConfig.componentState) as JsonValue;
             }
 
-            let component: ComponentContainer.Component | undefined;
-            const componentConstructor = instantiator.constructor;
-            if (componentConstructor !== undefined) {
-                component = new componentConstructor(container, componentState, virtual);
-            } else {
-                const factoryFunction = instantiator.factoryFunction;
-                if (factoryFunction !== undefined) {
-                    component = factoryFunction(container, componentState, virtual);
-                } else {
-                    throw new AssertError('LMBCFFU10008');
-                }
+            if (factoryFunction !== undefined) {
+                result = factoryFunction(container, componentState);
             }
 
+            /*
             if (virtual) {
                 if (component === undefined) {
                     throw new UnexpectedUndefinedError('GLBCVCU988774');
@@ -261,21 +158,22 @@ export class GoldenLayout extends VirtualLayout {
             result = {
                 virtual: instantiator.virtual,
                 component,
-            };
+                };
+            */
 
         } else {
-            // Use getComponentEvent
-            result = super.bindComponent(container, itemConfig);
+            //result = super.bindComponent(container, itemConfig);
         }
 
         return result;
     }
 
     /** @internal */
-    override unbindComponent(container: ComponentContainer, virtual: boolean, component: ComponentContainer.Component | undefined): void {
+    override unbindComponent(container: ComponentContainer, handle: ComponentContainer.Handle): void {
+        /*
         const registeredComponent = this._registeredComponentMap.get(container);
         if (registeredComponent === undefined) {
-            super.unbindComponent(container, virtual, component); // was not created from registration so use virtual unbind events
+            super.unbindComponent(container, handle); // was not created from registration so use virtual unbind events
         } else {
             const virtuableComponent = this._virtuableComponentMap.get(container);
             if (virtuableComponent !== undefined) {
@@ -288,6 +186,7 @@ export class GoldenLayout extends VirtualLayout {
                 }
             }
         }
+        */
     }
 
     override fireBeforeVirtualRectingEvent(count: number): void {
@@ -333,13 +232,6 @@ export namespace GoldenLayout {
         rootHtmlElement: HTMLElement;
     }
 
-    export type ComponentConstructor = new(container: ComponentContainer, state: JsonValue | undefined, virtual: boolean) => ComponentContainer.Component;
-    export type ComponentFactoryFunction = (container: ComponentContainer, state: JsonValue | undefined, virtual: boolean) => ComponentContainer.Component | undefined;
-    export type GetComponentConstructorCallback = (this: void, config: ResolvedComponentItemConfig) => ComponentConstructor;
-
-    export interface ComponentInstantiator {
-        constructor: ComponentConstructor | undefined;
-        factoryFunction: ComponentFactoryFunction | undefined;
-        virtual: boolean;
-    }
+    // ??? combine with VirtualLayout.BindComponentEventHandler
+    export type ComponentFactoryFunction = (container: ComponentContainer, state: JsonValue | undefined) => ComponentContainer.Handle;
 }

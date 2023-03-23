@@ -414,9 +414,7 @@ export interface ComponentItemConfig extends HeaderedItemConfig {
     /**
      * The type of the component.
      * `componentType` must be of type `string` if it is registered with any of the following functions:
-     * * {@link (GoldenLayout:class).registerComponent} (deprecated)
-     * * {@link (GoldenLayout:class).registerComponentConstructor}
-     * * {@link (GoldenLayout:class).registerComponentFactoryFunction}
+     * * {@link (GoldenLayout:class).registerComponent}
      */
     componentType: JsonValue;
     /**

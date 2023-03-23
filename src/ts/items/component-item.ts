@@ -34,7 +34,6 @@ export class ComponentItem extends ContentItem {
     get reorderEnabled(): boolean { return this._reorderEnabled; }
     /** @internal */
     get initialWantMaximise(): boolean { return this._initialWantMaximise; }
-    get component(): ComponentContainer.Component | undefined { return this._container.component; }
     get container(): ComponentContainer { return this._container; }
     get parentItem(): ComponentParentableItem { return this._parentItem; }
 
@@ -254,7 +253,7 @@ export class ComponentItem extends ContentItem {
         const contentInset = this.layoutManager.layoutConfig.dimensions.contentInset;
         this.element.style.margin = contentInset ? `${contentInset}px` : '';
 
-        const contentElement = this.component;
+        const contentElement = this.container.element;
         const componentElement =
             (contentElement instanceof HTMLElement
                 && contentElement.parentNode instanceof HTMLElement

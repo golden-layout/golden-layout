@@ -15,8 +15,8 @@ import { deepExtend, setElementHeight, setElementWidth } from '../utils/utils';
 export class ComponentContainer extends EventEmitter {
     /** @internal */
     private _componentType: JsonValue;
-    /** @internal */ // DEPRECATED
-    private _boundComponent: ComponentContainer.BindableComponent;
+    /** @internal */
+    private _handle: ComponentContainer.Handle;
     /** @internal */
     private _width: number;
     /** @internal */
@@ -52,9 +52,8 @@ export class ComponentContainer extends EventEmitter {
     /** @internal @deprecated use {@link (ComponentContainer:class).componentType} */
     get componentName(): JsonValue { return this._componentType; }
     get componentType(): JsonValue { return this._componentType; }
-    get virtual(): boolean { return this._boundComponent.virtual; }
-    // FIXME get rid of _boundComponent
-    get component(): ComponentContainer.Component { return this._boundComponent.component; }
+    get handle(): ComponentContainer.Handle { return this._handle; }
+    get virtual(): boolean { return this._element === undefined; }
     get tab(): Tab { return this._tab; }
     get title(): string { return this._parent.title; }
     get layoutManager(): LayoutManager { return this._layoutManager; }
@@ -105,7 +104,7 @@ export class ComponentContainer extends EventEmitter {
         this._initialState = _config.componentState;
         this._state = this._initialState;
 
-        this._boundComponent = this.layoutManager.bindComponent(this, _config);
+        this._handle = this.layoutManager.bindComponent(this, _config);
 
         //FIXME:this.updateElementPositionPropertyFromBoundComponent();
     }
@@ -236,7 +235,7 @@ export class ComponentContainer extends EventEmitter {
 
             this._updateItemConfigEvent(config);
 
-            this._boundComponent = this.layoutManager.bindComponent(this, config);
+            this._handle = this.layoutManager.bindComponent(this, config);
             this.updateElementPositionPropertyFromBoundComponent();
 
             if (this.virtualVisibilityChangeRequiredEvent !== undefined) {
@@ -421,7 +420,7 @@ export class ComponentContainer extends EventEmitter {
     /** @internal */
     private updateElementPositionPropertyFromBoundComponent() {
         if (this._element) {
-            if (this._boundComponent.virtual) {
+            if (this.virtual) {
                 this._element.style.position = 'static';
             } else {
                 this._element.style.position = ''; // set it back to attribute value
@@ -463,8 +462,8 @@ export class ComponentContainer extends EventEmitter {
         if (this._stackMaximised) {
             this.exitStackMaximised();
         }
-        this.emit('beforeComponentRelease', this._boundComponent.component);
-        this.layoutManager.unbindComponent(this, this._boundComponent.virtual, this._boundComponent.component);
+        this.emit('beforeComponentRelease', this._handle);
+        this.layoutManager.unbindComponent(this, this._handle);
     }
 }
 
@@ -473,12 +472,9 @@ export type ItemContainer = ComponentContainer;
 
 /** @public */
 export namespace ComponentContainer {
+    export type Handle = unknown;
+    /* @deprecated - future may be reused as synonym for ComponentContainer*/
     export type Component = unknown;
-
-    export interface BindableComponent {
-        component: Component;
-        virtual: boolean;
-    }
 
     export type StateRequestEventHandler = (this: void) => JsonValue | undefined;
     export type VirtualRectingRequiredEvent = (this: void, container: ComponentContainer, width: number, height: number) => void; // DEPRECATED

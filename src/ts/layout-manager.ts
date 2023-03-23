@@ -304,9 +304,9 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /** @internal */
-    abstract bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BindableComponent;
+    abstract bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.Handle;
     /** @internal */
-    abstract unbindComponent(container: ComponentContainer, virtual: boolean, component: ComponentContainer.Component | undefined): void;
+    abstract unbindComponent(container: ComponentContainer, handle: ComponentContainer.Handle): void;
 
     _hideTargetIndicator() : void { // FIXME rename? hideTargetIndicator
         const dropTargetIndicator = this.dropTargetIndicator;
@@ -1946,17 +1946,15 @@ export abstract class LayoutManager extends EventEmitter {
 
         const moveWindow = ! cancel && ! this.inSomeWindow && onlyWindow;
         if (! (cancel || moveWindow)
-            && component
+            && component && component.container
             && this._dragState >= DragState.DroppedElsewhere) {
             // dropped in other window or to desktop
-            if (component.component) {
-                const parent = component.parent;
-                // dragExported callback may need size/position of element,
-                // which it can't get if display is 'none'.
-                if (parent && parent.type === 'stack')
-                    parent.element.style.display='';
-                component.container.emit('dragExported', screenX, screenY, component);
-            }
+            const parent = component.parent;
+            // dragExported callback may need size/position of element,
+            // which it can't get if display is 'none'.
+            if (parent && parent.type === 'stack')
+                parent.element.style.display='';
+            component.container.emit('dragExported', screenX, screenY, component);
         }
 
         this.doDeferredActions(cancel || !!moveWindow);

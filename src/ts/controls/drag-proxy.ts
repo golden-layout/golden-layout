@@ -163,8 +163,9 @@ export class DragProxy extends EventEmitter {
 
         this._element.style.left = numberToPixels(x);
         this._element.style.top = numberToPixels(y);
-        this._area = this._layoutManager.getArea(x, y);
+        // FIXME set component.contentElement postion to that of this._proxyContainerElement
 
+        this._area = this._layoutManager.getArea(x, y);
         if (this._area !== null) {
             this._lastValidArea = this._area;
             this._area.contentItem.highlightDropZone(x, y, this._area);

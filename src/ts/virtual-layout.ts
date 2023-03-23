@@ -8,18 +8,7 @@ import { DomConstants } from './utils/dom-constants';
 import { I18nStringId, i18nStrings } from './utils/i18n-strings';
 
 /** @public */
-export class VirtualLayout extends LayoutManager {
-    /**
-     * @deprecated Use {@link (VirtualLayout:class).bindComponentEvent} and
-     * {@link (VirtualLayout:class).unbindComponentEvent} with virtual components
-     */
-    getComponentEvent: VirtualLayout.GetComponentEventHandler | undefined;
-    /**
-     * @deprecated Use {@link (VirtualLayout:class).bindComponentEvent} and
-     * {@link (VirtualLayout:class).unbindComponentEvent} with virtual components
-     */
-    releaseComponentEvent: VirtualLayout.ReleaseComponentEventHandler | undefined;
-
+export abstract class VirtualLayout extends LayoutManager {
     bindComponentEvent: VirtualLayout.BindComponentEventHandler | undefined;
     unbindComponentEvent: VirtualLayout.UnbindComponentEventHandler | undefined;
 
@@ -209,60 +198,28 @@ export class VirtualLayout extends LayoutManager {
         }
     }
 
-    /** @internal */
-    override bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BindableComponent {
+    /* * @internal * /
+    override bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.Handle {
         if (this.bindComponentEvent !== undefined) {
             const bindableComponent = this.bindComponentEvent(container, itemConfig);
             return bindableComponent;
-        } else {
-            if (this.getComponentEvent !== undefined) {
-                return {
-                    virtual: false,
-                    component: this.getComponentEvent(container, itemConfig),
-                }
-            } else {
-                // There is no component registered for this type, and we don't have a getComponentEvent defined.
-                // This might happen when the user pops out a dialog and the component types are not registered upfront.
-                const text = i18nStrings[I18nStringId.ComponentTypeNotRegisteredAndBindComponentEventHandlerNotAssigned];
-                const message = `${text}: ${JSON.stringify(itemConfig)}`
-                throw new BindError(message);
-            }
+
         }
     }
+    */
 
     /** @internal */
-    override unbindComponent(container: ComponentContainer, virtual: boolean, component: ComponentContainer.Component | undefined): void {
+    override unbindComponent(container: ComponentContainer, handle: ComponentContainer.Handle): void {
         if (this.unbindComponentEvent !== undefined) {
             this.unbindComponentEvent(container);
-        } else {
-            if (!virtual && this.releaseComponentEvent !== undefined) {
-                if (component === undefined) {
-                    throw new UnexpectedUndefinedError('VCUCRCU333998');
-                } else {
-                    this.releaseComponentEvent(container, component);
-                }
-            }
         }
     }
 }
 
 /** @public */
 export namespace VirtualLayout {
-    /**
-     * @deprecated Use virtual components with {@link (VirtualLayout:class).bindComponentEvent} and
-     * {@link (VirtualLayout:class).unbindComponentEvent} events.
-     */
-    export type GetComponentEventHandler =
-        (this: void, container: ComponentContainer, itemConfig: ResolvedComponentItemConfig) => ComponentContainer.Component;
-    /**
-     * @deprecated Use virtual components with {@link (VirtualLayout:class).bindComponentEvent} and
-     * {@link (VirtualLayout:class).unbindComponentEvent} events.
-     */
-    export type ReleaseComponentEventHandler =
-        (this: void, container: ComponentContainer, component: ComponentContainer.Component) => void;
-
     export type BindComponentEventHandler =
-        (this: void, container: ComponentContainer, itemConfig: ResolvedComponentItemConfig) => ComponentContainer.BindableComponent;
+        (this: void, container: ComponentContainer, itemConfig: ResolvedComponentItemConfig) => ComponentContainer.Handle;
     export type UnbindComponentEventHandler =
         (this: void, container: ComponentContainer) => void;
 
