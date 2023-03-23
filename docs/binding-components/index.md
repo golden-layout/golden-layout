@@ -1,13 +1,57 @@
 # Binding Components
 
-Golden Layout binds to components and then controls their position, size and visibility (positioning) so that they fit within a layout. There are 4 ways Golden Layout can bind to a component:
+Golden Layout binds to components and then controls their position, size and visibility (positioning) so that they fit within a layout.
 
-1. **Embedding via Registration** (classic)\
+You can control how a component is allocated and bound by setting the `createComponentElement` function, or by registering a initialization function
+using `registerComponent` or `registerComponentDefault`.
+
+1. The `createComponentElement` function normally creates an HTML element that will contain the content of the component.  The default `createComponentElement` creates an child of the main Golden Layout root (ground) element. If you override `createComponentElement` you can create or re-use some other element.  If a call to `createComponentElement` returns `undefined` then the component is considered "virtual".
+
+2. After `createComponentElement` returns an initialization function is called. This is a function you have registered with `registerComponent` or `registerComponentDefault`. The initialization function returns a `ComponenetContainer.Handle` which can be any JavaScript value that is useful. For example it can be handle to an object in a framework like React or Vue. If there is no matching initialization function, then no further initialization is done, beyond whatever you have done in `createComponentElement`.
+
+## Component element allocation
+
+### Default allocation
+
+If you don't set `createComponentElement` then Golden Layout will instantiate the component's root HTML element within Golden Layout's own DOM hierarchy sub-tree, as a direct child of the root element. Components and their ancestors are not reparented when a layout is changed, assuming the component remains in the same top-level window and Golden Layout instance. This avoids breaking iframe, sockets, etc.
+
+### Custom Allocation
+
+If you change `createComponentElement` you are responsible for allocating the component's root HTML element. It can be anywhere - for example as a child of `document.body`. It can also be a pre-existing element - for example if you want tocreate an initial component, only loading Golden Layout when you create a second component. The return value of `createComponentElement` is the  component's root HTML element.  Golden Layout will normally handle handle re-position and re-sizing the component as needed, though you can set handlers to override theseand other actions.
+
+A complication is if `copyForDragImage` is set. [See here.](#the-copyfordragimage-setting).
+
+### Virtual Components
+
+If `createComponentElement` return `undefined` then the component is virtual.  Golden Layout calculates the space and position allocated for each component, you are responsible for aactually positioning the components, used functions called from Golden Layout. You may also need to adjust focus and visibility.
+
+## The `copyForDragImage` setting
+
+If the the `copyForDragImage` setting (in `LayoutConfig`) is true, then an extra level of HTML element nesting is created: The result of `createComponentElement` gets the `class` `lm_component`.  It has a single child which has the `class` `lm_content`.  The latter is the actual element used by your application.
+
+If `copyForDragImage` is false, the `lm_component` and the `lm_content` are the asme element.
+
+If `copyForDragImage` is undefined, the default `createComponentElement` will treat it as true. A custom `createComponentElement` is do as it will, but it is recommended that it also create separate `lm_component` and `lm_content` elemens if `copyForDragImage` is undefined _or_ true.
+
+Having distinct `lm_component` and `lm_content` elements allows Golden Layout to create a nicer visual representation (a drag image or drag proxy) when a component is dragged using native drag-and-drop.
+
+(Creating a drag image is done differently when the `useDragAndDrop` setting is false.)
+
+## Old - needs to be updated/replaced.
+
+There are 4 ways Golden Layout can bind to a component:
+
+1. **Embedding via Registration** (classic)
+
+_Replace by default alllocation_
 A component's constructor/factory is registered with Golden Layout. Golden Layout will instantiate an instance when required. The constructor/factory will add the component's root HTML element within Golden Layout's own DOM hierarchy sub-tree. This is the classic Golden Layout binding method. With this binding method an ancestor of the component's root HTML element could be reparented if the layout changes.
+
 1. **Embedding via Events**\
 Components are obtained on demand by events. An event handler will construct or otherwise fetch the component and return it. The event handler will also add the component's root HTML element within Golden Layout's own DOM hierarchy sub-tree. This is the binding method introduced in version 2.
+
 1. **Virtual via Registration**\
 A component's constructor/factory is registered with Golden Layout. Golden Layout will instantiate an instance when required. The component will use the same positioning as virtual components however Golden Layout will handle all the events internally.
+
 1. **Virtual via Events** (Virtual Components)\
 With virtual components, Golden Layout never interacts directly with components. The application controls the construction/allocation, destruction/deallocation and positioning of components. Golden Layout will advise the application when components are needed and no longer needed via events. It will also advise about components' positioning via events. This allows an application to control the placement of components in the DOM hierarchy and components' root HTML element's ancestors are not reparented when the layout is changed.
 
@@ -36,7 +80,6 @@ When a component is removed from Golden Layout it will be necessary to remove th
 With virtual components, Golden Layout knows nothing about components and does not include the component's HTML elements in its own DOM hierarchy. Instead, whenever a component needs its position, size or visibility changed, Golden Layout will fire events which allow the application to change a component's position, size or visibility.  This is analogous to virtual grids where strings and other content to be displayed in a grid, are not included within the grid. Instead the grid fires events whenever it needs to display content. The application will return the required content.
 
 Virtual Components has the following advantages:
-* Components and their ancestors are not reparented when a layout is changed. This avoids breaking iframe, sockets, etc.
 * It is no longer necessary to extract the top level HTML element from a component.
 * Applications using frameworks with their own component hierarchy, such as Angular and Vue, no longer have to break their component hierarchy to insert Golden Layout. The framework's methodology for handling parent/child relationships can be maintained even with the components which Golden Layout is positioning. (Teleporting component's HTML elements is no longer necessary)
 * Applications typically bind a component's top level HTML element to the Golden Layout root element. Debugging becomes easier as the DOM hierarchy relevant to your application is a lot shallower.

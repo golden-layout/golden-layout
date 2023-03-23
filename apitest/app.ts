@@ -299,7 +299,7 @@ export class App {
         }
     }
 
-    private handleBindComponentEvent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BindableComponent {
+    private handleBindComponentEvent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.Handle {
         const componentTypeName = ResolvedComponentItemConfig.resolveComponentTypeName(itemConfig);
         if (componentTypeName === undefined) {
             throw new Error('handleBindComponentEvent: Undefined componentTypeName');
