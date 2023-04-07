@@ -956,28 +956,14 @@ export abstract class LayoutManager extends EventEmitter {
         if (--this._virtualSizedContainerAddingBeginCount === 0) {
             const count = this._virtualSizedContainers.length;
             if (count > 0) {
-                this.fireBeforeVirtualRectingEvent(count);
+                this.beforeVirtualRectingEvent?.(count);
                 for (let i = 0; i < count; i++) {
                     const container = this._virtualSizedContainers[i];
                     container.notifyVirtualRectingRequired();
                 }
-                this.fireAfterVirtualRectingEvent();
+                this.afterVirtualRectingEvent?.();
                 this._virtualSizedContainers.length = 0;
             }
-        }
-    }
-
-    /** @internal */
-    fireBeforeVirtualRectingEvent(count: number): void {
-        if (this.beforeVirtualRectingEvent !== undefined) {
-            this.beforeVirtualRectingEvent(count);
-        }
-    }
-
-    /** @internal */
-    fireAfterVirtualRectingEvent(): void {
-        if (this.afterVirtualRectingEvent !== undefined) {
-            this.afterVirtualRectingEvent();
         }
     }
 

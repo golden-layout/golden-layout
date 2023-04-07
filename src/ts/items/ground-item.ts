@@ -168,21 +168,8 @@ export class GroundItem extends ComponentParentableItem {
                 setElementHeight(this.contentItems[0].element, height);
             }
 
-            this.updateContentItemsSize();
-        }
-    }
-
-    /**
-     * Adds a Root ContentItem.
-     * Internal only.  To replace Root ContentItem with API, use {@link (LayoutManager:class).updateRootSize}
-     */
-    override updateSize(): void {
-        this.layoutManager.beginVirtualSizedContainerAdding();
-        try {
-            this.updateNodeSize();
-            this.updateContentItemsSize();
-        } finally {
-            this.layoutManager.endVirtualSizedContainerAdding();
+            //this.updateContentItemsSize();
+            this.updateSize();
         }
     }
 
@@ -320,7 +307,7 @@ export class GroundItem extends ComponentParentableItem {
         // only applicable if ComponentItem is root and then it always has focus
     }
 
-    private updateNodeSize(): void {
+    updateNodeSize(): void {
         const { width, height } = this.layoutManager.containerWidthAndHeight();
 
         setElementWidth(this.element, width);

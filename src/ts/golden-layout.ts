@@ -1,11 +1,11 @@
 import { LayoutConfig } from './config/config';
 import { ResolvedComponentItemConfig } from './config/resolved-config';
 import { ComponentContainer } from './container/component-container';
-import { ApiError, BindError } from './errors/external-error';
-import { AssertError, UnexpectedUndefinedError } from './errors/internal-error';
+import { BindError } from './errors/external-error';
+import { UnexpectedUndefinedError } from './errors/internal-error';
 import { I18nStringId, i18nStrings } from './utils/i18n-strings';
 import { JsonValue, LogicalZIndex } from './utils/types';
-import { deepExtendValue, ensureElementPositionAbsolute, setElementDisplayVisibility } from './utils/utils';
+import { deepExtendValue, setElementDisplayVisibility } from './utils/utils';
 import { VirtualLayout } from './virtual-layout';
 
 /** @public */
@@ -19,8 +19,6 @@ export class GoldenLayout extends VirtualLayout {
     private _registeredComponentMap = new Map<ComponentContainer, ComponentContainer.Component>();
     /** @internal */
     private _virtuableComponentMap = new Map<ComponentContainer, GoldenLayout.VirtuableComponent>(); // FIXME remove
-    /** @internal */
-    private _goldenLayoutBoundingClientRect: DOMRect;
 
     /** @internal */
     private _containerVirtualVisibilityChangeRequiredEventListener =
@@ -188,12 +186,6 @@ export class GoldenLayout extends VirtualLayout {
         }
         */
     }
-
-    override fireBeforeVirtualRectingEvent(count: number): void {
-        this._goldenLayoutBoundingClientRect = this.container.getBoundingClientRect();
-        super.fireBeforeVirtualRectingEvent(count);
-    }
-
 
     /** @internal */
     private handleContainerVirtualVisibilityChangeRequiredEvent(container: ComponentContainer, visible: boolean): void {

@@ -242,11 +242,11 @@ export class ComponentContainer extends EventEmitter {
                 this.virtualVisibilityChangeRequiredEvent(this, this._visible);
             }
             if (this.virtualRectingRequiredEvent !== undefined) {
-                this._layoutManager.fireBeforeVirtualRectingEvent(1);
+                this._layoutManager.beforeVirtualRectingEvent?.(1);
                 try {
                     this.virtualRectingRequiredEvent(this, this._width, this._height);
                 } finally {
-                    this._layoutManager.fireAfterVirtualRectingEvent();
+                    this._layoutManager.afterVirtualRectingEvent?.();
                 }
             }
             this.setBaseLogicalZIndex();
@@ -382,11 +382,11 @@ export class ComponentContainer extends EventEmitter {
     /** @internal */
     drag(): void {
         if (this.virtualRectingRequiredEvent !== undefined) {
-            this._layoutManager.fireBeforeVirtualRectingEvent(1);
+            this._layoutManager.beforeVirtualRectingEvent?.(1);
             try {
                 this.virtualRectingRequiredEvent(this, this._width, this._height);
             } finally {
-                this._layoutManager.fireAfterVirtualRectingEvent();
+                this._layoutManager.afterVirtualRectingEvent?.();
             }
         }
     }
@@ -425,16 +425,6 @@ export class ComponentContainer extends EventEmitter {
             } else {
                 this._element.style.position = ''; // set it back to attribute value
             }
-        }
-    }
-
-    /** @internal */
-    addVirtualSizedContainerToLayoutManager(): void {
-        this._layoutManager.beginVirtualSizedContainerAdding();
-        try {
-            this._layoutManager.addVirtualSizedContainer(this);
-        } finally {
-            this._layoutManager.endVirtualSizedContainerAdding();
         }
     }
 

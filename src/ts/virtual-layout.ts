@@ -1,11 +1,9 @@
 import { LayoutConfig } from './config/config';
 import { ResolvedComponentItemConfig, ResolvedLayoutConfig, ResolvedPopoutLayoutConfig } from './config/resolved-config';
 import { ComponentContainer } from './container/component-container';
-import { BindError } from './errors/external-error';
 import { UnexpectedUndefinedError } from './errors/internal-error';
 import { LayoutManager } from './layout-manager';
 import { DomConstants } from './utils/dom-constants';
-import { I18nStringId, i18nStrings } from './utils/i18n-strings';
 
 /** @public */
 export abstract class VirtualLayout extends LayoutManager {

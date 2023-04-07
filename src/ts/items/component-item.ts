@@ -155,11 +155,6 @@ export class ComponentItem extends ContentItem {
     }
 
     /** @internal */
-    override updateSize(): void {
-        this.updateNodeSize();
-    }
-
-    /** @internal */
     override init(): void {
         this.updateNodeSize();
 
@@ -250,31 +245,30 @@ export class ComponentItem extends ContentItem {
 
     /** @internal */
     updateNodeSize(): void {
+        // OLD:  this._container.setSizeToNodeSize(width, height, force)
         const contentInset = this.layoutManager.layoutConfig.dimensions.contentInset;
         this.element.style.margin = contentInset ? `${contentInset}px` : '';
 
-        const contentElement = this.container.element;
-        const componentElement =
-            (contentElement instanceof HTMLElement
-                && contentElement.parentNode instanceof HTMLElement
-                && contentElement.parentNode.classList.contains("lm_component"))
-            ? contentElement.parentNode
-            : contentElement;
+        const contentElement = this.container.contentElement;
+        const componentElement = this.container.element;
         if (contentElement instanceof HTMLElement
             // && contentElement.style.display !== 'none'
             && this.parentItem instanceof Stack) {
             // Do not update size of hidden components to prevent unwanted reflows
             const stackElement = this.parentItem.element;
-            const stackBounds = stackElement.getBoundingClientRect();
+            let stackBounds;
             const itemElement = this.element;
             const itemBounds = itemElement.getBoundingClientRect();
             const layoutBounds = this.layoutManager.container.getBoundingClientRect();
             if (componentElement instanceof HTMLElement
                 && contentElement !== componentElement) {
+                stackBounds = stackElement.getBoundingClientRect();
                 componentElement.style.top = numberToPixels(stackBounds.top - layoutBounds.top);
                 componentElement.style.left = numberToPixels(stackBounds.left - layoutBounds.left);
                 componentElement.style.width = numberToPixels(stackBounds.width);
                 componentElement.style.height = numberToPixels(stackBounds.height);
+            } else {
+                stackBounds = layoutBounds;
             }
             contentElement.style.position = "absolute";
             contentElement.style.top = numberToPixels(itemBounds.top - stackBounds.top);
@@ -283,7 +277,8 @@ export class ComponentItem extends ContentItem {
             contentElement.style.height = numberToPixels(itemBounds.height);
         }
         else console.log('updateNodeSize ignored');
-        this.container.addVirtualSizedContainerToLayoutManager();
+
+        this.layoutManager.addVirtualSizedContainer(this.container);
     }
 }
 

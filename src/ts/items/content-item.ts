@@ -111,9 +111,20 @@ export abstract class ContentItem extends EventEmitter {
 
     /**
      * Updaters the size of the component and its children, called recursively
+     * Called whenever the dimensions of this item or one of its parents change
      * @internal
      */
-    abstract updateSize(): void;
+    updateSize(): void {
+        this.layoutManager.beginVirtualSizedContainerAdding();
+        try {
+            this.updateNodeSize();
+            this.updateContentItemsSize();
+        } finally {
+            this.layoutManager.endVirtualSizedContainerAdding();
+        }
+    }
+
+    abstract updateNodeSize(): void;
 
     /**
      * Removes a child node (and its children) from the tree

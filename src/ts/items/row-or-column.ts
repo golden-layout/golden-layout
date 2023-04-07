@@ -232,19 +232,6 @@ export class RowOrColumn extends ContentItem {
     }
 
     /**
-     * Called whenever the dimensions of this item or one of its parents change
-     */
-    override updateSize(): void {
-        this.layoutManager.beginVirtualSizedContainerAdding();
-        try {
-            this.updateNodeSize();
-            this.updateContentItemsSize();
-        } finally {
-            this.layoutManager.endVirtualSizedContainerAdding();
-        }
-    }
-
-    /**
      * Invoked recursively by the layout manager. ContentItem.init appends
      * the contentItem's DOM elements to the container, RowOrColumn init adds splitters
      * in between them
@@ -289,7 +276,7 @@ export class RowOrColumn extends ContentItem {
     }
 
     /** @internal */
-    private updateNodeSize(): void {
+    updateNodeSize(): void {
         if (this.contentItems.length > 0) {
             this.calculateRelativeSizes();
             this.setAbsoluteSizes();

@@ -139,17 +139,6 @@ export class Stack extends ComponentParentableItem {
     }
 
     /** @internal */
-    override updateSize(): void {
-        this.layoutManager.beginVirtualSizedContainerAdding();
-        try {
-            this.updateNodeSize();
-            this.updateContentItemsSize();
-        } finally {
-            this.layoutManager.endVirtualSizedContainerAdding();
-        }
-    }
-
-    /** @internal */
     override init(): void {
         if (this.isInitialised === true) return;
 
@@ -690,7 +679,7 @@ export class Stack extends ComponentParentableItem {
     }
 
     /** @internal */
-    private updateNodeSize(): void {
+    updateNodeSize(): void {
         if (this.element.style.display !== 'none') {
             this.emit('resize');
             this.emitStateChangedEvent();
