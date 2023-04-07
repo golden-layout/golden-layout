@@ -124,6 +124,9 @@ export abstract class ContentItem extends EventEmitter {
         }
     }
 
+    /**
+     * @internal
+     */
     abstract updateNodeSize(): void;
 
     /**

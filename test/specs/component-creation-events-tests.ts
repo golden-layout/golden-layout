@@ -15,7 +15,7 @@ describe('component creation', function () {
                     return;
 		}
 
-		layout.registerComponentFactoryFunction('testComponent', Recorder);
+		layout.registerComponent('testComponent', Recorder);
 
 		layout.addEventListener('itemCreated', eventListener.itemCreated);
 	});

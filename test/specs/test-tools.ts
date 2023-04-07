@@ -6,7 +6,7 @@ export default class TestTools {
 	public static createLayout(config: LayoutConfig): GoldenLayout {
 		const myLayout = new GoldenLayout();
 
-		myLayout.registerComponentFactoryFunction(this.TEST_COMPONENT_NAME, TestTools.createTestComponent);
+		myLayout.registerComponent(this.TEST_COMPONENT_NAME, TestTools.createTestComponent);
 
 		myLayout.loadLayout(config);
 

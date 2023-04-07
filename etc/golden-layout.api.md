@@ -54,22 +54,19 @@ export class ComponentContainer extends EventEmitter {
     _config: ResolvedComponentItemConfig,
     _parent: ComponentItem,
     _layoutManager: LayoutManager,
-    _element: HTMLElement | undefined,
     _updateItemConfigEvent: ComponentContainer.UpdateItemConfigEventHandler,
     _showEvent: ComponentContainer.ShowEventHandler,
     _hideEvent: ComponentContainer.HideEventHandler,
     _focusEvent: ComponentContainer.FocusEventHandler,
     _blurEvent: ComponentContainer.BlurEventHandler);
-    // @internal (undocumented)
-    addVirtualSizedContainerToLayoutManager(): void;
     blur(suppressEvent?: boolean): void;
     close(): void;
-    // (undocumented)
-    get component(): ComponentContainer.Component;
     // @internal @deprecated (undocumented)
     get componentName(): JsonValue;
     // (undocumented)
     get componentType(): JsonValue;
+    // (undocumented)
+    readonly contentElement: HTMLElement | undefined;
     // @internal (undocumented)
     destroy(): void;
     // @internal (undocumented)
@@ -90,6 +87,8 @@ export class ComponentContainer extends EventEmitter {
     getElement(): HTMLElement | undefined;
     // @deprecated
     getState(): JsonValue | undefined;
+    // (undocumented)
+    get handle(): ComponentContainer.Handle;
     // (undocumented)
     get height(): number;
     hide(): void;
@@ -145,19 +144,14 @@ export class ComponentContainer extends EventEmitter {
 
 // @public (undocumented)
 export namespace ComponentContainer {
-    // (undocumented)
-    export interface BindableComponent {
-        // (undocumented)
-        component: Component;
-        // (undocumented)
-        virtual: boolean;
-    }
     // @internal (undocumented)
     export type BlurEventHandler = (this: void, suppressEvent: boolean) => void;
     // (undocumented)
     export type Component = unknown;
     // @internal (undocumented)
     export type FocusEventHandler = (this: void, suppressEvent: boolean) => void;
+    // (undocumented)
+    export type Handle = unknown;
     // @internal (undocumented)
     export type HideEventHandler = (this: void) => void;
     // (undocumented)
@@ -186,8 +180,6 @@ export class ComponentItem extends ContentItem {
     blur(suppressEvent?: boolean): void;
     // (undocumented)
     close(): void;
-    // (undocumented)
-    get component(): ComponentContainer.Component | undefined;
     // @internal @deprecated (undocumented)
     get componentName(): JsonValue;
     // (undocumented)
@@ -246,8 +238,6 @@ export class ComponentItem extends ContentItem {
     toConfig(): ResolvedComponentItemConfig;
     // @internal (undocumented)
     updateNodeSize(): void;
-    // @internal (undocumented)
-    updateSize(): void;
 }
 
 // @public (undocumented)
@@ -378,8 +368,10 @@ export abstract class ContentItem extends EventEmitter {
     get type(): ItemType;
     // @internal (undocumented)
     protected updateContentItemsSize(): void;
+    // @internal (undocumented)
+    abstract updateNodeSize(): void;
     // @internal
-    abstract updateSize(): void;
+    updateSize(): void;
 }
 
 // @public (undocumented)
@@ -657,40 +649,21 @@ export class GoldenLayout extends VirtualLayout {
     // @deprecated
     constructor(config: LayoutConfig, container?: HTMLElement);
     // @internal (undocumented)
-    bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BindableComponent;
-    // (undocumented)
-    fireBeforeVirtualRectingEvent(count: number): void;
-    getComponentInstantiator(config: ResolvedComponentItemConfig): GoldenLayout.ComponentInstantiator | undefined;
+    bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.Handle;
+    getComponentInstantiator(config: ResolvedComponentItemConfig): GoldenLayout.ComponentFactoryFunction | undefined;
     // (undocumented)
     getRegisteredComponentTypeNames(): string[];
-    // @deprecated
-    registerComponent(name: string, componentConstructorOrFactoryFtn: GoldenLayout.ComponentConstructor | GoldenLayout.ComponentFactoryFunction, virtual?: boolean): void;
-    registerComponentConstructor(typeName: string, componentConstructor: GoldenLayout.ComponentConstructor, virtual?: boolean): void;
-    registerComponentFactoryFunction(typeName: string, componentFactoryFunction: GoldenLayout.ComponentFactoryFunction, virtual?: boolean): void;
-    // @deprecated
-    registerComponentFunction(callback: GoldenLayout.GetComponentConstructorCallback): void;
-    registerGetComponentConstructorCallback(callback: GoldenLayout.GetComponentConstructorCallback): void;
+    registerComponent(typeName: string, componentFactoryFunction: GoldenLayout.ComponentFactoryFunction): void;
+    // (undocumented)
+    registerComponentDefault(componentFactoryFunction: GoldenLayout.ComponentFactoryFunction): void;
     // @internal (undocumented)
-    unbindComponent(container: ComponentContainer, virtual: boolean, component: ComponentContainer.Component | undefined): void;
+    unbindComponent(container: ComponentContainer, handle: ComponentContainer.Handle): void;
 }
 
 // @public (undocumented)
 export namespace GoldenLayout {
     // (undocumented)
-    export type ComponentConstructor = new (container: ComponentContainer, state: JsonValue | undefined, virtual: boolean) => ComponentContainer.Component;
-    // (undocumented)
-    export type ComponentFactoryFunction = (container: ComponentContainer, state: JsonValue | undefined, virtual: boolean) => ComponentContainer.Component | undefined;
-    // (undocumented)
-    export interface ComponentInstantiator {
-        // (undocumented)
-        constructor: ComponentConstructor | undefined;
-        // (undocumented)
-        factoryFunction: ComponentFactoryFunction | undefined;
-        // (undocumented)
-        virtual: boolean;
-    }
-    // (undocumented)
-    export type GetComponentConstructorCallback = (this: void, config: ResolvedComponentItemConfig) => ComponentConstructor;
+    export type ComponentFactoryFunction = (container: ComponentContainer, state: JsonValue | undefined) => ComponentContainer.Handle;
     // (undocumented)
     export interface VirtuableComponent {
         // (undocumented)
@@ -1121,7 +1094,7 @@ export abstract class LayoutManager extends EventEmitter {
     // @internal (undocumented)
     beginVirtualSizedContainerAdding(): void;
     // @internal (undocumented)
-    abstract bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BindableComponent;
+    abstract bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.Handle;
     // @internal (undocumented)
     calculateItemAreas(): void;
     // (undocumented)
@@ -1139,7 +1112,7 @@ export abstract class LayoutManager extends EventEmitter {
     // (undocumented)
     createAndInitContentItem(config: ResolvedItemConfig, parent: ContentItem): ContentItem;
     // (undocumented)
-    createContainerElement: (config: ResolvedComponentItemConfig, item: ComponentItem) => HTMLElement | undefined;
+    createComponentElement: (config: ResolvedComponentItemConfig, component: ComponentContainer) => HTMLElement | undefined;
     // @internal
     createContentItem(config: ResolvedItemConfig, parent: ContentItem): ContentItem;
     // (undocumented)
@@ -1175,10 +1148,6 @@ export abstract class LayoutManager extends EventEmitter {
     get eventHub(): EventHub;
     // (undocumented)
     findFirstComponentItemById(id: string): ComponentItem | undefined;
-    // @internal (undocumented)
-    fireAfterVirtualRectingEvent(): void;
-    // @internal (undocumented)
-    fireBeforeVirtualRectingEvent(count: number): void;
     focusComponent(item: ComponentItem, suppressEvent?: boolean): void;
     // (undocumented)
     get focusedComponentItem(): ComponentItem | undefined;
@@ -1244,7 +1213,7 @@ export abstract class LayoutManager extends EventEmitter {
     // @deprecated (undocumented)
     toConfig(): ResolvedLayoutConfig;
     // @internal (undocumented)
-    abstract unbindComponent(container: ComponentContainer, virtual: boolean, component: ComponentContainer.Component | undefined): void;
+    abstract unbindComponent(container: ComponentContainer, handle: ComponentContainer.Handle): void;
     // @deprecated
     unminifyConfig(config: ResolvedLayoutConfig): ResolvedLayoutConfig;
     updateRootSize(): void;
@@ -1633,7 +1602,7 @@ export namespace ResolvedLayoutConfig {
         // (undocumented)
         readonly constrainDragToContainer: boolean;
         // (undocumented)
-        readonly copyForDragImage: boolean;
+        readonly copyForDragImage: boolean | undefined;
         // (undocumented)
         readonly dragDataMimetype: string;
         // (undocumented)
@@ -1800,7 +1769,8 @@ export class RowOrColumn extends ContentItem {
     protected setParent(parent: ContentItem): void;
     // (undocumented)
     toConfig(): ResolvedRowOrColumnItemConfig;
-    updateSize(): void;
+    // @internal (undocumented)
+    updateNodeSize(): void;
 }
 
 // @public (undocumented)
@@ -1960,7 +1930,7 @@ export class Stack extends ComponentParentableItem {
     toConfig(): ResolvedStackItemConfig;
     toggleMaximise(): void;
     // @internal (undocumented)
-    updateSize(): void;
+    updateNodeSize(): void;
     // (undocumented)
     updateTabSizes(): void;
 }
@@ -2090,28 +2060,22 @@ export interface UndefinableSizeWithUnit {
 }
 
 // @public (undocumented)
-export class VirtualLayout extends LayoutManager {
+export abstract class VirtualLayout extends LayoutManager {
     constructor(container?: HTMLElement, bindComponentEventHandler?: VirtualLayout.BindComponentEventHandler, unbindComponentEventHandler?: VirtualLayout.UnbindComponentEventHandler);
     // @deprecated
     constructor(config: LayoutConfig, container?: HTMLElement);
     // @internal
     constructor(configOrOptionalContainer: LayoutConfig | HTMLElement | undefined, containerOrBindComponentEventHandler: HTMLElement | VirtualLayout.BindComponentEventHandler | undefined, unbindComponentEventHandler: VirtualLayout.UnbindComponentEventHandler | undefined | Node | null, skipInit: true);
-    // @internal (undocumented)
-    bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BindableComponent;
     // (undocumented)
     bindComponentEvent: VirtualLayout.BindComponentEventHandler | undefined;
     checkAddDefaultPopinButton(): boolean;
     clearHtmlAndAdjustStylesForSubWindow(): void;
     // (undocumented)
     destroy(): void;
-    // @deprecated (undocumented)
-    getComponentEvent: VirtualLayout.GetComponentEventHandler | undefined;
     // @deprecated
     init(): void;
-    // @deprecated (undocumented)
-    releaseComponentEvent: VirtualLayout.ReleaseComponentEventHandler | undefined;
     // @internal (undocumented)
-    unbindComponent(container: ComponentContainer, virtual: boolean, component: ComponentContainer.Component | undefined): void;
+    unbindComponent(container: ComponentContainer, handle: ComponentContainer.Handle): void;
     // (undocumented)
     unbindComponentEvent: VirtualLayout.UnbindComponentEventHandler | undefined;
 }
@@ -2121,13 +2085,9 @@ export namespace VirtualLayout {
     // (undocumented)
     export type BeforeVirtualRectingEvent = (this: void) => void;
     // (undocumented)
-    export type BindComponentEventHandler = (this: void, container: ComponentContainer, itemConfig: ResolvedComponentItemConfig) => ComponentContainer.BindableComponent;
+    export type BindComponentEventHandler = (this: void, container: ComponentContainer, itemConfig: ResolvedComponentItemConfig) => ComponentContainer.Handle;
     // @internal (undocumented)
     export function createLayoutManagerConstructorParameters(configOrOptionalContainer: LayoutConfig | HTMLElement | undefined, containerOrBindComponentEventHandler?: HTMLElement | Node | null | VirtualLayout.BindComponentEventHandler, unbindComponentEventHandler?: VirtualLayout.UnbindComponentEventHandler | Node | null): LayoutManager.ConstructorParameters;
-    // @deprecated (undocumented)
-    export type GetComponentEventHandler = (this: void, container: ComponentContainer, itemConfig: ResolvedComponentItemConfig) => ComponentContainer.Component;
-    // @deprecated (undocumented)
-    export type ReleaseComponentEventHandler = (this: void, container: ComponentContainer, component: ComponentContainer.Component) => void;
     // (undocumented)
     export type UnbindComponentEventHandler = (this: void, container: ComponentContainer) => void;
 }
