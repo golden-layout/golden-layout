@@ -1,8 +1,11 @@
 import { UnexpectedUndefinedError } from '../errors/internal-error';
 import { ComponentItem } from '../items/component-item';
+import { ComponentContainer } from '../container/component-container';
+import { Stack } from '../items/stack';
 import { LayoutManager } from '../layout-manager';
 import { DomConstants } from '../utils/dom-constants';
 import { DragListener } from '../utils/drag-listener';
+import { enableIFramePointerEvents } from '../utils/utils';
 
 /**
  * Represents an individual tab within a Stack's header
@@ -22,8 +25,6 @@ export class Tab {
     private _isActive = false;
 
     /** @internal */
-    private readonly _tabClickListener = (ev: MouseEvent) => this.onTabClickDown(ev);
-    /** @internal */
     private readonly _tabTouchStartListener = (ev: TouchEvent) => this.onTabTouchStart(ev);
     /** @internal */
     private readonly _closeClickListener = () => this.onCloseClick();
@@ -32,12 +33,14 @@ export class Tab {
     // /** @internal */
     // private readonly _closeMouseDownListener = () => this.onCloseMousedown();
     /** @internal */
-    private readonly _dragStartListener = (x: number, y: number) => this.onDragStart(x, y);
+    private readonly _dragStartListenerOld = (x: number, y: number) => this.onDragStartOld(x, y);
+    /** @internal */
+    private readonly _dragStartListener = (e: DragEvent) => this.onDragStart(e);
     /** @internal */
     private readonly _contentItemDestroyListener = () => this.onContentItemDestroy();
     /** @internal */
-    private readonly _tabTitleChangedListener = (title: string) => this.setTitle(title)
-
+    private readonly _tabTitleChangedListener = (title: string) => this.setTitle(title);
+    readonly tabClickListener = (ev: MouseEvent): void => this.onTabClickDown(ev);
     get isActive(): boolean { return this._isActive; }
     // get header(): Header { return this._header; }
     get componentItem(): ComponentItem { return this._componentItem; }
@@ -76,6 +79,8 @@ export class Tab {
         this._titleElement.classList.add(DomConstants.ClassName.Title);
         this._closeElement = document.createElement('div'); 
         this._closeElement.classList.add(DomConstants.ClassName.CloseTab);
+        this._element.setAttribute('draggable', 'true');
+        this._closeElement.setAttribute('draggable', 'false');
         this._element.appendChild(this._titleElement);
         this._element.appendChild(this._closeElement);
 
@@ -94,8 +99,8 @@ export class Tab {
             this.enableReorder();
         }
 
-        this._element.addEventListener('click', this._tabClickListener, { passive: true });
-        this._element.addEventListener('touchstart', this._tabTouchStartListener, { passive: true });
+        this._element.addEventListener('click', this.tabClickListener, { passive: true });
+        //this._element.addEventListener('touchstart', this._tabTouchStartListener, { passive: true });
 
         if (this._componentItem.isClosable) {
             this._closeElement.addEventListener('click', this._closeClickListener, { passive: true });
@@ -116,8 +121,10 @@ export class Tab {
      * html tags) of the same string.
      */
     setTitle(title: string): void {
-        this._titleElement.innerText = title;
         this._element.title = title;
+        const parent = this.componentItem.parent;
+        if (parent instanceof Stack)
+            parent.header.updateTabSizes();
     }
 
     /**
@@ -142,19 +149,33 @@ export class Tab {
      * @internal
      */
     destroy(): void {
-        this._closeEvent = undefined;
-        this._focusEvent = undefined;
-        this._dragStartEvent = undefined;
-        this._element.removeEventListener('click', this._tabClickListener);
-        this._element.removeEventListener('touchstart', this._tabTouchStartListener);
-        this._closeElement?.removeEventListener('click', this._closeClickListener);
-        this._closeElement?.removeEventListener('touchstart', this._closeTouchStartListener);
-        // this._closeElement?.removeEventListener('mousedown', this._closeMouseDownListener);
-        this._componentItem.off('titleChanged', this._tabTitleChangedListener);
-        if (this.reorderEnabled) {
-            this.disableReorder();
+        const action = (cancel: boolean) => {
+            if (cancel) {
+                return;
+            }
+            this._closeEvent = undefined;
+            this._focusEvent = undefined;
+            this._dragStartEvent = undefined;
+            this._element.removeEventListener('click', this.tabClickListener);
+            this._element.removeEventListener('touchstart', this._tabTouchStartListener);
+            this._closeElement?.removeEventListener('click', this._closeClickListener);
+            this._closeElement?.removeEventListener('touchstart', this._closeTouchStartListener);
+            // this._closeElement?.removeEventListener('mousedown', this._closeMouseDownListener);
+            this._componentItem.off('titleChanged', this._tabTitleChangedListener);
+            if (this.reorderEnabled) {
+                this.disableReorder();
+            }
+        };
+        const lm = this._layoutManager;
+        if (lm.currentlyDragging()) {
+            lm.deferIfDragging(action);
+        } else {
+            action(false);
         }
-        this._element.remove();
+        lm.deferIfDragging((cancel) => {
+            if (! cancel)
+                this._element.remove();
+            });
     }
 
     /** @internal */
@@ -170,12 +191,12 @@ export class Tab {
     }
 
     /**
-     * Callback for the DragListener
+     * Old callback for the DragListener
      * @param x - The tabs absolute x position
      * @param y - The tabs absolute y position
      * @internal
      */
-    private onDragStart(x: number, y: number): void {
+    private onDragStartOld(x: number, y: number): void {
         if (this._dragListener === undefined) {
             throw new UnexpectedUndefinedError('TODSDLU10093');
         } else {
@@ -186,6 +207,21 @@ export class Tab {
             }
         }
 
+    }
+
+    private onDragStart(e: DragEvent): void {
+        // See drag-listener#startDrag
+        const tabElement = this._element;
+        document.body.classList.add(DomConstants.ClassName.Dragging);
+        tabElement.classList.add(DomConstants.ClassName.Dragging);
+        enableIFramePointerEvents(false);
+        // FIXME: set non-maximized
+        this._layoutManager.startComponentDrag(e, this.componentItem);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        this._layoutManager.deferIfDragging((_cancel: boolean) => {
+            document.body.classList.remove(DomConstants.ClassName.Dragging);
+            tabElement.classList.remove(DomConstants.ClassName.Dragging);
+        });
     }
 
     /** @internal */
@@ -201,18 +237,26 @@ export class Tab {
      * @internal
      */
     private onTabClickDown(event: MouseEvent) {
-        const target = event.target;
-        if (target === this._element || target === this._titleElement) {
-            // left mouse button
-            if (event.button === 0) {
-                // event.stopPropagation();
-                this.notifyFocus();
+        const target = event.target as HTMLElement;
 
-                // middle mouse button
-            } else if (event.button === 1 && this._componentItem.isClosable) {
-                // event.stopPropagation();
-                this.notifyClose();
+        // return if clicking child of tab unless inside an lm_title
+        if (target !== this._element) {
+            for (let p = target; ! p.classList.contains("lm_title");
+                 p = p.parentNode as HTMLElement) {
+                if (p == this._element || p == document.body)
+                    return;
             }
+        }
+
+        // left mouse button
+        if (event.button === 0) {
+            // event.stopPropagation();
+            this.notifyFocus();
+
+            // middle mouse button
+        } else if (event.button === 1 && this._componentItem.isClosable) {
+            // event.stopPropagation();
+            this.notifyClose();
         }
     }
 
@@ -265,18 +309,25 @@ export class Tab {
 
     /** @internal */
     private enableReorder() {
-        this._dragListener = new DragListener(this._element, [this._titleElement]);
-        this._dragListener.on('dragStart', this._dragStartListener);
+        if (this._layoutManager.useNativeDragAndDrop()) {
+            this._element.addEventListener('dragstart', this._dragStartListener,
+                                           { passive: true });
+        } else {
+            this._dragListener = new DragListener(this._element);
+            this._dragListener?.on('dragStart', this._dragStartListenerOld);
+        }
         this._componentItem.on('destroy', this._contentItemDestroyListener);
     }
 
     /** @internal */
     private disableReorder() {
-        if (this._dragListener === undefined) {
+        if (this._layoutManager.useNativeDragAndDrop()) {
+            this._element.removeEventListener('dragstart', this._dragStartListener);
+        } else if (this._dragListener === undefined) {
             throw new UnexpectedUndefinedError('TDR87745');
         } else {
             this._componentItem.off('destroy', this._contentItemDestroyListener);
-            this._dragListener.off('dragStart', this._dragStartListener);
+            this._dragListener.off('dragStart', this._dragStartListenerOld);
             this._dragListener = undefined;
         }
     }
@@ -284,6 +335,12 @@ export class Tab {
 
 /** @public */
 export namespace Tab {
+    export enum RenderFlags {
+        DropdownActive = 1,
+        InDropdownMenu = 2,
+        IsActiveTab = 4,
+    }
+    export type TitleRenderer = (component: ComponentContainer, target: HTMLElement, availableWidth: number, flags: RenderFlags)=>void;
     /** @internal */
     export type CloseEvent = (componentItem: ComponentItem) => void;
     /** @internal */

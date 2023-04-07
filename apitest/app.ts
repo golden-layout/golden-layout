@@ -299,7 +299,7 @@ export class App {
         }
     }
 
-    private handleBindComponentEvent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BindableComponent {
+    private handleBindComponentEvent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.Handle {
         const componentTypeName = ResolvedComponentItemConfig.resolveComponentTypeName(itemConfig);
         if (componentTypeName === undefined) {
             throw new Error('handleBindComponentEvent: Undefined componentTypeName');
@@ -366,7 +366,7 @@ export class App {
             throw new Error('handleContainerVirtualRectingRequiredEvent: Component does not have a root HTML element');
         }
 
-        const containerBoundingClientRect = container.element.getBoundingClientRect();
+        const containerBoundingClientRect = (container.element as HTMLElement).getBoundingClientRect();
         const left = containerBoundingClientRect.left - this._goldenLayoutBoundingClientRect.left;
         rootElement.style.left = this.numberToPixels(left);
         const top = containerBoundingClientRect.top - this._goldenLayoutBoundingClientRect.top;

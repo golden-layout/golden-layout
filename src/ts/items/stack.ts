@@ -6,10 +6,8 @@ import { LayoutManager } from '../layout-manager';
 import { DomConstants } from '../utils/dom-constants';
 import { DragListener } from '../utils/drag-listener';
 import { EventEmitter } from '../utils/event-emitter';
-import { AreaLinkedRect, ItemType, JsonValue, Side, SizeUnitEnum, WidthAndHeight, WidthOrHeightPropertyName } from '../utils/types';
+import { AreaLinkedRect, ItemType, JsonValue, Side, SizeUnitEnum } from '../utils/types';
 import {
-    getElementWidthAndHeight,
-    numberToPixels,
     setElementDisplayVisibility
 } from '../utils/utils';
 import { ComponentItem } from './component-item';
@@ -42,7 +40,7 @@ export class Stack extends ComponentParentableItem {
     private _initialActiveItemIndex: number;
 
     /** @internal */
-    private _resizeListener = () => this.handleResize();
+    private _resizeListener = () => this.updateTabSizes();
     /** @internal */
     private _maximisedListener = () => this.handleMaximised();
     /** @internal */
@@ -67,8 +65,7 @@ export class Stack extends ComponentParentableItem {
 
     /** @internal */
     constructor(layoutManager: LayoutManager, config: ResolvedStackItemConfig, parent: ContentItem) {
-        super(layoutManager, config, parent, Stack.createElement(document));
-
+        super(layoutManager, config, parent, ContentItem.createElement(DomConstants.ClassName.Stack));
         this._headerConfig = config.header;
         const layoutHeaderConfig = layoutManager.layoutConfig.header;
         const configContent = config.content;
@@ -142,17 +139,6 @@ export class Stack extends ComponentParentableItem {
     }
 
     /** @internal */
-    override updateSize(force: boolean): void {
-        this.layoutManager.beginVirtualSizedContainerAdding();
-        try {
-            this.updateNodeSize();
-            this.updateContentItemsSize(force);
-        } finally {
-            this.layoutManager.endVirtualSizedContainerAdding();
-        }
-    }
-
-    /** @internal */
     override init(): void {
         if (this.isInitialised === true) return;
 
@@ -183,7 +169,7 @@ export class Stack extends ComponentParentableItem {
 
                 this.setActiveComponentItem(contentItems[this._initialActiveItemIndex] as ComponentItem, false);
 
-                this._header.updateTabSizes();
+                this.updateTabSizes();
             }
         }
 
@@ -205,18 +191,12 @@ export class Stack extends ComponentParentableItem {
             if (this.contentItems.indexOf(componentItem) === -1) {
                 throw new Error('componentItem is not a child of this stack');
             } else {
-                this.layoutManager.beginSizeInvalidation();
-                try {
-                    if (this._activeComponentItem !== undefined) {
-                        this._activeComponentItem.hide();
-                    }
-                    this._activeComponentItem = componentItem;
-                    this._header.processActiveComponentChanged(componentItem);
-                    componentItem.show();
-                } finally {
-                    this.layoutManager.endSizeInvalidation();
+                if (this._activeComponentItem !== undefined) {
+                    this._activeComponentItem.hide();
                 }
-
+                this._activeComponentItem = componentItem;
+                this._header.processActiveComponentChanged(componentItem);
+                componentItem.show();
                 this.emit('activeContentItemChanged', componentItem);
                 this.layoutManager.emit('activeContentItemChanged', componentItem);
                 this.emitStateChangedEvent();
@@ -244,6 +224,11 @@ export class Stack extends ComponentParentableItem {
 
     /** @internal */
     override setFocusedValue(value: boolean): void {
+        if (value) {
+            this.element.classList.add(DomConstants.ClassName.Focused);
+        } else {
+            this.element.classList.remove(DomConstants.ClassName.Focused);
+        }
         this._header.applyFocusedValue(value);
         super.setFocusedValue(value);
     }
@@ -300,7 +285,7 @@ export class Stack extends ComponentParentableItem {
             this._header.createTab(contentItem, index);
             this.setActiveComponentItem(contentItem, focus);
             this._header.updateTabSizes();
-            this.updateSize(false);
+            this.updateSize();
             contentItem.container.setBaseLogicalZIndex();
             this._header.updateClosability();
             this.emitStateChangedEvent();
@@ -511,7 +496,7 @@ export class Stack extends ComponentParentableItem {
             this.size *= 0.5;
             contentItem.size = this.size;
             contentItem.sizeUnit = this.sizeUnit;
-            this.stackParent.updateSize(false);
+            this.stackParent.updateSize();
             /*
              * This handles items that are dropped on top or bottom of a row or left / right of a column. We need
              * to create the appropriate contentItem for them to live in
@@ -528,7 +513,7 @@ export class Stack extends ComponentParentableItem {
             this.size = 50;
             contentItem.size = 50;
             contentItem.sizeUnit = SizeUnitEnum.Percent;
-            rowOrColumn.updateSize(false);
+            rowOrColumn.updateSize();
         }
     }
 
@@ -694,20 +679,8 @@ export class Stack extends ComponentParentableItem {
     }
 
     /** @internal */
-    private updateNodeSize(): void {
+    updateNodeSize(): void {
         if (this.element.style.display !== 'none') {
-            const content: WidthAndHeight = getElementWidthAndHeight(this.element);
-
-            if (this._header.show) {
-                const dimension = this._header.leftRightSided ? WidthOrHeightPropertyName.width : WidthOrHeightPropertyName.height;
-                content[dimension] -= this.layoutManager.layoutConfig.dimensions.headerHeight;
-            }
-            this._childElementContainer.style.width = numberToPixels(content.width);
-            this._childElementContainer.style.height = numberToPixels(content.height);
-            for (let i = 0; i < this.contentItems.length; i++) {
-                this.contentItems[i].element.style.width = numberToPixels(content.width);
-                this.contentItems[i].element.style.height = numberToPixels(content.height);
-            }
             this.emit('resize');
             this.emitStateChangedEvent();
         }
@@ -715,10 +688,14 @@ export class Stack extends ComponentParentableItem {
 
     /** @internal */
     private highlightHeaderDropZone(x: number): void {
-        const visibleTabsLength = this._header.lastVisibleTabIndex + 1;
+        const tabDropPlaceholder = this.layoutManager.tabDropPlaceholder;
+        tabDropPlaceholder.remove();
         const tabsContainerElement = this._header.tabsContainerElement;
         const tabsContainerElementChildNodes = tabsContainerElement.childNodes;
+        // Only walk over the visible tabs
+        const visibleTabsLength = tabsContainerElementChildNodes.length;
 
+        /*
         // Create shallow copy of childNodes list, excluding DropPlaceHolder, as we will be modifying the childNodes list
         const visibleTabElements = new Array<HTMLElement>(visibleTabsLength);
         let tabIndex = 0;
@@ -728,7 +705,8 @@ export class Stack extends ComponentParentableItem {
             if (visibleTabElement !== this.layoutManager.tabDropPlaceholder) {
                 visibleTabElements[tabCount++] = visibleTabElement;
             }
-        }
+            }
+        */
 
         const dropTargetIndicator = this.layoutManager.dropTargetIndicator;
         if (dropTargetIndicator === null) {
@@ -759,8 +737,10 @@ export class Stack extends ComponentParentableItem {
             let tabLeft: number;
             let tabWidth: number;
             let tabElement: HTMLElement;
+            let afterDrag = 0;
             do {
-                tabElement = visibleTabElements[tabIndex] as HTMLElement;
+                tabElement = tabsContainerElementChildNodes[tabIndex] as HTMLElement;
+                //tabElement = visibleTabElements[tabIndex] as HTMLElement;
                 const tabRect = tabElement.getBoundingClientRect();
                 const tabRectTop = tabRect.top + document.body.scrollTop;
                 const tabRectLeft = tabRect.left + document.body.scrollLeft;
@@ -773,6 +753,9 @@ export class Stack extends ComponentParentableItem {
                     tabLeft = tabRectLeft;
                     tabTop = tabRectTop;
                     tabWidth = tabRect.width;
+                }
+                if (tabElement.classList.contains(DomConstants.ClassName.Dragging)) {
+                    afterDrag++;
                 }
 
                 if (x >= tabLeft && x < tabLeft + tabWidth) {
@@ -787,15 +770,10 @@ export class Stack extends ComponentParentableItem {
                 return;
             }
 
-            const halfX = tabLeft + tabWidth / 2;
-
-            if (x < halfX) {
-                this._dropIndex = tabIndex;
-                tabElement.insertAdjacentElement('beforebegin', this.layoutManager.tabDropPlaceholder);
-            } else {
-                this._dropIndex = Math.min(tabIndex + 1, visibleTabsLength);
-                tabElement.insertAdjacentElement('afterend', this.layoutManager.tabDropPlaceholder);
-            }
+            const preferNext = x >= (tabLeft + tabWidth / 2);
+            this._dropIndex = tabIndex + (tabIndex < visibleTabsLength && preferNext ? 1 : 0) - afterDrag;
+            tabElement.parentNode?.insertBefore(tabDropPlaceholder,
+                                                preferNext ? tabElement.nextSibling : tabElement);
 
             const tabDropPlaceholderRect = this.layoutManager.tabDropPlaceholder.getBoundingClientRect();
             const tabDropPlaceholderRectTop = tabDropPlaceholderRect.top + document.body.scrollTop;
@@ -843,7 +821,7 @@ export class Stack extends ComponentParentableItem {
         //    // move the header behind the content.
         //    this.element.appendChild(this._header.element);
         //}
-        this.updateSize(false);
+        this.updateSize();
     }
 
     /** @internal */
@@ -862,9 +840,9 @@ export class Stack extends ComponentParentableItem {
         }
     }
 
-    /** @internal */
-    private handleResize() {
-        this._header.updateTabSizes()
+    updateTabSizes(): void {
+        if (this._header)
+            this._header.updateTabSizes();
     }
 
     /** @internal */
@@ -884,6 +862,9 @@ export class Stack extends ComponentParentableItem {
 
     /** @internal */
     private handleHeaderClickEvent(ev: MouseEvent) {
+        // Forces updates if click is when top-level window has lost focus.
+        if (this._activeComponentItem)
+            this.setActiveComponentItem(this._activeComponentItem, true);
         const eventName = EventEmitter.headerClickEventName;
         const bubblingEvent = new EventEmitter.ClickBubblingEvent(eventName, this, ev);
         this.emit(eventName, bubblingEvent);
@@ -911,7 +892,7 @@ export class Stack extends ComponentParentableItem {
         if (this.isMaximised === true) {
             this.toggleMaximise();
         }
-        this.layoutManager.startComponentDrag(x, y, dragListener, componentItem, this);
+        this.layoutManager.startComponentDragOld(x, y, dragListener, componentItem, this);
     }
 
     /** @internal */
@@ -964,12 +945,4 @@ export namespace Stack {
     export type ContentAreaDimensions = {
         [segment: string]: ContentAreaDimension;
     };
-
-    /** @internal */
-    export function createElement(document: Document): HTMLDivElement {
-        const element = document.createElement('div');
-        element.classList.add(DomConstants.ClassName.Item);
-        element.classList.add(DomConstants.ClassName.Stack);
-        return element;
-    }
 }

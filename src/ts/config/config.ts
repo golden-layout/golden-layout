@@ -414,9 +414,7 @@ export interface ComponentItemConfig extends HeaderedItemConfig {
     /**
      * The type of the component.
      * `componentType` must be of type `string` if it is registered with any of the following functions:
-     * * {@link (GoldenLayout:class).registerComponent} (deprecated)
-     * * {@link (GoldenLayout:class).registerComponentConstructor}
-     * * {@link (GoldenLayout:class).registerComponentFactoryFunction}
+     * * {@link (GoldenLayout:class).registerComponent}
      */
     componentType: JsonValue;
     /**
@@ -806,11 +804,41 @@ export namespace LayoutConfig {
          * Default: false
          */
         popInOnClose?: boolean;
+
+        useDragAndDrop?: boolean;
+
+        /**
+         * Use component's element for setDragImage, if possible.
+         * Has side-effect of nesting content element inside a component.
+         * Ignored unless useDragAndDrop.
+         */
+        copyForDragImage?: boolean;
+
+        /**
+         * When dragging an item, indicate the original position.
+         * The default style uses a dashed light-brown outline.
+         * Default: true
+         */
+        showOldPositionWhenDragging?: boolean;
+
+        dragDataMimetype?: string;
+
+        /**
+         * Check whether location.search contains a gl-window parameter.
+         * This is used to handle window popin in simple cases.
+         * Default: true
+         */
+        checkGlWindowKey?: boolean;
     }
 
     export namespace Settings {
         export function resolve(settings: Settings | undefined): ResolvedLayoutConfig.Settings {
             const result: ResolvedLayoutConfig.Settings = {
+                useDragAndDrop: settings?.useDragAndDrop ?? false,
+                copyForDragImage: settings?.copyForDragImage,
+                showOldPositionWhenDragging: settings?.showOldPositionWhenDragging ?? ResolvedLayoutConfig.Settings.defaults.showOldPositionWhenDragging,
+                dragDataMimetype: settings?.dragDataMimetype ?? ResolvedLayoutConfig.Settings.defaults.dragDataMimetype,
+                checkGlWindowKey: settings?.checkGlWindowKey ?? true,
                 constrainDragToContainer: settings?.constrainDragToContainer ?? ResolvedLayoutConfig.Settings.defaults.constrainDragToContainer,
                 reorderEnabled: settings?.reorderEnabled ?? ResolvedLayoutConfig.Settings.defaults.reorderEnabled,
                 popoutWholeStack: settings?.popoutWholeStack ?? ResolvedLayoutConfig.Settings.defaults.popoutWholeStack,
@@ -835,9 +863,19 @@ export namespace LayoutConfig {
         borderWidth?: number;
 
         /**
-         * Default: 15
+         * Default: 5
          */
         borderGrabWidth?: number,
+
+        /**
+         * Space to allocate between component wrapper and content element.
+         * This can be used for an 'outline'.
+         * This may affect drag from other window over iframe which may
+         * not trigger depending on the CSS pointer-events setting.
+         * (Uncertain: needs testing/experimentation.)
+         * Default: 0
+         */
+        contentInset?: number;
 
         /**
          * The minimum height an item can be resized to (in pixel).
@@ -891,6 +929,7 @@ export namespace LayoutConfig {
             const result: ResolvedLayoutConfig.Dimensions = {
                 borderWidth: dimensions?.borderWidth ?? ResolvedLayoutConfig.Dimensions.defaults.borderWidth,
                 borderGrabWidth: dimensions?.borderGrabWidth ?? ResolvedLayoutConfig.Dimensions.defaults.borderGrabWidth,
+                contentInset: dimensions?.contentInset ?? ResolvedLayoutConfig.Dimensions.defaults.contentInset,
                 defaultMinItemHeight,
                 defaultMinItemHeightUnit,
                 defaultMinItemWidth,

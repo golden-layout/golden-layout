@@ -10,7 +10,7 @@ export namespace WidthOrHeightPropertyName {
     export const height = 'height';
 }
 
-/** @internal */
+/** @public */
 export interface WidthAndHeight {
     width: number;
     height: number;

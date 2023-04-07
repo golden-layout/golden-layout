@@ -45,7 +45,7 @@ export class RowOrColumn extends ContentItem {
         /** @internal */
         private _rowOrColumnParent: ContentItem
     ) {
-        super(layoutManager, config, _rowOrColumnParent, RowOrColumn.createElement(document, isColumn));
+        super(layoutManager, config, _rowOrColumnParent, ContentItem.createElement(isColumn ? DomConstants.ClassName.Column : DomConstants.ClassName.Row));
 
         this.isRow = !isColumn;
         this.isColumn = isColumn;
@@ -163,7 +163,7 @@ export class RowOrColumn extends ContentItem {
             }
         }
 
-        this.updateSize(false);
+        this.updateSize();
         this.emitBaseBubblingEvent('stateChanged');
 
         return index;
@@ -188,20 +188,35 @@ export class RowOrColumn extends ContentItem {
          * Remove the splitter before the item or after if the item happens
          * to be the first in the row/column
          */
-        if (this._splitter[splitterIndex]) {
-            this._splitter[splitterIndex].destroy();
-            this._splitter.splice(splitterIndex, 1);
+        const splitter = this._splitter[splitterIndex];
+        if (splitter) {
+            splitter.element.style.display = 'none';
+            this.layoutManager.deferIfDragging((cancel: boolean) => {
+                if (cancel) {
+                    splitter.element.style.display = '';
+                } else {
+                    splitter.destroy();
+                    this._splitter.splice(splitterIndex, 1);
+                }
+            });
         }
 
         super.removeChild(contentItem, keepChild);
 
-        if (this.contentItems.length === 1 && this.isClosable === true) {
-            const childItem = this.contentItems[0];
-            this.contentItems.length = 0;
-            this._rowOrColumnParent.replaceChild(this, childItem, true);
-        } else {
-            this.updateSize(false);
+        this.layoutManager.deferIfDragging((cancel: boolean) => {
+            if (! cancel
+                    && this.contentItems.length === 1 && this.isClosable === true) {
+                const childItem = this.contentItems[0];
+                this.contentItems.length = 0;
+                this._rowOrColumnParent.replaceChild(this, childItem, true);
+                return;
+            }
+            this.updateSize();
             this.emitBaseBubblingEvent('stateChanged');
+        });
+        if (this.layoutManager.currentlyDragging()) {
+            this.updateSize();
+            //this.emitBaseBubblingEvent('stateChanged');
         }
     }
 
@@ -212,21 +227,8 @@ export class RowOrColumn extends ContentItem {
         const size = oldChild.size;
         super.replaceChild(oldChild, newChild);
         newChild.size = size;
-        this.updateSize(false);
+        this.updateSize();
         this.emitBaseBubblingEvent('stateChanged');
-    }
-
-    /**
-     * Called whenever the dimensions of this item or one of its parents change
-     */
-    override updateSize(force: boolean): void {
-        this.layoutManager.beginVirtualSizedContainerAdding();
-        try {
-            this.updateNodeSize();
-            this.updateContentItemsSize(force);
-        } finally {
-            this.layoutManager.endVirtualSizedContainerAdding();
-        }
     }
 
     /**
@@ -274,7 +276,7 @@ export class RowOrColumn extends ContentItem {
     }
 
     /** @internal */
-    private updateNodeSize(): void {
+    updateNodeSize(): void {
         if (this.contentItems.length > 0) {
             this.calculateRelativeSizes();
             this.setAbsoluteSizes();
@@ -294,16 +296,19 @@ export class RowOrColumn extends ContentItem {
         const absoluteSizes = this.calculateAbsoluteSizes();
 
         for (let i = 0; i < this.contentItems.length; i++) {
+            const item = this.contentItems[i];
+            if (item.ignoring)
+                continue;
             if (absoluteSizes.additionalPixel - i > 0) {
                 absoluteSizes.itemSizes[i]++;
             }
 
             if (this._isColumn) {
-                setElementWidth(this.contentItems[i].element, absoluteSizes.crossAxisSize);
-                setElementHeight(this.contentItems[i].element, absoluteSizes.itemSizes[i]);
+                setElementWidth(item.element, absoluteSizes.crossAxisSize);
+                setElementHeight(item.element, absoluteSizes.itemSizes[i]);
             } else {
-                setElementWidth(this.contentItems[i].element, absoluteSizes.itemSizes[i]);
-                setElementHeight(this.contentItems[i].element, absoluteSizes.crossAxisSize);
+                setElementWidth(item.element, absoluteSizes.itemSizes[i]);
+                setElementHeight(item.element, absoluteSizes.crossAxisSize);
             }
         }
     }
@@ -313,8 +318,10 @@ export class RowOrColumn extends ContentItem {
      * @returns Set with absolute sizes and additional pixels.
      * @internal
      */
-    private calculateAbsoluteSizes(): RowOrColumn.AbsoluteSizes {
-        const totalSplitterSize = (this.contentItems.length - 1) * this._splitterSize;
+    private calculateAbsoluteSizes() {
+        const totalSplitterSize =
+            (this.contentItems.length - (this.ignoringChild ? 2 : 1))
+            * this._splitterSize;
         const { width: elementWidth, height: elementHeight } = getElementWidthAndHeight(this.element);
 
         let totalSize: number;
@@ -330,10 +337,11 @@ export class RowOrColumn extends ContentItem {
         let totalAssigned = 0;
         const itemSizes = [];
 
-        for (let i = 0; i < this.contentItems.length; i++) {
-            const contentItem = this.contentItems[i];
+        for (const contentItem of this.contentItems) {
             let itemSize: number;
-            if (contentItem.sizeUnit === SizeUnitEnum.Percent) {
+            if (contentItem.ignoring) {
+                itemSize = 0;
+            } else if (contentItem.sizeUnit === SizeUnitEnum.Percent) {
                 itemSize = Math.floor(totalSize * (contentItem.size / 100));
             } else {
                 throw new AssertError('ROCCAS6692');
@@ -380,6 +388,8 @@ export class RowOrColumn extends ContentItem {
         let totalFractionalSize = 0;
 
         for (let i = 0; i < this.contentItems.length; i++) {
+            if (this.contentItems[i].ignoring)
+                continue;
             const contentItem = this.contentItems[i];
             const sizeUnit = contentItem.sizeUnit;
             switch (sizeUnit) {
@@ -630,11 +640,11 @@ export class RowOrColumn extends ContentItem {
         offset = Math.min(offset, this._splitterMaxPosition);
 
         this._splitterPosition = offset;
-        const offsetPixels = numberToPixels(offset);
+        const offsetPixels = numberToPixels(offset - splitter.dragHandleOffset);
         if (this._isColumn) {
-            splitter.element.style.top = offsetPixels;
+            splitter.dragHandleElement.style.top = offsetPixels;
         } else {
-            splitter.element.style.left = offsetPixels;
+            splitter.dragHandleElement.style.left = offsetPixels;
         }
     }
 
@@ -657,10 +667,13 @@ export class RowOrColumn extends ContentItem {
             items.before.size = splitterPositionInRange * totalRelativeSize;
             items.after.size = (1 - splitterPositionInRange) * totalRelativeSize;
 
-            splitter.element.style.top = numberToPixels(0);
-            splitter.element.style.left = numberToPixels(0);
+            const offset = splitter.dragHandleOffset;
+            if (this._isColumn)
+                splitter.dragHandleElement.style.top = `${-offset}px`;
+            else
+                splitter.dragHandleElement.style.left = `${-offset}px`;
 
-            globalThis.requestAnimationFrame(() => this.updateSize(false));
+            globalThis.requestAnimationFrame(() => this.updateSize());
         }
     }
 }
@@ -691,17 +704,5 @@ export namespace RowOrColumn {
         } else {
             return setElementHeight(element, value);
         }
-    }
-
-    /** @internal */
-    export function createElement(document: Document, isColumn: boolean): HTMLDivElement {
-        const element = document.createElement('div');
-        element.classList.add(DomConstants.ClassName.Item);
-        if (isColumn) {
-            element.classList.add(DomConstants.ClassName.Column);
-        } else {
-            element.classList.add(DomConstants.ClassName.Row);
-        }
-        return element;
     }
 }

@@ -6,7 +6,7 @@ import { numberToPixels, setElementDisplayVisibility } from '../utils/utils';
 export class DropTargetIndicator {
     private _element: HTMLElement;
 
-    constructor() {
+    constructor(parent: HTMLElement = document.body, before: Node | null = null) {
         // Maybe use container instead of Document Body?
         this._element = document.createElement('div');
         this._element.classList.add(DomConstants.ClassName.DropTargetIndicator);
@@ -14,7 +14,7 @@ export class DropTargetIndicator {
         innerElement.classList.add(DomConstants.ClassName.Inner);
         this._element.appendChild(innerElement);
 
-        document.body.appendChild(this._element);
+        parent.insertBefore(this._element, before);
     }
 
     destroy(): void {

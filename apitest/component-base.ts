@@ -12,7 +12,7 @@ export abstract class ComponentBase implements GoldenLayout.VirtuableComponent {
             this._rootElement.style.position = 'absolute';
             this._rootElement.style.overflow = 'hidden';
         } else {
-            this._rootElement = this._container.element;
+            this._rootElement = this._container.element as HTMLElement;
         }
     }
 }

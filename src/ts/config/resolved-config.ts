@@ -392,6 +392,11 @@ export interface ResolvedLayoutConfig {
 /** @public */
 export namespace ResolvedLayoutConfig {
     export interface Settings {
+        readonly useDragAndDrop: boolean;
+        readonly copyForDragImage: boolean|undefined;
+        readonly showOldPositionWhenDragging: boolean;
+        readonly dragDataMimetype: string;
+        readonly checkGlWindowKey: boolean;
         // see Config.Settings for comments
         readonly constrainDragToContainer: boolean;
         readonly reorderEnabled: boolean; // also in ResolvedItemConfig which takes precedence
@@ -408,6 +413,11 @@ export namespace ResolvedLayoutConfig {
 
     export namespace Settings {
         export const defaults: ResolvedLayoutConfig.Settings = {
+            useDragAndDrop: true,
+            copyForDragImage: undefined,
+            showOldPositionWhenDragging: true,
+            dragDataMimetype: 'text/gl-drag-data',
+            checkGlWindowKey: true,
             constrainDragToContainer: true,
             reorderEnabled: true,
             popoutWholeStack: false,
@@ -422,6 +432,11 @@ export namespace ResolvedLayoutConfig {
 
         export function createCopy(original: Settings): Settings {
             return {
+                useDragAndDrop: original.useDragAndDrop,
+                copyForDragImage: original.copyForDragImage,
+                showOldPositionWhenDragging: original.showOldPositionWhenDragging,
+                dragDataMimetype: original.dragDataMimetype,
+                checkGlWindowKey: original.checkGlWindowKey,
                 constrainDragToContainer: original.constrainDragToContainer,
                 reorderEnabled: original.reorderEnabled,
                 popoutWholeStack: original.popoutWholeStack,
@@ -440,6 +455,7 @@ export namespace ResolvedLayoutConfig {
         // see LayoutConfig.Dimensions for comments
         readonly borderWidth: number;
         readonly borderGrabWidth: number,
+        readonly contentInset: number,
         readonly defaultMinItemHeight: number;
         readonly defaultMinItemHeightUnit: SizeUnitEnum;
         readonly defaultMinItemWidth: number;
@@ -454,6 +470,7 @@ export namespace ResolvedLayoutConfig {
             return {
                 borderWidth: original.borderWidth,
                 borderGrabWidth: original.borderGrabWidth,
+                contentInset: original.contentInset,
                 defaultMinItemHeight: original.defaultMinItemHeight,
                 defaultMinItemHeightUnit: original.defaultMinItemHeightUnit,
                 defaultMinItemWidth: original.defaultMinItemWidth,
@@ -467,6 +484,7 @@ export namespace ResolvedLayoutConfig {
         export const defaults: ResolvedLayoutConfig.Dimensions = {
             borderWidth: 5,
             borderGrabWidth: 5,
+            contentInset: 0,
             defaultMinItemHeight: 0,
             defaultMinItemHeightUnit: SizeUnitEnum.Pixel,
             defaultMinItemWidth: 10,

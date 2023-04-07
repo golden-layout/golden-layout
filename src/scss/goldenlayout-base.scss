@@ -3,7 +3,7 @@
 // can also be developed using SCSS.
 // All changes to base style should be done in goldenlayout-base.scss.
 // Do NOT make changes directly in goldenlayout-base.scss.  goldenlayout-base.scss should only be updated by
-// running the npm script "update-scss"
+// running the npm script "update:scss"
 // Make sure that less code in goldenlayout.base.scss can be correctly correctly converted to scss with less2sass (ie keep it basic)
 
 // Width variables (appears count calculates by raw css)
@@ -87,6 +87,12 @@ $height6: 15px; // Appears 1 time
   }
 }
 
+.lm_headers {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+};
+
 // Pane Header (container of Tabs for each pane)
 .lm_header {
   overflow: visible;
@@ -101,6 +107,7 @@ $height6: 15px; // Appears 1 time
   // Pane controls (popout, maximize, minimize, close)
   .lm_controls {
     position: absolute;
+    top: 0px;
     right: 3px;
     display: flex;
 
@@ -114,8 +121,15 @@ $height6: 15px; // Appears 1 time
   }
 
   .lm_tabs {
-    position: absolute;
     display: flex;
+    overflow: hidden;
+  }
+
+  .lm_title {
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: pre;
   }
 
   // Single Tab container. A single Tab is set for each pane, a group of Tabs are contained in ".lm_header"
@@ -124,7 +138,7 @@ $height6: 15px; // Appears 1 time
     float: left;
     height: $height2;
     margin-top: 1px;
-    padding: 0px 10px 5px;
+    padding: 0px 6px 5px;
     padding-right: 25px;
     position: relative;
     touch-action: none;
@@ -145,12 +159,6 @@ $height6: 15px; // Appears 1 time
       }
     }
 
-    .lm_title {
-      display: inline-block;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
     // Close Tab Icon
     .lm_close_tab {
       width: $width3;
@@ -161,6 +169,25 @@ $height6: 15px; // Appears 1 time
       text-align: center;
     }
   }
+}
+
+.lm_header.lm_tight_mode {
+    .lm_tabs {
+        .lm_tab {
+            padding-left: 2px;
+            padding-right: 2px;
+            .lm_close_tab {
+                display: none;
+            }
+        }
+        .lm_tab.lm_active {
+            display: inherit;
+            padding-right: 22px;
+            .lm_close_tab {
+                display: inherit;
+            }
+        }
+    }
 }
 
 // Change stack style to absolute positioning for docking transition ability
@@ -330,6 +357,10 @@ $height6: 15px; // Appears 1 time
     right: 0;
     z-index: 5;
     overflow: hidden;
+    .lm_title {
+        display: block;
+        padding: 1px;
+    }
 
     .lm_tab {
       clear: both;

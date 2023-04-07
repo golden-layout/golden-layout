@@ -3,13 +3,13 @@
 // can also be developed using SCSS.
 // All changes to base style should be done in goldenlayout-base.less.
 // Do NOT make changes directly in goldenlayout-base.scss.  goldenlayout-base.scss should only be updated by
-// running the npm script "update-scss"
+// running the npm script "update:scss"
 // Make sure that less code in goldenlayout.base.less can be correctly correctly converted to scss with less2sass (ie keep it basic)
 
 // Width variables (appears count calculates by raw css)
 @width0: 100%; // Appears 3 times
 @width1: 20px; // Appears 2 times
-@width2: 100px; // Appears 1 time
+@width2: 100px; // Appears 2 times
 @width3: 14px; // Appears 1 time
 @width4: 18px; // Appears 1 time
 @width5: 15px; // Appears 1 time
@@ -28,6 +28,22 @@
   position: relative;
 }
 
+.lm_goldenlayout {
+    // The follow colors may be overridden by themes or even on-the-fly
+    --lm_border_color: #000000;
+    --lm_drag_old_position_border: 2px tan dashed;
+    --lm_splitter_drag_color: darkcyan;
+}
+
+.lm_items {
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--lm_border_color);
+}
+.lm_splitter .lm_bg {
+  background-color: var(--lm_border_color);
+}
+
 .lm_row > .lm_item {
   float: left;
 }
@@ -41,8 +57,16 @@
 // ".lm_dragging" is applied to BODY tag during Drag and is also directly applied to the root of the object being dragged
 .lm_dragging,
 .lm_dragging * {
-  cursor: move !important;
+  cursor: move;
   user-select: none;
+}
+
+// Separator line (handle to change pane size)
+.lm_splitter {
+  &:hover .lm_drag_handle, // When hovered by mouse...
+  &.lm_dragging .lm_drag_handle {
+    background-color: var(--lm_splitter_drag_color);
+  }
 }
 
 // If a specific Pane is maximized
@@ -60,16 +84,31 @@
 // Separator line (handle to change pane size)
 .lm_splitter {
   position: relative;
-  z-index: 2;
+  z-index: auto;
   touch-action: none;
+  background: transparent;
 
+  .lm_bg {
+    opacity: 1;
+    z-index: -2;
+    position: absolute;
+  }
+  .lm_drag_handle {
+    position: absolute;
+    background-clip: content-box;
+    z-index: 2;
+    touch-action: none;
+    -webkit-user-select: none;
+            user-select: none;
+    box-sizing: content-box;
+  }
   &.lm_vertical {
+    .lm_bg {
+      width: @width0;
+    }
     .lm_drag_handle {
       width: @width0;
-      position: absolute;
-      cursor: ns-resize;
-      touch-action: none;
-      user-select: none;
+      cursor: row-resize;
     }
   }
 
@@ -77,14 +116,18 @@
     float: left;
     height: @height0;
 
+    .lm_bg {
+      height: @height0;
+    }
     .lm_drag_handle {
       height: @height0;
-      position: absolute;
-      cursor: ew-resize;
-      touch-action: none;
-      user-select: none;
+      cursor: col-resize;
     }
   }
+}
+
+.lm_component {
+  position: absolute;
 }
 
 // Pane Header (container of Tabs for each pane)
@@ -93,6 +136,7 @@
   position: relative;
   z-index: 1;
   user-select: none;
+  width: 100%;
 
   [class^=lm_] {
     box-sizing: content-box !important;
@@ -101,6 +145,7 @@
   // Pane controls (popout, maximize, minimize, close)
   .lm_controls {
     position: absolute;
+    top: 0px;
     right: 3px;
     display: flex;
 
@@ -113,18 +158,13 @@
     }
   }
 
-  .lm_tabs {
-    position: absolute;
-    display: flex;
-  }
-
   // Single Tab container. A single Tab is set for each pane, a group of Tabs are contained in ".lm_header"
   .lm_tab {
     cursor: pointer;
     float: left;
     height: @height2;
     margin-top: 1px;
-    padding: 0px 10px 5px;
+    padding: 0px 6px 5px;
     padding-right: 25px;
     position: relative;
     touch-action: none;
@@ -145,12 +185,6 @@
       }
     }
 
-    .lm_title {
-      display: inline-block;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
     // Close Tab Icon
     .lm_close_tab {
       width: @width3;
@@ -162,13 +196,90 @@
     }
   }
 }
+.lm_tabs {
+  display: flex;
+  overflow: hidden;
+}
+
+.lm_tab {
+  .lm_title {
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: pre;
+  }
+}
+
+.lm_header.lm_tight_mode {
+  .lm_tabs {
+    .lm_tab {
+      padding-left: 2px;
+      padding-right: 2px;
+    }
+    .lm_tab.lm_active {
+      display: inherit;
+      padding-right: 22px;
+      .lm_close_tab {
+        display: inherit;
+      }
+    }
+  }
+  .lm_drop_tab_placeholder {
+    padding-right: 0.7 * @width2;
+    margin-right: 0px; // counteract negative margin-left when taps overlap
+  }
+}
+.lm_header.lm_tight_mode .lm_tabs .lm_tab .lm_close_tab,
+.lm_stack.lm_single .lm_tabs .lm_tab.lm_active .lm_close_tab {
+   display: none;
+ }
+.lm_stack.lm_single .lm_header .lm_tabs {
+  .lm_tab, .lm_tab.lm_active {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+}
+div.lm_drag_old_position {
+    box-sizing: border-box;
+}
+div.lm_drag_old_position .lm_header .lm_tab.lm_dragging,
+div.lm_drag_old_position .lm_item {
+    border: var(--lm_drag_old_position_border);
+}
+div.lm_drag_old_position .lm_header .lm_tab.lm_dragging {
+    opacity: 1;
+    background-color: transparent;
+}
+div.lm_drag_old_position.lm_single .lm_header {
+    background-color: transparent;
+}
+div.lm_drag_old_position .lm_header .lm_tab.lm_dragging .lm_title {
+    opacity: 0;
+}
+div.lm_drag_old_position  .lm_controls {
+    display: none;
+}
 
 // Change stack style to absolute positioning for docking transition ability
 .lm_stack {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  z-index: auto;
 
   > .lm_items {
       overflow: hidden;
+      flex-grow: 1;
+      position: relative;
+      z-index: auto;
+
+      .lm_item {
+        position: absolute;
+        left: 0px;
+        right: 0px;
+        top: 0px;
+        bottom: 0px;
+      }
   }
 
   &.lm_left {
@@ -189,6 +300,7 @@
       position: absolute;
       right: 0;
       top: 0;
+      flex-grow: 0;
     }
   }
   &.lm_bottom {
@@ -306,7 +418,7 @@
 
 .lm_drop_tab_placeholder {
   float: left;
-  width: @width2;
+  padding-right: @width2;
   visibility: hidden;
 }
 
@@ -330,6 +442,10 @@
     right: 0;
     z-index: 5;
     overflow: hidden;
+    .lm_title {
+        display: block;
+        padding: 1px;
+    }
 
     .lm_tab {
       clear: both;
@@ -371,7 +487,7 @@
 // Placeholder Container of target position
 .lm_dropTargetIndicator {
   display: none;
-  position: absolute;
+  position: fixed;
   z-index: 35;
   transition: all 200ms ease;
 
@@ -418,5 +534,20 @@
 
   > .lm_icon {
     z-index: 20;
+  }
+}
+
+.lm_dragImage {
+  position: absolute;
+  opacity: 0.8;
+
+  section {
+    background-color: transparent;
+   }
+
+  .lm_dragImageInner {
+    border: solid 2px red;
+    background-color: transparent;
+    position: relative;
   }
 }

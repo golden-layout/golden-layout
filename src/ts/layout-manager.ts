@@ -13,7 +13,6 @@ import { BrowserPopout } from './controls/browser-popout';
 import { DragProxy } from './controls/drag-proxy';
 import { DragSource } from './controls/drag-source';
 import { DropTargetIndicator } from './controls/drop-target-indicator';
-import { TransitionIndicator } from './controls/transition-indicator';
 import { ConfigurationError } from './errors/external-error';
 import { AssertError, UnexpectedNullError, UnexpectedUndefinedError, UnreachableCaseError } from './errors/internal-error';
 import { ComponentItem } from './items/component-item';
@@ -28,8 +27,9 @@ import { DragListener } from './utils/drag-listener';
 import { EventEmitter } from './utils/event-emitter';
 import { EventHub } from './utils/event-hub';
 import { I18nStringId, I18nStrings, i18nStrings } from './utils/i18n-strings';
-import { ItemType, JsonValue, Rect, ResponsiveMode } from './utils/types';
+import { ItemType, JsonValue, Rect, ResponsiveMode, WidthAndHeight } from './utils/types';
 import {
+    enableIFramePointerEvents,
     getElementWidthAndHeight,
     removeFromArray,
     setElementHeight,
@@ -41,6 +41,13 @@ declare global {
     interface Window {
         __glInstance: LayoutManager;
     }
+}
+
+enum DragState {
+    NotDragging = 0,
+    DroppedInThisWindow = 1,
+    DroppedElsewhere = 2,
+    CurrentlyDragging = 3,
 }
 
 /**
@@ -65,6 +72,8 @@ export abstract class LayoutManager extends EventEmitter {
     /** @internal */
     private _containerElement: HTMLElement;
     /** @internal */
+    private _containerPosition: Node | null;
+    /** @internal */
     private _isInitialised = false;
     /** @internal */
     private _groundItem: GroundItem | undefined = undefined;
@@ -73,11 +82,14 @@ export abstract class LayoutManager extends EventEmitter {
     /** @internal */
     private _dropTargetIndicator: DropTargetIndicator | null = null;
     /** @internal */
-    private _transitionIndicator: TransitionIndicator | null = null;
-    /** @internal */
     private _resizeTimeoutId: ReturnType<typeof setTimeout> | undefined;
     /** @internal */
-    private _itemAreas: ContentItem.Area[] = [];
+    private _itemAreas: ContentItem.Area[] | null = null;
+    private _dragState: DragState = DragState.NotDragging;
+    private _lastDragLeaveTime = 0;
+    private _draggedComponentItem: ComponentItem | undefined;
+    /** @internal */
+    private _dragEnterCount = 0;
     /** @internal */
     private _maximisedStack: Stack | undefined;
     /** @internal */
@@ -103,8 +115,6 @@ export abstract class LayoutManager extends EventEmitter {
     /** @internal */
     private _virtualSizedContainerAddingBeginCount = 0;
     /** @internal */
-    private _sizeInvalidationBeginCount = 0;
-    /** @internal */
     protected _constructorOrSubWindowLayoutConfig: LayoutConfig | undefined; // protected for backwards compatibility
 
     /** @internal */
@@ -115,13 +125,51 @@ export abstract class LayoutManager extends EventEmitter {
     private _windowBeforeUnloadListening = false;
     /** @internal */
     private _maximisedStackBeforeDestroyedListener = (ev: EventEmitter.BubblingEvent) => this.cleanupBeforeMaximisedStackDestroyed(ev);
+    private _area: ContentItem.Area | null = null;
+    private _lastValidArea: ContentItem.Area | null = null;
+    private _actionsOnDragEnd: ((cancel: boolean)=>void)[] = [];
+
+    popoutClickHandler: (item: Stack, ev: Event)=>boolean = () => false;
+    private _removeItem: (()=>void) | undefined = undefined;
+    // May be set by client code.
+    inSomeWindow = false;
+    private delayedDragEndTimer: ReturnType<typeof setTimeout> | undefined;
+    private delayedDragEndFunction: (()=>void) | undefined = undefined;
+    createDragProxy: ((item: ComponentItem, x: number, y: number)=>void)|undefined;
 
     readonly isSubWindow: boolean;
     layoutConfig: ResolvedLayoutConfig;
 
+    /** Return width and height available for root element.
+     * By default size of containerElement - which is usually document.root.
+     * Should be overridden if not 100% of containerElement. */
+    containerWidthAndHeight: () => WidthAndHeight;
     beforeVirtualRectingEvent: LayoutManager.BeforeVirtualRectingEvent | undefined;
     afterVirtualRectingEvent: LayoutManager.AfterVirtualRectingEvent | undefined;
 
+    createComponentElement: (config: ResolvedComponentItemConfig, component: ComponentContainer)=>HTMLElement|undefined
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        = (config, component) => {
+        let parent = this.groundItem?.element || document.body;
+        const contentElement = document.createElement('div');
+        let componentElement = contentElement;
+        if (this.layoutConfig.settings.copyForDragImage
+            ?? this.layoutConfig.settings.useDragAndDrop) {
+            componentElement = document.createElement('div');
+            parent.appendChild(componentElement);
+            parent = componentElement;
+        }
+        parent.appendChild(contentElement);
+        contentElement.classList.add(DomConstants.ClassName.Content);
+        return componentElement;
+    };
+
+    enterOrLeaveSomeWindow(entering: boolean): void {
+        this.inSomeWindow = entering;
+        if (! entering) {
+            this._lastDragLeaveTime = Date.now();
+        }
+    }
     get container(): HTMLElement { return this._containerElement; }
     get isInitialised(): boolean { return this._isInitialised; }
     /** @internal */
@@ -131,8 +179,6 @@ export abstract class LayoutManager extends EventEmitter {
     get openPopouts(): BrowserPopout[] { return this._openPopouts; }
     /** @internal */
     get dropTargetIndicator(): DropTargetIndicator | null { return this._dropTargetIndicator; }
-    /** @internal @deprecated To be removed */
-    get transitionIndicator(): TransitionIndicator | null { return this._transitionIndicator; }
     get width(): number | null { return this._width; }
     get height(): number | null { return this._height; }
     /**
@@ -179,6 +225,10 @@ export abstract class LayoutManager extends EventEmitter {
         if (parameters.containerElement !== undefined) {
             this._containerElement = parameters.containerElement;
         }
+        if (parameters.containerPosition !== undefined) {
+            this._containerPosition = parameters.containerPosition;
+        }
+        this.containerWidthAndHeight = () => getElementWidthAndHeight(this._containerElement);
     }
 
     /**
@@ -210,9 +260,6 @@ export abstract class LayoutManager extends EventEmitter {
             if (this._dropTargetIndicator !== null) {
                 this._dropTargetIndicator.destroy();
             }
-            if (this._transitionIndicator !== null) {
-                this._transitionIndicator.destroy();
-            }
             this._eventHub.destroy();
 
             for (const dragSource of this._dragSources) {
@@ -234,6 +281,19 @@ export abstract class LayoutManager extends EventEmitter {
         return ResolvedLayoutConfig.minifyConfig(config);
     }
 
+    useNativeDragAndDrop(): boolean { return this.layoutConfig.settings.useDragAndDrop; }
+
+    currentlyDragging(): boolean { return this._dragState == DragState.CurrentlyDragging; }
+
+    dragDataMimetype(): string { return this.layoutConfig.settings.dragDataMimetype; }
+
+    validDragEvent(e: DragEvent): boolean {
+        // FIXME. Might be a good idea to check that all componentTypes in the
+        // dataTransfer value are registered types.
+        // That should make it more robust even if dragDataMimetype is the default.
+        return e.dataTransfer?.types.includes(this.dragDataMimetype()) || false;
+    }
+
     /**
      * Takes a configuration Object that was previously minified
      * using minifyConfig and returns its original version
@@ -244,9 +304,19 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /** @internal */
-    abstract bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BindableComponent;
+    abstract bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.Handle;
     /** @internal */
-    abstract unbindComponent(container: ComponentContainer, virtual: boolean, component: ComponentContainer.Component | undefined): void;
+    abstract unbindComponent(container: ComponentContainer, handle: ComponentContainer.Handle): void;
+
+    _hideTargetIndicator() : void { // FIXME rename? hideTargetIndicator
+        const dropTargetIndicator = this.dropTargetIndicator;
+        if (dropTargetIndicator === null) {
+            throw new UnexpectedNullError('DPOD30011');
+        } else {
+            dropTargetIndicator.hide();
+        }
+    }
+
 
     /**
      * Called from GoldenLayout class. Finishes of init
@@ -254,8 +324,6 @@ export abstract class LayoutManager extends EventEmitter {
      */
     init(): void {
         this.setContainer();
-        this._dropTargetIndicator = new DropTargetIndicator(/*this.container*/);
-        this._transitionIndicator = new TransitionIndicator();
         this.updateSizeFromContainer();
 
         let subWindowRootConfig: ComponentItemConfig | undefined;
@@ -292,8 +360,10 @@ export abstract class LayoutManager extends EventEmitter {
             }
         }
         const layoutConfig = this.layoutConfig;
-        this._groundItem = new GroundItem(this, layoutConfig.root, this._containerElement);
+        this._groundItem = new GroundItem(this, layoutConfig.root, this._containerElement, this._containerPosition);
         this._groundItem.init();
+        const element = this._groundItem.element;
+        this._dropTargetIndicator = new DropTargetIndicator(element, element.firstChild);
 
         this.checkLoadedLayoutMaximiseItem();
 
@@ -306,6 +376,56 @@ export abstract class LayoutManager extends EventEmitter {
             // must be SubWindow
             this.loadComponentAsRoot(subWindowRootConfig);
         }
+
+        const elm = document.body; //this._groundItem.element;
+        if (this.useNativeDragAndDrop()) {
+            elm.addEventListener('dragover', (e) => this.onDragOver(e), true);
+            elm.addEventListener('dragenter', (e) => this.onDragEnter(e), true);
+            elm.addEventListener('dragleave', (e) => this.onDragLeave(e), true);
+            elm.addEventListener('dragend', (e) => {
+                const x = e.screenX, y = e.screenY;
+                if (this._dragState === DragState.CurrentlyDragging) {
+                    this.delayedDragEndFunction = () => {
+                        if (this.delayedDragEndTimer)
+                            clearTimeout(this.delayedDragEndTimer);
+                        this.delayedDragEndTimer = undefined;
+                        this.delayedDragEndFunction = undefined;
+                        this.onDragEnd(x, y);
+                    };
+                    this.delayedDragEndTimer = globalThis.setTimeout(this.delayedDragEndFunction, 100);
+                } else
+                    this.onDragEnd(x, y, e);
+            }, true);
+            elm.addEventListener('drop', (e) => {console.log("drop event"); this.onDrop(e);});
+        }
+    }
+
+     /**
+     * Sets the target position, highlighting the appropriate area
+     *
+     * @param x - The x position in px
+     * @param y - The y position in px
+     *
+     * @internal
+     */
+    private setDropPosition(x: number, y: number): void {
+       // this._element.style.left = numberToPixels(x);
+       // this._element.style.top = numberToPixels(y);
+        this._area = this.getArea(x, y);
+        if (this._area !== null) {
+            this._lastValidArea = this._area;
+            this._area.contentItem.highlightDropZone(x, y, this._area);
+        }
+    }
+   private onDrag(event: MouseEvent) {
+        const x = event.pageX;
+        const y = event.pageY;
+        if (this._itemAreas === null)
+            this.calculateItemAreas();
+        if (this._itemAreas === null || this._itemAreas.length === 0)
+            return;
+
+        this.setDropPosition(x, y);
     }
 
     /**
@@ -645,10 +765,10 @@ export abstract class LayoutManager extends EventEmitter {
                 this._groundItem.setSize(this._width, this._height);
 
                 if (this._maximisedStack) {
-                    const { width, height } = getElementWidthAndHeight(this._containerElement);
+                    const { width, height } = this.containerWidthAndHeight();
                     setElementWidth(this._maximisedStack.element, width);
                     setElementHeight(this._maximisedStack.element, height);
-                    this._maximisedStack.updateSize(false);
+                    this._maximisedStack.updateSize();
                 }
 
                 this.adjustColumnsResponsive();
@@ -657,35 +777,19 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /** @internal */
-    beginSizeInvalidation(): void {
-        this._sizeInvalidationBeginCount++;
-    }
-
-    /** @internal */
-    endSizeInvalidation(): void {
-        if (--this._sizeInvalidationBeginCount === 0) {
-            this.updateSizeFromContainer();
-        }
-    }
-
-    /** @internal */
     updateSizeFromContainer(): void {
-        const { width, height } = getElementWidthAndHeight(this._containerElement);
+        const { width, height } = this.containerWidthAndHeight();
         this.setSize(width, height);
     }
 
     /**
      * Update the size of the root ContentItem.  This will update the size of all contentItems in the tree
-     * @param force - In some cases the size is not updated if it has not changed. In this case, events
-     * (such as ComponentContainer.virtualRectingRequiredEvent) are not fired. Setting force to true, ensures the size is updated regardless, and
-     * the respective events are fired. This is sometimes necessary when a component's size has not changed but it has become visible, and the
-     * relevant events need to be fired.
      */
-    updateRootSize(force = false): void {
+    updateRootSize(): void {
         if (this._groundItem === undefined) {
             throw new UnexpectedUndefinedError('LMURS28881');
         } else {
-            this._groundItem.updateSize(force);
+            this._groundItem.updateSize();
         }
     }
 
@@ -748,7 +852,7 @@ export abstract class LayoutManager extends EventEmitter {
 
     findFirstComponentItemById(id: string): ComponentItem | undefined {
         if (this._groundItem === undefined) {
-            throw new UnexpectedUndefinedError('LMFFCIBI82446');
+            return undefined;
         } else {
             return this.findFirstContentItemTypeByIdRecursive(ItemType.component, id, this._groundItem) as ComponentItem;
         }
@@ -837,7 +941,7 @@ export abstract class LayoutManager extends EventEmitter {
 
     /** @internal */
     beginVirtualSizedContainerAdding(): void {
-        if (++this._virtualSizedContainerAddingBeginCount === 0) {
+        if (this._virtualSizedContainerAddingBeginCount++ === 0) {
             this._virtualSizedContainers.length = 0;
         }
     }
@@ -852,28 +956,14 @@ export abstract class LayoutManager extends EventEmitter {
         if (--this._virtualSizedContainerAddingBeginCount === 0) {
             const count = this._virtualSizedContainers.length;
             if (count > 0) {
-                this.fireBeforeVirtualRectingEvent(count);
+                this.beforeVirtualRectingEvent?.(count);
                 for (let i = 0; i < count; i++) {
                     const container = this._virtualSizedContainers[i];
                     container.notifyVirtualRectingRequired();
                 }
-                this.fireAfterVirtualRectingEvent();
+                this.afterVirtualRectingEvent?.();
                 this._virtualSizedContainers.length = 0;
             }
-        }
-    }
-
-    /** @internal */
-    fireBeforeVirtualRectingEvent(count: number): void {
-        if (this.beforeVirtualRectingEvent !== undefined) {
-            this.beforeVirtualRectingEvent(count);
-        }
-    }
-
-    /** @internal */
-    fireAfterVirtualRectingEvent(): void {
-        if (this.afterVirtualRectingEvent !== undefined) {
-            this.afterVirtualRectingEvent();
         }
     }
 
@@ -963,26 +1053,57 @@ export abstract class LayoutManager extends EventEmitter {
     newDragSource(element: HTMLElement,
         componentTypeOrItemConfigCallback: JsonValue | (() => (DragSource.ComponentItemConfig | ComponentItemConfig)),
         componentState?: JsonValue,
-        title?: string,
-        id?: string,
+        title?: string
     ): DragSource {
-        const dragSource = new DragSource(this, element, [], componentTypeOrItemConfigCallback, componentState, title, id);
+        const dragSource = new DragSource(this, element, componentTypeOrItemConfigCallback, componentState, title);
         this._dragSources.push(dragSource);
 
         return dragSource;
     }
 
     /**
-	 * Removes a DragListener added by createDragSource() so the corresponding
-	 * DOM element is not a drag source any more.
-	 */
-	removeDragSource(dragSource: DragSource): void {
-		removeFromArray(dragSource, this._dragSources );
-		dragSource.destroy();
+     * Removes a DragListener added by createDragSource() so the corresponding
+     * DOM element is not a drag source any more.
+     */
+    removeDragSource(dragSource: DragSource): void {
+	removeFromArray(dragSource, this._dragSources );
+	dragSource.destroy();
+    }
+
+    removeElementEventually(element: HTMLElement): void {
+        if (this.currentlyDragging()) {
+            element.style.opacity = '0';
+            this._actionsOnDragEnd.push((cancel) => {
+                if (cancel)
+                    element.style.opacity = '';
+                else
+                    element.remove();
+            });
+        } else {
+            element.remove();
+        }
+    }
+    deferIfDragging(action: (cancel: boolean)=>void): void {
+        if (this.currentlyDragging())
+            this._actionsOnDragEnd.push(action);
+        else
+            action(false);
+    }
+
+    doDeferredActions(cancel: boolean): void {
+        for (const action of this._actionsOnDragEnd) {
+            action(cancel);
+        }
+        this._actionsOnDragEnd.length = 0;
     }
 
     /** @internal */
-    startComponentDrag(x: number, y: number, dragListener: DragListener, componentItem: ComponentItem, stack: Stack): void {
+    startComponentDragOld(x: number, y: number, dragListener: DragListener, componentItem: ComponentItem, stack: Stack): void
+        {
+        if (this.createDragProxy) {
+            this.createDragProxy(componentItem, x, y);
+            // return;
+        }
         new DragProxy(
             x,
             y,
@@ -991,6 +1112,181 @@ export abstract class LayoutManager extends EventEmitter {
             componentItem,
             stack
         );
+    }
+
+    /** @internal */
+    startComponentDrag(ev: DragEvent, componentItem: ComponentItem): void
+    {
+        this._dragState = DragState.CurrentlyDragging;
+        this._draggedComponentItem = componentItem;
+        const data = {config: componentItem.toConfig()};
+        if (ev instanceof DragEvent && ev.dataTransfer) {
+            const jdata = JSON.stringify(data);
+            ev.dataTransfer.setData(this.dragDataMimetype(), jdata);
+        }
+
+        // Make drag-image
+        const tabElement = componentItem.tab.element;
+        //tabElement.style.visibility="visible";
+        const stack = componentItem.parent as Stack;
+        const isActiveTab = stack.getActiveComponentItem() === componentItem;
+        const headerElement = stack.header.element;
+        //headerElement.style.visibility="hidden";
+        const tabClone = tabElement.cloneNode(true) as HTMLElement;
+        const tabsContainer = document.createElement('section');
+        tabsContainer.classList.add(DomConstants.ClassName.Tabs);
+        tabsContainer.appendChild(tabClone);
+        const headerClone = document.createElement('section');
+        headerClone.classList.add(DomConstants.ClassName.Header);
+        headerClone.appendChild(tabsContainer);
+        let image: HTMLElement;
+        const element = componentItem.container.element;
+        const contentElement = componentItem.container.contentElement;
+        // usually same as effective copyForDragImage - see createComponentElement
+        const useFreshDragImage = ! element || element === contentElement;
+        if (useFreshDragImage) {
+            image = document.createElement('section');
+            image.classList.add(DomConstants.ClassName.DragImage);
+            const inner = document.createElement('div');
+            inner.classList.add(DomConstants.ClassName.DragImageInner);
+            image.appendChild(headerClone);
+            image.appendChild(inner);
+            document.body.appendChild(image);
+            const stackBounds = stack.element.getBoundingClientRect();
+            image.style.top = `${stackBounds.top}px`;
+            image.style.left = `${stackBounds.left}px`;
+            image.style.width = `${stackBounds.width}px`;
+            image.style.height = `${stackBounds.height}px`;
+            inner.style.left = "0px";
+            inner.style.right = "0px";
+            inner.style.height = `${stackBounds.height-tabsContainer.clientHeight}px`;
+            inner.style.top = `${tabsContainer.clientHeight}px`;
+            inner.style.bottom = "0px";
+        } else {
+            image = element as HTMLElement;
+            image.insertBefore(headerClone, image.firstChild);
+        }
+        headerClone.style.background = "transparent";
+        headerClone.style.position = "absolute";
+        headerClone.style.top = "0px";
+        if (! isActiveTab) {
+            for (const sibling of stack.contentItems) {
+                if (sibling !== componentItem)
+                    sibling.element.style.opacity = '0';
+            }
+        }
+        const oldOpacity = image.style.opacity;
+        //Ideally we'd like to have the drag image be partially transparent.
+        //That is the default on Firefox, so we're OK.
+        //The following works on GtkWebKit and presumably Safari
+        //THE FOLLOWING SEEMS TO BE NEEDED IF !useFreshDragImage
+        //(ON Chrome/Electron/Qt AND WebKit BUT NOT Firefox).
+        image.style.opacity = "0.6";
+        //However, it semi-breaks Firefox, making it too transparent.
+        //It also seems to have no effect on Chrome/Electron.
+        //Maybe this needs to be a browser-dependent setting.  FIXME.
+        //The offset from the mouse pointer is wrong on GtkWebKit:
+        //- It seems to ignore the offset and just center the image over
+        //- the mouse cursor. FIXME.
+        //Perhaps scale the image if it is really large. FIXME.
+        const etarget = ev.target as HTMLElement;
+        const dX = ev.offsetX + etarget.offsetLeft;
+        const dY = ev.offsetY + etarget.offsetTop;
+        tabsContainer.style.marginLeft = `${(ev.target as HTMLElement).offsetLeft}px`;
+        ev.dataTransfer?.setDragImage(image as HTMLElement, dX, dY);
+        this.emit('dragstart', ev, componentItem);
+        enableIFramePointerEvents(false);
+
+        // We need to visibly remove the componentItem during dragging.
+        // However, this needs to happen at a later 'tick' than setDragImage,
+        // at least if !useFreshDragImage.
+        this._removeItem = () => {
+            if (! this._removeItem)
+                return;
+            this._removeItem = undefined;
+
+            // Set 'ignoring' property so calculateItemAreas works.
+            // The latter is called from onDragEnter, which may happen
+            // before the requestAnimationFrame action.
+            for (let item: ContentItem = componentItem; ; ) {
+                const parent = item.parent;
+                if (! parent)
+                    break;
+                if (item.contentItems.length >= 2) {
+                    break;
+                }
+                if (item === componentItem || item.isStack) {
+                    item.ignoring = true;
+                    parent.ignoringChild = true;
+                }
+                if (parent.isGround)
+                    break;
+                item = parent;
+            }
+
+            // Take the lm_item out of the layout (set position to absolute),
+            // so remaining elements can be re-positioned.
+            // Whle doing so, add a dashed border (at the old position)
+            // as a visual feedbakc.
+            const ielement = componentItem.element;
+            const oparent = stack.element.offsetParent;
+            const draggingWholeStack = stack.contentItems.length <= 1;
+            // FUTURE: draggingWholeStack should also be set if dragging
+            // an enture stack as a unit.
+            if (this.layoutConfig.settings.showOldPositionWhenDragging
+                && stack.parent && oparent //&& stack.parent.isGround
+                && ielement.style.position === '') {
+                const stackBounds = stack.element.getBoundingClientRect();
+                const parentBounds = oparent.getBoundingClientRect();
+                stack.element.classList.add("lm_drag_old_position");
+                stack.element.style.zIndex = '4';
+                if (draggingWholeStack) {
+                    const sstyle = stack.element.style;
+                    sstyle.top = `${stackBounds.top - parentBounds.top}px`;
+                    sstyle.left = `${stackBounds.left - parentBounds.left}px`;
+                    sstyle.width = `${stackBounds.width - 2}px`;
+                    sstyle.height = `${stackBounds.height - 2}px`;
+                    sstyle.position = 'absolute'
+                }
+                this._actionsOnDragEnd.push((cancel) => {
+                    stack.element.classList.remove("lm_drag_old_position");
+                    stack.element.style.zIndex = '';
+                    if (draggingWholeStack) {
+                        const sstyle = stack.element.style;
+                        sstyle.top = '';
+                        sstyle.left = '';
+                        sstyle.width = '';
+                        sstyle.height = '';
+                        sstyle.position = '';
+                    }
+                });
+            }
+
+            headerClone.remove();
+            if (! isActiveTab) {
+                for (const sibling of stack.contentItems) {
+                    if (sibling !== componentItem)
+                        sibling.element.style.opacity = '';
+                }
+            }
+            tabElement.style.visibility = '';
+            headerElement.style.visibility = '';
+            if (useFreshDragImage)
+                image.remove();
+            else
+                image.style.opacity = oldOpacity;
+            componentItem.parent?.removeChild(componentItem, true);
+            const container = componentItem.container;
+            if (container.visible) {
+                container.setVisibility(false);
+                this._actionsOnDragEnd.push((cancel) => {
+                    container.setVisibility(true);
+                });
+            }
+            console.log("after removeChild");
+        }
+
+        window.requestAnimationFrame(this._removeItem);
     }
 
     /**
@@ -1168,9 +1464,11 @@ export abstract class LayoutManager extends EventEmitter {
         let matchingArea = null;
         let smallestSurface = Infinity;
 
-        for (let i = 0; i < this._itemAreas.length; i++) {
-            const area = this._itemAreas[i];
-
+        if (this._itemAreas === null)
+            this.calculateItemAreas();
+        const itemAreas = this._itemAreas as ContentItem.Area[];
+        for (let i = 0; i < itemAreas.length; i++) {
+            const area = itemAreas[i];
             if (
                 x >= area.x1 &&
                 x < area.x2 && // x2 is not included in area
@@ -1210,7 +1508,8 @@ export abstract class LayoutManager extends EventEmitter {
                 }
                 return;
             } else {
-                if (groundItem.contentItems[0].isStack) {
+                if (allContentItems[1].isStack) {
+                    // No rows/columns (except ones we're ignoring).
                     // if root is Stack, then split stack and sides of Layout are same, so skip sides
                     this._itemAreas = [];
                 } else {
@@ -1249,6 +1548,7 @@ export abstract class LayoutManager extends EventEmitter {
                 }
             }
         }
+        console.log("l-m calculateItemAreas: "+this._itemAreas.length+" areas");
     }
 
     /**
@@ -1291,10 +1591,10 @@ export abstract class LayoutManager extends EventEmitter {
             throw new UnexpectedUndefinedError('LMMXI19993');
         } else {
             this._groundItem.element.prepend(stack.element);
-            const { width, height } = getElementWidthAndHeight(this._containerElement);
+            const { width, height } = this.containerWidthAndHeight();
             setElementWidth(stack.element, width);
             setElementHeight(stack.element, height);
-            stack.updateSize(true);
+            stack.updateSize();
             stack.focusActiveContentItem();
             this._maximisedStack.emit('maximised');
             this.emit('stateChanged');
@@ -1313,7 +1613,7 @@ export abstract class LayoutManager extends EventEmitter {
                 stack.element.classList.remove(DomConstants.ClassName.Maximised);
                 this._maximisePlaceholder.insertAdjacentElement('afterend', stack.element);
                 this._maximisePlaceholder.remove();
-                this.updateRootSize(true);
+                stack.parent.updateSize();
                 this._maximisedStack = undefined;
                 stack.off('beforeItemDestroyed', this._maximisedStackBeforeDestroyedListener);
                 stack.emit('minimised');
@@ -1394,8 +1694,7 @@ export abstract class LayoutManager extends EventEmitter {
             this._resizeTimeoutId = setTimeout(
                 () => {
                     this._resizeTimeoutId = undefined;
-                    this.beginSizeInvalidation();
-                    this.endSizeInvalidation();
+                    this.updateSizeFromContainer();
                 },
                 this.resizeDebounceInterval,
             );
@@ -1417,7 +1716,8 @@ export abstract class LayoutManager extends EventEmitter {
         const bodyElement = document.body;
         const containerElement = this._containerElement ?? bodyElement;
 
-        if (containerElement === bodyElement) {
+        if (containerElement === bodyElement
+                && bodyElement.firstElementChild === null) {
             this.resizeWithContainerAutomatically = true;
 
             const documentElement = document.documentElement;
@@ -1534,6 +1834,188 @@ export abstract class LayoutManager extends EventEmitter {
                 this.addChildContentItemsToContainer(container, item);
             }
         }
+    }
+
+    private onDragEnter(e: MouseEvent) {
+        if (this._removeItem)
+            this._removeItem();
+        e.stopPropagation();
+        if (e instanceof DragEvent) {
+            if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+            if (! this.validDragEvent(e))
+                return;
+        }
+        if (this._dragEnterCount == 0) {
+            this.emit('drag-enter-window', e);
+            this.calculateItemAreas();
+        }
+        this._dragEnterCount++;
+        e.preventDefault();
+    }
+
+    private onDragLeave(e: MouseEvent) {
+        this._lastDragLeaveTime = Date.now();
+        e.stopPropagation();
+        if (e instanceof DragEvent) {
+            if (! this.validDragEvent(e))
+                return;
+        }
+        this._dragEnterCount--;
+        if (this._dragEnterCount <= 0) {
+            this.exitDrag();
+            this.emit('drag-leave-window', e);
+        }
+    }
+
+    private onDragOver(e: MouseEvent) {
+        if (e instanceof DragEvent && e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+        const valid = e instanceof DragEvent && this.validDragEvent(e);
+        //console.log("dragover "+(e.target as HTMLElement).getAttribute("class")+" valid:"+valid+" entercount:"+this._dragEnterCount+(e instanceof DragEvent ? (" dropEffect:"+e.dataTransfer?.dropEffect):""));
+        //      drag-listener.onPointerMove -> emit('drag', ...)
+        this.onDrag(e);
+        if (valid && this._area)
+            e.preventDefault(); // allow drop
+    }
+
+    private onDragEnd( screenX: number, screenY: number,
+                       event: MouseEvent|null = null) {
+        console.log("onDragEnd st:"+this._dragState+" timer:"+this.delayedDragEndTimer);
+
+        // There are four cases we want to handle. Unfortunately, it is not
+        // possible to reliably distinguish them on all browsers we care about.
+        // (1) Normal drop in this window (_dragState == DroppedInThisWindow)
+        // (2) Normal drop in other window (_dragState == DroppedElsewhere)
+        // We can't detect this case unless we get an external notification
+        // (the application calls droppedInOtherWindow). The notification may
+        // happen after the dragend event, which is one reason we wait a bit.
+        // If we don't get the notification in time, we handle it as case (3).
+        // (3) Drop to desktop
+        // (4) Drag was cancelled (by typing Esc).
+
+        // Try to detact a cancelled drag. There doesn't seem to be a way
+        // to detect this reliably except on Firefox (with mozUserCancelled).
+        // Note that while the specification says dropEffect is supposed
+        // to be "none" if the drag was cancelled, this is unreliable.
+        let cancel = false;
+        if (event instanceof DragEvent
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            && (event.dataTransfer as any).mozUserCancelled)
+            cancel = true;
+        if (this._dragState == DragState.CurrentlyDragging && ! cancel) {
+            // Heuristic: If the most recent dragleave was less than 200ms ago,
+            // it was probably caused by a 'cancel' (Escape pressed).
+            const now = Date.now();
+            if (now >= this._lastDragLeaveTime
+                && now - this._lastDragLeaveTime <= 200) {
+                cancel = true;
+            }
+        }
+
+        const component = this._draggedComponentItem;
+        console.log("onDragEnd now:"+Date.now()+" cancel:"+cancel+" comp:"+component+" cur-drag:"+this._dragState+" in-win:"+this.inSomeWindow+" ecnt:"+this._dragEnterCount);
+        // if this is the only component, and it is dropped to the desktop,
+        // just reuse the window (though move it - if possible).
+        const onlyWindow = component?.parent
+            && component.parent.type === "stack"
+            && component.parent.contentItems.length === 1
+            && component.parent.contentItems[0] === component
+            && component.parent.parent?.type === "ground";
+        let dropItem = undefined;
+        if (this._draggedComponentItem
+            && this._dragState == DragState.DroppedInThisWindow) {
+            if (onlyWindow)
+                cancel = true;
+            else {
+                dropItem = this._draggedComponentItem;
+            }
+        }
+
+        const moveWindow = ! cancel && ! this.inSomeWindow && onlyWindow;
+        if (! (cancel || moveWindow)
+            && component && component.container
+            && this._dragState >= DragState.DroppedElsewhere) {
+            // dropped in other window or to desktop
+            const parent = component.parent;
+            // dragExported callback may need size/position of element,
+            // which it can't get if display is 'none'.
+            if (parent && parent.type === 'stack')
+                parent.element.style.display='';
+            component.container.emit('dragExported', screenX, screenY, component);
+        }
+
+        this.doDeferredActions(cancel || !!moveWindow);
+        if (dropItem && this._area)
+            this._area.contentItem.onDrop(dropItem, this._area);
+        //console.log("dragend ev-handler enter-count:"+this._dragEnterCount);
+        // FIXME incorporate drag-listener:processDragStop
+        // See processDragStop in drag-listener
+        //document.body.classList.remove(DomConstants.ClassName.Dragging);
+        // if iframe: clear style.pointer-events
+        enableIFramePointerEvents(true);
+        if (moveWindow && component && component.container) {
+            component.container.emit('dragMoved', screenX, screenY, component);
+        }
+        this._draggedComponentItem = undefined;
+        this._dragState = DragState.NotDragging;
+        this.emit('dragend');
+    }
+
+    private exitDrag() {
+        this._dragEnterCount = 0;
+        this._hideTargetIndicator();
+        //this.dropTargetIndicator.hide();
+        //this._componentItem.exitDragMode();
+    }
+
+    // A drag was started/ending in another (top-level) window
+    // Needs to be called from application.
+    public draggingInOtherWindow(ending: boolean): void {
+        enableIFramePointerEvents(ending);
+    }
+
+    // Dropped to another (top-level) window.
+    // Needs to be called from application.
+    public droppedInOtherWindow(): void {
+        this._dragState = DragState.DroppedElsewhere;
+        if (this.delayedDragEndFunction)
+            this.delayedDragEndFunction();
+    }
+
+    private onDrop(e: MouseEvent) {
+        this.emit('drop', e);
+        let data;
+        if (e instanceof DragEvent) {
+            if (e.dataTransfer) e.dataTransfer.dropEffect="move";
+            const dvalue = e.dataTransfer?.getData(this.dragDataMimetype());
+            data = dvalue && JSON.parse(dvalue);
+        } else if (this._draggedComponentItem) {
+            data = {config: this._draggedComponentItem.toConfig()};
+        }
+        console.log("onDrop area:"+this._area);
+        // JSON.parse(data);
+        e.preventDefault();
+        this.exitDrag();
+        // FIXME check type
+
+        // SEE drag-proxy:onDrop
+        //let droppedComponentItem: ComponentItem | undefined;
+        if (this._area !== null) {
+            if (this._draggedComponentItem) {
+                //this.doDeferredActions(false);
+                /*
+                droppedComponentItem = this._draggedComponentItem;
+                this._area.contentItem.onDrop(droppedComponentItem, this._area);
+                (droppedComponentItem.container.component as HTMLElement).style.zIndex = "";
+                */
+            } else {
+                console.log("dropped from different window "+JSON.stringify(data.config));
+                const item = new ComponentItem(this, data.config, this.groundItem as ComponentParentableItem);
+                this._area.contentItem.onDrop(item, this._area);
+            }
+        }
+        this._dragState = DragState.DroppedInThisWindow;
+        if (this.delayedDragEndFunction)
+            this.delayedDragEndFunction();
     }
 
     /**
@@ -1779,6 +2261,7 @@ export namespace LayoutManager {
         constructorOrSubWindowLayoutConfig: LayoutConfig | undefined;
         isSubWindow: boolean;
         containerElement: HTMLElement | undefined;
+        containerPosition: Node | null;
     }
 
     /** @internal */

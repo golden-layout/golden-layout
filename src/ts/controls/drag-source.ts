@@ -28,23 +28,19 @@ export class DragSource {
         /** @internal */
         private readonly _element: HTMLElement,
         /** @internal */
-        private readonly _extraAllowableChildTargets: HTMLElement[],
-        /** @internal @deprecated replace with componentItemConfigOrFtn in version 3 */
         private _componentTypeOrFtn: JsonValue | (() => (DragSource.ComponentItemConfig | ConfigComponentItemConfig)),
         /** @internal @deprecated remove in version 3 */
         private _componentState: JsonValue | undefined,
         /** @internal @deprecated remove in version 3 */
         private _title: string | undefined,
-        /** @internal @deprecated remove in version 3 */
-        private _id: string | undefined
     ) {
         this._dragListener = null;
 
         this._dummyGroundContainer = document.createElement('div');
 
         const dummyRootItemConfig = ResolvedRowOrColumnItemConfig.createDefault('row');
-        this._dummyGroundContentItem = new GroundItem(this._layoutManager, dummyRootItemConfig, this._dummyGroundContainer);
-
+        this._dummyGroundContentItem = new GroundItem(this._layoutManager, dummyRootItemConfig, this._dummyGroundContainer, null);
+ 
         this.createDragListener();
     }
 
@@ -63,7 +59,7 @@ export class DragSource {
     private createDragListener() {
         this.removeDragListener();
 
-        this._dragListener = new DragListener(this._element, this._extraAllowableChildTargets);
+        this._dragListener = new DragListener(this._element);
         this._dragListener.on('dragStart', (x, y) => this.onDragStart(x, y));
         this._dragListener.on('dragStop', () => this.onDragStop());
     }
@@ -98,7 +94,6 @@ export class DragSource {
                 componentState: this._componentState,
                 componentType: this._componentTypeOrFtn,
                 title: this._title,
-                id: this._id,
             };
         }
 
@@ -115,14 +110,7 @@ export class DragSource {
         if (this._dragListener === null) {
             throw new UnexpectedNullError('DSODSD66746');
         } else {
-            const dragProxy = new DragProxy(x, y, this._dragListener, this._layoutManager, componentItem , this._dummyGroundContentItem);
-
-            const transitionIndicator = this._layoutManager.transitionIndicator;
-            if (transitionIndicator === null) {
-                throw new UnexpectedNullError('DSODST66746');
-            } else {
-                transitionIndicator.transitionElements(this._element, dragProxy.element);
-            }
+            new DragProxy(x, y, this._dragListener, this._layoutManager, componentItem , this._dummyGroundContentItem);
         }
     }
 

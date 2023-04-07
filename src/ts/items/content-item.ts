@@ -2,6 +2,7 @@ import { ResolvedItemConfig } from '../config/resolved-config'
 import { BrowserPopout } from '../controls/browser-popout'
 import { AssertError, UnexpectedNullError } from '../errors/internal-error'
 import { LayoutManager } from '../layout-manager'
+import { DomConstants } from '../utils/dom-constants'
 import { EventEmitter } from '../utils/event-emitter'
 import { AreaLinkedRect, ItemType, SizeUnitEnum } from '../utils/types'
 import { getUniqueId, setElementDisplayVisibility } from '../utils/utils'
@@ -35,6 +36,8 @@ export abstract class ContentItem extends EventEmitter {
     /** @internal */
     private _isInitialised;
 
+    ignoring = false;
+    ignoringChild = false;
     /** @internal */
     size: number;
     /** @internal */
@@ -108,13 +111,23 @@ export abstract class ContentItem extends EventEmitter {
 
     /**
      * Updaters the size of the component and its children, called recursively
-     * @param force - In some cases the size is not updated if it has not changed. In this case, events
-     * (such as ComponentContainer.virtualRectingRequiredEvent) are not fired. Setting force to true, ensures the size is updated regardless, and
-     * the respective events are fired. This is sometimes necessary when a component's size has not changed but it has become visible, and the
-     * relevant events need to be fired.
+     * Called whenever the dimensions of this item or one of its parents change
      * @internal
      */
-    abstract updateSize(force: boolean): void;
+    updateSize(): void {
+        this.layoutManager.beginVirtualSizedContainerAdding();
+        try {
+            this.updateNodeSize();
+            this.updateContentItemsSize();
+        } finally {
+            this.layoutManager.endVirtualSizedContainerAdding();
+        }
+    }
+
+    /**
+     * @internal
+     */
+    abstract updateNodeSize(): void;
 
     /**
      * Removes a child node (and its children) from the tree
@@ -135,9 +148,9 @@ export abstract class ContentItem extends EventEmitter {
         }
 
         /**
-		 * Call destroy on the content item.
-		 * All children are destroyed as well
-		 */
+	 * Call destroy on the content item.
+	 * All children are destroyed as well
+	 */
         if (!keepChild) {
 			this._contentItems[index].destroy();
         }
@@ -145,13 +158,19 @@ export abstract class ContentItem extends EventEmitter {
         /**
          * Remove the content item from this nodes array of children
          */
-        this._contentItems.splice(index, 1);
+        this.layoutManager.deferIfDragging((cancel: boolean) => {
+            this.ignoringChild = false;
+            contentItem.ignoring = false;
+            if (! cancel) {
+                this._contentItems.splice(index, 1);
+            }
+        });
 
         /**
          * If this node still contains other content items, adjust their size
          */
-        if (this._contentItems.length > 0) {
-            this.updateSize(false);
+        if (this._contentItems.length > (this.layoutManager.currentlyDragging() ? 1 : 0)) {
+            this.updateSize();
         } else {
             /**
              * If this was the last content item, remove this node as well
@@ -160,7 +179,7 @@ export abstract class ContentItem extends EventEmitter {
                 if (this._parent === null) {
                     throw new UnexpectedNullError('CIUC00874');
                 } else {
-                    this._parent.removeChild(this);
+                    this._parent.removeChild(this, keepChild);
                 }
             }
         }
@@ -216,6 +235,7 @@ export abstract class ContentItem extends EventEmitter {
                 oldChild._parent = null;
                 oldChild.destroy(); // will now also destroy all children of oldChild
             }
+//            }
 
             /*
             * Wire the new contentItem into the tree
@@ -236,7 +256,7 @@ export abstract class ContentItem extends EventEmitter {
                     newChild.init();
                 }
 
-                this.updateSize(false);
+                this.updateSize();
             }
         }
     }
@@ -296,19 +316,14 @@ export abstract class ContentItem extends EventEmitter {
 
     /** @internal */
     show(): void {
-        this.layoutManager.beginSizeInvalidation();
-        try {
-            // Not sure why showAllActiveContentItems() was called. GoldenLayout seems to work fine without it.  Left commented code
-            // in source in case a reason for it becomes apparent.
-            // this.layoutManager.showAllActiveContentItems();
-            setElementDisplayVisibility(this._element, true);
-            // this.layoutManager.updateSizeFromContainer();
+        // Not sure why showAllActiveContentItems() was called. GoldenLayout seems to work fine without it.  Left commented code
+        // in source in case a reason for it becomes apparent.
+        // this.layoutManager.showAllActiveContentItems();
+        setElementDisplayVisibility(this._element, true);
+        this.layoutManager.updateSizeFromContainer();
 
-            for (let i = 0; i < this._contentItems.length; i++) {
-                this._contentItems[i].show();
-            }
-        } finally {
-            this.layoutManager.endSizeInvalidation();
+        for (let i = 0; i < this._contentItems.length; i++) {
+            this._contentItems[i].show();
         }
     }
 
@@ -320,11 +335,19 @@ export abstract class ContentItem extends EventEmitter {
         for (let i = 0; i < this._contentItems.length; i++) {
             this._contentItems[i].destroy();
         }
-        this._contentItems = [];
+        const element = this._element;
+        element.style.display = 'none';
+        this.layoutManager.deferIfDragging((cancel) => {
+            if (cancel) {
+                element.style.display = '';
+            } else {
+                this._contentItems = [];
 
-        this.emitBaseBubblingEvent('beforeItemDestroyed');
-        this._element.remove();
-        this.emitBaseBubblingEvent('itemDestroyed');
+                this.emitBaseBubblingEvent('beforeItemDestroyed');
+                this._element.remove();
+                this.emitBaseBubblingEvent('itemDestroyed');
+            }
+        });
     }
 
     /**
@@ -386,19 +409,15 @@ export abstract class ContentItem extends EventEmitter {
 
     /** @internal */
     protected hide(): void {
-        this.layoutManager.beginSizeInvalidation();
-        try {
-            setElementDisplayVisibility(this._element, false);
-            // this.layoutManager.updateSizeFromContainer();
-        } finally {
-            this.layoutManager.endSizeInvalidation();
-        }
+        setElementDisplayVisibility(this._element, false);
+        this.layoutManager.updateSizeFromContainer();
     }
 
     /** @internal */
-    protected updateContentItemsSize(force: boolean): void {
+    protected updateContentItemsSize(): void {
         for (let i = 0; i < this._contentItems.length; i++) {
-            this._contentItems[i].updateSize(force);
+            if (! this._contentItems[i].ignoring)
+                this._contentItems[i].updateSize();
         }
     }
 
@@ -506,6 +525,16 @@ export namespace ContentItem {
     export interface Area extends AreaLinkedRect {
         surface: number;
         contentItem: ContentItem;
+    }
+
+    /** @internal */
+    export function createElement(kindClass?: string): HTMLDivElement {
+        const element = document.createElement('div');
+        element.classList.add(DomConstants.ClassName.Item);
+        if (kindClass) {
+            element.classList.add(kindClass);
+        }
+        return element;
     }
 }
 

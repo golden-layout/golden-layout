@@ -54,7 +54,6 @@ export class ComponentContainer extends EventEmitter {
     _config: ResolvedComponentItemConfig,
     _parent: ComponentItem,
     _layoutManager: LayoutManager,
-    _element: HTMLElement,
     _updateItemConfigEvent: ComponentContainer.UpdateItemConfigEventHandler,
     _showEvent: ComponentContainer.ShowEventHandler,
     _hideEvent: ComponentContainer.HideEventHandler,
@@ -62,17 +61,17 @@ export class ComponentContainer extends EventEmitter {
     _blurEvent: ComponentContainer.BlurEventHandler);
     blur(suppressEvent?: boolean): void;
     close(): void;
-    // (undocumented)
-    get component(): ComponentContainer.Component;
     // @internal @deprecated (undocumented)
     get componentName(): JsonValue;
     // (undocumented)
     get componentType(): JsonValue;
+    // (undocumented)
+    readonly contentElement: HTMLElement | undefined;
     // @internal (undocumented)
     destroy(): void;
     // @internal (undocumented)
     drag(): void;
-    get element(): HTMLElement;
+    get element(): HTMLElement | undefined;
     // @internal
     enterDragMode(width: number, height: number): void;
     // @internal (undocumented)
@@ -85,9 +84,11 @@ export class ComponentContainer extends EventEmitter {
     extendState(state: Record<string, unknown>): void;
     focus(suppressEvent?: boolean): void;
     // @deprecated (undocumented)
-    getElement(): HTMLElement;
+    getElement(): HTMLElement | undefined;
     // @deprecated
     getState(): JsonValue | undefined;
+    // (undocumented)
+    get handle(): ComponentContainer.Handle;
     // (undocumented)
     get height(): number;
     hide(): void;
@@ -96,6 +97,8 @@ export class ComponentContainer extends EventEmitter {
     get isHidden(): boolean;
     // (undocumented)
     get layoutManager(): LayoutManager;
+    // (undocumented)
+    notifyResize: ComponentContainer.NotifyResizeHandler | undefined;
     // @internal (undocumented)
     notifyVirtualRectingRequired(): void;
     // (undocumented)
@@ -107,13 +110,13 @@ export class ComponentContainer extends EventEmitter {
     setLogicalZIndex(logicalZIndex: LogicalZIndex): void;
     // @internal
     setSize(width: number, height: number): boolean;
-    // @internal
-    setSizeToNodeSize(width: number, height: number, force: boolean): void;
     // @deprecated
     setState(state: JsonValue): void;
     // @internal (undocumented)
     setTab(tab: Tab): void;
     setTitle(title: string): void;
+    // (undocumented)
+    setTitleRenderer(renderer: Tab.TitleRenderer | undefined): void;
     // @internal (undocumented)
     setVisibility(value: boolean): void;
     show(): void;
@@ -141,21 +144,18 @@ export class ComponentContainer extends EventEmitter {
 
 // @public (undocumented)
 export namespace ComponentContainer {
-    // (undocumented)
-    export interface BindableComponent {
-        // (undocumented)
-        component: Component;
-        // (undocumented)
-        virtual: boolean;
-    }
     // @internal (undocumented)
     export type BlurEventHandler = (this: void, suppressEvent: boolean) => void;
     // (undocumented)
     export type Component = unknown;
     // @internal (undocumented)
     export type FocusEventHandler = (this: void, suppressEvent: boolean) => void;
+    // (undocumented)
+    export type Handle = unknown;
     // @internal (undocumented)
     export type HideEventHandler = (this: void) => void;
+    // (undocumented)
+    export type NotifyResizeHandler = (this: void, container: ComponentContainer, left: number, top: number, width: number, height: number) => void;
     // @internal (undocumented)
     export type ShowEventHandler = (this: void) => void;
     // (undocumented)
@@ -180,8 +180,6 @@ export class ComponentItem extends ContentItem {
     blur(suppressEvent?: boolean): void;
     // (undocumented)
     close(): void;
-    // (undocumented)
-    get component(): ComponentContainer.Component | undefined;
     // @internal @deprecated (undocumented)
     get componentName(): JsonValue;
     // (undocumented)
@@ -226,6 +224,8 @@ export class ComponentItem extends ContentItem {
     // (undocumented)
     setTab(tab: Tab): void;
     setTitle(title: string): void;
+    // (undocumented)
+    setTitleRenderer(renderer: Tab.TitleRenderer | undefined): void;
     // @internal (undocumented)
     show(): void;
     // (undocumented)
@@ -233,9 +233,11 @@ export class ComponentItem extends ContentItem {
     // (undocumented)
     get title(): string;
     // (undocumented)
+    get titleRenderer(): Tab.TitleRenderer | undefined;
+    // (undocumented)
     toConfig(): ResolvedComponentItemConfig;
     // @internal (undocumented)
-    updateSize(force: boolean): void;
+    updateNodeSize(): void;
 }
 
 // @public (undocumented)
@@ -305,6 +307,10 @@ export abstract class ContentItem extends EventEmitter {
     // (undocumented)
     get id(): string;
     set id(value: string);
+    // (undocumented)
+    ignoring: boolean;
+    // (undocumented)
+    ignoringChild: boolean;
     // @internal
     init(): void;
     // @internal (undocumented)
@@ -361,9 +367,11 @@ export abstract class ContentItem extends EventEmitter {
     // (undocumented)
     get type(): ItemType;
     // @internal (undocumented)
-    protected updateContentItemsSize(force: boolean): void;
+    protected updateContentItemsSize(): void;
+    // @internal (undocumented)
+    abstract updateNodeSize(): void;
     // @internal
-    abstract updateSize(force: boolean): void;
+    updateSize(): void;
 }
 
 // @public (undocumented)
@@ -375,6 +383,8 @@ export namespace ContentItem {
         // (undocumented)
         surface: number;
     }
+    // @internal (undocumented)
+    export function createElement(kindClass?: string): HTMLDivElement;
 }
 
 // @public
@@ -383,11 +393,9 @@ export class DragSource {
     constructor(
     _layoutManager: LayoutManager,
     _element: HTMLElement,
-    _extraAllowableChildTargets: HTMLElement[],
     _componentTypeOrFtn: JsonValue | (() => (DragSource.ComponentItemConfig | ComponentItemConfig)),
     _componentState: JsonValue | undefined,
-    _title: string | undefined,
-    _id: string | undefined);
+    _title: string | undefined);
     // @internal
     destroy(): void;
 }
@@ -471,6 +479,8 @@ export namespace EventEmitter {
     // (undocumented)
     export type ComponentItemParam = [ComponentItem];
     // (undocumented)
+    export type DragMovedParams = [offsetX: number, offsetY: number, component: ComponentItem];
+    // (undocumented)
     export type DragParams = [offsetX: number, offsetY: number, event: PointerEvent];
     // (undocumented)
     export type DragStartParams = [originalX: number, originalY: number];
@@ -478,6 +488,10 @@ export namespace EventEmitter {
     export type DragStopParams = [event: PointerEvent | undefined];
     // (undocumented)
     export interface EventParamsMap {
+        // (undocumented)
+        "drag-enter-window": MouseEventParams;
+        // (undocumented)
+        "drag-leave-window": MouseEventParams;
         // (undocumented)
         "__all": UnknownParams;
         // (undocumented)
@@ -497,9 +511,19 @@ export namespace EventEmitter {
         // (undocumented)
         "drag": DragParams;
         // (undocumented)
+        "dragend": NoParams;
+        // (undocumented)
+        "dragExported": DragMovedParams;
+        // (undocumented)
+        "dragMoved": DragMovedParams;
+        // (undocumented)
         "dragStart": DragStartParams;
         // (undocumented)
+        "dragstart": MouseComponentParams;
+        // (undocumented)
         "dragStop": DragStopParams;
+        // (undocumented)
+        "drop": MouseEventParams;
         // (undocumented)
         "focus": BubblingEventParam;
         // (undocumented)
@@ -545,6 +569,10 @@ export namespace EventEmitter {
         // (undocumented)
         "windowOpened": PopoutParam;
     }
+    // (undocumented)
+    export type MouseComponentParams = [event: MouseEvent, component: ComponentItem];
+    // (undocumented)
+    export type MouseEventParams = [event: MouseEvent];
     // (undocumented)
     export type NoParams = [];
     // (undocumented)
@@ -617,43 +645,25 @@ export function formatUndefinableSize(size: number | undefined, sizeUnit: SizeUn
 // @public (undocumented)
 export class GoldenLayout extends VirtualLayout {
     constructor(container?: HTMLElement, bindComponentEventHandler?: VirtualLayout.BindComponentEventHandler, unbindComponentEventHandler?: VirtualLayout.UnbindComponentEventHandler);
+    constructor(config: LayoutConfig, container?: HTMLElement, position?: Node | null);
     // @deprecated
     constructor(config: LayoutConfig, container?: HTMLElement);
     // @internal (undocumented)
-    bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BindableComponent;
-    // (undocumented)
-    fireBeforeVirtualRectingEvent(count: number): void;
-    getComponentInstantiator(config: ResolvedComponentItemConfig): GoldenLayout.ComponentInstantiator | undefined;
+    bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.Handle;
+    getComponentInstantiator(config: ResolvedComponentItemConfig): GoldenLayout.ComponentFactoryFunction | undefined;
     // (undocumented)
     getRegisteredComponentTypeNames(): string[];
-    // @deprecated
-    registerComponent(name: string, componentConstructorOrFactoryFtn: GoldenLayout.ComponentConstructor | GoldenLayout.ComponentFactoryFunction, virtual?: boolean): void;
-    registerComponentConstructor(typeName: string, componentConstructor: GoldenLayout.ComponentConstructor, virtual?: boolean): void;
-    registerComponentFactoryFunction(typeName: string, componentFactoryFunction: GoldenLayout.ComponentFactoryFunction, virtual?: boolean): void;
-    // @deprecated
-    registerComponentFunction(callback: GoldenLayout.GetComponentConstructorCallback): void;
-    registerGetComponentConstructorCallback(callback: GoldenLayout.GetComponentConstructorCallback): void;
+    registerComponent(typeName: string, componentFactoryFunction: GoldenLayout.ComponentFactoryFunction): void;
+    // (undocumented)
+    registerComponentDefault(componentFactoryFunction: GoldenLayout.ComponentFactoryFunction): void;
     // @internal (undocumented)
-    unbindComponent(container: ComponentContainer, virtual: boolean, component: ComponentContainer.Component | undefined): void;
+    unbindComponent(container: ComponentContainer, handle: ComponentContainer.Handle): void;
 }
 
 // @public (undocumented)
 export namespace GoldenLayout {
     // (undocumented)
-    export type ComponentConstructor = new (container: ComponentContainer, state: JsonValue | undefined, virtual: boolean) => ComponentContainer.Component;
-    // (undocumented)
-    export type ComponentFactoryFunction = (container: ComponentContainer, state: JsonValue | undefined, virtual: boolean) => ComponentContainer.Component | undefined;
-    // (undocumented)
-    export interface ComponentInstantiator {
-        // (undocumented)
-        constructor: ComponentConstructor | undefined;
-        // (undocumented)
-        factoryFunction: ComponentFactoryFunction | undefined;
-        // (undocumented)
-        virtual: boolean;
-    }
-    // (undocumented)
-    export type GetComponentConstructorCallback = (this: void, config: ResolvedComponentItemConfig) => ComponentConstructor;
+    export type ComponentFactoryFunction = (container: ComponentContainer, state: JsonValue | undefined) => ComponentContainer.Handle;
     // (undocumented)
     export interface VirtuableComponent {
         // (undocumented)
@@ -679,6 +689,8 @@ export class Header extends EventEmitter {
     // @internal (undocumented)
     applyFocusedValue(value: boolean): void;
     // (undocumented)
+    availableTabsSize(): number;
+    // (undocumented)
     get controlsContainerElement(): HTMLElement;
     // @internal
     createTab(componentItem: ComponentItem, index: number): void;
@@ -688,6 +700,8 @@ export class Header extends EventEmitter {
     get element(): HTMLElement;
     // (undocumented)
     get lastVisibleTabIndex(): number;
+    // (undocumented)
+    layoutDefault(): void;
     // (undocumented)
     get layoutManager(): LayoutManager;
     // (undocumented)
@@ -965,6 +979,7 @@ export namespace LayoutConfig {
     export interface Dimensions {
         borderGrabWidth?: number;
         borderWidth?: number;
+        contentInset?: number;
         defaultMinItemHeight?: string;
         defaultMinItemWidth?: string;
         dragProxyHeight?: number;
@@ -1029,9 +1044,13 @@ export namespace LayoutConfig {
     // (undocumented)
     export interface Settings {
         blockedPopoutsThrowError?: boolean;
+        checkGlWindowKey?: boolean;
         // @deprecated
         closePopoutsOnUnload?: boolean;
         constrainDragToContainer?: boolean;
+        copyForDragImage?: boolean;
+        // (undocumented)
+        dragDataMimetype?: string;
         // @deprecated (undocumented)
         hasHeaders?: boolean;
         popInOnClose?: boolean;
@@ -1043,10 +1062,13 @@ export namespace LayoutConfig {
         showCloseIcon?: boolean;
         // @deprecated
         showMaximiseIcon?: boolean;
+        showOldPositionWhenDragging?: boolean;
         // @deprecated
         showPopoutIcon?: boolean;
         tabControlOffset?: number;
         tabOverlapAllowance?: number;
+        // (undocumented)
+        useDragAndDrop?: boolean;
     }
     // (undocumented)
     export namespace Settings {
@@ -1070,11 +1092,9 @@ export abstract class LayoutManager extends EventEmitter {
     // (undocumented)
     beforeVirtualRectingEvent: LayoutManager.BeforeVirtualRectingEvent | undefined;
     // @internal (undocumented)
-    beginSizeInvalidation(): void;
-    // @internal (undocumented)
     beginVirtualSizedContainerAdding(): void;
     // @internal (undocumented)
-    abstract bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BindableComponent;
+    abstract bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.Handle;
     // @internal (undocumented)
     calculateItemAreas(): void;
     // (undocumented)
@@ -1088,33 +1108,46 @@ export abstract class LayoutManager extends EventEmitter {
     protected _constructorOrSubWindowLayoutConfig: LayoutConfig | undefined;
     // (undocumented)
     get container(): HTMLElement;
+    containerWidthAndHeight: () => WidthAndHeight;
     // (undocumented)
     createAndInitContentItem(config: ResolvedItemConfig, parent: ContentItem): ContentItem;
+    // (undocumented)
+    createComponentElement: (config: ResolvedComponentItemConfig, component: ComponentContainer) => HTMLElement | undefined;
     // @internal
     createContentItem(config: ResolvedItemConfig, parent: ContentItem): ContentItem;
+    // (undocumented)
+    createDragProxy: ((item: ComponentItem, x: number, y: number) => void) | undefined;
     createPopout(itemConfigOrContentItem: ContentItem | ResolvedRootItemConfig, positionAndSize: ResolvedPopoutLayoutConfig.Window, parentId: string | null, indexInParent: number | null): BrowserPopout;
     // @internal (undocumented)
     createPopoutFromContentItem(item: ContentItem, window: ResolvedPopoutLayoutConfig.Window | undefined, parentId: string | null, indexInParent: number | null | undefined): BrowserPopout;
     // @internal (undocumented)
     createPopoutFromPopoutLayoutConfig(config: ResolvedPopoutLayoutConfig): BrowserPopout;
+    // (undocumented)
+    currentlyDragging(): boolean;
+    // (undocumented)
+    deferIfDragging(action: (cancel: boolean) => void): void;
     // @deprecated (undocumented)
     get deprecatedConstructor(): boolean;
     destroy(): void;
+    // (undocumented)
+    doDeferredActions(cancel: boolean): void;
+    // (undocumented)
+    dragDataMimetype(): string;
+    // (undocumented)
+    draggingInOtherWindow(ending: boolean): void;
+    // (undocumented)
+    droppedInOtherWindow(): void;
     // Warning: (ae-forgotten-export) The symbol "DropTargetIndicator" needs to be exported by the entry point index.d.ts
     //
     // @internal (undocumented)
     get dropTargetIndicator(): DropTargetIndicator | null;
     // @internal (undocumented)
-    endSizeInvalidation(): void;
-    // @internal (undocumented)
     endVirtualSizedContainerAdding(): void;
+    // (undocumented)
+    enterOrLeaveSomeWindow(entering: boolean): void;
     get eventHub(): EventHub;
     // (undocumented)
     findFirstComponentItemById(id: string): ComponentItem | undefined;
-    // @internal (undocumented)
-    fireAfterVirtualRectingEvent(): void;
-    // @internal (undocumented)
-    fireBeforeVirtualRectingEvent(count: number): void;
     focusComponent(item: ComponentItem, suppressEvent?: boolean): void;
     // (undocumented)
     get focusedComponentItem(): ComponentItem | undefined;
@@ -1126,8 +1159,12 @@ export abstract class LayoutManager extends EventEmitter {
     get groundItem(): GroundItem | undefined;
     // (undocumented)
     get height(): number | null;
+    // (undocumented)
+    _hideTargetIndicator(): void;
     // @internal
     init(): void;
+    // (undocumented)
+    inSomeWindow: boolean;
     // (undocumented)
     get isInitialised(): boolean;
     // (undocumented)
@@ -1149,7 +1186,11 @@ export abstract class LayoutManager extends EventEmitter {
     newItemAtLocation(itemConfig: RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig, locationSelectors?: readonly LayoutManager.LocationSelector[]): ContentItem | undefined;
     // (undocumented)
     get openPopouts(): BrowserPopout[];
+    // (undocumented)
+    popoutClickHandler: (item: Stack, ev: Event) => boolean;
     removeDragSource(dragSource: DragSource): void;
+    // (undocumented)
+    removeElementEventually(element: HTMLElement): void;
     resizeDebounceExtendedWhenPossible: boolean;
     resizeDebounceInterval: number;
     resizeWithContainerAutomatically: boolean;
@@ -1164,24 +1205,26 @@ export abstract class LayoutManager extends EventEmitter {
     setMaximisedStack(stack: Stack | undefined): void;
     setSize(width: number, height: number): void;
     // @internal (undocumented)
-    startComponentDrag(x: number, y: number, dragListener: DragListener, componentItem: ComponentItem, stack: Stack): void;
+    startComponentDrag(ev: DragEvent, componentItem: ComponentItem): void;
+    // @internal (undocumented)
+    startComponentDragOld(x: number, y: number, dragListener: DragListener, componentItem: ComponentItem, stack: Stack): void;
     // @internal (undocumented)
     get tabDropPlaceholder(): HTMLElement;
     // @deprecated (undocumented)
     toConfig(): ResolvedLayoutConfig;
-    // Warning: (ae-forgotten-export) The symbol "TransitionIndicator" needs to be exported by the entry point index.d.ts
-    //
-    // @internal @deprecated (undocumented)
-    get transitionIndicator(): TransitionIndicator | null;
     // @internal (undocumented)
-    abstract unbindComponent(container: ComponentContainer, virtual: boolean, component: ComponentContainer.Component | undefined): void;
+    abstract unbindComponent(container: ComponentContainer, handle: ComponentContainer.Handle): void;
     // @deprecated
     unminifyConfig(config: ResolvedLayoutConfig): ResolvedLayoutConfig;
-    updateRootSize(force?: boolean): void;
+    updateRootSize(): void;
     // @deprecated (undocumented)
     updateSize(width: number, height: number): void;
     // @internal (undocumented)
     updateSizeFromContainer(): void;
+    // (undocumented)
+    useNativeDragAndDrop(): boolean;
+    // (undocumented)
+    validDragEvent(e: DragEvent): boolean;
     // (undocumented)
     get width(): number | null;
 }
@@ -1198,6 +1241,8 @@ export namespace LayoutManager {
         constructorOrSubWindowLayoutConfig: LayoutConfig | undefined;
         // (undocumented)
         containerElement: HTMLElement | undefined;
+        // (undocumented)
+        containerPosition: Node | null;
         // (undocumented)
         isSubWindow: boolean;
     }
@@ -1496,6 +1541,8 @@ export namespace ResolvedLayoutConfig {
         // (undocumented)
         readonly borderWidth: number;
         // (undocumented)
+        readonly contentInset: number;
+        // (undocumented)
         readonly defaultMinItemHeight: number;
         // (undocumented)
         readonly defaultMinItemHeightUnit: SizeUnitEnum;
@@ -1548,10 +1595,16 @@ export namespace ResolvedLayoutConfig {
     export interface Settings {
         // (undocumented)
         readonly blockedPopoutsThrowError: boolean;
+        // (undocumented)
+        readonly checkGlWindowKey: boolean;
         // @deprecated (undocumented)
         readonly closePopoutsOnUnload: boolean;
         // (undocumented)
         readonly constrainDragToContainer: boolean;
+        // (undocumented)
+        readonly copyForDragImage: boolean | undefined;
+        // (undocumented)
+        readonly dragDataMimetype: string;
         // (undocumented)
         readonly popInOnClose: boolean;
         // (undocumented)
@@ -1563,9 +1616,13 @@ export namespace ResolvedLayoutConfig {
         // (undocumented)
         readonly responsiveMode: ResponsiveMode;
         // (undocumented)
+        readonly showOldPositionWhenDragging: boolean;
+        // (undocumented)
         readonly tabControlOffset: number;
         // (undocumented)
         readonly tabOverlapAllowance: number;
+        // (undocumented)
+        readonly useDragAndDrop: boolean;
     }
     // (undocumented)
     export namespace Settings {
@@ -1712,7 +1769,8 @@ export class RowOrColumn extends ContentItem {
     protected setParent(parent: ContentItem): void;
     // (undocumented)
     toConfig(): ResolvedRowOrColumnItemConfig;
-    updateSize(force: boolean): void;
+    // @internal (undocumented)
+    updateNodeSize(): void;
 }
 
 // @public (undocumented)
@@ -1728,8 +1786,6 @@ export namespace RowOrColumn {
         // (undocumented)
         totalSize: number;
     }
-    // @internal (undocumented)
-    export function createElement(document: Document, isColumn: boolean): HTMLDivElement;
     // @internal (undocumented)
     export function getElementDimensionSize(element: HTMLElement, dimension: WidthOrHeightPropertyName): number;
     // @internal (undocumented)
@@ -1874,7 +1930,9 @@ export class Stack extends ComponentParentableItem {
     toConfig(): ResolvedStackItemConfig;
     toggleMaximise(): void;
     // @internal (undocumented)
-    updateSize(force: boolean): void;
+    updateNodeSize(): void;
+    // (undocumented)
+    updateTabSizes(): void;
 }
 
 // @public (undocumented)
@@ -1890,8 +1948,6 @@ export namespace Stack {
     export type ContentAreaDimensions = {
         [segment: string]: ContentAreaDimension;
     };
-    // @internal (undocumented)
-    export function createElement(document: Document): HTMLDivElement;
     // @internal (undocumented)
     export const enum Segment {
         // (undocumented)
@@ -1967,6 +2023,8 @@ export class Tab {
     setFocused(): void;
     setTitle(title: string): void;
     // (undocumented)
+    readonly tabClickListener: (ev: MouseEvent) => void;
+    // (undocumented)
     get titleElement(): HTMLElement;
 }
 
@@ -1978,6 +2036,17 @@ export namespace Tab {
     export type DragStartEvent = (x: number, y: number, dragListener: DragListener, componentItem: ComponentItem) => void;
     // @internal (undocumented)
     export type FocusEvent = (componentItem: ComponentItem) => void;
+    // (undocumented)
+    export enum RenderFlags {
+        // (undocumented)
+        DropdownActive = 1,
+        // (undocumented)
+        InDropdownMenu = 2,
+        // (undocumented)
+        IsActiveTab = 4
+    }
+    // (undocumented)
+    export type TitleRenderer = (component: ComponentContainer, target: HTMLElement, availableWidth: number, flags: RenderFlags) => void;
 }
 
 // Warning: (ae-internal-missing-underscore) The name "UndefinableSizeWithUnit" should be prefixed with an underscore because the declaration is marked as @internal
@@ -1991,28 +2060,22 @@ export interface UndefinableSizeWithUnit {
 }
 
 // @public (undocumented)
-export class VirtualLayout extends LayoutManager {
+export abstract class VirtualLayout extends LayoutManager {
     constructor(container?: HTMLElement, bindComponentEventHandler?: VirtualLayout.BindComponentEventHandler, unbindComponentEventHandler?: VirtualLayout.UnbindComponentEventHandler);
     // @deprecated
     constructor(config: LayoutConfig, container?: HTMLElement);
     // @internal
-    constructor(configOrOptionalContainer: LayoutConfig | HTMLElement | undefined, containerOrBindComponentEventHandler: HTMLElement | VirtualLayout.BindComponentEventHandler | undefined, unbindComponentEventHandler: VirtualLayout.UnbindComponentEventHandler | undefined, skipInit: true);
-    // @internal (undocumented)
-    bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.BindableComponent;
+    constructor(configOrOptionalContainer: LayoutConfig | HTMLElement | undefined, containerOrBindComponentEventHandler: HTMLElement | VirtualLayout.BindComponentEventHandler | undefined, unbindComponentEventHandler: VirtualLayout.UnbindComponentEventHandler | undefined | Node | null, skipInit: true);
     // (undocumented)
     bindComponentEvent: VirtualLayout.BindComponentEventHandler | undefined;
     checkAddDefaultPopinButton(): boolean;
     clearHtmlAndAdjustStylesForSubWindow(): void;
     // (undocumented)
     destroy(): void;
-    // @deprecated (undocumented)
-    getComponentEvent: VirtualLayout.GetComponentEventHandler | undefined;
     // @deprecated
     init(): void;
-    // @deprecated (undocumented)
-    releaseComponentEvent: VirtualLayout.ReleaseComponentEventHandler | undefined;
     // @internal (undocumented)
-    unbindComponent(container: ComponentContainer, virtual: boolean, component: ComponentContainer.Component | undefined): void;
+    unbindComponent(container: ComponentContainer, handle: ComponentContainer.Handle): void;
     // (undocumented)
     unbindComponentEvent: VirtualLayout.UnbindComponentEventHandler | undefined;
 }
@@ -2022,20 +2085,14 @@ export namespace VirtualLayout {
     // (undocumented)
     export type BeforeVirtualRectingEvent = (this: void) => void;
     // (undocumented)
-    export type BindComponentEventHandler = (this: void, container: ComponentContainer, itemConfig: ResolvedComponentItemConfig) => ComponentContainer.BindableComponent;
+    export type BindComponentEventHandler = (this: void, container: ComponentContainer, itemConfig: ResolvedComponentItemConfig) => ComponentContainer.Handle;
     // @internal (undocumented)
-    export function createLayoutManagerConstructorParameters(configOrOptionalContainer: LayoutConfig | HTMLElement | undefined, containerOrBindComponentEventHandler?: HTMLElement | VirtualLayout.BindComponentEventHandler): LayoutManager.ConstructorParameters;
-    // @deprecated (undocumented)
-    export type GetComponentEventHandler = (this: void, container: ComponentContainer, itemConfig: ResolvedComponentItemConfig) => ComponentContainer.Component;
-    // @deprecated (undocumented)
-    export type ReleaseComponentEventHandler = (this: void, container: ComponentContainer, component: ComponentContainer.Component) => void;
+    export function createLayoutManagerConstructorParameters(configOrOptionalContainer: LayoutConfig | HTMLElement | undefined, containerOrBindComponentEventHandler?: HTMLElement | Node | null | VirtualLayout.BindComponentEventHandler, unbindComponentEventHandler?: VirtualLayout.UnbindComponentEventHandler | Node | null): LayoutManager.ConstructorParameters;
     // (undocumented)
     export type UnbindComponentEventHandler = (this: void, container: ComponentContainer) => void;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "WidthAndHeight" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
+// @public (undocumented)
 export interface WidthAndHeight {
     // (undocumented)
     height: number;

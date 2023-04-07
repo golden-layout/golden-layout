@@ -5,10 +5,9 @@
 @color3: #dddddd; // Appears 2 times
 
 @color4: #cccccc; // Appears 1 time
-@color5: #444444; // Appears 1 time
 @color6: #999999; // Appears 1 time
 @color7: #111111; // Appears 1 time
-@color8: #452500; // Appears 1 time
+@color8: #452500; // Appears 1 time (seemingly unused)
 @color9: #555555; // Appears 1 time
 @color10: #ffffff; // Appears 2 time
 
@@ -19,14 +18,13 @@
 // Entire GoldenLayout Container, if a background is set, it is visible as color of "pane header" and "splitters" (if these latest has opacity very low)
 .lm_goldenlayout {
   background: @color0;
+  --lm_border_color: @color0;
 }
 
 // Single Pane content (area in which final dragged content is contained)
 .lm_content {
   background: @color1;
-  border: 1px solid transparent;
 }
-
 // Single Pane content during Drag (style of moving window following mouse)
 .lm_dragProxy {
   .lm_content {
@@ -43,19 +41,6 @@
   .lm_inner {
     background: @color0;
     opacity: 0.2;
-  }
-}
-
-// Separator line (handle to change pane size)
-.lm_splitter {
-  background: @color0;
-  opacity: 0.001;
-  transition: opacity 200ms ease;
-
-  &:hover, // When hovered by mouse...
-  &.lm_dragging {
-    background: @color5;
-    opacity: 1;
   }
 }
 
@@ -133,7 +118,7 @@
   }
 }
 
-// If Pane Header (container of Tabs for each pane) is selected (used only if addition of new Contents is made "by selection" and not "by drag")
+// If Pane Header (container of Tabs for each pane) is selected (used only if addition of new Contents is made "by selection" and not "by drag") UNUSED?
 .lm_selected {
   .lm_header {
     background-color: @color8;

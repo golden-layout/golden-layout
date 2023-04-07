@@ -4,7 +4,7 @@ import { AssertError, UnexpectedNullError } from '../errors/internal-error';
 import { LayoutManager } from '../layout-manager';
 import { DomConstants } from '../utils/dom-constants';
 import { AreaLinkedRect, ItemType, SizeUnitEnum } from '../utils/types';
-import { getElementWidthAndHeight, setElementHeight, setElementWidth } from '../utils/utils';
+import { setElementHeight, setElementWidth } from '../utils/utils';
 import { ComponentItem } from './component-item';
 import { ComponentParentableItem } from './component-parentable-item';
 import { ContentItem } from './content-item';
@@ -20,27 +20,14 @@ export class GroundItem extends ComponentParentableItem {
     private readonly _childElementContainer: HTMLElement;
     private readonly _containerElement: HTMLElement;
 
-    constructor(layoutManager: LayoutManager, rootItemConfig: ResolvedRootItemConfig | undefined, containerElement: HTMLElement) {
+    constructor(layoutManager: LayoutManager, rootItemConfig: ResolvedRootItemConfig | undefined, containerElement: HTMLElement, containerPosition: Node | null) {
 
-        super(layoutManager, ResolvedGroundItemConfig.create(rootItemConfig), null, GroundItem.createElement(document));
+        super(layoutManager, ResolvedGroundItemConfig.create(rootItemConfig), null, _createRootElement(containerElement, containerPosition));
+        this.element.classList.add(DomConstants.ClassName.GoldenLayout);
 
         this.isGround = true;
         this._childElementContainer = this.element;
         this._containerElement = containerElement;
-
-        // insert before any pre-existing content elements
-        let before = null;
-        while (true) {
-            const prev: ChildNode | null =
-                before ? before.previousSibling : this._containerElement.lastChild;
-            if (prev instanceof Element
-                && prev.classList.contains(DomConstants.ClassName.Content)) {
-                before = prev;
-            } else {
-                break;
-            }
-        }
-        this._containerElement.insertBefore(this.element, before);
     }
 
     override init(): void {
@@ -143,7 +130,7 @@ export class GroundItem extends ComponentParentableItem {
             this._childElementContainer.appendChild(contentItem.element);
             index = super.addChild(contentItem, index);
 
-            this.updateSize(false);
+            this.updateSize();
             this.emitBaseBubblingEvent('stateChanged');
 
             return index;
@@ -170,7 +157,7 @@ export class GroundItem extends ComponentParentableItem {
     /** @internal */
     setSize(width: number, height: number): void {
         if (width === undefined || height === undefined) {
-            this.updateSize(false); // For backwards compatibility with v1.x API
+            this.updateSize(); // For backwards compatibility with v1.x API
         } else {
             setElementWidth(this.element, width);
             setElementHeight(this.element, height);
@@ -181,21 +168,8 @@ export class GroundItem extends ComponentParentableItem {
                 setElementHeight(this.contentItems[0].element, height);
             }
 
-            this.updateContentItemsSize(false);
-        }
-    }
-
-    /**
-     * Adds a Root ContentItem.
-     * Internal only.  To replace Root ContentItem with API, use {@link (LayoutManager:class).updateRootSize}
-     */
-    override updateSize(force: boolean): void {
-        this.layoutManager.beginVirtualSizedContainerAdding();
-        try {
-            this.updateNodeSize();
-            this.updateContentItemsSize(force);
-        } finally {
-            this.layoutManager.endVirtualSizedContainerAdding();
+            //this.updateContentItemsSize();
+            this.updateSize();
         }
     }
 
@@ -269,14 +243,14 @@ export class GroundItem extends ComponentParentableItem {
                 column.size = 50;
                 contentItem.size = 50;
                 contentItem.sizeUnit = SizeUnitEnum.Percent;
-                rowOrColumn.updateSize(false);
+                rowOrColumn.updateSize();
             } else {
                 const sibling = column.contentItems[insertBefore ? 0 : column.contentItems.length - 1]
                 column.addChild(contentItem, insertBefore ? 0 : undefined, true);
                 sibling.size *= 0.5;
                 contentItem.size = sibling.size;
                 contentItem.sizeUnit = SizeUnitEnum.Percent;
-                column.updateSize(false);
+                column.updateSize();
             }
         }
     }
@@ -333,8 +307,8 @@ export class GroundItem extends ComponentParentableItem {
         // only applicable if ComponentItem is root and then it always has focus
     }
 
-    private updateNodeSize(): void {
-        const { width, height } = getElementWidthAndHeight(this._containerElement);
+    updateNodeSize(): void {
+        const { width, height } = this.layoutManager.containerWidthAndHeight();
 
         setElementWidth(this.element, width);
         setElementHeight(this.element, height);
@@ -351,8 +325,14 @@ export class GroundItem extends ComponentParentableItem {
     private deepGetAllContentItems(content: readonly ContentItem[], result: ContentItem[]): void {
         for (let i = 0; i < content.length; i++) {
             const contentItem = content[i];
-            result.push(contentItem);
-            this.deepGetAllContentItems(contentItem.contentItems, result);
+            const children = contentItem.contentItems;
+            if (! contentItem.ignoring) {
+                if (! contentItem.ignoringChild
+                    || (contentItem.type !== ItemType.row && contentItem.type !== ItemType.column)
+                    || children.length > 2)
+                    result.push(contentItem);
+                this.deepGetAllContentItems(children, result);
+            }
         }
     }
 
@@ -368,6 +348,12 @@ export class GroundItem extends ComponentParentableItem {
         }
     }
 
+}
+
+function _createRootElement(containerElement: HTMLElement, containerPosition: Node | null): HTMLDivElement {
+    const element = ContentItem.createElement(DomConstants.ClassName.Root);
+    containerElement.insertBefore(element, containerPosition);
+    return element;
 }
 
 /** @internal */
@@ -392,13 +378,5 @@ export namespace GroundItem {
             y1: 'y2',
             x1: 'x2',
         };
-    }
-
-    export function createElement(document: Document): HTMLDivElement {
-        const element = document.createElement('div');
-        element.classList.add(DomConstants.ClassName.GoldenLayout);
-        element.classList.add(DomConstants.ClassName.Item);
-        element.classList.add(DomConstants.ClassName.Root);
-        return element;
     }
 }

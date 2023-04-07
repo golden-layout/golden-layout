@@ -1,10 +1,10 @@
 import { DomConstants } from './dom-constants';
 import { EventEmitter } from './event-emitter';
+import { enableIFramePointerEvents } from './utils';
 
 /** @internal */
 export class DragListener extends EventEmitter {
     private _timeout: ReturnType<typeof setTimeout> | undefined;
-    private _allowableTargets: HTMLElement[];
     private _oDocument: Document;
     private _eBody: HTMLElement;
     private _nDelay: number;
@@ -20,12 +20,11 @@ export class DragListener extends EventEmitter {
     private _pointerMoveEventListener = (ev: PointerEvent) => this.onPointerMove(ev);
     private _pointerUpEventListener = (ev: PointerEvent) => this.onPointerUp(ev);
 
-    constructor(private _eElement: HTMLElement, extraAllowableChildTargets: HTMLElement[]) {
+    constructor(private _eElement: HTMLElement) {
         super();
 
         this._timeout = undefined;
 
-        this._allowableTargets = [_eElement, ...extraAllowableChildTargets];
         this._oDocument = document;
         this._eBody = document.body;
 
@@ -66,10 +65,17 @@ export class DragListener extends EventEmitter {
     }
 
     private onPointerDown(oEvent: PointerEvent) {
-        if (this._allowableTargets.includes(oEvent.target as HTMLElement) && oEvent.isPrimary) {
-            const coordinates = this.getPointerCoordinates(oEvent);
-            this.processPointerDown(coordinates);
+        for (let target = oEvent.target; ; target = target.parentNode) {
+            if (! (target instanceof HTMLElement))
+                return;
+            const draggable = target.getAttribute('draggable');
+            if (draggable === 'true')
+                break;
+            if (draggable !== null)
+                return;
         }
+
+        this.processPointerDown(this.getPointerCoordinates(oEvent));
     }
 
     private processPointerDown(coordinates: DragListener.PointerCoordinates) {
@@ -133,7 +139,7 @@ export class DragListener extends EventEmitter {
         if (this._dragging === true) {
             this._eBody.classList.remove(DomConstants.ClassName.Dragging);
             this._eElement.classList.remove(DomConstants.ClassName.Dragging);
-            this._oDocument.querySelector('iframe')?.style.setProperty('pointer-events', '');
+            enableIFramePointerEvents(true);
             this._dragging = false;
             this.emit('dragStop', dragEvent);
         }
@@ -155,7 +161,7 @@ export class DragListener extends EventEmitter {
         this._dragging = true;
         this._eBody.classList.add(DomConstants.ClassName.Dragging);
         this._eElement.classList.add(DomConstants.ClassName.Dragging);
-        this._oDocument.querySelector('iframe')?.style.setProperty('pointer-events', 'none');
+        enableIFramePointerEvents(false);
         this.emit('dragStart', this._nOriginalX, this._nOriginalY);
     }
 

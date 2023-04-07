@@ -6,7 +6,7 @@ import { DomConstants } from '../utils/dom-constants';
 import { DragListener } from '../utils/drag-listener';
 import { EventEmitter } from '../utils/event-emitter';
 import { Side } from '../utils/types';
-import { numberToPixels, setElementDisplayVisibility } from '../utils/utils';
+import { setElementDisplayVisibility } from '../utils/utils';
 import { HeaderButton } from './header-button';
 import { Tab } from './tab';
 import { TabsContainer } from './tabs-container';
@@ -72,6 +72,8 @@ export class Header extends EventEmitter {
     private readonly _tabDropdownButton: HeaderButton;
     /** @internal */
     private readonly _maximiseButton: HeaderButton | undefined;
+    /** @internal */
+    private _updateRequested = 0;
     // /** @internal */
     // private _activeComponentItem: ComponentItem | null = null; // only used to identify active tab
 
@@ -143,12 +145,10 @@ export class Header extends EventEmitter {
         this._element.classList.add(DomConstants.ClassName.Header);
         this._controlsContainerElement = document.createElement('section');
         this._controlsContainerElement.classList.add(DomConstants.ClassName.Controls);
-        this._element.appendChild(this._tabsContainer.element);
-        this._element.appendChild(this._controlsContainerElement);
-        this._element.appendChild(this._tabsContainer.dropdownElement);
+        this.layoutDefault();
 
         this._element.addEventListener('click', this._clickListener, { passive: true });
-        this._element.addEventListener('touchstart', this._touchStartListener, { passive: true });
+        //this._element.addEventListener('touchstart', this._touchStartListener, { passive: true });
 
         this._documentMouseUpListener = () => this._tabsContainer.hideAdditionalTabsDropdown()
         globalThis.document.addEventListener('mouseup', this._documentMouseUpListener, { passive: true });
@@ -162,7 +162,7 @@ export class Header extends EventEmitter {
         }
 
         if (this._popoutEnabled) {
-            this._popoutButton = new HeaderButton(this, this._popoutLabel, DomConstants.ClassName.Popout, () => this.handleButtonPopoutEvent());
+            this._popoutButton = new HeaderButton(this, this._popoutLabel, DomConstants.ClassName.Popout, (ev) => this.handleButtonPopoutEvent(ev));
         }
 
         /**
@@ -184,25 +184,41 @@ export class Header extends EventEmitter {
         this.processTabDropdownActiveChanged();
     }
 
+    layoutDefault(): void {
+        const el = this._element;
+        while (el.firstChild)
+            el.removeChild(el.firstChild);
+        el.appendChild(this._tabsContainer.element);
+        el.appendChild(this._controlsContainerElement);
+        el.appendChild(this._tabsContainer.dropdownElement);
+    }
+
     /**
      * Destroys the entire header
      * @internal
      */
     destroy(): void {
-        this.emit('destroy');
+        this._element.style.opacity = '0';
+        this.layoutManager.deferIfDragging((cancel) => {
+            if (cancel) {
+                this._element.style.opacity = '';
+            } else {
+                this.emit('destroy');
 
-        this._popoutEvent = undefined;
-        this._maximiseToggleEvent = undefined;
-        this._clickEvent = undefined;
-        this._touchStartEvent = undefined;
-        this._componentRemoveEvent = undefined;
-        this._componentFocusEvent = undefined;
-        this._componentDragStartEvent = undefined;
+                this._popoutEvent = undefined;
+                this._maximiseToggleEvent = undefined;
+                this._clickEvent = undefined;
+                this._touchStartEvent = undefined;
+                this._componentRemoveEvent = undefined;
+                this._componentFocusEvent = undefined;
+                this._componentDragStartEvent = undefined;
 
-        this._tabsContainer.destroy();
+                this._tabsContainer.destroy();
 
-        globalThis.document.removeEventListener('mouseup', this._documentMouseUpListener);
-        this._element.remove();
+                globalThis.document.removeEventListener('mouseup', this._documentMouseUpListener);
+                this._element.remove();
+            }
+        });
     }
 
     /**
@@ -315,25 +331,37 @@ export class Header extends EventEmitter {
      * @internal
      */
     updateTabSizes(): void {
-        if (this._tabsContainer.tabCount > 0) {
-            const headerHeight = this._show ? this._layoutManager.layoutConfig.dimensions.headerHeight : 0;
+        if (this._updateRequested)
+            return;
+        this._updateRequested = window.requestAnimationFrame(() => {
+            this._updateRequested = 0;
 
-            if (this._leftRightSided) {
-                this._element.style.height = '';
-                this._element.style.width = numberToPixels(headerHeight);
-            } else {
-                this._element.style.width = '';
-                this._element.style.height = numberToPixels(headerHeight);
+            if (this._tabsContainer.tabCount > 0) {
+                /* We need explicit this._element.style.width
+                * if the header is in an lm_header container.
+                const headerHeight = this._show ? this._layoutManager.layoutConfig.dimensions.headerHeight : 0;
+                if (this._leftRightSided) {
+                    this._element.style.height = '';
+                    this._element.style.width = `${headerHeight}px;
+                } else {
+                    this._element.style.width = '';
+                    this._element.style.height = `${headerHeight}px`;
+                }
+                */
+                this._tabsContainer.updateTabSizes(this, this._getActiveComponentItemEvent());
             }
-            let availableWidth: number;
-            if (this._leftRightSided) {
-                availableWidth = this._element.offsetHeight - this._controlsContainerElement.offsetHeight - this._tabControlOffset;
-            } else {
-                availableWidth = this._element.offsetWidth - this._controlsContainerElement.offsetWidth - this._tabControlOffset;
-            }
+        });
+    }
 
-            this._tabsContainer.updateTabSizes(availableWidth, this._getActiveComponentItemEvent());
+    availableTabsSize(): number {
+        const el = this._element;
+        let avail = this._leftRightSided ? el.offsetHeight : el.offsetWidth;
+        for (let ch = el.firstElementChild; ch; ch = ch.nextElementSibling) {
+            if (ch !== this.tabsContainerElement && ch instanceof HTMLElement) {
+                avail -= this._leftRightSided ? ch.offsetHeight : ch.offsetWidth
+            }
         }
+        return avail;
     }
 
     /** @internal */
@@ -377,7 +405,9 @@ export class Header extends EventEmitter {
     }
 
     /** @internal */
-    private handleButtonPopoutEvent() {
+    private handleButtonPopoutEvent(ev: Event) {
+        if (this._layoutManager.popoutClickHandler(this.parent, ev))
+            return;
         if (this._layoutManager.layoutConfig.settings.popoutWholeStack) {
             if (this._popoutEvent === undefined) {
                 throw new UnexpectedUndefinedError('HHBPOE17834');
@@ -404,7 +434,7 @@ export class Header extends EventEmitter {
     }
 
     /**
-     * Invoked when the header's background is clicked (not it's tabs or controls)
+     * Invoked when the header's background is clicked (not its tabs or controls)
      * @internal
      */
     private onClick(event: MouseEvent) {
@@ -414,7 +444,7 @@ export class Header extends EventEmitter {
     }
 
     /**
-     * Invoked when the header's background is touched (not it's tabs or controls)
+     * Invoked when the header's background is touched (not its tabs or controls)
      * @internal
      */
     private onTouchStart(event: TouchEvent) {

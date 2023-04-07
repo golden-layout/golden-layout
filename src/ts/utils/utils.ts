@@ -95,6 +95,12 @@ export function setElementDisplayVisibility(element: HTMLElement, visible: boole
 }
 
 /** @internal */
+export function enableIFramePointerEvents(enable: boolean): void {
+    document.querySelectorAll('iframe.lm_content').forEach((element) =>
+        (element as HTMLElement).style.setProperty('pointer-events', enable ? '' : 'none'));
+}
+
+/** @internal */
 export function ensureElementPositionAbsolute(element: HTMLElement): void {
     const absolutePosition = 'absolute';
     if (element.style.position !== absolutePosition) {
