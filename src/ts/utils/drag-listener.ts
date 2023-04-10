@@ -66,7 +66,7 @@ export class DragListener extends EventEmitter {
     }
 
     private onPointerDown(oEvent: PointerEvent) {
-        if (this._allowableTargets.includes(oEvent.target as HTMLElement) && oEvent.isPrimary) {
+        if (this._allowableTargets.includes(oEvent.target as HTMLElement) && oEvent.isPrimary && oEvent.button === 0) {
             const coordinates = this.getPointerCoordinates(oEvent);
             this.processPointerDown(coordinates);
         }
@@ -129,7 +129,7 @@ export class DragListener extends EventEmitter {
         }
 
         this.checkRemovePointerTrackingEventListeners();
-    
+
         if (this._dragging === true) {
             this._eBody.classList.remove(DomConstants.ClassName.Dragging);
             this._eElement.classList.remove(DomConstants.ClassName.Dragging);
@@ -144,7 +144,7 @@ export class DragListener extends EventEmitter {
             this._oDocument.removeEventListener('pointermove', this._pointerMoveEventListener);
             this._oDocument.removeEventListener('pointerup', this._pointerUpEventListener);
             this._pointerTracking = false;
-        }    
+        }
     }
 
     private startDrag() {

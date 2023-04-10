@@ -122,6 +122,10 @@ Components can have focus. This is analagous to HTML elements having focus. Only
 
 LocationSelectors specify the location of a component in terms of a parent and a index. They can be used when adding components programatically.  [More](./location-selectors/index.md)
 
+## Header and Buttons
+
+Some [notes](./headers-and-buttons/index.md) regarding headers and buttons.
+
 ## Popouts
 
 A component in a layout can be 'popped' out into a separate browser window.  It can be then be viewed separately from the main layout. [More](./popouts/index.md)
