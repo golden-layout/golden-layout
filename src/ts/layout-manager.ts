@@ -1249,15 +1249,19 @@ export abstract class LayoutManager extends EventEmitter {
                     sstyle.position = 'absolute'
                 }
                 this._actionsOnDragEnd.push((cancel) => {
-                    stack.element.classList.remove("lm_drag_old_position");
-                    stack.element.style.zIndex = '';
-                    if (draggingWholeStack) {
-                        const sstyle = stack.element.style;
-                        sstyle.top = '';
-                        sstyle.left = '';
-                        sstyle.width = '';
-                        sstyle.height = '';
-                        sstyle.position = '';
+                    if (cancel) {
+                        stack.element.classList.remove("lm_drag_old_position");
+                        stack.element.style.zIndex = '';
+                        if (draggingWholeStack) {
+                            const sstyle = stack.element.style;
+                            sstyle.top = '';
+                            sstyle.left = '';
+                            sstyle.width = '';
+                            sstyle.height = '';
+                            sstyle.position = '';
+                        }
+                    } else {
+                        stack.element.remove();
                     }
                 });
             }
