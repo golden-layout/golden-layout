@@ -177,13 +177,18 @@ export class RowOrColumn extends ContentItem {
      *
      */
     override removeChild(contentItem: ContentItem, keepChild: boolean): void {
-        const index = this.contentItems.indexOf(contentItem);
+        const items = this.contentItems;
+        const index = items.indexOf(contentItem);
         const splitterIndex = Math.max(index - 1, 0);
 
         if (index === -1) {
             throw new Error('Can\'t remove child. ContentItem is not child of this Row or Column');
         }
-
+        const nitems = items.length;
+        const savedSizes = new Array(nitems)
+        for (let i = 0; i < nitems; i++) {
+            savedSizes[i] = items[i].size;
+        }
         /**
          * Remove the splitter before the item or after if the item happens
          * to be the first in the row/column
@@ -210,6 +215,11 @@ export class RowOrColumn extends ContentItem {
                 this.contentItems.length = 0;
                 this._rowOrColumnParent.replaceChild(this, childItem, true);
                 return;
+            }
+            if (cancel) {
+                for (let i = 0; i < nitems; i++) {
+                    items[i].size = savedSizes[i];
+                }
             }
             this.updateSize();
             this.emitBaseBubblingEvent('stateChanged');
