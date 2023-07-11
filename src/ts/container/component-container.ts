@@ -39,9 +39,12 @@ export class ComponentContainer extends EventEmitter {
     private _logicalZIndex: LogicalZIndex;
     /** @internal */
     private _element: HTMLElement | undefined;
+    /** @internal */
+    _scale = 1.0;
 
     stateRequestEvent: ComponentContainer.StateRequestEventHandler | undefined;
-    virtualRectingRequiredEvent: ComponentContainer.VirtualRectingRequiredEvent | undefined; // DEPRECATED
+    /** @deprecated use notifyResize instead */
+    virtualRectingRequiredEvent: ComponentContainer.VirtualRectingRequiredEvent | undefined;
     notifyResize: ComponentContainer.NotifyResizeHandler | undefined;
     virtualVisibilityChangeRequiredEvent: ComponentContainer.VirtualVisibilityChangeRequiredEvent | undefined;
     virtualZIndexChangeRequiredEvent: ComponentContainer.VirtualZIndexChangeRequiredEvent | undefined;
@@ -53,7 +56,6 @@ export class ComponentContainer extends EventEmitter {
     get componentName(): JsonValue { return this._componentType; }
     get componentType(): JsonValue { return this._componentType; }
     get handle(): ComponentContainer.Handle { return this._handle; }
-    get virtual(): boolean { return this._element === undefined; }
     get tab(): Tab { return this._tab; }
     get title(): string { return this._parent.title; }
     get layoutManager(): LayoutManager { return this._layoutManager; }
@@ -105,8 +107,6 @@ export class ComponentContainer extends EventEmitter {
         this._state = this._initialState;
 
         this._handle = this.layoutManager.bindComponent(this, _config);
-
-        //FIXME:this.updateElementPositionPropertyFromBoundComponent();
     }
 
     /** @internal */
@@ -119,6 +119,13 @@ export class ComponentContainer extends EventEmitter {
     /** @deprecated use {@link (ComponentContainer:class).element } */
     getElement(): HTMLElement | undefined {
         return this._element;
+    }
+
+    scale(scale: number): number {
+        if (scale > 0) {
+            this._scale = scale;
+        }
+        return this._scale;
     }
 
     /**
@@ -236,17 +243,16 @@ export class ComponentContainer extends EventEmitter {
             this._updateItemConfigEvent(config);
 
             this._handle = this.layoutManager.bindComponent(this, config);
-            this.updateElementPositionPropertyFromBoundComponent();
 
             if (this.virtualVisibilityChangeRequiredEvent !== undefined) {
                 this.virtualVisibilityChangeRequiredEvent(this, this._visible);
             }
             if (this.virtualRectingRequiredEvent !== undefined) {
-                this._layoutManager.beforeVirtualRectingEvent?.(1);
+                this._layoutManager.beforeResizingEvent?.(1);
                 try {
-                    this.virtualRectingRequiredEvent(this, this._width, this._height);
+                    this.notifyResizingRequired();
                 } finally {
-                    this._layoutManager.afterVirtualRectingEvent?.();
+                    this._layoutManager.afterResizingEvent?.();
                 }
             }
             this.setBaseLogicalZIndex();
@@ -381,31 +387,29 @@ export class ComponentContainer extends EventEmitter {
 
     /** @internal */
     drag(): void {
-        if (this.virtualRectingRequiredEvent !== undefined) {
-            this._layoutManager.beforeVirtualRectingEvent?.(1);
+        if (this.notifyResize || this.virtualRectingRequiredEvent) {
+            this._layoutManager.beforeResizingEvent?.(1);
             try {
-                this.virtualRectingRequiredEvent(this, this._width, this._height);
+                this.notifyResizingRequired();
             } finally {
-                this._layoutManager.afterVirtualRectingEvent?.();
+                this._layoutManager.afterResizingEvent?.();
             }
         }
     }
 
     /** @internal */
-    notifyVirtualRectingRequired(): void {
-        if (this.virtualRectingRequiredEvent !== undefined
-            || this.notifyResize) {
-            if (this.virtualRectingRequiredEvent)
-                this.virtualRectingRequiredEvent(this, this._width, this._height);
-            const element = this.parent.element;
-            //let left = 0, top = 0, width = 0, height = 0;
-            if (this.notifyResize && element) {
-                const bounds = element.getBoundingClientRect();
-                this.notifyResize(this, bounds.left, bounds.top, bounds.width, bounds.height);
-            }
-            this.emit('resize');
-            this.checkShownFromZeroDimensions();
+    notifyResizingRequired(): void {
+        const element = this.parent.element;
+        if (this.notifyResize && element) {
+            const bounds = element.getBoundingClientRect();
+            this.notifyResize(this, bounds.left, bounds.top, bounds.width, bounds.height);
+        } else if (this.virtualRectingRequiredEvent) {
+            this.virtualRectingRequiredEvent(this, this._width, this._height);
+        } else {
+            this.parent.updateComponentSize();
         }
+        this.emit('resize');
+        this.checkShownFromZeroDimensions();
     }
 
     /** @internal */
@@ -414,17 +418,6 @@ export class ComponentContainer extends EventEmitter {
             const logicalZIndex = this._logicalZIndex;
             const defaultZIndex = LogicalZIndexToDefaultMap[logicalZIndex];
             this.virtualZIndexChangeRequiredEvent(this, logicalZIndex, defaultZIndex);
-        }
-    }
-
-    /** @internal */
-    private updateElementPositionPropertyFromBoundComponent() {
-        if (this._element) {
-            if (this.virtual) {
-                this._element.style.position = 'static';
-            } else {
-                this._element.style.position = ''; // set it back to attribute value
-            }
         }
     }
 
@@ -467,7 +460,8 @@ export namespace ComponentContainer {
     export type Component = unknown;
 
     export type StateRequestEventHandler = (this: void) => JsonValue | undefined;
-    export type VirtualRectingRequiredEvent = (this: void, container: ComponentContainer, width: number, height: number) => void; // DEPRECATED
+    /** @deprecated - use NotifyResizeHandler */
+    export type VirtualRectingRequiredEvent = (this: void, container: ComponentContainer, width: number, height: number) => void;
     export type NotifyResizeHandler = (this: void, container: ComponentContainer, left: number, top: number, width: number, height: number) => void;
     export type VirtualVisibilityChangeRequiredEvent = (this: void, container: ComponentContainer, visible: boolean) => void;
     export type VirtualZIndexChangeRequiredEvent =

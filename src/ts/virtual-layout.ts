@@ -221,7 +221,7 @@ export namespace VirtualLayout {
     export type UnbindComponentEventHandler =
         (this: void, container: ComponentContainer) => void;
 
-    export type BeforeVirtualRectingEvent = (this: void) => void;
+    export type BeforeResizingEvent = (this: void) => void;
 
     /** @internal
      * Veriable to hold the state whether we already checked if we are running in a sub window.

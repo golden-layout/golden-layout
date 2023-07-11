@@ -60,8 +60,6 @@ export class GoldenLayout extends VirtualLayout {
         }
     }
 
-    //  REMOVE   registerComponentFactoryFunction(typeName: string, componentFactoryFunction: GoldenLayout.ComponentFactoryFunction, virtual = false): void {
-
     /**
      * Register a new component with the layout manager.
      */
@@ -77,6 +75,16 @@ export class GoldenLayout extends VirtualLayout {
         }
 
         this._componentTypesMap.set(typeName, componentFactoryFunction);
+    }
+
+    /**
+     * Register a new component type with the layout manager.
+     */
+    registerComponentConstructor(typeName: string, componentConstructor: GoldenLayout.ComponentConstructor): void {
+        this.registerComponent(typeName,
+                               (container, config) => {
+                                   new componentConstructor(container, config);
+                               });
     }
 
     registerComponentDefault(componentFactoryFunction: GoldenLayout.ComponentFactoryFunction): void {
@@ -224,6 +232,7 @@ export namespace GoldenLayout {
         rootHtmlElement: HTMLElement;
     }
 
+    export type ComponentConstructor = new(container: ComponentContainer, state: JsonValue | undefined) => ComponentContainer.Handle;
     // ??? combine with VirtualLayout.BindComponentEventHandler
     export type ComponentFactoryFunction = (container: ComponentContainer, state: JsonValue | undefined) => ComponentContainer.Handle;
 }

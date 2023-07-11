@@ -718,14 +718,15 @@ export class Stack extends ComponentParentableItem {
         // Empty stack
         if (visibleTabsLength === 0) {
             const headerRect = this._header.element.getBoundingClientRect();
-            const headerTop = headerRect.top + document.body.scrollTop;
-            const headerLeft = headerRect.left + document.body.scrollLeft;
+            const scale = this.layoutManager._scale;
+            const headerTop = headerRect.top / scale + document.body.scrollTop;
+            const headerLeft = headerRect.left / scale + document.body.scrollLeft;
 
             area = {
                 x1: headerLeft,
                 x2: headerLeft + 100,
-                y1: headerTop + headerRect.height - 20,
-                y2: headerTop + headerRect.height,
+                y1: headerTop + headerRect.height / scale - 20,
+                y2: headerTop + headerRect.height / scale,
             };
 
             this._dropIndex = 0;
@@ -737,22 +738,23 @@ export class Stack extends ComponentParentableItem {
             let tabLeft: number;
             let tabWidth: number;
             let tabElement: HTMLElement;
+            const scale = this.layoutManager._scale;
             let afterDrag = 0;
             do {
                 tabElement = tabsContainerElementChildNodes[tabIndex] as HTMLElement;
                 //tabElement = visibleTabElements[tabIndex] as HTMLElement;
                 const tabRect = tabElement.getBoundingClientRect();
-                const tabRectTop = tabRect.top + document.body.scrollTop;
-                const tabRectLeft = tabRect.left + document.body.scrollLeft;
+                const tabRectTop = tabRect.top / scale + document.body.scrollTop;
+                const tabRectLeft = tabRect.left / scale + document.body.scrollLeft;
 
                 if (this._header.leftRightSided) {
                     tabLeft = tabRectTop;
                     tabTop = tabRectLeft;
-                    tabWidth = tabRect.height;
+                    tabWidth = tabRect.height / scale;
                 } else {
                     tabLeft = tabRectLeft;
                     tabTop = tabRectTop;
-                    tabWidth = tabRect.width;
+                    tabWidth = tabRect.width / scale;
                 }
                 if (tabElement.classList.contains(DomConstants.ClassName.Dragging)) {
                     afterDrag++;
@@ -776,9 +778,9 @@ export class Stack extends ComponentParentableItem {
                                                 preferNext ? tabElement.nextSibling : tabElement);
 
             const tabDropPlaceholderRect = this.layoutManager.tabDropPlaceholder.getBoundingClientRect();
-            const tabDropPlaceholderRectTop = tabDropPlaceholderRect.top + document.body.scrollTop;
-            const tabDropPlaceholderRectLeft = tabDropPlaceholderRect.left + document.body.scrollLeft;
-            const tabDropPlaceholderRectWidth = tabDropPlaceholderRect.width;
+            const tabDropPlaceholderRectTop = tabDropPlaceholderRect.top / scale + document.body.scrollTop;
+            const tabDropPlaceholderRectLeft = tabDropPlaceholderRect.left / scale + document.body.scrollLeft;
+            const tabDropPlaceholderRectWidth = tabDropPlaceholderRect.width / scale;
 
             if (this._header.leftRightSided) {
                 const placeHolderTop = tabDropPlaceholderRectTop;

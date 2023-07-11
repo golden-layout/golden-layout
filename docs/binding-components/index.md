@@ -37,6 +37,30 @@ Having distinct `lm_component` and `lm_content` elements allows Golden Layout to
 
 (Creating a drag image is done differently when the `useDragAndDrop` setting is false.)
 
+### Scaled components (zoom)
+
+If you use a `scale` `transform` to resize (zoom) you components (or the entire window) you need to notify GoldenLayout of this so it can correctly calculate sizes.  You can either scale the entire layout or just a single component.
+
+To scale the entire layout, call the `LayoutManager.scale` function. For example:
+```
+function scaleLayout(zoom: number): void {
+    const bodyStyle = document.body.style;
+    if (zoom && (zoom < 0.99 || zoom > 1.01)) {
+        const topElement = document.documentElement;
+        bodyStyle.width = `${topElement.offsetWidth / zoom}px`;
+        bodyStyle.height = `${topElement.offsetHeight / zoom}px`;
+    } else {
+        bodyStyle.width = "";
+        bodyStyle.height = "";
+    }
+    layout_manager.scale(zoom);
+}
+```
+
+To scale a single component, call the `scale` method of the `ComponentContainer`.
+This assumes you have set a `scale` `transform` on the content element (`lm_content`).  (If you scale an inner element, GoldenLayout doesn't care about that.)
+The effective scale is the product of the global scale and the component scale.
+
 ## Old - needs to be updated/replaced.
 
 There are 4 ways Golden Layout can bind to a component:
@@ -61,7 +85,6 @@ Registering a component and specifying static positioning is the classic GoldenL
 
 The following functions can be used to register components.
 * `GoldenLayout.registerComponent()`
-* `GoldenLayout.registerComponentConstructor()`
 * `GoldenLayout.registerComponentFactoryFunction()`
 * `GoldenLayout.registerComponentFunction()`
 * `GoldenLayout.registerGetComponentConstructorCallback()`
@@ -92,7 +115,7 @@ With Virtual Components the following events need to be handled:
     * ensure this element has `absolute` position,
     * make the element a child of Golden Layout's root HTML element,
     * store the component in a map using `container` as the key,
-    * add handlers to the container's `virtualRectingRequiredEvent` and `virtualVisibilityChangeRequiredEvent` events,
+    * add handlers to the container's `notifyReszie` and `virtualVisibilityChangeRequiredEvent` events,
     * return the component in an `BindableComponent` interface with `virtual: true`.
 
     Example:
@@ -107,7 +130,7 @@ With Virtual Components the following events need to be handled:
         const componentRootElement = component.rootHtmlElement;
         this._layoutElement.appendChild(componentRootElement);
         this._boundComponentMap.set(container, component);
-        container.virtualRectingRequiredEvent = (container, width, height) => this.handleContainerVirtualRectingRequiredEvent(container, width, height);
+        container.notifyResize = (container, x, y, width, height) => this.handleNotifyResize(container, x, y, width, height);
         container.virtualVisibilityChangeRequiredEvent = (container, visible) => this.handleContainerVisibilityChangeRequiredEvent(container, visible);
         return {
             component,
@@ -138,19 +161,19 @@ Fired when a component is removed from Golden Layout.  The handler is passed the
         this._boundComponentMap.delete(container);
     }
     ```
-* `LayoutManager.beforeVirtualRectingEvent: () => void`\
+* `LayoutManager.beforeResizingEvent: () => void`\
 This event does not need to be handled. However it can be used to optimise positioning of components. Whenever a layout is changed, it may be that several components need to be repositioned.  This event will be fired whenever one or more components need to be positioned as the result of one layout change.  Typically it is used to get the position of Golden Layout's root HTML element, using `getBoundingClientRect()`. This can then be cached for use when each component's position needs to be calculated.
 
     Example:
     ```typescript
-    private handleBeforeVirtualRectingEvent(count: number) {
+    private handleBeforeResizingEvent(count: number) {
         this._goldenLayoutBoundingClientRect = this._layoutElement.getBoundingClientRect();
     }
     ```
-* `ComponentContainer.virtualRectingRequiredEvent: (container, width, height) => void;`\
-Fired when a component's position and/or size need to be changed. The handler is passed the container and the component's required width and height. Typically, the handler would:
+* `ComponentContainer.notifyResize: (container, x, y, width, height) => void;`\
+Fired when a component's position and/or size need to be changed. The handler is passed the container and the component's required position and size. Typically, the handler would:
     * find the component in the map using `container` as the key,
-    * get the Golden Layout's root HTML element's position using `getBoundingClientRect()`, (Alternatively, it can used the position calculated by the handler for the `virtualRectingRequiredEvent` event.)
+    * get the Golden Layout's root HTML element's position using `getBoundingClientRect()`, (Alternatively, it can used the position calculated by the handler for the `NotifyResize` event.)
     * get the container's position using `getBoundingClientRect()`,
     * calculate the container's position relative to Golden Layout's root HTML element position.
     * accordingly, update the following properties in the component's top level HTML element:
@@ -161,15 +184,15 @@ Fired when a component's position and/or size need to be changed. The handler is
 
     Example:
     ```typescript
-    private handleContainerVirtualRectingRequiredEvent(container: ComponentContainer, width: number, height: number) {
+    private handleNotifyResize(container: ComponentContainer, x: number, y: number, width: number, height: number) {
         const component = this._boundComponentMap.get(container);
         if (component === undefined) {
-            throw new Error('handleContainerVirtualRectingRequiredEvent: Component not found');
+            throw new Error(''handleNotifyResize: Component not found');
         }
 
         const rootElement = component.rootHtmlElement;
         if (rootElement === undefined) {
-            throw new Error('handleContainerVirtualRectingRequiredEvent: Component does not have a root HTML element');
+            throw new Error('handleNotifyResize: Component does not have a root HTML element');
         }
 
         const containerBoundingClientRect = container.element.getBoundingClientRect();
