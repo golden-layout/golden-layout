@@ -93,7 +93,7 @@ export class App {
         this._goldenLayout = new GoldenLayout(this._layoutElement, this._bindComponentEventListener, this._unbindComponentEventListener);
 
         this._goldenLayout.resizeWithContainerAutomatically = true;
-        this._goldenLayout.beforeVirtualRectingEvent = (count) => this.handleBeforeVirtualRectingEvent(count);
+        this._goldenLayout.beforeResizingEvent = (count) => this.handleBeforeResizingEvent(count);
         this._goldenLayout.addEventListener('stackHeaderClick', (event) => this.handleStackHeaderClick(event));
 
         const registerNotVirtualComponentTypesButton = document.querySelector('#registerNotVirtualButton') as HTMLButtonElement;
@@ -349,7 +349,7 @@ export class App {
         this._boundComponentMap.delete(container);
     }
 
-    private handleBeforeVirtualRectingEvent(count: number) {
+    private handleBeforeResizingEvent(count: number) {
         this._goldenLayoutBoundingClientRect = this._layoutElement.getBoundingClientRect();
         this._lastVirtualRectingCount = count;
         this._lastVirtualRectingCountSpan.innerText = this._lastVirtualRectingCount.toString();

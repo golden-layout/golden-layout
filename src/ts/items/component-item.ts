@@ -244,7 +244,7 @@ export class ComponentItem extends ContentItem {
     }
 
     /** @internal */
-    updateNodeSize(): void {
+    updateComponentSize(): void {
         // OLD:  this._container.setSizeToNodeSize(width, height, force)
         const contentInset = this.layoutManager.layoutConfig.dimensions.contentInset;
         this.element.style.margin = contentInset ? `${contentInset}px` : '';
@@ -259,25 +259,30 @@ export class ComponentItem extends ContentItem {
             let stackBounds;
             const itemElement = this.element;
             const itemBounds = itemElement.getBoundingClientRect();
-            const layoutBounds = this.layoutManager.container.getBoundingClientRect();
+            const layoutContainer = this.layoutManager.container;
+            const layoutBounds = layoutContainer.getBoundingClientRect();
+            const mainZoom = this.layoutManager._scale;
+            const itemZoom = mainZoom * this._container._scale;
             if (componentElement instanceof HTMLElement
                 && contentElement !== componentElement) {
                 stackBounds = stackElement.getBoundingClientRect();
-                componentElement.style.top = numberToPixels(stackBounds.top - layoutBounds.top);
-                componentElement.style.left = numberToPixels(stackBounds.left - layoutBounds.left);
-                componentElement.style.width = numberToPixels(stackBounds.width);
-                componentElement.style.height = numberToPixels(stackBounds.height);
+                componentElement.style.top = numberToPixels((stackBounds.top - layoutBounds.top) / mainZoom);
+                componentElement.style.left = numberToPixels((stackBounds.left - layoutBounds.left) / mainZoom);
+                componentElement.style.width = numberToPixels(stackBounds.width / itemZoom);
+                componentElement.style.height = numberToPixels(stackBounds.height / itemZoom);
             } else {
                 stackBounds = layoutBounds;
             }
             contentElement.style.position = "absolute";
-            contentElement.style.top = numberToPixels(itemBounds.top - stackBounds.top);
-            contentElement.style.left = numberToPixels(itemBounds.left - stackBounds.left);
-            contentElement.style.width = numberToPixels(itemBounds.width);
-            contentElement.style.height = numberToPixels(itemBounds.height);
+            contentElement.style.top = numberToPixels((itemBounds.top - stackBounds.top) / mainZoom);
+            contentElement.style.left = numberToPixels((itemBounds.left - stackBounds.left) / mainZoom);
+            contentElement.style.width = numberToPixels(itemBounds.width / itemZoom);
+            contentElement.style.height = numberToPixels(itemBounds.height / itemZoom);
         }
         else console.log('updateNodeSize ignored');
+    }
 
+    updateNodeSize(): void {
         this.layoutManager.addVirtualSizedContainer(this.container);
     }
 }

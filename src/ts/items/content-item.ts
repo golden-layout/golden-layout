@@ -115,12 +115,12 @@ export abstract class ContentItem extends EventEmitter {
      * @internal
      */
     updateSize(): void {
-        this.layoutManager.beginVirtualSizedContainerAdding();
+        this.layoutManager.beginResizing();
         try {
             this.updateNodeSize();
             this.updateContentItemsSize();
         } finally {
-            this.layoutManager.endVirtualSizedContainerAdding();
+            this.layoutManager.endResizing();
         }
     }
 
@@ -356,13 +356,13 @@ export abstract class ContentItem extends EventEmitter {
      */
     getElementArea(element?: HTMLElement): ContentItem.Area | null {
         element = element ?? this._element;
-
+        const scale = this.layoutManager._scale;
         const rect = element.getBoundingClientRect();
-        const top = rect.top + document.body.scrollTop;
-        const left = rect.left + document.body.scrollLeft;
+        const top = rect.top / scale + document.body.scrollTop;
+        const left = rect.left / scale + document.body.scrollLeft;
 
-        const width = rect.width;
-        const height = rect.height;
+        const width = rect.width / scale;
+        const height = rect.height / scale;
 
         return {
             x1: left,

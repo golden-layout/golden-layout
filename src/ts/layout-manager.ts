@@ -109,6 +109,8 @@ export abstract class LayoutManager extends EventEmitter {
     /** @internal */
     private _height: number | null = null;
     /** @internal */
+    _scale = 1.0;
+    /** @internal */
     private _focusedComponentItem: ComponentItem | undefined;
     /** @internal */
     private _virtualSizedContainers: ComponentContainer[] = [];
@@ -144,8 +146,8 @@ export abstract class LayoutManager extends EventEmitter {
      * By default size of containerElement - which is usually document.root.
      * Should be overridden if not 100% of containerElement. */
     containerWidthAndHeight: () => WidthAndHeight;
-    beforeVirtualRectingEvent: LayoutManager.BeforeVirtualRectingEvent | undefined;
-    afterVirtualRectingEvent: LayoutManager.AfterVirtualRectingEvent | undefined;
+    beforeResizingEvent: LayoutManager.BeforeResizingEvent | undefined;
+    afterResizingEvent: LayoutManager.AfterResizingEvent | undefined
 
     createComponentElement: (config: ResolvedComponentItemConfig, component: ComponentContainer)=>HTMLElement|undefined
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -163,6 +165,13 @@ export abstract class LayoutManager extends EventEmitter {
         contentElement.classList.add(DomConstants.ClassName.Content);
         return componentElement;
     };
+
+    scale(scale = 0.0): number {
+        if (scale > 0.0) {
+            this._scale = scale;
+        }
+        return scale;
+    }
 
     enterOrLeaveSomeWindow(entering: boolean): void {
         this.inSomeWindow = entering;
@@ -425,7 +434,8 @@ export abstract class LayoutManager extends EventEmitter {
         if (this._itemAreas === null || this._itemAreas.length === 0)
             return;
 
-        this.setDropPosition(x, y);
+        const scale = this._scale;
+        this.setDropPosition(x / scale, y / scale);
     }
 
     /**
@@ -940,7 +950,7 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /** @internal */
-    beginVirtualSizedContainerAdding(): void {
+    beginResizing(): void {
         if (this._virtualSizedContainerAddingBeginCount++ === 0) {
             this._virtualSizedContainers.length = 0;
         }
@@ -952,16 +962,16 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /** @internal */
-    endVirtualSizedContainerAdding(): void {
+    endResizing(): void {
         if (--this._virtualSizedContainerAddingBeginCount === 0) {
             const count = this._virtualSizedContainers.length;
             if (count > 0) {
-                this.beforeVirtualRectingEvent?.(count);
+                this.beforeResizingEvent?.(count);
                 for (let i = 0; i < count; i++) {
                     const container = this._virtualSizedContainers[i];
-                    container.notifyVirtualRectingRequired();
+                    container.notifyResizingRequired();
                 }
-                this.afterVirtualRectingEvent?.();
+                this.afterResizingEvent?.();
                 this._virtualSizedContainers.length = 0;
             }
         }
@@ -1153,10 +1163,11 @@ export abstract class LayoutManager extends EventEmitter {
             image.appendChild(inner);
             document.body.appendChild(image);
             const stackBounds = stack.element.getBoundingClientRect();
-            image.style.top = `${stackBounds.top}px`;
-            image.style.left = `${stackBounds.left}px`;
-            image.style.width = `${stackBounds.width}px`;
-            image.style.height = `${stackBounds.height}px`;
+            const scale = this._scale;
+            image.style.top = `${stackBounds.top / scale}px`;
+            image.style.left = `${stackBounds.left / scale}px`;
+            image.style.width = `${stackBounds.width / scale}px`;
+            image.style.height = `${stackBounds.height / scale}px`;
             inner.style.left = "0px";
             inner.style.right = "0px";
             inner.style.height = `${stackBounds.height-tabsContainer.clientHeight}px`;
@@ -1226,7 +1237,7 @@ export abstract class LayoutManager extends EventEmitter {
 
             // Take the lm_item out of the layout (set position to absolute),
             // so remaining elements can be re-positioned.
-            // Whle doing so, add a dashed border (at the old position)
+            // While doing so, add a dashed border (at the old position)
             // as a visual feedbakc.
             const ielement = componentItem.element;
             const oparent = stack.element.offsetParent;
@@ -1238,26 +1249,31 @@ export abstract class LayoutManager extends EventEmitter {
                 && ielement.style.position === '') {
                 const stackBounds = stack.element.getBoundingClientRect();
                 const parentBounds = oparent.getBoundingClientRect();
+                const scale = this._scale;
                 stack.element.classList.add("lm_drag_old_position");
                 stack.element.style.zIndex = '4';
                 if (draggingWholeStack) {
                     const sstyle = stack.element.style;
-                    sstyle.top = `${stackBounds.top - parentBounds.top}px`;
-                    sstyle.left = `${stackBounds.left - parentBounds.left}px`;
-                    sstyle.width = `${stackBounds.width - 2}px`;
-                    sstyle.height = `${stackBounds.height - 2}px`;
+                    sstyle.top = `${(stackBounds.top - parentBounds.top) / scale}px`;
+                    sstyle.left = `${(stackBounds.left - parentBounds.left) / scale}px`;
+                    sstyle.width = `${stackBounds.width / scale - 2}px`;
+                    sstyle.height = `${stackBounds.height / scale - 2}px`;
                     sstyle.position = 'absolute'
                 }
                 this._actionsOnDragEnd.push((cancel) => {
-                    stack.element.classList.remove("lm_drag_old_position");
-                    stack.element.style.zIndex = '';
-                    if (draggingWholeStack) {
-                        const sstyle = stack.element.style;
-                        sstyle.top = '';
-                        sstyle.left = '';
-                        sstyle.width = '';
-                        sstyle.height = '';
-                        sstyle.position = '';
+                    if (cancel) {
+                        stack.element.classList.remove("lm_drag_old_position");
+                        stack.element.style.zIndex = '';
+                        if (draggingWholeStack) {
+                            const sstyle = stack.element.style;
+                            sstyle.top = '';
+                            sstyle.left = '';
+                            sstyle.width = '';
+                            sstyle.height = '';
+                            sstyle.position = '';
+                        }
+                    } else {
+                        stack.element.remove();
                     }
                 });
             }
@@ -2253,8 +2269,8 @@ export abstract class LayoutManager extends EventEmitter {
 
 /** @public */
 export namespace LayoutManager {
-    export type BeforeVirtualRectingEvent = (this: void, count: number) => void;
-    export type AfterVirtualRectingEvent = (this: void) => void;
+    export type BeforeResizingEvent = (this: void, count: number) => void;
+    export type AfterResizingEvent = (this: void) => void;
 
     /** @internal */
     export interface ConstructorParameters {

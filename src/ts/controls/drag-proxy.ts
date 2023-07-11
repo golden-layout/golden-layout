@@ -66,7 +66,8 @@ export class DragProxy extends EventEmitter {
 
         this.determineMinMaxXY();
         this._layoutManager.calculateItemAreas();
-        this.setDropPosition(x, y);
+        const scale = this._layoutManager._scale;
+        this.setDropPosition(x / scale, y / scale);
     }
 
     /** Create Stack-like structure to contain the dragged component */
@@ -106,16 +107,18 @@ export class DragProxy extends EventEmitter {
     }
 
     private determineMinMaxXY(): void {
-        const groundItem = this._layoutManager.groundItem;
+        const lm = this._layoutManager;
+        const groundItem = lm.groundItem;
         if (groundItem === undefined) {
             throw new UnexpectedUndefinedError('DPDMMXY73109');
         } else {
             const groundElement = groundItem.element;
             const rect = groundElement.getBoundingClientRect();
-            this._minX = rect.left + document.body.scrollLeft;
-            this._minY = rect.top + document.body.scrollTop;
-            this._maxX = this._minX + rect.width;
-            this._maxY = this._minY + rect.height;
+            const scale = lm._scale;
+            this._minX = rect.left / scale + document.body.scrollLeft;
+            this._minY = rect.top / scale  + document.body.scrollTop;
+            this._maxX = this._minX + rect.width / scale ;
+            this._maxY = this._minY + rect.height / scale ;
         }
     }
 
