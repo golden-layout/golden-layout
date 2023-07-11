@@ -6,6 +6,8 @@ This version is a substantial and incompatible change from the previous (2.6.0) 
 
 * Both "Embedding via Events" and "Virtual via Events" are deprecated, unsupported, and probably no longer working. These binding methods are likely to be removed. The `createComponentElement` function should provide similar funtionality; let us know if that is not the case.
 
+* The `VirtualLayout` class is deprecated and may be removed.
+
 ## Registration functions
 
 * The `registerComponent` function is un-deprecated, but only accepts a component factory function, not a construction.
