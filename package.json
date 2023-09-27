@@ -1,6 +1,6 @@
 {
-  "name": "golden-layout",
-  "version": "1.5.9",
+  "name": "@rachitiitr/golden-layout",
+  "version": "1.6.0",
   "author": "deepstreamHub GmbH",
   "license": "MIT",
   "devDependencies": {
