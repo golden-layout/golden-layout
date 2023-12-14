@@ -438,7 +438,7 @@ export abstract class LayoutManager extends EventEmitter {
                 return undefined;
             } else {
                 const createdItem = location.parentItem.contentItems[location.index];
-                if (!ContentItem.isComponentItem(createdItem)) {
+                if (!ComponentItem.isComponentItem(createdItem)) {
                     throw new AssertError('LMNC992877533');
                 } else {
                     return createdItem;
@@ -597,7 +597,7 @@ export abstract class LayoutManager extends EventEmitter {
                 if (ItemConfig.isComponent(itemConfig)) {
                     // see if stack was inserted
                     const item = parentItem.contentItems[addIdx];
-                    if (ContentItem.isStack(item)) {
+                    if (Stack.isStack(item)) {
                         parentItem = item;
                         addIdx = 0;
                     }
@@ -1220,7 +1220,7 @@ export abstract class LayoutManager extends EventEmitter {
 
                 for (let i = 0; i < allContentItems.length; i++) {
                     const stack = allContentItems[i];
-                    if (ContentItem.isStack(stack)) {
+                    if (Stack.isStack(stack)) {
                         const area = stack.getArea();
 
                         if (area === null) {
@@ -1264,7 +1264,7 @@ export abstract class LayoutManager extends EventEmitter {
 
             if (configMaximisedItems.length > 0) {
                 let item = configMaximisedItems[0];
-                if (ContentItem.isComponentItem(item)) {
+                if (ComponentItem.isComponentItem(item)) {
                     const stack = item.parent;
                     if (stack === null) {
                         throw new UnexpectedNullError('LMXLLMI69999');
@@ -1272,7 +1272,7 @@ export abstract class LayoutManager extends EventEmitter {
                         item = stack;
                     }
                 }
-                if (!ContentItem.isStack(item)) {
+                if (!Stack.isStack(item)) {
                     throw new AssertError('LMCLLMI19993');
                 } else {
                     item.maximise();

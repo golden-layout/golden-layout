@@ -141,6 +141,10 @@ export class Stack extends ComponentParentableItem {
         this._header.updateClosability();
     }
 
+    static isStack(item: ContentItem): item is Stack {
+        return item.isStack;
+    }
+
     /** @internal */
     override updateSize(force: boolean): void {
         this.layoutManager.beginVirtualSizedContainerAdding();
@@ -193,7 +197,7 @@ export class Stack extends ComponentParentableItem {
 
     /** @deprecated Use {@link (Stack:class).setActiveComponentItem} */
     setActiveContentItem(item: ContentItem): void {
-        if (!ContentItem.isComponentItem(item)) {
+        if (!ComponentItem.isComponentItem(item)) {
             throw new Error('Stack.setActiveContentItem: item is not a ComponentItem');
         } else {
             this.setActiveComponentItem(item, false);

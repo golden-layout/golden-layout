@@ -61,18 +61,6 @@ export abstract class ContentItem extends EventEmitter {
     get element(): HTMLElement { return this._element; }
     get isInitialised(): boolean { return this._isInitialised; }
 
-    static isStack(item: ContentItem): item is Stack {
-        return item.isStack;
-    }
-
-    static isComponentItem(item: ContentItem): item is ComponentItem {
-        return item.isComponent;
-    }
-
-    static isComponentParentableItem(item: ContentItem): item is ComponentParentableItem {
-        return item.isStack || item.isGround;
-    }
-
     /** @internal */
     constructor(public readonly layoutManager: LayoutManager,
         config: ResolvedItemConfig,
