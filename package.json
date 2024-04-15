@@ -100,5 +100,8 @@
     "last 2 Safari major versions",
     "last 2 iOS major versions",
     "Firefox ESR"
-  ]
+  ],
+  "dependencies": {
+    "golden-layout": "^2.6.0"
+  }
 }
