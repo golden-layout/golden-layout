@@ -1,6 +1,7 @@
 import { DomConstants } from './dom-constants';
 import { EventEmitter } from './event-emitter';
 import { enableIFramePointerEvents } from './utils';
+import { LayoutManager } from '../layout-manager';
 
 /** @internal */
 export class DragListener extends EventEmitter {
@@ -20,7 +21,11 @@ export class DragListener extends EventEmitter {
     private _pointerMoveEventListener = (ev: PointerEvent) => this.onPointerMove(ev);
     private _pointerUpEventListener = (ev: PointerEvent) => this.onPointerUp(ev);
 
-    constructor(private _eElement: HTMLElement) {
+    constructor(
+        /** @internal */
+        private _layoutManager: LayoutManager,
+        private _eElement: HTMLElement
+    ) {
         super();
 
         this._timeout = undefined;
@@ -65,10 +70,11 @@ export class DragListener extends EventEmitter {
     }
 
     private onPointerDown(oEvent: PointerEvent) {
+        const draggableName = this._layoutManager.draggableAttrName();
         for (let target = oEvent.target; ; target = target.parentNode) {
             if (! (target instanceof HTMLElement))
                 return;
-            const draggable = target.getAttribute('draggable');
+            const draggable = target.getAttribute(draggableName);
             if (draggable === 'true')
                 break;
             if (draggable !== null)

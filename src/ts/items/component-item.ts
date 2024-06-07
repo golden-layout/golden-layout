@@ -58,7 +58,9 @@ export class ComponentItem extends ContentItem {
         this.applyUpdatableConfig(config);
 
         this._initialWantMaximise = config.maximised;
+        const isNewDragSource = _parentItem.element?.parentNode?.parentNode === null;
 
+        if (! isNewDragSource) {
         this._container = new ComponentContainer(config, this, layoutManager,
             (itemConfig) => this.handleUpdateItemConfigEvent(itemConfig),
             () => this.show(),
@@ -66,6 +68,7 @@ export class ComponentItem extends ContentItem {
             (suppressEvent) => this.focus(suppressEvent),
             (suppressEvent) => this.blur(suppressEvent),
         );
+    }
     }
 
     /** @internal */
@@ -90,7 +93,7 @@ export class ComponentItem extends ContentItem {
     }
 
     toConfig(): ResolvedComponentItemConfig {
-        const stateRequestEvent = this._container.stateRequestEvent;
+        const stateRequestEvent = this._container?.stateRequestEvent;
         const state = stateRequestEvent === undefined ? this._container.state : stateRequestEvent();
 
         const result: ResolvedComponentItemConfig = {

@@ -292,6 +292,11 @@ export abstract class LayoutManager extends EventEmitter {
 
     useNativeDragAndDrop(): boolean { return this.layoutConfig.settings.useDragAndDrop; }
 
+    /** 'draggable' if using drag-and-drop API; some other word otherwise.
+     * (Firefox doesn't like if if we use 'draggable' without the drag-and-drop API.)
+     **/
+    draggableAttrName(): string { return this.useNativeDragAndDrop() ? 'draggable' : 'gl-draggable'; }
+
     currentlyDragging(): boolean { return this._dragState == DragState.CurrentlyDragging; }
 
     dragDataMimetype(): string { return this.layoutConfig.settings.dragDataMimetype; }
@@ -1125,44 +1130,50 @@ export abstract class LayoutManager extends EventEmitter {
     }
 
     /** @internal */
-    startComponentDrag(ev: DragEvent, componentItem: ComponentItem): void
+    setTransferData(ev: DragEvent, componentItem: ComponentItem, config: ResolvedComponentItemConfig = componentItem.toConfig()): void
     {
         this._dragState = DragState.CurrentlyDragging;
         this._draggedComponentItem = componentItem;
-        const data = {config: componentItem.toConfig()};
+        const data = {config: config};
         if (ev instanceof DragEvent && ev.dataTransfer) {
             const jdata = JSON.stringify(data);
             ev.dataTransfer.setData(this.dragDataMimetype(), jdata);
         }
+    }
 
-        // Make drag-image
-        const tabElement = componentItem.tab.element;
-        //tabElement.style.visibility="visible";
-        const stack = componentItem.parent as Stack;
-        const isActiveTab = stack.getActiveComponentItem() === componentItem;
-        const headerElement = stack.header.element;
-        //headerElement.style.visibility="hidden";
-        const tabClone = tabElement.cloneNode(true) as HTMLElement;
+    makeDragImage(useFreshDragImage: boolean, componentItem: ComponentItem): HTMLElement {
+        let image: HTMLElement;
+        let tabClone: HTMLElement;
+        let stack: Stack | undefined;
+        const newComponent = ! componentItem.tab;
+        if (newComponent) {
+            tabClone = document.createElement('section');
+            tabClone.classList.add(DomConstants.ClassName.Tab);
+        } else {
+            const tabElement = componentItem.tab.element;
+            stack = componentItem.parent as Stack;
+            tabClone = tabElement.cloneNode(true) as HTMLElement;
+        }
         const tabsContainer = document.createElement('section');
         tabsContainer.classList.add(DomConstants.ClassName.Tabs);
         tabsContainer.appendChild(tabClone);
         const headerClone = document.createElement('section');
         headerClone.classList.add(DomConstants.ClassName.Header);
         headerClone.appendChild(tabsContainer);
-        let image: HTMLElement;
-        const element = componentItem.container.element;
-        const contentElement = componentItem.container.contentElement;
-        // usually same as effective copyForDragImage - see createComponentElement
-        const useFreshDragImage = ! element || element === contentElement;
+
         if (useFreshDragImage) {
             image = document.createElement('section');
             image.classList.add(DomConstants.ClassName.DragImage);
             const inner = document.createElement('div');
-            inner.classList.add(DomConstants.ClassName.DragImageInner);
+            inner.classList.add(DomConstants.ClassName.Content);
             image.appendChild(headerClone);
             image.appendChild(inner);
-            document.body.appendChild(image);
-            const stackBounds = stack.element.getBoundingClientRect();
+            let stackBounds;
+            if (stack instanceof Stack) {
+                stackBounds = stack.element.getBoundingClientRect();
+            } else { // from DragSoure
+                stackBounds = new DOMRect(0, 0, 300, 200);
+            }
             const scale = this._scale;
             image.style.top = `${stackBounds.top / scale}px`;
             image.style.left = `${stackBounds.left / scale}px`;
@@ -1173,10 +1184,34 @@ export abstract class LayoutManager extends EventEmitter {
             inner.style.height = `${stackBounds.height-tabsContainer.clientHeight}px`;
             inner.style.top = `${tabsContainer.clientHeight}px`;
             inner.style.bottom = "0px";
+            image.style.zIndex = "-1";
+            document.body.appendChild(image);
         } else {
-            image = element as HTMLElement;
+            image = componentItem.container.element as HTMLElement;
             image.insertBefore(headerClone, image.firstChild);
+            image.classList.add(DomConstants.ClassName.DragProxy);
         }
+        return image;
+    }
+
+    /** @internal */
+    startComponentDrag(ev: DragEvent, componentItem: ComponentItem): void
+    {
+        this.setTransferData(ev, componentItem);
+
+        const stack = componentItem.parent as Stack;
+        const isActiveTab = stack.getActiveComponentItem() === componentItem;
+        const tabElement = componentItem.tab.element;
+        const headerElement = stack.header.element;
+        const element = componentItem.container.element;
+        const contentElement = componentItem.container.contentElement;
+        // usually same as effective !copyForDragImage - see createComponentElement
+        const useFreshDragImage = ! element || element === contentElement;
+
+        let image: HTMLElement = this.makeDragImage(useFreshDragImage, componentItem);
+
+        const headerClone = image.firstChild as HTMLElement;
+        const tabsContainer = headerClone.firstChild as HTMLElement; 
         headerClone.style.background = "transparent";
         headerClone.style.position = "absolute";
         headerClone.style.top = "0px";
@@ -1196,14 +1231,11 @@ export abstract class LayoutManager extends EventEmitter {
         //However, it semi-breaks Firefox, making it too transparent.
         //It also seems to have no effect on Chrome/Electron.
         //Maybe this needs to be a browser-dependent setting.  FIXME.
-        //The offset from the mouse pointer is wrong on GtkWebKit:
-        //- It seems to ignore the offset and just center the image over
-        //- the mouse cursor. FIXME.
         //Perhaps scale the image if it is really large. FIXME.
         const etarget = ev.target as HTMLElement;
         const dX = ev.offsetX + etarget.offsetLeft;
         const dY = ev.offsetY + etarget.offsetTop;
-        tabsContainer.style.marginLeft = `${(ev.target as HTMLElement).offsetLeft}px`;
+        tabsContainer.style.marginLeft = `${etarget.offsetLeft}px`;
         ev.dataTransfer?.setDragImage(image as HTMLElement, dX, dY);
         this.emit('dragstart', ev, componentItem);
         enableIFramePointerEvents(false);
@@ -1289,8 +1321,10 @@ export abstract class LayoutManager extends EventEmitter {
             headerElement.style.visibility = '';
             if (useFreshDragImage)
                 image.remove();
-            else
+            else {
                 image.style.opacity = oldOpacity;
+                image.classList.remove(DomConstants.ClassName.DragProxy);
+            }
             componentItem.parent?.removeChild(componentItem, true);
             const container = componentItem.container;
             if (container.visible) {
@@ -1564,7 +1598,6 @@ export abstract class LayoutManager extends EventEmitter {
                 }
             }
         }
-        console.log("l-m calculateItemAreas: "+this._itemAreas.length+" areas");
     }
 
     /**
@@ -1888,9 +1921,11 @@ export abstract class LayoutManager extends EventEmitter {
         const valid = e instanceof DragEvent && this.validDragEvent(e);
         //console.log("dragover "+(e.target as HTMLElement).getAttribute("class")+" valid:"+valid+" entercount:"+this._dragEnterCount+(e instanceof DragEvent ? (" dropEffect:"+e.dataTransfer?.dropEffect):""));
         //      drag-listener.onPointerMove -> emit('drag', ...)
-        this.onDrag(e);
-        if (valid && this._area)
-            e.preventDefault(); // allow drop
+        if (valid) {
+            this.onDrag(e);
+            if (this._area)
+                e.preventDefault(); // allow drop
+        }
     }
 
     private onDragEnd( screenX: number, screenY: number,
@@ -1936,13 +1971,13 @@ export abstract class LayoutManager extends EventEmitter {
             && component.parent.contentItems.length === 1
             && component.parent.contentItems[0] === component
             && component.parent.parent?.type === "ground";
-        let dropItem = undefined;
+        let dropItem: ComponentItem | undefined = undefined;
         if (this._draggedComponentItem
             && this._dragState == DragState.DroppedInThisWindow) {
             if (onlyWindow)
                 cancel = true;
             else {
-                dropItem = this._draggedComponentItem;
+                dropItem = this._draggedComponentItem.container && this._draggedComponentItem;
             }
         }
 
@@ -2015,19 +2050,11 @@ export abstract class LayoutManager extends EventEmitter {
 
         // SEE drag-proxy:onDrop
         //let droppedComponentItem: ComponentItem | undefined;
-        if (this._area !== null) {
-            if (this._draggedComponentItem) {
-                //this.doDeferredActions(false);
-                /*
-                droppedComponentItem = this._draggedComponentItem;
-                this._area.contentItem.onDrop(droppedComponentItem, this._area);
-                (droppedComponentItem.container.component as HTMLElement).style.zIndex = "";
-                */
-            } else {
-                console.log("dropped from different window "+JSON.stringify(data.config));
-                const item = new ComponentItem(this, data.config, this.groundItem as ComponentParentableItem);
-                this._area.contentItem.onDrop(item, this._area);
-            }
+        if (this._area !== null
+            && ! (this._draggedComponentItem && this._draggedComponentItem.container)) {
+            console.log('dropped from different window '+JSON.stringify(data.config));
+            const item = new ComponentItem(this, data.config, this.groundItem as ComponentParentableItem);
+            this._area.contentItem.onDrop(item, this._area);
         }
         this._dragState = DragState.DroppedInThisWindow;
         if (this.delayedDragEndFunction)

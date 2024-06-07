@@ -100,10 +100,14 @@ export class ComponentContainer extends EventEmitter {
     // (undocumented)
     notifyResize: ComponentContainer.NotifyResizeHandler | undefined;
     // @internal (undocumented)
-    notifyVirtualRectingRequired(): void;
+    notifyResizingRequired(): void;
     // (undocumented)
     get parent(): ComponentItem;
     replaceComponent(itemConfig: ComponentItemConfig): void;
+    // (undocumented)
+    scale(scale: number): number;
+    // @internal (undocumented)
+    _scale: number;
     // (undocumented)
     setBaseLogicalZIndex(): void;
     // (undocumented)
@@ -128,9 +132,7 @@ export class ComponentContainer extends EventEmitter {
     get tab(): Tab;
     // (undocumented)
     get title(): string;
-    // (undocumented)
-    get virtual(): boolean;
-    // (undocumented)
+    // @deprecated (undocumented)
     virtualRectingRequiredEvent: ComponentContainer.VirtualRectingRequiredEvent | undefined;
     // (undocumented)
     virtualVisibilityChangeRequiredEvent: ComponentContainer.VirtualVisibilityChangeRequiredEvent | undefined;
@@ -162,7 +164,7 @@ export namespace ComponentContainer {
     export type StateRequestEventHandler = (this: void) => JsonValue | undefined;
     // @internal (undocumented)
     export type UpdateItemConfigEventHandler = (itemConfig: ResolvedComponentItemConfig) => void;
-    // (undocumented)
+    // @deprecated (undocumented)
     export type VirtualRectingRequiredEvent = (this: void, container: ComponentContainer, width: number, height: number) => void;
     // (undocumented)
     export type VirtualVisibilityChangeRequiredEvent = (this: void, container: ComponentContainer, visible: boolean) => void;
@@ -237,6 +239,8 @@ export class ComponentItem extends ContentItem {
     // (undocumented)
     toConfig(): ResolvedComponentItemConfig;
     // @internal (undocumented)
+    updateComponentSize(): void;
+    // (undocumented)
     updateNodeSize(): void;
 }
 
@@ -654,6 +658,7 @@ export class GoldenLayout extends VirtualLayout {
     // (undocumented)
     getRegisteredComponentTypeNames(): string[];
     registerComponent(typeName: string, componentFactoryFunction: GoldenLayout.ComponentFactoryFunction): void;
+    registerComponentConstructor(typeName: string, componentConstructor: GoldenLayout.ComponentConstructor): void;
     // (undocumented)
     registerComponentDefault(componentFactoryFunction: GoldenLayout.ComponentFactoryFunction): void;
     // @internal (undocumented)
@@ -662,6 +667,8 @@ export class GoldenLayout extends VirtualLayout {
 
 // @public (undocumented)
 export namespace GoldenLayout {
+    // (undocumented)
+    export type ComponentConstructor = new (container: ComponentContainer, state: JsonValue | undefined) => ComponentContainer.Handle;
     // (undocumented)
     export type ComponentFactoryFunction = (container: ComponentContainer, state: JsonValue | undefined) => ComponentContainer.Handle;
     // (undocumented)
@@ -1088,11 +1095,11 @@ export abstract class LayoutManager extends EventEmitter {
     // @internal (undocumented)
     addVirtualSizedContainer(container: ComponentContainer): void;
     // (undocumented)
-    afterVirtualRectingEvent: LayoutManager.AfterVirtualRectingEvent | undefined;
+    afterResizingEvent: LayoutManager.AfterResizingEvent | undefined;
     // (undocumented)
-    beforeVirtualRectingEvent: LayoutManager.BeforeVirtualRectingEvent | undefined;
+    beforeResizingEvent: LayoutManager.BeforeResizingEvent | undefined;
     // @internal (undocumented)
-    beginVirtualSizedContainerAdding(): void;
+    beginResizing(): void;
     // @internal (undocumented)
     abstract bindComponent(container: ComponentContainer, itemConfig: ResolvedComponentItemConfig): ComponentContainer.Handle;
     // @internal (undocumented)
@@ -1133,6 +1140,7 @@ export abstract class LayoutManager extends EventEmitter {
     doDeferredActions(cancel: boolean): void;
     // (undocumented)
     dragDataMimetype(): string;
+    draggableAttrName(): string;
     // (undocumented)
     draggingInOtherWindow(ending: boolean): void;
     // (undocumented)
@@ -1142,7 +1150,7 @@ export abstract class LayoutManager extends EventEmitter {
     // @internal (undocumented)
     get dropTargetIndicator(): DropTargetIndicator | null;
     // @internal (undocumented)
-    endVirtualSizedContainerAdding(): void;
+    endResizing(): void;
     // (undocumented)
     enterOrLeaveSomeWindow(entering: boolean): void;
     get eventHub(): EventHub;
@@ -1174,6 +1182,8 @@ export abstract class LayoutManager extends EventEmitter {
     loadComponentAsRoot(itemConfig: ComponentItemConfig): void;
     loadLayout(layoutConfig: LayoutConfig): void;
     // (undocumented)
+    makeDragImage(useFreshDragImage: boolean, componentItem: ComponentItem): HTMLElement;
+    // (undocumented)
     get maximisedStack(): Stack | undefined;
     // @deprecated
     minifyConfig(config: ResolvedLayoutConfig): ResolvedLayoutConfig;
@@ -1199,11 +1209,17 @@ export abstract class LayoutManager extends EventEmitter {
     // (undocumented)
     get rootItem(): ContentItem | undefined;
     saveLayout(): ResolvedLayoutConfig;
+    // (undocumented)
+    scale(scale?: number): number;
+    // @internal (undocumented)
+    _scale: number;
     // @internal
     setFocusedComponentItem(item: ComponentItem | undefined, suppressEvents?: boolean): void;
     // @internal
     setMaximisedStack(stack: Stack | undefined): void;
     setSize(width: number, height: number): void;
+    // @internal (undocumented)
+    setTransferData(ev: DragEvent, componentItem: ComponentItem): void;
     // @internal (undocumented)
     startComponentDrag(ev: DragEvent, componentItem: ComponentItem): void;
     // @internal (undocumented)
@@ -1232,9 +1248,9 @@ export abstract class LayoutManager extends EventEmitter {
 // @public (undocumented)
 export namespace LayoutManager {
     // (undocumented)
-    export type AfterVirtualRectingEvent = (this: void) => void;
+    export type AfterResizingEvent = (this: void) => void;
     // (undocumented)
-    export type BeforeVirtualRectingEvent = (this: void, count: number) => void;
+    export type BeforeResizingEvent = (this: void, count: number) => void;
     // @internal (undocumented)
     export interface ConstructorParameters {
         // (undocumented)
@@ -2083,7 +2099,7 @@ export abstract class VirtualLayout extends LayoutManager {
 // @public (undocumented)
 export namespace VirtualLayout {
     // (undocumented)
-    export type BeforeVirtualRectingEvent = (this: void) => void;
+    export type BeforeResizingEvent = (this: void) => void;
     // (undocumented)
     export type BindComponentEventHandler = (this: void, container: ComponentContainer, itemConfig: ResolvedComponentItemConfig) => ComponentContainer.Handle;
     // @internal (undocumented)

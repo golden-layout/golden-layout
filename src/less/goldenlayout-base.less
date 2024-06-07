@@ -35,7 +35,8 @@
     --lm_splitter_drag_color: darkcyan;
 }
 
-.lm_items {
+.lm_items,
+.lm_dragProxy .lm_content {
   border-width: 1px;
   border-style: solid;
   border-color: var(--lm_border_color);
@@ -472,14 +473,13 @@ div.lm_drag_old_position  .lm_controls {
   position: absolute;
   top: 0;
   left: 0;
-  z-index: 30;
 
   .lm_header {
     background: transparent;
   }
 
   .lm_content {
-    border-top: none;
+    position: static;
     overflow: hidden;
   }
 }
@@ -536,18 +536,11 @@ div.lm_drag_old_position  .lm_controls {
     z-index: 20;
   }
 }
-
-.lm_dragImage {
-  position: absolute;
+.lm_dragProxy {
   opacity: 0.8;
 
-  section {
+  .lm_content {
     background-color: transparent;
-   }
-
-  .lm_dragImageInner {
-    border: solid 2px red;
-    background-color: transparent;
-    position: relative;
+    position: absolute;
   }
 }
