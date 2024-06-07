@@ -1261,8 +1261,8 @@ export abstract class LayoutManager extends EventEmitter {
                     sstyle.position = 'absolute'
                 }
                 this._actionsOnDragEnd.push((cancel) => {
+                    stack.element.classList.remove("lm_drag_old_position");
                     if (cancel) {
-                        stack.element.classList.remove("lm_drag_old_position");
                         stack.element.style.zIndex = '';
                         if (draggingWholeStack) {
                             const sstyle = stack.element.style;
@@ -1272,7 +1272,7 @@ export abstract class LayoutManager extends EventEmitter {
                             sstyle.height = '';
                             sstyle.position = '';
                         }
-                    } else {
+                    } else if (draggingWholeStack) {
                         stack.element.remove();
                     }
                 });
