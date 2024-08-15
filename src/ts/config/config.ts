@@ -1,5 +1,7 @@
 import { ConfigurationError } from '../errors/external-error';
 import { AssertError, UnexpectedUndefinedError, UnreachableCaseError } from '../errors/internal-error';
+import { ComponentItem } from '../items/component-item';
+import { Stack } from '../items/stack';
 import { I18nStringId, i18nStrings } from '../utils/i18n-strings';
 import { ItemType, JsonValue, ResponsiveMode, Side, SizeUnitEnum } from '../utils/types';
 import { deepExtendValue, splitStringAtFirstNonNumericChar } from '../utils/utils';
@@ -257,6 +259,7 @@ export namespace HeaderedItemConfig {
         close?: string;
         minimise?: string;
         tabDropdown?: false | string;
+        tabsContainerCloseInterceptor?: (stack: Stack) => Promise<boolean> | boolean;
     }
 
     export namespace Header {
@@ -271,6 +274,7 @@ export namespace HeaderedItemConfig {
                     close: header?.close,
                     minimise: header?.minimise,
                     tabDropdown: header?.tabDropdown,
+                    tabsContainerCloseInterceptor: header?.tabsContainerCloseInterceptor
                 }
                 return result;
             }
@@ -829,6 +833,13 @@ export namespace LayoutConfig {
          * Default: true
          */
         checkGlWindowKey?: boolean;
+
+        /**
+         * Intercepts tabs container close event
+         * @param componentItem
+         * @returns 
+         */
+        tabsContainerCloseInterceptor?: (stack: Stack) => Promise<boolean> | boolean;
     }
 
     export namespace Settings {
@@ -849,6 +860,7 @@ export namespace LayoutConfig {
                 reorderOnTabMenuClick: settings?.reorderOnTabMenuClick ?? ResolvedLayoutConfig.Settings.defaults.reorderOnTabMenuClick,
                 tabControlOffset: settings?.tabControlOffset ?? ResolvedLayoutConfig.Settings.defaults.tabControlOffset,
                 popInOnClose: settings?.popInOnClose ?? ResolvedLayoutConfig.Settings.defaults.popInOnClose,
+                tabsContainerCloseInterceptor: settings?.tabsContainerCloseInterceptor
             }
             return result;
         }
@@ -1074,6 +1086,7 @@ export namespace LayoutConfig {
                     (settings?.showCloseIcon === false ? false : ResolvedLayoutConfig.Header.defaults.close),
                 minimise: header?.minimise ?? labels?.minimise ?? ResolvedLayoutConfig.Header.defaults.minimise,
                 tabDropdown: header?.tabDropdown ?? labels?.tabDropdown ?? ResolvedLayoutConfig.Header.defaults.tabDropdown,
+                tabsContainerCloseInterceptor: undefined
             }
             return result;
         }
