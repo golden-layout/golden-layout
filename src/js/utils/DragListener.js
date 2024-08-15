@@ -9,12 +9,12 @@ lm.utils.DragListener = function( eElement, nButtonCode ) {
 	/**
 	 * The delay after which to start the drag in milliseconds
 	 */
-	this._nDelay = 200;
+	this._nDelay = 500;
 
 	/**
 	 * The distance the mouse needs to be moved to qualify as a drag
 	 */
-	this._nDistance = 10;//TODO - works better with delay only
+	this._nDistance = 25; //TODO - works better with delay only
 
 	this._nX = 0;
 	this._nY = 0;
