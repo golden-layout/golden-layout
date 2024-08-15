@@ -45,6 +45,8 @@ export class Header extends EventEmitter {
     private readonly _tabDropdownEnabled: boolean;
     /** @internal */
     private readonly _tabDropdownLabel: string;
+    /** @internal */
+    private readonly _tabsContainerCloseInterceptor?: (stack: Stack) => Promise<boolean> | boolean;
 
     /** @internal */
     private readonly _tabControlOffset: number;
@@ -119,15 +121,9 @@ export class Header extends EventEmitter {
     ) {
         super();
 
-        this._tabsContainer = new TabsContainer(this._layoutManager,
-            (item) => this.handleTabInitiatedComponentRemoveEvent(item),
-            (item) => this.handleTabInitiatedComponentFocusEvent(item),
-            (x, y, dragListener, item) => this.handleTabInitiatedDragStartEvent(x, y, dragListener, item),
-            () => this.processTabDropdownActiveChanged(),
-        );
-
         this._show = settings.show;
         this._popoutEnabled = settings.popoutEnabled;
+        this._tabsContainerCloseInterceptor = settings.tabsContainerCloseInterceptor;
         this._popoutLabel = settings.popoutLabel;
         this._maximiseEnabled = settings.maximiseEnabled;
         this._maximiseLabel = settings.maximiseLabel;
@@ -137,9 +133,18 @@ export class Header extends EventEmitter {
         this._closeLabel = settings.closeLabel;
         this._tabDropdownEnabled = settings.tabDropdownEnabled;
         this._tabDropdownLabel = settings.tabDropdownLabel;
+        this._canRemoveComponent = this._configClosable;
+
+        this._tabsContainer = new TabsContainer(this._layoutManager,
+            (item) => this.handleTabInitiatedComponentRemoveEvent(item),
+            (item) => this.handleTabInitiatedComponentFocusEvent(item),
+            (x, y, dragListener, item) => this.handleTabInitiatedDragStartEvent(x, y, dragListener, item),
+            () => this.processTabDropdownActiveChanged(),
+            this._tabsContainerCloseInterceptor
+        );
+
         this.setSide(settings.side);
 
-        this._canRemoveComponent = this._configClosable;
 
         this._element = document.createElement('section');
         this._element.classList.add(DomConstants.ClassName.Header);
@@ -178,7 +183,7 @@ export class Header extends EventEmitter {
          * Close button
          */
         if (this._configClosable) {
-            this._closeButton = new HeaderButton(this, this._closeLabel, DomConstants.ClassName.Close, () => closeEvent());
+            this._closeButton = new HeaderButton(this, this._closeLabel, DomConstants.ClassName.Close, () => closeEvent(this));
         }
 
         this.processTabDropdownActiveChanged();
@@ -477,7 +482,7 @@ export namespace Header {
     /** @internal */
     export type GetActiveComponentItemEvent = (this: void) => ComponentItem | undefined;
     /** @internal */
-    export type CloseEvent = (this: void) => void;
+    export type CloseEvent = (header: Header) => void;
     /** @internal */
     export type PopoutEvent = (this: void) => void;
     /** @internal */
@@ -509,5 +514,6 @@ export namespace Header {
         closeLabel: string;
         tabDropdownEnabled: boolean;
         tabDropdownLabel: string;
+        tabsContainerCloseInterceptor?: (stack: Stack) => Promise<boolean> | boolean;
     }
 }
