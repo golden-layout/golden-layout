@@ -22,7 +22,7 @@ Golden Layout is a Javascript layout manager which enables you to layout compone
 * Touch support
 * Support for application frameworks such as Angular and Vue
 * Virtual components
-* Comprehensive API
+* [Comprehensive API](./api/README.md)
 * Load and save layouts
 * Focus components
 * Completely themeable
