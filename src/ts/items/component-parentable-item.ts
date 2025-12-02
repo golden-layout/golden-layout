@@ -2,6 +2,11 @@ import { ComponentItem } from './component-item';
 import { ContentItem } from './content-item';
 
 export abstract class ComponentParentableItem extends ContentItem {
+
+    static isComponentParentableItem(item: ContentItem): item is ComponentParentableItem {
+        return item.isStack || item.isGround;
+    }
+
     /** @internal */
     private _focused = false;
 

@@ -70,6 +70,10 @@ export class ComponentItem extends ContentItem {
         );
     }
 
+    static isComponentItem(item: ContentItem): item is ComponentItem {
+        return item.isComponent;
+    }
+
     /** @internal */
     override destroy(): void {
         this._container.destroy()
