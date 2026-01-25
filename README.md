@@ -54,8 +54,7 @@ If you do want to use my fork, feel free to create an Issue or
 email me if you need help - that may spur me to clean things up a bit.
 
 ## Installation
-The library can be installed into an application package with the npm command:\
-`npm i golden-layout`
+See the instructions [here](docs/index.md#installation--usage).
 
 ## More information
 
