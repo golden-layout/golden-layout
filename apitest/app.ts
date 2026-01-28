@@ -1,6 +1,7 @@
 import { ComponentBase } from 'component-base';
 import {
     ComponentContainer,
+    ComponentItem,
     ComponentItemConfig,
     ContentItem,
     EventEmitter,
@@ -596,7 +597,7 @@ export class App {
 
     private replaceComponentRecursively(content: ContentItem[], itemConfig: ComponentItemConfig) {
         for (const item of content) {
-            if (ContentItem.isComponentItem(item)) {
+            if (ComponentItem.isComponentItem(item)) {
                 const container = item.container;
                 if (container.componentType === ColorComponent.typeName) {
                     container.replaceComponent(itemConfig);

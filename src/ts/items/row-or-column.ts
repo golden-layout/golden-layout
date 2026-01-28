@@ -16,6 +16,7 @@ import {
 } from "../utils/utils"
 import { ComponentItem } from './component-item'
 import { ContentItem } from './content-item'
+import { Stack } from './stack'
 
 /** @public */
 export class RowOrColumn extends ContentItem {
@@ -93,7 +94,7 @@ export class RowOrColumn extends ContentItem {
         index = this.addItem(itemConfig, index);
         const createdItem = this.contentItems[index];
 
-        if (ContentItem.isStack(createdItem) && (ItemConfig.isComponent(itemConfig))) {
+        if (Stack.isStack(createdItem) && (ItemConfig.isComponent(itemConfig))) {
             // createdItem is a Stack which was created to hold wanted component.  Return component
             return createdItem.contentItems[0];
         } else {

@@ -9,6 +9,7 @@ import { ComponentItem } from './component-item';
 import { ComponentParentableItem } from './component-parentable-item';
 import { ContentItem } from './content-item';
 import { RowOrColumn } from './row-or-column';
+import { Stack } from './stack';
 
 /**
  * GroundItem is the ContentItem whose one child is the root ContentItem (Root is planted in Ground).
@@ -304,10 +305,10 @@ export class GroundItem extends ComponentParentableItem {
     getConfigMaximisedItems(): ContentItem[] {
         const result: ContentItem[] = [];
         this.deepFilterContentItems(this.contentItems, result, (item) => {
-            if (ContentItem.isStack(item) && item.initialWantMaximise) {
+            if (Stack.isStack(item) && item.initialWantMaximise) {
                 return true;
             } else {
-                if (ContentItem.isComponentItem(item) && item.initialWantMaximise) {
+                if (ComponentItem.isComponentItem(item) && item.initialWantMaximise) {
                     return true;
                 } else {
                     return false;
