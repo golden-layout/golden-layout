@@ -279,7 +279,9 @@ export class Stack extends ComponentParentableItem {
     }
 
     addItem(itemConfig: ComponentItemConfig, index?: number): number {
-        this.layoutManager.checkMinimiseMaximisedStack();
+        if (!this.isMaximised) {
+            this.layoutManager.checkMinimiseMaximisedStack();
+        }
 
         const resolvedItemConfig = ItemConfig.resolve(itemConfig, false);
         const contentItem = this.layoutManager.createAndInitContentItem(resolvedItemConfig, this);
