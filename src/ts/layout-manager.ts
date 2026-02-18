@@ -966,7 +966,7 @@ export abstract class LayoutManager extends EventEmitter {
         title?: string,
         id?: string,
     ): DragSource {
-        const dragSource = new DragSource(this, element, [], componentTypeOrItemConfigCallback, componentState, title, id);
+        const dragSource = new DragSource(this, element, componentTypeOrItemConfigCallback, componentState, title, id);
         this._dragSources.push(dragSource);
 
         return dragSource;

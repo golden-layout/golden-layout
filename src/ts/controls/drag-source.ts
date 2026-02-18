@@ -27,8 +27,6 @@ export class DragSource {
         private _layoutManager: LayoutManager,
         /** @internal */
         private readonly _element: HTMLElement,
-        /** @internal */
-        private readonly _extraAllowableChildTargets: HTMLElement[],
         /** @internal @deprecated replace with componentItemConfigOrFtn in version 3 */
         private _componentTypeOrFtn: JsonValue | (() => (DragSource.ComponentItemConfig | ConfigComponentItemConfig)),
         /** @internal @deprecated remove in version 3 */
@@ -63,7 +61,7 @@ export class DragSource {
     private createDragListener() {
         this.removeDragListener();
 
-        this._dragListener = new DragListener(this._element, this._extraAllowableChildTargets);
+        this._dragListener = new DragListener(this._element);
         this._dragListener.on('dragStart', (x, y) => this.onDragStart(x, y));
         this._dragListener.on('dragStop', () => this.onDragStop());
     }

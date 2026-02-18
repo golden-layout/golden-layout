@@ -76,6 +76,8 @@ export class Tab {
         this._titleElement.classList.add(DomConstants.ClassName.Title);
         this._closeElement = document.createElement('div'); 
         this._closeElement.classList.add(DomConstants.ClassName.CloseTab);
+        this._element.setAttribute('draggable', 'yes');
+        this._closeElement.setAttribute('draggable', 'no');
         this._element.appendChild(this._titleElement);
         this._element.appendChild(this._closeElement);
 
@@ -265,7 +267,7 @@ export class Tab {
 
     /** @internal */
     private enableReorder() {
-        this._dragListener = new DragListener(this._element, [this._titleElement]);
+        this._dragListener = new DragListener(this._element);
         this._dragListener.on('dragStart', this._dragStartListener);
         this._componentItem.on('destroy', this._contentItemDestroyListener);
     }
