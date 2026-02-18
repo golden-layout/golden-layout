@@ -1022,7 +1022,7 @@ export namespace LayoutConfig {
         // @deprecated (undocumented)
         tabDropdown?: string;
     }
-    // @internal (undocumented)
+    // (undocumented)
     export function resolve(layoutConfig: LayoutConfig): ResolvedLayoutConfig;
     // @internal (undocumented)
     export function resolveOpenPopouts(popoutConfigs: PopoutLayoutConfig[] | undefined): ResolvedPopoutLayoutConfig[];

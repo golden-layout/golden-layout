@@ -1044,7 +1044,6 @@ export namespace LayoutConfig {
         return 'parentId' in config || 'indexInParent' in config || 'window' in config;
     }
 
-    /** @internal */
     export function resolve(layoutConfig: LayoutConfig): ResolvedLayoutConfig {
         if (isPopout(layoutConfig)) {
             return PopoutLayoutConfig.resolve(layoutConfig);

@@ -1,0 +1,65 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "npm",
+			"script": "lint:ts",
+			"problemMatcher": [
+				"$eslint-stylish"
+			],
+			"label": "npm: typescript eslint",
+			"detail": "eslint -c .eslintrc.js --ext .ts"
+		},
+		{
+			"type": "typescript",
+			"tsconfig": "tsconfig.json",
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build",
+			"label": "tsc: build - tsconfig.json"
+		},
+		{
+			"type": "npm",
+			"script": "build:ts",
+			"group": "build",
+			"problemMatcher": [
+				"$tsc"
+			],
+			"label": "npm: build:ts",
+			"detail": "node_modules/.bin/tsc -p tsconfig.json"
+		},
+		{
+			"type": "npm",
+			"script": "demo",
+			"problemMatcher": [
+				"$tsc-watch"
+			],
+			"label": "npm: demo",
+			"detail": "webpack-dev-server --env.dev --mode development --config ./webpack/demo/webpack.config.js",
+			"isBackground": true
+		},
+		{
+			"type": "npm",
+			"script": "build:module:api",
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"label": "npm: api",
+			"detail": "tsc --build -p ./tsconfig.module.api.json"
+		},
+		{
+			"type": "npm",
+			"script": "apitest:serve",
+			"problemMatcher": [
+				"$eslint-stylish"
+			],
+			"label": "npm: apitest:serve",
+			"detail": "webpack serve --mode development --config ./apitest/webpack.config.js"
+		}
+	]
+}
