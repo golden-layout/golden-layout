@@ -1692,6 +1692,36 @@ export abstract class LayoutManager extends EventEmitter {
                     return this.tryCreateLocationFromParentItem(parentItem, selectorIndex);
                 }
             }
+            case LayoutManager.LocationSelector.TypeId.LastStack: {
+                const stacks = this.getAllStacks();
+                if (stacks.length === 0) {
+                    return undefined;
+                } else {
+                    const parentItem = stacks[stacks.length - 1];
+                    return this.tryCreateLocationFromParentItem(parentItem, selectorIndex);
+                }
+            }
+            case LayoutManager.LocationSelector.TypeId.StackContainingComponentType: {
+                const componentType = selector.componentType;
+                if (componentType === undefined) {
+                    return undefined;
+                }
+                const allItems = this.getAllContentItems();
+                const stack = allItems.find(
+                    (item) =>
+                        item.type === ItemType.stack &&
+                        item.contentItems.some(
+                            (child) =>
+                                child.type === ItemType.component &&
+                                (child as ComponentItem).componentType === componentType,
+                        ),
+                ) as Stack | undefined;
+                if (stack === undefined) {
+                    return undefined;
+                } else {
+                    return this.tryCreateLocationFromParentItem(stack, selectorIndex);
+                }
+            }
             case LayoutManager.LocationSelector.TypeId.FirstRowOrColumn: {
                 let parentItem = this.findFirstContentItemType(ItemType.row);
                 if (parentItem !== undefined) {
@@ -1819,6 +1849,8 @@ export namespace LayoutManager {
         typeId: LocationSelector.TypeId;
         /** Used by algorithm to determine index in found ContentItem */
         index?: number;
+        /** Used by StackContainingComponentType to identify the target stack */
+        componentType?: JsonValue;
     }
 
     /** @public */
@@ -1840,6 +1872,10 @@ export namespace LayoutManager {
             Empty,
             /** Finds root if layout is empty, otherwise a child under root */
             Root,
+            /** Last stack found in layout (rightmost/bottommost in depth-first order) */
+            LastStack,
+            /** Stack that contains a component with the given componentType */
+            StackContainingComponentType,
         }
     }
 
