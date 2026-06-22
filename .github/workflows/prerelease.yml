@@ -17,6 +17,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
     - uses: actions/checkout@v4
@@ -27,7 +30,7 @@ jobs:
     - name: Configure Node
       uses: actions/setup-node@v4
       with:
-        node-version: 18
+        node-version: 24
         registry-url: https://registry.npmjs.org
         cache: 'npm'
 
@@ -54,8 +57,6 @@ jobs:
 
     - name: Publish (NPM registry)
       run: npm publish --tag "${{inputs.dist_tag}}"
-      env:
-        NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
 
     - name: Output published version
       if: success()
