@@ -1,6 +1,5 @@
 name: Prerelease
 
-# Manually triggered
 on:
   workflow_dispatch:
     inputs:
@@ -13,6 +12,8 @@ on:
         description: 'Version iteration (<current_version>-<dist_tag>.<iteration> / 2.0.0-axes.1), ie. 1, 2, 3...'
         required: false
         type: string
+  push:
+    branches: [ master ]
 
 jobs:
   build:
@@ -40,14 +41,30 @@ jobs:
     - name: Build
       run: npm run build
 
+    # ── Stable release path (push to master) ──────────────────────────────
+    - name: Check if version changed
+      if: github.event_name == 'push'
+      id: version_check
+      run: |
+        LOCAL=$(node -p "require('./package.json').version")
+        REMOTE=$(npm view @genesis-community/golden-layout version 2>/dev/null || echo "0.0.0")
+        echo "local=$LOCAL"
+        echo "remote=$REMOTE"
+        [ "$LOCAL" != "$REMOTE" ] && echo "changed=true" >> $GITHUB_OUTPUT || echo "changed=false" >> $GITHUB_OUTPUT
+
+    - name: Publish stable (NPM registry)
+      if: github.event_name == 'push' && steps.version_check.outputs.changed == 'true'
+      run: npm publish
+
+    # ── Prerelease path (manual trigger) ──────────────────────────────────
     - name: Bump version (canary)
-      if: ${{!inputs.iteration}}
+      if: github.event_name == 'workflow_dispatch' && !inputs.iteration
       run: |
         COMMIT_ID=$(git rev-parse --short HEAD)
         npm version prepatch --preid "alpha-$COMMIT_ID" --no-git-tag-version
 
     - name: Bump version (custom)
-      if: ${{ inputs.iteration }}
+      if: github.event_name == 'workflow_dispatch' && inputs.iteration
       run: |
         CURRENT_VERSION=$(node -p "require('./package.json').version")
         # Ensure we just append the prerelease tag to the current version
@@ -55,11 +72,12 @@ jobs:
         NEW_VERSION="$CURRENT_VERSION-${{inputs.dist_tag}}.${{inputs.iteration}}"
         npm version "$NEW_VERSION" --no-git-tag-version
 
-    - name: Publish (NPM registry)
+    - name: Publish prerelease (NPM registry)
+      if: github.event_name == 'workflow_dispatch'
       run: npm publish --tag "${{inputs.dist_tag}}"
 
     - name: Output published version
       if: success()
       run: |
         PUBLISHED_VERSION=$(node -p "require('./package.json').version")
-        echo "✅ Successfully published version $PUBLISHED_VERSION with dist-tag ${{inputs.dist_tag}}"
+        echo "✅ Successfully published version $PUBLISHED_VERSION"
