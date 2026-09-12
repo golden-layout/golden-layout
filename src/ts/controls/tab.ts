@@ -79,8 +79,9 @@ export class Tab {
         this._titleElement.classList.add(DomConstants.ClassName.Title);
         this._closeElement = document.createElement('div'); 
         this._closeElement.classList.add(DomConstants.ClassName.CloseTab);
-        this._element.setAttribute('draggable', 'true');
-        this._closeElement.setAttribute('draggable', 'false');
+        const draggableName = _layoutManager.draggableAttrName();
+        this._element.setAttribute(draggableName, 'true');
+        this._closeElement.setAttribute(draggableName, 'false');
         this._element.appendChild(this._titleElement);
         this._element.appendChild(this._closeElement);
 
@@ -313,7 +314,7 @@ export class Tab {
             this._element.addEventListener('dragstart', this._dragStartListener,
                                            { passive: true });
         } else {
-            this._dragListener = new DragListener(this._element);
+            this._dragListener = new DragListener(this._layoutManager, this._element);
             this._dragListener?.on('dragStart', this._dragStartListenerOld);
         }
         this._componentItem.on('destroy', this._contentItemDestroyListener);

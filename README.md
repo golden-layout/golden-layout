@@ -54,25 +54,7 @@ If you do want to use my fork, feel free to create an Issue or
 email me if you need help - that may spur me to clean things up a bit.
 
 ## Installation
-
-### From a git clone
-
-```
-npm install
-npm run build:bundles
-```
-
-Copy the file `dist/bundle/esm/golden-layout.min.js` (if using EcmaScript modules, as recommended) or `dist/bundle/umd/golden-layout.min.js` (if using UMD modules) to a folder (for example `lib`) inside your application.
-Import it from there, for example with:
-```
-import { GoldenLayout } from '../lib/golden-layout/golden-layout.min.js'
-```
-Also recursively copy the contents of `dist/css` to where you application can read them,
-
-### Using npm
-
-The library can be installed into an application package with the npm command:\
-`npm i golden-layout`  However, this may get you a very old version.
+See the instructions [here](docs/index.md#installation--usage).
 
 ## More information
 

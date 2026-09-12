@@ -10,7 +10,7 @@ This version is a substantial and incompatible change from the previous (2.6.0) 
 
 ## Registration functions
 
-* The `registerComponent` function is un-deprecated, but only accepts a component factory function, not a construction.
+* The `registerComponent` function is un-deprecated, but only accepts a component factory function, not a constructor.
 
 * Removed `registerComponentFactoryFunction`. Just use `registerComponent`.
 
@@ -20,10 +20,14 @@ This version is a substantial and incompatible change from the previous (2.6.0) 
 
 * The componentFactoryFunction registered by `registerComponent` (and related functions) now returns an application-specific "handle". The value is saved in the`ComponentContainer` object and can be accessed by the `ComponentContainer.handle` function. The handle can be anything; it not used by GoldenLayout. An application can use it to identify a virtual component.
 
-* The `registerComponent` function (and related functions) no longer accepts an options `virtual` argument
+* The `registerComponent` function (and related functions) no longer accepts an optional `virtual` argument
 
 ## Positioning ("Recting") events renamed
 
 * The `virtualRectingRequiredEvent` callback is deprecated. Use `notifyResize` instead.
 
 * Renamed `beforeVirtualRectingEvent` and `afterVirtualRectingEvent` (in `LayoutManager`) to `beforeResizingEvent` and `afterResizingEvent`.
+
+## DragSource to drag a button
+
+You can use `manager.newDragSource` to create a `"NEW"` button that you can drag and drop into an area, crating a new window there. This needs more polishing and testing.

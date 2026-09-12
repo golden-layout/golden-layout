@@ -2,6 +2,7 @@ import { DomConstants } from '../utils/dom-constants';
 import { DragListener } from '../utils/drag-listener';
 import { EventEmitter } from '../utils/event-emitter';
 import { numberToPixels } from '../utils/utils';
+import { LayoutManager } from '../layout-manager';
 
 /** @internal */
 export class Splitter {
@@ -18,7 +19,7 @@ export class Splitter {
     get backgroundElement(): HTMLDivElement { return this._backgroundElement; }
     get dragHandleOffset(): number { return this._dragHandleOffset; }
 
-    constructor(private _isVertical: boolean, private _size: number, grabSize: number) {
+    constructor(private _layoutManager: LayoutManager, private _isVertical: boolean, private _size: number, grabSize: number) {
         this._grabSize = grabSize < this._size ? this._size : grabSize;
 
         this._element = document.createElement('div');
@@ -28,7 +29,7 @@ export class Splitter {
         this._dragHandleElement = dragHandleElement;
         dragHandleElement.classList.add(DomConstants.ClassName.DragHandle);
         this._backgroundElement.classList.add(DomConstants.ClassName.Bg);
-        this._element.setAttribute('draggable', 'true');
+        this._element.setAttribute(_layoutManager.draggableAttrName(), 'true');
 
         const handleExcessSize = this._grabSize - this._size;
         const handleExcessPos = handleExcessSize / 2;
@@ -58,7 +59,7 @@ export class Splitter {
         this._element.appendChild(this._backgroundElement);
         this._element.appendChild(dragHandleElement);
 
-        this._dragListener = new DragListener(this._element);
+        this._dragListener = new DragListener(this._layoutManager, this._element);
     }
 
     destroy(): void {
