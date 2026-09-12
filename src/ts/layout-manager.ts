@@ -398,17 +398,22 @@ export abstract class LayoutManager extends EventEmitter {
             elm.addEventListener('dragleave', (e) => this.onDragLeave(e), true);
             elm.addEventListener('dragend', (e) => {
                 const x = e.screenX, y = e.screenY;
+                // Try to detact a cancelled drag. The specification says
+                // dropEffect is supposed to be "none" if the drag was
+                // cancelled, but this is unreliable. Firefox has
+                // mozUserCancelled but that appears to be unreliable, too.
+                const cancel = e.dataTransfer?.dropEffect === 'none';
                 if (this._dragState === DragState.CurrentlyDragging) {
                     this.delayedDragEndFunction = () => {
                         if (this.delayedDragEndTimer)
                             clearTimeout(this.delayedDragEndTimer);
                         this.delayedDragEndTimer = undefined;
                         this.delayedDragEndFunction = undefined;
-                        this.onDragEnd(x, y);
+                        this.onDragEnd(x, y, cancel);
                     };
                     this.delayedDragEndTimer = globalThis.setTimeout(this.delayedDragEndFunction, 100);
                 } else
-                    this.onDragEnd(x, y, e);
+                    this.onDragEnd(x, y, cancel, e);
             }, true);
             elm.addEventListener('drop', (e) => {console.log("drop event"); this.onDrop(e);});
         }
@@ -1928,9 +1933,8 @@ export abstract class LayoutManager extends EventEmitter {
         }
     }
 
-    private onDragEnd( screenX: number, screenY: number,
+    private onDragEnd( screenX: number, screenY: number, cancel: boolean,
                        event: MouseEvent|null = null) {
-        console.log("onDragEnd st:"+this._dragState+" timer:"+this.delayedDragEndTimer);
 
         // There are four cases we want to handle. Unfortunately, it is not
         // possible to reliably distinguish them on all browsers we care about.
@@ -1943,15 +1947,6 @@ export abstract class LayoutManager extends EventEmitter {
         // (3) Drop to desktop
         // (4) Drag was cancelled (by typing Esc).
 
-        // Try to detact a cancelled drag. There doesn't seem to be a way
-        // to detect this reliably except on Firefox (with mozUserCancelled).
-        // Note that while the specification says dropEffect is supposed
-        // to be "none" if the drag was cancelled, this is unreliable.
-        let cancel = false;
-        if (event instanceof DragEvent
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            && (event.dataTransfer as any).mozUserCancelled)
-            cancel = true;
         if (this._dragState == DragState.CurrentlyDragging && ! cancel) {
             // Heuristic: If the most recent dragleave was less than 200ms ago,
             // it was probably caused by a 'cancel' (Escape pressed).
@@ -1963,7 +1958,6 @@ export abstract class LayoutManager extends EventEmitter {
         }
 
         const component = this._draggedComponentItem;
-        console.log("onDragEnd now:"+Date.now()+" cancel:"+cancel+" comp:"+component+" cur-drag:"+this._dragState+" in-win:"+this.inSomeWindow+" ecnt:"+this._dragEnterCount);
         // if this is the only component, and it is dropped to the desktop,
         // just reuse the window (though move it - if possible).
         const onlyWindow = component?.parent

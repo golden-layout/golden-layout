@@ -1219,7 +1219,7 @@ export abstract class LayoutManager extends EventEmitter {
     setMaximisedStack(stack: Stack | undefined): void;
     setSize(width: number, height: number): void;
     // @internal (undocumented)
-    setTransferData(ev: DragEvent, componentItem: ComponentItem): void;
+    setTransferData(ev: DragEvent, componentItem: ComponentItem, config?: ResolvedComponentItemConfig): void;
     // @internal (undocumented)
     startComponentDrag(ev: DragEvent, componentItem: ComponentItem): void;
     // @internal (undocumented)
