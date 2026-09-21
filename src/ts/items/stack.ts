@@ -88,7 +88,10 @@ export class Stack extends ComponentParentableItem {
         const close = this._headerConfig?.close ?? componentHeaderConfig?.close ?? layoutHeaderConfig.close;
         const minimise = this._headerConfig?.minimise ?? componentHeaderConfig?.minimise ?? layoutHeaderConfig.minimise;
         const tabDropdown = this._headerConfig?.tabDropdown ?? componentHeaderConfig?.tabDropdown ?? layoutHeaderConfig.tabDropdown;
+        const tabsContainerCloseInterceptor = this._headerConfig?.tabsContainerCloseInterceptor ?? componentHeaderConfig?.tabsContainerCloseInterceptor ?? layoutHeaderConfig.tabsContainerCloseInterceptor;
         this._maximisedEnabled = maximise !== false;
+
+
         const headerSettings: Header.Settings = {
             show: show !== false,
             side: show === false ? Side.top : show,
@@ -102,20 +105,24 @@ export class Stack extends ComponentParentableItem {
             minimiseLabel: minimise,
             tabDropdownEnabled: tabDropdown !== false,
             tabDropdownLabel: tabDropdown === false ? '' : tabDropdown,
+            tabsContainerCloseInterceptor: tabsContainerCloseInterceptor
         };
 
-        this._header = new Header(layoutManager,
-            this, headerSettings,
+        this._header = new Header(
+            layoutManager,
+            this, 
+            headerSettings,
             config.isClosable && close !== false,
             () => this.getActiveComponentItem(),
-            () => this.remove(),
+            () => this.removeHeader(this),
             () => this.handlePopoutEvent(),
             () => this.toggleMaximise(),
             (ev) => this.handleHeaderClickEvent(ev),
             (ev) => this.handleHeaderTouchStartEvent(ev),
             (item) => this.handleHeaderComponentRemoveEvent(item),
             (item) => this.handleHeaderComponentFocusEvent(item),
-            (x, y, dragListener, item) => this.handleHeaderComponentStartDragEvent(x, y, dragListener, item),
+            (x, y, dragListener, item) => this.handleHeaderComponentStartDragEvent(x, y, dragListener, item)
+
         );
 
         // this._dropZones = {};
@@ -403,7 +410,7 @@ export class Stack extends ComponentParentableItem {
                 isClosable: this.isClosable,
                 maximised: this.isMaximised,
                 header: this.createHeaderConfig(),
-                activeItemIndex,
+                activeItemIndex
             }
             return result;
         }
@@ -913,6 +920,7 @@ export class Stack extends ComponentParentableItem {
                     close: undefined,
                     minimise: undefined,
                     tabDropdown: undefined,
+                    tabsContainerCloseInterceptor: () => true
                 };
             }
             return result;

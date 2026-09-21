@@ -6,8 +6,12 @@ import { DragListener } from '../utils/drag-listener';
 import { numberToPixels, pixelsToNumber } from '../utils/utils';
 import { Tab } from './tab';
 import { Header } from './header';
+import { Stack } from '../items/stack';
 
-/** @internal */
+/**
+ * Container of one or more taabs
+ * @internal
+ */
 export class TabsContainer {
     // There is one tab per ComponentItem in stack.  However they may not be ordered the same
     private readonly _tabs: Tab[] = [];
@@ -30,6 +34,7 @@ export class TabsContainer {
         private _componentFocusEvent: TabsContainer.ComponentItemFocusEvent,
         private _componentDragStartEvent: TabsContainer.ComponentItemDragStartEvent,
         private _dropdownActiveChangedEvent: TabsContainer.DropdownActiveChangedEvent,
+        private _tabsContainerCloseInterceptor?: (stack: Stack) => Promise<boolean> | boolean
     ) {
         this._element = document.createElement('section');
         this._element.classList.add(DomConstants.ClassName.Tabs);
@@ -62,7 +67,8 @@ export class TabsContainer {
             componentItem,
             (item) => this.handleTabCloseEvent(item),
             (item) => this.handleTabFocusEvent(item),
-            (x, y, dragListener, item) => this.handleTabDragStartEvent(x, y, dragListener, item));
+            (x, y, dragListener, item) => this.handleTabDragStartEvent(x, y, dragListener, item), 
+            this);
 
         if (index === undefined) {
             index = this._tabs.length;

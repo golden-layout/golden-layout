@@ -6,6 +6,7 @@ import { LayoutManager } from '../layout-manager';
 import { DomConstants } from '../utils/dom-constants';
 import { DragListener } from '../utils/drag-listener';
 import { enableIFramePointerEvents } from '../utils/utils';
+import { TabsContainer } from './tabs-container';
 
 /**
  * Represents an individual tab within a Stack's header
@@ -40,7 +41,13 @@ export class Tab {
     private readonly _contentItemDestroyListener = () => this.onContentItemDestroy();
     /** @internal */
     private readonly _tabTitleChangedListener = (title: string) => this.setTitle(title);
+    /** @internal */
+    private _closeInterceptor: () => boolean | undefined;
+    private readonly tabsContainer: TabsContainer | undefined;
     readonly tabClickListener = (ev: MouseEvent): void => this.onTabClickDown(ev);
+
+    onCloseClicked = () => {};
+
     get isActive(): boolean { return this._isActive; }
     // get header(): Header { return this._header; }
     get componentItem(): ComponentItem { return this._componentItem; }
@@ -71,7 +78,9 @@ export class Tab {
         /** @internal */
         private _focusEvent: Tab.FocusEvent | undefined,
         /** @internal */
-        private _dragStartEvent: Tab.DragStartEvent | undefined
+        private _dragStartEvent: Tab.DragStartEvent | undefined,
+          /** @internal */
+        private _tabsContainer: TabsContainer | undefined
     ) {
         this._element = document.createElement('div');
         this._element.classList.add(DomConstants.ClassName.Tab);
@@ -79,11 +88,13 @@ export class Tab {
         this._titleElement.classList.add(DomConstants.ClassName.Title);
         this._closeElement = document.createElement('div'); 
         this._closeElement.classList.add(DomConstants.ClassName.CloseTab);
+        this._closeElement.classList.add("supertest");
         const draggableName = _layoutManager.draggableAttrName();
         this._element.setAttribute(draggableName, 'true');
         this._closeElement.setAttribute(draggableName, 'false');
         this._element.appendChild(this._titleElement);
         this._element.appendChild(this._closeElement);
+        this.tabsContainer = _tabsContainer;
 
         if (_componentItem.isClosable) {
             this._closeElement.style.display = '';
@@ -274,11 +285,20 @@ export class Tab {
      */
     private onCloseClick() {
         this.notifyClose();
+        this.onCloseClicked();
     }
 
     /** @internal */
     private onCloseTouchStart() {
         this.notifyClose();
+    }
+
+    /**
+     * Sets close interceptor. 
+     * @param fn 
+     */
+    setCloseInterceptor(fn: () => boolean): void {
+        this._closeInterceptor = fn;
     }
 
     /**
@@ -295,7 +315,9 @@ export class Tab {
         if (this._closeEvent === undefined) {
             throw new UnexpectedUndefinedError('TNC15007');
         } else {
-            this._closeEvent(this._componentItem);
+            if (this._closeInterceptor && this._closeInterceptor()) {
+                this._closeEvent(this._componentItem);
+            }
         }
     }
 

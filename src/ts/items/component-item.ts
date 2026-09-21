@@ -110,7 +110,7 @@ export class ComponentItem extends ContentItem {
             title: this._title,
             header: ResolvedHeaderedItemConfig.Header.createCopy(this._headerConfig),
             componentType: ResolvedComponentItemConfig.copyComponentType(this.componentType),
-            componentState: state,
+            componentState: state
         }
 
         return result;
@@ -172,7 +172,6 @@ export class ComponentItem extends ContentItem {
      * @public
      * @param title -
      */
-
     setTitle(title: string): void {
         this._title = title;
         this.emit('titleChanged', title);

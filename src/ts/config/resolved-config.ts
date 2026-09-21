@@ -1,4 +1,6 @@
 import { AssertError, UnreachableCaseError } from '../errors/internal-error';
+import { ComponentItem } from '../items/component-item';
+import { Stack } from '../items/stack';
 import { ConfigMinifier } from '../utils/config-minifier';
 import { ItemType, JsonValue, ResponsiveMode, Side, SizeUnitEnum } from '../utils/types';
 import { deepExtendValue } from '../utils/utils';
@@ -27,7 +29,7 @@ export namespace ResolvedItemConfig {
         minSize: undefined,
         minSizeUnit: SizeUnitEnum.Pixel,
         id: '',
-        isClosable: true,
+        isClosable: true
     } as const;
 
     /** Creates a copy of the original ResolvedItemConfig using an alternative content if specified */
@@ -102,6 +104,7 @@ export namespace ResolvedHeaderedItemConfig {
         readonly close: string | undefined;
         readonly minimise: string | undefined;
         readonly tabDropdown: false | string | undefined;
+        readonly tabsContainerCloseInterceptor?: (stack: Stack) => Promise<boolean> | boolean;
     }
 
     export namespace Header {
@@ -116,6 +119,7 @@ export namespace ResolvedHeaderedItemConfig {
                     maximise: original.maximise,
                     minimise: original.minimise,
                     tabDropdown: original.tabDropdown,
+                    tabsContainerCloseInterceptor: original.tabsContainerCloseInterceptor
                 }
             }
         }
@@ -146,7 +150,7 @@ export namespace ResolvedStackItemConfig {
             maximised: original.maximised,
             isClosable: original.isClosable,
             activeItemIndex: original.activeItemIndex,
-            header: ResolvedHeaderedItemConfig.Header.createCopy(original.header),
+            header: ResolvedHeaderedItemConfig.Header.createCopy(original.header)
         }
         return result;
     }
@@ -172,7 +176,7 @@ export namespace ResolvedStackItemConfig {
             maximised: ResolvedHeaderedItemConfig.defaultMaximised,
             isClosable: ResolvedItemConfig.defaults.isClosable,
             activeItemIndex: defaultActiveItemIndex,
-            header: undefined,
+            header: undefined
         }
         return result;
     }
@@ -220,7 +224,7 @@ export namespace ResolvedComponentItemConfig {
             title: original.title,
             header: ResolvedHeaderedItemConfig.Header.createCopy(original.header),
             componentType: original.componentType,
-            componentState: deepExtendValue(undefined, original.componentState) as JsonValue,
+            componentState: deepExtendValue(undefined, original.componentState) as JsonValue
         }
         return result;
     }
@@ -240,7 +244,7 @@ export namespace ResolvedComponentItemConfig {
             title,
             header: undefined,
             componentType,
-            componentState,
+            componentState
         }
         return result;
     }
@@ -288,7 +292,7 @@ export namespace ResolvedRowOrColumnItemConfig {
             minSize: original.minSize,
             minSizeUnit: original.minSizeUnit,
             id: original.id,
-            isClosable: original.isClosable,
+            isClosable: original.isClosable
         }
         return result;
     }
@@ -311,7 +315,7 @@ export namespace ResolvedRowOrColumnItemConfig {
             minSize: ResolvedItemConfig.defaults.minSize,
             minSizeUnit: ResolvedItemConfig.defaults.minSizeUnit,
             id: ResolvedItemConfig.defaults.id,
-            isClosable: ResolvedItemConfig.defaults.isClosable,
+            isClosable: ResolvedItemConfig.defaults.isClosable
         }
         return result;
     }
@@ -374,7 +378,7 @@ export namespace ResolvedGroundItemConfig {
             id: '',
             isClosable: false,
             title: '',
-            reorderEnabled: false,
+            reorderEnabled: false
         }
     }
 }
@@ -409,6 +413,7 @@ export namespace ResolvedLayoutConfig {
         readonly reorderOnTabMenuClick: boolean;
         readonly tabControlOffset: number;
         readonly popInOnClose: boolean;
+        readonly tabsContainerCloseInterceptor?: (stack: Stack) => Promise<boolean> | boolean;
     }
 
     export namespace Settings {
@@ -428,6 +433,7 @@ export namespace ResolvedLayoutConfig {
             reorderOnTabMenuClick: true,
             tabControlOffset: 10,
             popInOnClose: false,
+            tabsContainerCloseInterceptor: undefined
         } as const;
 
         export function createCopy(original: Settings): Settings {
@@ -447,6 +453,7 @@ export namespace ResolvedLayoutConfig {
                 reorderOnTabMenuClick: original.reorderOnTabMenuClick,
                 tabControlOffset: original.tabControlOffset,
                 popInOnClose: original.popInOnClose,
+                tabsContainerCloseInterceptor: original.tabsContainerCloseInterceptor
             }
         }
     }
@@ -503,6 +510,7 @@ export namespace ResolvedLayoutConfig {
         readonly minimise: string;
         readonly close: false | string;
         readonly tabDropdown: false | string;
+        readonly tabsContainerCloseInterceptor?: (stack: Stack) => Promise<boolean> | boolean;
     }
 
     export namespace Header {
@@ -515,6 +523,7 @@ export namespace ResolvedLayoutConfig {
                 maximise: original.maximise,
                 minimise: original.minimise,
                 tabDropdown: original.tabDropdown,
+                tabsContainerCloseInterceptor: original.tabsContainerCloseInterceptor
             }
         }
 
@@ -525,7 +534,8 @@ export namespace ResolvedLayoutConfig {
             maximise: 'maximise',
             minimise: 'minimise',
             close: 'close',
-            tabDropdown: 'additional tabs'
+            tabDropdown: 'additional tabs',
+            tabsContainerCloseInterceptor: undefined
         } as const;
     }
 
@@ -555,7 +565,7 @@ export namespace ResolvedLayoutConfig {
                 settings: ResolvedLayoutConfig.Settings.createCopy(config.settings),
                 dimensions: ResolvedLayoutConfig.Dimensions.createCopy(config.dimensions),
                 header: ResolvedLayoutConfig.Header.createCopy(config.header),
-                resolved: config.resolved,
+                resolved: config.resolved
             }
             return result;
         }

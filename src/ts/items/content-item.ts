@@ -35,6 +35,7 @@ export abstract class ContentItem extends EventEmitter {
     private _throttledEvents: string[];
     /** @internal */
     private _isInitialised;
+    private removeHeaderBusy: boolean = false;
 
     ignoring = false;
     ignoringChild = false;
@@ -270,6 +271,43 @@ export abstract class ContentItem extends EventEmitter {
             throw new UnexpectedNullError('CIR11110');
         } else {
             this._parent.removeChild(this);
+        }
+    }
+
+    /**
+     * Attempts to remove stack synchronously or asynchronously. Either way, if multiple signals to remove the stacks are fired, they are ignored until the first signal resolves.
+     * @param stack 
+     */
+    removeHeader(stack: Stack): void {
+        if (this._parent === null) {
+            throw new UnexpectedNullError('CIR11110');
+        } else {
+            if (!this.layoutManager.layoutConfig.settings.tabsContainerCloseInterceptor) {
+                this._parent.removeChild(this);
+            }
+            else if (!this.removeHeaderBusy) {
+
+                this.removeHeaderBusy = true;
+                var result = this.layoutManager.layoutConfig.settings.tabsContainerCloseInterceptor(stack);
+
+                if (result instanceof Promise) {
+                    result.then(x => {
+
+                        this.removeHeaderBusy = false;
+
+                        if (x && this._parent) {
+                            this._parent.removeChild(this);
+                        }
+                    })
+                }
+                else {
+                    this.removeHeaderBusy = false;
+
+                    if (result) {
+                        this._parent.removeChild(this);
+                    }
+                }
+            }
         }
     }
 
