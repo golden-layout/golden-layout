@@ -20,9 +20,9 @@ jobs:
         architecture:
           - x64
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v7.0.1
 
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v7.0.0
         with:
           node-version: ${{ matrix.node_version }}
           architecture: ${{ matrix.architecture }}
